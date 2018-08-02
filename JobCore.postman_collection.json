@@ -1,0 +1,67 @@
+{
+	"variables": [],
+	"info": {
+		"name": "JobCore",
+		"_postman_id": "6675d2e5-90fe-34a2-c609-eb270c1f4b47",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/api/oauth/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "alesanchezr",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "zl3hfu8y",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "JV5ThMNyGN9QITNvn4Av22qPWxxyksG29Qxm7XL9",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "Kam6WRxavLDFPgJCsjmTVcsNseLuBGjOYjgLJXYHOFB7yXhTQfKatt7r8Qz4eqDbQu7r1ezoT8KZhjbvjvXhaXo8CYwyiU0AH8lKIyA8H7CoRzAZ97QocTPrqjufCXir",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": "{{host}}oauth/token/",
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "candidates/",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": "{{host}}candidates/",
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

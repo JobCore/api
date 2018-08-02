@@ -1,0 +1,27 @@
+- pipeline: "Test and deploy API"
+  trigger_mode: "ON_EVERY_PUSH"
+  ref_name: "master"
+  ref_type: "BRANCH"
+  actions:
+  - action: "Execute: Tests"
+    type: "BUILD"
+    working_directory: "/buddy/django-rest-test"
+    docker_image_name: "library/python"
+    docker_image_tag: "3.6.4"
+    execute_commands:
+    - "pip install -r requirements.txt"
+    - "pytest"
+    services:
+    - type: "MARIADB"
+      version: "10.1.16"
+      persistent: false
+      connection:
+        host: "mariadb"
+        port: 3306
+        user: "root"
+        password: "root"
+    cached_dirs:
+    - "/root/.cache/pip"
+    mount_filesystem_path: "/buddy/django-rest-test"
+    shell: "BASH"
+    trigger_condition: "ALWAYS"

@@ -1,0 +1,7 @@
+[run]
+omit = */tests/*
+       */migrations/*
+       */.virtualenvs/*
+       */venv/*
+       */env/*
+       */pagination.py
