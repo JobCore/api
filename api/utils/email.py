@@ -4,18 +4,21 @@ from django.template.loader import get_template
 from django.template import Context
 import requests
 
+NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'true')
+
 def send_email_message(slug, to, data={}):
     template = get_template_content(slug, data)
-    return requests.post(
-        "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
-        auth=("api", os.environ.get('MAILGUN_API_KEY')),
-        data={
-            "from": "Excited User <mailgun@mailgun.jobcore.co>",
-            "to": to,
-            "subject": template['subject'],
-            "text": template['text'],
-            "html": template['html']
-        })
+    if NOTIFICATIONS_ENABLED:
+        return requests.post(
+            "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
+            auth=("api", os.environ.get('MAILGUN_API_KEY')),
+            data={
+                "from": "Excited User <mailgun@mailgun.jobcore.co>",
+                "to": to,
+                "subject": template['subject'],
+                "text": template['text'],
+                "html": template['html']
+            })
         
 def get_template_content(slug, data={}):
     plaintext = get_template(slug+'.txt')

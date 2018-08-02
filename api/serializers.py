@@ -165,6 +165,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class ShiftSerializer(serializers.ModelSerializer):
     date = DatetimeFormatField(required=False)
+    candidates = serializers.ListField(write_only=True)
 
     class Meta:
         model = Shift
@@ -189,9 +190,38 @@ class ShiftSerializer(serializers.ModelSerializer):
         else:
             return False
             
-    # def update(self, instance, validated_data):
-    #     #re-implement the update and notify whomever
-    #     return instance
+    def validate_candidates(self, value):
+        return value
+            
+    def update(self, shift, validated_data):
+
+        # Sync candidates
+        current_candidates = shift.candidates.all()
+        new_candidates = Employee.objects.filter(id__in=validated_data['candidates'])
+        for employee in current_candidates:
+            if employee not in new_candidates:
+                ShiftApplication.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
+        for employee in new_candidates:
+            if employee not in current_candidates:
+                ShiftApplication.objects.create(employee=employee, shift=shift)
+        validated_data.pop('candidates')
+        
+        
+        # Sync employees
+        current_employees = shift.employees.all()
+        new_employees = validated_data['employees']
+        for employee in current_employees:
+            if employee not in new_employees:
+                shift.employees.remove(employee.id)
+        for employee in new_employees:
+            if employee not in current_employees:
+                shift.employees.add(employee.id)
+        validated_data.pop('employees')
+        
+        
+        Shift.objects.filter(pk=shift.id).update(**validated_data)
+
+        return shift
             
 class ShiftPostSerializer(serializers.ModelSerializer):
     date = DatetimeFormatField()

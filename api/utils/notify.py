@@ -31,8 +31,8 @@ def notify_shift_creation(shift, being_created=False):
     talents_to_notify = get_talents_to_notify(shift)
     for talent in talents_to_notify:
         
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
+        #payload = jwt_payload_handler(user)
+        #token = jwt_encode_handler(payload)
         
         
         if being_created:

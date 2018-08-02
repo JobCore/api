@@ -370,9 +370,8 @@ class ShiftView(APIView, CustomPagination):
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
         serializer = ShiftSerializer(shift, data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             notify_shift_creation(shift)
             return Response(serializer.data, status=status.HTTP_200_OK)
