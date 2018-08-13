@@ -33,6 +33,7 @@ p {
   font-size: 14px;
   font-weight: normal;
   line-height: 19px;
+  margin-bottom: 10px;
 }
 
 a.link1 {
@@ -90,8 +91,16 @@ h1 {
   td[class="spechide"] {
     display: none !important;
   }
+  td[class="banner"]{
+    text-align: center;
+  }
   img[class="banner"] {
     width: 100% !important;
+    height: auto !important;
+  }
+  img[class="logo"] {
+    width: 100% !important;
+    max-width: 300px;
     height: auto !important;
   }
   td[class="left_pad"] {
@@ -122,6 +131,12 @@ h1 {
   }
   img[class="banner"] {
     width: 100% !important;
+    max-width: 300px;
+    height: auto !important;
+  }
+  img[class="logo"] {
+    width: 100% !important;
+    max-width: 300px;
     height: auto !important;
   }
   .font {
@@ -156,10 +171,10 @@ h1 {
             <tbody>
               <!--===============================Header======================================-->
               <tr>
-                <td><img src="{% static "logo.png" %}"/></td>
-              </tr>
-              <tr>
                 <td height='75' class="spechide"></td>
+              </tr>
+              <tr class="banner">
+                <td class="banner" align="center"><img class="logo" src="{{API_URL}}{% static "logo.png" %}"/></td>
               </tr>
               <!--===============================Body======================================-->
               <tr>

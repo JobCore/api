@@ -17,7 +17,7 @@
                       <div class="contentEditable">
                         <p style='text-align:center;margin:0;font-family:Georgia,Time,sans-serif;font-size:26px;color:#222222;'>
                           <span class="specbundle2">
-                            <span class="font1">New job invitation from&nbsp;</span>
+                            <span class="font1">Cancelled shift in &nbsp;</span>
                           </span>
                           <span style="color:#289CDC;" class="font"> {{ COMPANY_NAME }}</span>
                         </p>
@@ -53,28 +53,14 @@
           <td align='left'>
             <div class="contentEditableContainer contentTextEditable">
               <div class="contentEditable" align='center'>
-                <p><span class="fuchsia">{{ COMPANY }}</span> is looking for a <span class="dark-green">{{ POSITION }}</span> on <span class="red">{{ DATE }}</span> and thought of you as a possible candidate for the job. </p>
+                <p><span class="fuchsia">{{ COMPANY }}</span> is no longer seeking for a <span class="dark-green">{{ POSITION }}</span> on <span class="red">{{ DATE }}</span> the shift has been cancelled.</p>
+                <p>We have remove that shift from your scheduler and <strong>you are new available for hire during that time frame.</strong></p>
+                <p>This is just an informative message and it does not require any actions on your side.</p>
               </div>
             </div>
           </td>
         </tr>
         <tr><td height='55'></td></tr>
-        <tr>
-          <td align='center'>
-            <table>
-              <tr>
-                <td align='center' bgcolor='#27666F' style='background:#27666F; padding:15px 18px;-webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px;'>
-                  <div class="contentEditableContainer contentTextEditable">
-                    <div class="contentEditable" align='center'>
-                      <a target='_blank' href='{{ APP_URL }}' class='link2' style='color:#ffffff;'>Review Job Offer</a>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr><td height='20'></td></tr>
       </table>
     </div>
 {% endblock %}

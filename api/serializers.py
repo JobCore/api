@@ -9,7 +9,7 @@ from oauth2_provider.models import AccessToken
 from django.contrib.auth.models import User
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from .models import *
-from api.utils.email import send_email_message
+from api.utils import notify
 from rest_framework_jwt.settings import api_settings
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -100,13 +100,12 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         # TODO: send email message not working
-        send_email_message("invite_to_jobcore", "alejandro@bestmiamiweddings.com", {
-            "SENDER": validated_data['sender'].user.first_name + ' ' + validated_data['sender'].user.last_name,
-            "COMPANY": "Fetes & Events",
-            "POSITION": "Server",
-            "DATE": "July 21st"
-        })
-        return JobCoreInvite(**validated_data)
+        invite = JobCoreInvite(**validated_data)
+        invite.save()
+        
+        notify.jobcore_invite(invite)
+        
+        return invite
 
 class ShiftInviteSerializer(serializers.ModelSerializer):
 
@@ -115,14 +114,15 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         exclude = ()
         
     def create(self, validated_data):
+        
         # TODO: send email message not working
-        send_email_message("invite_to_shift", "alejandro@bestmiamiweddings.com", {
-            "SENDER": validated_data['sender'].user.first_name + ' ' + validated_data['sender'].user.last_name,
-            "COMPANY": validated_data['sender'].user.profile.employer.title,
-            "POSITION": validated_data['shift'].position.title,
-            "DATE": validated_data['shift'].date.strftime('%m/%d/%Y')
-        })
-        return ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+        invite.save()
+        
+        # TODO: send email message not working
+        notify.shift_invite(invite)
+        
+        return invite
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -165,61 +165,98 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class ShiftSerializer(serializers.ModelSerializer):
     date = DatetimeFormatField(required=False)
-    candidates = serializers.ListField(write_only=True)
+    allowed_from_list = serializers.ListField(write_only=True, required=False)
 
     class Meta:
         model = Shift
         exclude = ()
-
-    def is_changing_status(self, shift, new_status=None):
-        if self.validated_data['status'] != shift.status:
-            if new_status is None:
+        
+    def has_sensitive_updates(validated_data):
+        non_sensitive_fields = ['application_restriction','minimum_allowed_rating','allowed_from_list','required_badges','rating']
+        for key in validated_data:
+            if key not in non_sensitive_data:
                 return True
-            else:
-                return (self.validated_data['status'] == new_status)
-        else:
-            return False
-
-    def can_be_updated(self, shift):
-        # It will be or remain a draft
-        if self.validated_data['status'] == 'DRAFT':
-            return True
-        # I was a draft but it will become something else
-        elif shift.status == 'DRAFT':
-            return True
-        else:
-            return False
+        
+        return False
+        
+    def validate(self, data):
+        shift = self.instance
+        if data['status'] != 'DRAFT' and shift.status != 'DRAFT' and self.has_sensitive_updates(data):
+            raise serializers.ValidationError('The shift can only be updated as a draft')
             
-    def validate_candidates(self, value):
-        return value
-            
+        return data
+    
+    # TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
+        
+        # delete all accepeted employees
+        if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
+            ShiftInvite.objects.filter(shift=shift).delete()
+            shift.employees.clear()
+        
+        # Sync employees
+        if 'allowed_from_list' in validated_data:
+            current_favlists = shift.allowed_from_list.all().values_list('id', flat=True)
+            new_favlists = validated_data['allowed_from_list']
+            for favlist in current_favlists:
+                if favlist not in new_favlists:
+                    shift.allowed_from_list.remove(favlist)
+            for favlist in new_favlists:
+                if favlist not in current_favlists:
+                    shift.allowed_from_list.add(favlist)
+            validated_data.pop('allowed_from_list')
+            
+        Shift.objects.filter(pk=shift.id).update(**validated_data)
+        
+        notify.shift_update(user=self.context['request'].user, shift=shift)
 
+        return shift
+
+class ShiftCandidatesSerializer(serializers.ModelSerializer):
+    candidates = serializers.ListField(write_only=True, required=False)
+
+    class Meta:
+        model = Shift
+        exclude = ()
+        
+    def validate(self, data):
+        shift = Shift.objects.get(id=self.instance.id)
+        if ('status' in data and data['status'] != 'OPEN') and shift.status != 'OPEN':
+            raise serializers.ValidationError('This shift is not opened for applicants')
+            
+        return data
+
+    def update(self, shift, validated_data):
+        
+        talents_to_notify = { "accepted": [], "rejected": [] }
         # Sync candidates
-        current_candidates = shift.candidates.all()
-        new_candidates = Employee.objects.filter(id__in=validated_data['candidates'])
-        for employee in current_candidates:
-            if employee not in new_candidates:
-                ShiftApplication.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
-        for employee in new_candidates:
-            if employee not in current_candidates:
-                ShiftApplication.objects.create(employee=employee, shift=shift)
-        validated_data.pop('candidates')
+        if 'candidates' in validated_data:
+            current_candidates = shift.candidates.all()
+            new_candidates = Employee.objects.filter(id__in=validated_data['candidates'])
+            for employee in current_candidates:
+                if employee not in new_candidates:
+                    ShiftApplication.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
+            for employee in new_candidates:
+                if employee not in current_candidates:
+                    ShiftApplication.objects.create(employee=employee, shift=shift)
+            validated_data.pop('candidates')
         
         
         # Sync employees
-        current_employees = shift.employees.all()
-        new_employees = validated_data['employees']
-        for employee in current_employees:
-            if employee not in new_employees:
-                shift.employees.remove(employee.id)
-        for employee in new_employees:
-            if employee not in current_employees:
-                shift.employees.add(employee.id)
-        validated_data.pop('employees')
-        
-        
-        Shift.objects.filter(pk=shift.id).update(**validated_data)
+        if 'employees' in validated_data:
+            current_employees = shift.employees.all()
+            new_employees = validated_data['employees']
+            for employee in current_employees:
+                if employee not in new_employees:
+                    talents_to_notify["rejected"].append(employee)
+                    shift.employees.remove(employee.id)
+            for employee in new_employees:
+                if employee not in current_employees:
+                    talents_to_notify["accepted"].append(employee)
+                    shift.employees.add(employee.id)
+            validated_data.pop('employees')
+            
+        notify.shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
 
         return shift
             

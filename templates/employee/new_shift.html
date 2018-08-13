@@ -35,15 +35,9 @@
   <!-- SEPARATOR -->
   <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
-      <tr>
-        <td valign='top' align='center'>
-          <div class="contentEditableContainer contentImageEditable">
-            <div class="contentEditable">
-              <img src="images/line.png" width='251' height='43' alt='' data-default="placeholder" data-max-width="560">
-            </div>
-          </div>
-        </td>
-      </tr>
+        <tr>
+          <td height="35"></td>
+        </tr>
     </table>
   </div>
   <!-- MESSAGE CONTENT -->
@@ -66,7 +60,7 @@
                 <td align='center' bgcolor='#27666F' style='background:#27666F; padding:15px 18px;-webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px;'>
                   <div class="contentEditableContainer contentTextEditable">
                     <div class="contentEditable" align='center'>
-                      <a target='_blank' href='{{ APP_URL }}' class='link2' style='color:#ffffff;'>Review Job Offer</a>
+                      <a target='_blank' href='{{ EMPLOYEE_URL }}/invite/response?token={{ TOKEN }}' class='link2' style='color:#ffffff;'>Answer the Job Invite</a>
                     </div>
                   </div>
                 </td>

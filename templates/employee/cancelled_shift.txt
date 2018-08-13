@@ -1,0 +1,9 @@
+Hello {{ EMAIL }}
+
+{{ COMPANY }} has cancelled the shift that was going to take place on {{ DATE }} for the {{ POSITION }} position.
+
+Your schedule for that day is no longer available for hire inside JobCore.
+
+This is just an informative message and it does not require any actions on your side.
+
+The JobCore Team

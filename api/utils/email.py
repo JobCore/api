@@ -8,6 +8,7 @@ NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'true')
 
 def send_email_message(slug, to, data={}):
     template = get_template_content(slug, data)
+    print('EMAL_SENT: '+slug+' to '+to)
     if NOTIFICATIONS_ENABLED:
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
@@ -21,31 +22,36 @@ def send_email_message(slug, to, data={}):
             })
         
 def get_template_content(slug, data={}):
-    plaintext = get_template(slug+'.txt')
-    htmly     = get_template(slug+'.html')
+    info = get_template_info(slug)
+    
+    plaintext = get_template(info['type']+'/'+slug+'.txt')
+    html     = get_template(info['type']+'/'+slug+'.html')
     #d = Context({ 'username': username })
     con = {
-        'APP_URL': os.environ.get('APP_URL'),
+        'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
+        'EMPLOYER_URL': os.environ.get('EMPLOYER_URL'),
+        'API_URL': os.environ.get('API_URL'),
         'COMPANY_NAME': 'JobCore',
         'COMPANY_LEGAL_NAME': 'JobCore LLC',
-        'COMPANY_ADDRESS': '270 Catalonia, Coral Gables, 33134',
-        'LINK': os.environ.get('APP_URL')
+        'COMPANY_ADDRESS': '270 Catalonia, Coral Gables, 33134'
     }
     z = con.copy()   # start with x's keys and values
     z.update(data)
     return {
         "text": plaintext.render(z),
-        "html": htmly.render(z),
-        "subject": get_template_subject(slug)
+        "html": html.render(z),
+        "subject": info['subject']
     }
     
-def get_template_subject(slug):
+def get_template_info(slug):
     subjects = {
-        "invite_to_jobcore": "You are invited to JobCore",
-        "invite_to_shift": "You have been specifically invited to a Job",
-        "new_shift": "New Job Waiting at JobCore",
-        "updated_shift": "Job updated at JobCore",
-        "password_reset": "JobCore Password Reset"
+        "invite_to_jobcore":{ "type": "employee", "subject": "A job is waiting for you"},
+        "invite_to_shift":  { "type": "employee", "subject": "You have been invited to work on a shift"},
+        "cancelled_shift":  { "type": "employee", "subject": "One of your upcoming shifts have been cancelled"},
+        "new_shift":        { "type": "employee", "subject": "There is a new shift waiting for you to apply"},
+        "applicant_accepted":   { "type": "employee", "subject": "Job application accepted, time to work :)"},
+        "applicant_rejected":   { "type": "employee", "subject": "Job application rejected, we are sorry :("},
+        "password_reset":   { "type": "registration", "subject": "About your password reset"}
     }
     if slug in subjects:
         return subjects[slug]

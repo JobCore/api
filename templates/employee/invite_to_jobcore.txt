@@ -1,0 +1,6 @@
+Hello {{ EMAIL }}
+
+{{ COMPANY }} has invited you work on JobCore, to sign up please click on the following link:
+{{ EMPLOYEE_URL }}/invite?token={{ TOKEN }}
+
+The JobCore Team

@@ -11,19 +11,24 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
-from api.utils.notify import notify_shift_creation
 from .pagination import CustomPagination
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
-from .models import *
-from .serializers import *
+from api.models import *
+from api.serializers import *
 
 # from .utils import GeneralException
 import logging
 logger = logging.getLogger(__name__)
+from api.utils.email import get_template_content
 
+class EmailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, slug):
+        template = get_template_content(slug)
+        return HttpResponse(template['html'])
 
 class TokenUserView(APIView):
     permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
@@ -48,7 +53,6 @@ class TokenUserView(APIView):
                 'expired': timezone.now() > token["expires"]
             }
         }, status=status.HTTP_200_OK)
-
 
 class UserEmailView(APIView):
     permission_classes = [AllowAny]
@@ -169,7 +173,11 @@ class EmployeeView(APIView, CustomPagination):
             
             qFirst = request.GET.get('first_name')
             if qFirst:
-                employees = employees.filter(profile__user__first_name=qFirst)
+                employees = employees.filter(profile__user__first_name__contains=qFirst)
+            
+            qLast = request.GET.get('last_name')
+            if qLast:
+                employees = employees.filter(profile__user__last_name__contains=qLast)
 
             qPositions = request.GET.getlist('positions')
             if qPositions:
@@ -212,10 +220,12 @@ class EmployeeView(APIView, CustomPagination):
 class ApplicantsView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer
 
+    # TODO: Optimization needed
     def get(self, request, id=False):
-            applications = ShiftApplication.objects.all()
-            serializer = ApplicantGetSerializer(applications, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        applications = ShiftApplication.objects.select_related('employee','shift').all()
+        # data = [applicant.id for applicant in applications]
+        serializer = ApplicantGetSerializer(applications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EmployerView(APIView):
@@ -370,10 +380,9 @@ class ShiftView(APIView, CustomPagination):
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = ShiftSerializer(shift, data=request.data)
+        serializer = ShiftSerializer(shift, data=request.data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
-            notify_shift_creation(shift)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -386,6 +395,19 @@ class ShiftView(APIView, CustomPagination):
         shift.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class ShiftCandidatesView(APIView, CustomPagination):
+    serializer_class = ShiftGetSerializer
+
+    def put(self, request, id):
+        try:
+            shift = Shift.objects.get(id=id)
+        except Shift.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = ShiftCandidatesSerializer(shift, data=request.data, context={"request": request})
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VenueView(APIView):
     def get(self, request, id=False):

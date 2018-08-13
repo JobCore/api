@@ -1,0 +1,9 @@
+Hello {{ EMAIL }}.
+
+Congratulations! Your job application has been approved!
+
+{{ COMPANY }} has approved your application for {{ POSITION }} on {{ DATE }}.
+
+This is just an informative message and it does not require any actions on your side
+
+The JobCore Team

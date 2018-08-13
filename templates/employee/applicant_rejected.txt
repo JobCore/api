@@ -1,0 +1,11 @@
+Hello {{ EMAIL }}.
+
+Your job application has been rejected.
+
+{{ COMPANY }} has rejected your application for {{ POSITION }} on {{ DATE }}.
+
+Your schedule for that day is now available for hire inside JobCore.
+
+This is just an informative message and it does not require any actions on your side.
+
+The JobCore Team
