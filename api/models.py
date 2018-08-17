@@ -26,6 +26,7 @@ class Badge(models.Model):
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     website = models.CharField(max_length=30, blank=True)
+    bio = models.TextField(max_length=250, blank=True)
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
