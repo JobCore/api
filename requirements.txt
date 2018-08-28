@@ -45,3 +45,4 @@ text-unidecode==1.2
 uritemplate==3.0.0
 urllib3==1.22
 wrapt==1.10.11
+gunicorn==19.9.0
