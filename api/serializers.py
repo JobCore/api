@@ -171,7 +171,7 @@ class ShiftSerializer(serializers.ModelSerializer):
         model = Shift
         exclude = ()
         
-    def has_sensitive_updates(validated_data):
+    def has_sensitive_updates(self,validated_data):
         non_sensitive_fields = ['application_restriction','minimum_allowed_rating','allowed_from_list','required_badges','rating']
         for key in validated_data:
             if key not in non_sensitive_data:
@@ -373,15 +373,15 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         'user': user
                     };
                 else:
-                    msg = _('Unable to log in with provided credentials.')
+                    msg = 'Unable to log in with provided credentials.'
                     raise serializers.ValidationError(msg)
 
             else:
-                msg = _('Must include "{username_field}" and "password".')
+                msg = 'Must include "{username_field}" and "password".'
                 msg = msg.format(username_field=self.username_field)
                 raise serializers.ValidationError(msg)
 
         else:
-            msg = _('Account with this email/username does not exists')
+            msg = 'Account with this email/username does not exists'
             raise serializers.ValidationError(msg)
             

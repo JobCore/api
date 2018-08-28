@@ -80,3 +80,7 @@ Find static files:
 ```
 python manage.py findstatic --verbosity 2 social-media/facebook.png
 ```
+
+## Heroku config vars
+
+heroku config:set GITHUB_USERNAME=joesmith

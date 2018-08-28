@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 import datetime
 import dotenv
+import dj_database_url
 dotenv.read_dotenv()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -25,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (os.environ.get('DEBUG') == 'TRUE')
 
 # TODO: Remember deleting unused hosts in production
 ALLOWED_HOSTS = [
@@ -110,26 +111,9 @@ WSGI_APPLICATION = 'jobcore.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'djangodb'),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'secret'),
-        'HOST': os.environ.get('DB_HOST', ''),
-        'PORT': os.environ.get('DB_PORT', ''),
-        'OPTIONS': {
-            'charset': 'utf8',
-            'use_unicode': True,
-            'sql_mode': 'STRICT_TRANS_TABLES',
-        },
-        'TEST': {
-            'COLLATION': 'utf8_unicode_ci',
-        }
-    }
+    'default': dj_database_url.config()
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -175,6 +159,9 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
+if(os.environ.get('DEBUG') != 'TRUE'):
+    STATIC_ROOT = "/home/ubuntu/workspace/static/"
+    
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=90000), #original: 900
     'JWT_ALLOW_REFRESH': True,

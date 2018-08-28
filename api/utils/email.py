@@ -4,7 +4,7 @@ from django.template.loader import get_template
 from django.template import Context
 import requests
 
-NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'true')
+NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'TRUE')
 
 def send_email_message(slug, to, data={}):
     template = get_template_content(slug, data)

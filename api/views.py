@@ -90,14 +90,6 @@ class UserRegisterView(APIView):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            profile = Profile.objects.get(user_id=serializer.data["id"])
-            if (request.data["type"] == "employer"):
-                employer = Employer.objects.get(id=request.data['employer'])
-                profile.employer = employer;
-                profile.save();
-            else:
-                Employee.objects.create(profile=profile)
-                profile.employee.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -340,7 +332,6 @@ class FavListView(APIView):
 
         favList.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class ShiftView(APIView, CustomPagination):
     serializer_class = ShiftGetSerializer
