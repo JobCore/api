@@ -329,6 +329,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserLoginSerializer(serializers.ModelSerializer):
     employee = serializers.CharField(required=False)
     employer = EmployerSerializer(required=False)
+    token = serializers.CharField(read_only=True)
 
     class Meta:
         model = User

@@ -1,8 +1,8 @@
 from django.urls import include, path
 from django.contrib.auth.views import PasswordResetConfirmView
 from rest_framework_jwt.views import ObtainJSONWebToken
-from .serializers import CustomJWTSerializer
-from . import views
+from api.serializers import CustomJWTSerializer
+from api import views
 
 app_name = "api"
 
