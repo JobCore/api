@@ -49,25 +49,8 @@ INSTALLED_APPS = [
     'api',
 ]
 
-# Swagger Settings
 LOGIN_URL = '/admin'
 LOGOUT_URL = '/admin/logout'
-SWAGGER_SETTINGS = {
-    'VALIDATOR_URL': 'http://localhost:8000',
-    'SECURITY_DEFINITIONS': {
-        'basic': {
-            'type': 'oauth2',
-            'flow': 'password',
-            'in': 'header',
-            'tokenUrl': 'password',
-            'authorizationUrl': 'http://swagger.io/api/oauth/dialog',
-            'scopes': {
-                'read': 'Read scope',
-                'write': 'Write scope'
-            }
-        }
-    }
-}
 
 AUTHENTICATION_BACKENDS = (
     'oauth2_provider.backends.OAuth2Backend',
@@ -77,6 +60,7 @@ AUTHENTICATION_BACKENDS = (
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'oauth2_provider.middleware.OAuth2TokenMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -150,16 +134,18 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static")
-]
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-if(os.environ.get('DEBUG') != 'TRUE'):
-    STATIC_ROOT = "/home/ubuntu/workspace/static/"
+# if(os.environ.get('DEBUG') != 'TRUE'):
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# else:
+#     STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+    
+    
     
 JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=90000), #original: 900
@@ -188,3 +174,22 @@ CORS_ORIGIN_ALLOW_ALL = True
 # CORS_ORIGIN_WHITELIST = (
 #     'localhost'
 # )
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

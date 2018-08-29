@@ -47,3 +47,4 @@ wrapt==1.10.11
 gunicorn==19.9.0
 dj-database-url==0.5.0
 djangorestframework-jwt==1.11.0
+whitenoise==4.0

@@ -81,6 +81,8 @@ Find static files:
 python manage.py findstatic --verbosity 2 social-media/facebook.png
 ```
 
-## Heroku config vars
+### Adding public keys to heroku
+heroku keys:add ~/.ssh/path/to/public/key
 
+## Heroku config vars
 heroku config:set GITHUB_USERNAME=joesmith
