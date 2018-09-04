@@ -181,11 +181,23 @@ class ShiftInvite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+PENDING = 'PENDING'
+ACCEPTED = 'ACCEPTED'
+JOBCORE_INVITE_STATUS_CHOICES = (
+    (PENDING, 'Pending'),
+    (ACCEPTED, 'Accepted'),
+)
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
     first_name = models.TextField(max_length=100, blank=True)
     last_name = models.TextField(max_length=100, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, default=None)
     email = models.TextField(max_length=100, blank=True)
+    status = models.CharField(
+        max_length=9,
+        choices=JOBCORE_INVITE_STATUS_CHOICES,
+        default=PENDING,
+        blank=True)
     phone_number = models.CharField(max_length=17, blank=True) # validators should be a list
     token = models.TextField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

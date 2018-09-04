@@ -7,9 +7,7 @@ from api import views
 app_name = "api"
 
 urlpatterns = [
-    path('password_reset',
-         views.UserEmailView.as_view(),
-         name="password-reset-email"),
+    path('password_reset', views.UserEmailView.as_view(), name="password-reset-email"),
     #path('login/', views.UserLoginView.as_view(), name="login"),
     path('jobcore-invites', views.JobCoreInviteView.as_view(), name="get-jcinvites"),
     path('jobcore-invites/<int:id>', views.JobCoreInviteView.as_view(), name="id-jcinvites"),
