@@ -14,6 +14,7 @@ from rest_framework_jwt.settings import api_settings
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
 # Format Serializers
 class ToTimestampField(serializers.Field):
@@ -44,6 +45,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.filter(email=data["email"])
         if user.exists():
             raise ValidationError("This email already exist.")
+            
         return data
 
     def create(self, validated_data):
@@ -52,11 +54,34 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()
         Profile.objects.create(user=user)
         user.profile.save()
+        
+        notify.email_validation(user)
+        
         return user
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+    repeat_password = serializers.CharField(required=True)
+    
+    def validate(self, data):
+        payload = jwt_decode_handler(data["token"])
+        try:
+            user = User.objects.get(id=payload["user_id"])
+        except User.DoesNotExist:
+            raise ValidationError("User does not exist.")
+        
+        if data['new_password'] != data['repeat_password']:
+            raise ValidationError("Passwords don't match")
+        
+        return data
+        
+    def create(self, validated_data):
+        payload = jwt_decode_handler(validated_data["token"])
+        user = User.objects.get(id=payload["user_id"])
+        user.set_password(validated_data['new_password'])
+        user.save()
+        return user
 
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -304,7 +329,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id','username', 'first_name',
+        fields = ('id','username', 'first_name', 'is_active',
                   'last_name', 'email', 'password', 'profile')
 
     def validate(self, data):

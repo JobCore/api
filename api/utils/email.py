@@ -51,7 +51,11 @@ def get_template_info(slug):
         "new_shift":        { "type": "employee", "subject": "There is a new shift waiting for you to apply"},
         "applicant_accepted":   { "type": "employee", "subject": "Job application accepted, time to work :)"},
         "applicant_rejected":   { "type": "employee", "subject": "Job application rejected, we are sorry :("},
-        "password_reset":   { "type": "registration", "subject": "About your password reset"}
+        "password_reset_link":   { "type": "registration", "subject": "About your password reset"},
+        "password_reset":   { "type": "registration", "subject": "You password has been reset"},
+        "registration":   { "type": "registration", "subject": "Welcome to JobCore"},
+        "reset_password_form":   { "type": "views", "subject": "Reset your password"},
+        "email_validated":   { "type": "views", "subject": "Your email has been validated"},
     }
     if slug in subjects:
         return subjects[slug]

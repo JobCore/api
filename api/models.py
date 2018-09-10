@@ -38,6 +38,16 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+ACTIVE = 'ACTIVE'
+PAUSED = 'PAUSED'
+PENDING = 'PENDING_EMAIL_VALIDATION'
+SUSPENDED = 'SUSPENDED'
+PROFILE_STATUS = (
+    (ACTIVE, 'Active'),
+    (PAUSED, 'Paused'),
+    (SUSPENDED, 'Suspended'),
+    (PENDING, 'PENDING_EMAIL_VALIDATION'),
+)
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     picture = models.URLField(blank=True)
@@ -49,6 +59,11 @@ class Profile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
+    status = models.CharField(
+        max_length=25,
+        choices=PROFILE_STATUS,
+        default=PENDING,
+        blank=True)
 
     def __str__(self):
         return self.user.username

@@ -1,7 +1,10 @@
+import os
+from base64 import b64encode, b64decode
 from api.models import Employee, ShiftInvite, Shift
 from api.utils.email import send_email_message
 import api.utils.jwt
 import rest_framework_jwt
+API_URL = os.environ.get('API_URL')
 
 jwt_encode_handler = rest_framework_jwt.settings.api_settings.JWT_ENCODE_HANDLER;
 
@@ -30,6 +33,27 @@ def get_talents_to_notify(shift):
         talents_to_notify = shift.candidates.all() | shift.employees.all()
     
     return talents_to_notify
+
+# password reset
+def password_reset_code(user):
+    payload = api.utils.jwt.jwt_payload_handler({
+        "user_id": user.id
+    })
+    token = jwt_encode_handler(payload)
+    send_email_message("password_reset_link", user.email, {
+        "link": API_URL+'/api/user/password/reset?token='+token
+    })
+
+# user registration
+def email_validation(user):
+    payload = api.utils.jwt.jwt_payload_handler({
+        "user_id": user.id
+    })
+    token = jwt_encode_handler(payload)
+    send_email_message("registration", user.email, {
+        "link": API_URL+'/api/user/email/validate?token='+token,
+        "first_name": user.first_name 
+    })
 
 # automatic notification
 def shift_update(user, shift, status='being_updated'):

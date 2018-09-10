@@ -1,5 +1,6 @@
 import json
-from base64 import b64encode
+import os
+from base64 import b64encode, b64decode
 from django.shortcuts import redirect
 from django.core.mail import send_mail
 from jobcore import settings
@@ -17,7 +18,12 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 from api.models import *
+from api.utils import notify
 from api.serializers import *
+from rest_framework_jwt.settings import api_settings
+
+import api.utils.jwt
+jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
 # from .utils import GeneralException
 import logging
@@ -28,6 +34,20 @@ class EmailView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, slug):
         template = get_template_content(slug)
+        return HttpResponse(template['html'])
+class ValidateEmailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        token = request.GET.get('token')
+        payload = jwt_decode_handler(token)
+        try:
+            user = User.objects.get(id=payload["user_id"])
+            user.profile.status = ACTIVE #email validation completed
+            user.profile.save()
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        template = get_template_content('email_validated')
         return HttpResponse(template['html'])
 
 class TokenUserView(APIView):
@@ -54,33 +74,47 @@ class TokenUserView(APIView):
             }
         }, status=status.HTTP_200_OK)
 
-class UserEmailView(APIView):
-    permission_classes = [AllowAny]
+class PasswordView(APIView):
+    permission_classes = (AllowAny,)
 
-    def post(self, request):
-        data = request.data
+    def get(self, request):
+        
+        token = request.GET.get('token')
+        data = jwt_decode_handler(token)
         try:
-            user = User.objects.get(email=data["email"])
+            user = User.objects.get(id=data['user_id'])
+        except User.DoesNotExist:
+            return Response({'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
+
+        payload = api.utils.jwt.jwt_payload_handler({
+            "user_id": user.id
+        })
+        token = jwt_encode_handler(payload)
+
+        template = get_template_content('reset_password_form', { "email": user.email, "token": token })
+        return HttpResponse(template['html'])
+        
+    def post(self, request):
+        email = request.data.get('email', None)
+        if not email:
+            return Response({'error': 'Email not found on the database'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            user = User.objects.get(email=email)
             serializer = UserLoginSerializer(user)
         except User.DoesNotExist:
-            return Response({'error': 'Email not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
 
-        encoded = str(user.id).encode('ascii')
-        base64_id = b64encode(encoded).decode('unicode_escape')[:-2]
-        tokenGenerator = PasswordResetTokenGenerator()
-        token = tokenGenerator.make_token(user)
-
-        try:
-            link = "http://localhost:8000/api/user/reset/{uuid}/{token}".format(
-                uuid=base64_id, token=token)
-            send_email_message("password_reset", "alejandro@bestmiamiweddings.com",{
-                link: link
-            })
-        except:
-            return Response({'error': 'Error sending email. Check your internet connection.'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+        notify.password_reset_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    def put(self, request):
+        
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -92,7 +126,6 @@ class UserRegisterView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class UserView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly, TokenHasReadWriteScope]
@@ -147,7 +180,6 @@ class UserView(APIView):
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class EmployeeView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer
 
@@ -199,6 +231,18 @@ class EmployeeView(APIView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployeeSerializer(employee, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, id):
         try:
             employee = Employee.objects.get(id=id)
@@ -207,7 +251,6 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class ApplicantsView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer
@@ -218,7 +261,6 @@ class ApplicantsView(APIView, CustomPagination):
         # data = [applicant.id for applicant in applications]
         serializer = ApplicantGetSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class EmployerView(APIView):
     def get(self, request, id=False):
@@ -256,7 +298,6 @@ class EmployerView(APIView):
         employer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class ProfileView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -288,7 +329,6 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class FavListView(APIView):
     def get(self, request, id=False):
@@ -351,6 +391,15 @@ class ShiftView(APIView, CustomPagination):
             qStatus = request.GET.get('not_status')
             if qStatus:
                 shifts = shifts.filter(~Q(status = qStatus))
+            
+            qUpcoming = request.GET.get('upcoming')
+            if qUpcoming == 'true':
+                shifts = shifts.filter(date__gte=today)
+                
+            if request.user.profile.employer is None:
+                shifts = shifts.filter(employees__in = (request.user.profile.id,))
+            else:
+                shifts = shifts.filter(employer = request.user.profile.employer.id)
             
             serializer = self.serializer_class(shifts, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -443,7 +492,6 @@ class VenueView(APIView):
         venue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class PositionView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -486,7 +534,6 @@ class PositionView(APIView):
 
         position.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class BadgeView(APIView):
     def get(self, request, id=False):
@@ -531,7 +578,6 @@ class BadgeView(APIView):
         badge.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class JobCoreInviteView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -575,7 +621,6 @@ class JobCoreInviteView(APIView):
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class ShiftInviteView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -587,12 +632,18 @@ class ShiftInviteView(APIView):
             serializer = ShiftInviteSerializer(invite, many=False)
         else:
             invites = ShiftInvite.objects.all()
+            
+            qEmployee_id = request.GET.get('employee')
+            if qEmployee_id:
+                invites = invites.filter(employee__id=qEmployee_id)
+            
             serializer = ShiftInviteSerializer(invites, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         invites = []
+        # masive creation of shift invites
         if isinstance(request.data['shifts'],list):
             for s in request.data['shifts']:
                 serializer = ShiftInviteSerializer(data={
@@ -606,6 +657,7 @@ class ShiftInviteView(APIView):
                 else:
                     return Response({'error': 'Error creating invite for shift'}, status=status.HTTP_400_BAD_REQUEST)
         else:
+            # add new invite to the shift
             serializer = ShiftInviteSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -625,16 +677,24 @@ class ShiftInviteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RateView(APIView):
-    def get(self, request, id=False):
-        if (id):
+    def get(self, request, user_id=False):
+        if (user_id):
             try:
-                rate = Rate.objects.get(id=id)
+                rate = Rate.objects.get(id=user_id)
             except Rate.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
             serializer = RateSerializer(rate, many=False)
         else:
             rates = Rate.objects.all()
+            
+            qEmployer = request.GET.get('employer')
+            qEmployee = request.GET.get('employee')
+            if qEmployee:
+                rates = rates.filter(employee__id=qEmployee)
+            elif qEmployer:
+                rates = rates.filter(employee__id=qEmployer)
+                
             serializer = RateSerializer(rates, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -657,12 +717,3 @@ class RateView(APIView):
 
         rate.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# class ImageView(APIView):
-#     permission_classes = (AllowAny,)
-#     authentication_classes = []
-
-#     def get(self, request, image_name):
-#         f = open('./static/'+image_name, 'rb')
-#         return HttpResponse(f, content_type='image/png')
