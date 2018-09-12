@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from .models import *
 from api.utils import notify
+from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -35,27 +36,59 @@ class UserGetSerializer(serializers.ModelSerializer):
                   'last_name', 'email')
 
 class UserRegisterSerializer(serializers.ModelSerializer):
+    account_type = serializers.CharField(required=True, write_only=True)
+    employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True, queryset=Employer.objects.all())
+    
     class Meta:
         model = User
         fields = ('id', 'username', 'first_name',
-                  'last_name', 'email', 'password')
+                  'last_name', 'email', 'password', 'account_type', 'employer')
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate(self, data):
         user = User.objects.filter(email=data["email"])
         if user.exists():
             raise ValidationError("This email already exist.")
+        
+        if data['account_type'] not in ('employer', 'employee'):
+            raise ValidationError("Account type can only be employer or employee")
+        elif data['account_type'] == 'employer' and 'employer' not in data:
+            raise ValidationError("You need to specify the user employer id")
             
         return data
 
     def create(self, validated_data):
+        account_type = validated_data['account_type']
+        validated_data.pop('account_type', None)
+        
+        if 'employer' in validated_data:
+            employer_id = validated_data['employer']
+            validated_data.pop('employer', None)
+            
         user = super(UserRegisterSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
-        Profile.objects.create(user=user)
-        user.profile.save()
         
-        notify.email_validation(user)
+        try:
+            Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg')
+            user.profile.save()
+            if account_type == 'employeer':
+                user.profile.employer = employer_id
+            elif account_type == 'employee':
+                Employee.objects.create(profile=user.profile)
+                user.profile.employee.save()
+            
+            notify.email_validation(user)
+        except:
+            user.delete()
+            print("Error:", sys.exc_info()[0])
+            raise
+        
+        jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
+        for invite in jobcore_invites:
+            invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=user.profile.employee)
+            invite.save()
+        jobcore_invites.delete()
         
         return user
 

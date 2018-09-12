@@ -17,6 +17,7 @@ urlpatterns = [
     path('user/<int:user_id>/employees', views.EmployeeView.as_view(), name="create-employees"),
     path('tokenuser', views.TokenUserView.as_view(), name="token-user"),
     path('applicants', views.ApplicantsView.as_view(), name="get-applicants"),
+    path('catalog/<str:catalog_type>', views.CatalogView.as_view(), name="get-catalog"),
     path('employers', views.EmployerView.as_view(), name="get-employers"),
     path('employers/<int:id>', views.EmployerView.as_view(), name="id-employers"),
     path('employees', views.EmployeeView.as_view(), name="get-employees"),

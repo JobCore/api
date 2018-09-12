@@ -1,5 +1,7 @@
 import json
 import os
+import functools
+import operator
 from base64 import b64encode, b64decode
 from django.shortcuts import redirect
 from django.core.mail import send_mail
@@ -35,6 +37,7 @@ class EmailView(APIView):
     def get(self, request, slug):
         template = get_template_content(slug)
         return HttpResponse(template['html'])
+        
 class ValidateEmailView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -195,13 +198,23 @@ class EmployeeView(APIView, CustomPagination):
         else:
             employees = Employee.objects.all()
             
-            qFirst = request.GET.get('first_name')
-            if qFirst:
-                employees = employees.filter(profile__user__first_name__contains=qFirst)
-            
-            qLast = request.GET.get('last_name')
-            if qLast:
-                employees = employees.filter(profile__user__last_name__contains=qLast)
+            qName = request.GET.get('full_name')
+            if qName:
+                search_args = []
+                for term in qName.split():
+                    for query in ('profile__user__first_name__istartswith', 'profile__user__last_name__istartswith'):
+                        search_args.append(Q(**{query: term}))
+                
+                employees = employees.filter(functools.reduce(operator.or_, search_args))
+            else:
+                qFirst = request.GET.get('first_name')
+                if qFirst:
+                    employees = employees.filter(profile__user__first_name__contains=qFirst)
+                    entities = []
+    
+                qLast = request.GET.get('last_name')
+                if qLast:
+                    employees = employees.filter(profile__user__last_name__contains=qLast)
 
             qPositions = request.GET.getlist('positions')
             if qPositions:
@@ -251,6 +264,7 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class ApplicantsView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer
@@ -666,7 +680,7 @@ class ShiftInviteView(APIView):
                 return Response({'error': 'Error creating invite for shift'}, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(invites, status=status.HTTP_201_CREATED)
-
+        
     def delete(self, request, id):
         try:
             invite = ShiftInvite.objects.get(id=id)
@@ -717,3 +731,31 @@ class RateView(APIView):
 
         rate.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class CatalogView(APIView):
+    def get(self, request, catalog_type):
+        
+        if catalog_type == 'employees':
+            employees = User.objects.all()
+            
+            qName = request.GET.get('full_name')
+            if qName:
+                search_args = []
+                for term in qName.split():
+                    for query in ('profile__user__first_name__istartswith', 'profile__user__last_name__istartswith'):
+                        search_args.append(Q(**{query: term}))
+                
+                employees = employees.filter(functools.reduce(operator.or_, search_args))
+
+            qPositions = request.GET.getlist('positions')
+            if qPositions:
+                employees = employees.filter(positions__id__in=qPositions)
+
+            qBadges = request.GET.getlist('badges')
+            if qBadges:
+                employees = employees.filter(badges__id__in=qBadges)
+            
+            employees = map(lambda emp: { "label": emp["first_name"] + ' ' + emp["last_name"], "value": emp["id"] }, employees.values('id', 'first_name', 'last_name'))
+            return Response(employees, status=status.HTTP_200_OK)
+            
+        return Response("no catalog", status=status.HTTP_200_OK)
