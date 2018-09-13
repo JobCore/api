@@ -61,8 +61,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         account_type = validated_data['account_type']
         validated_data.pop('account_type', None)
         
+        employer = None
         if 'employer' in validated_data:
-            employer_id = validated_data['employer']
+            employer = validated_data['employer']
             validated_data.pop('employer', None)
             
         user = super(UserRegisterSerializer, self).create(validated_data)
@@ -70,11 +71,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()
         
         try:
-            Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg')
+                
+            Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employer=employer)
             user.profile.save()
-            if account_type == 'employeer':
-                user.profile.employer = employer_id
-            elif account_type == 'employee':
+            
+            if account_type == 'employee':
                 Employee.objects.create(profile=user.profile)
                 user.profile.employee.save()
             

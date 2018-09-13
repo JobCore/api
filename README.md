@@ -86,3 +86,6 @@ heroku keys:add ~/.ssh/path/to/public/key
 
 ## Heroku config vars
 heroku config:set GITHUB_USERNAME=joesmith
+
+## Start python shell
+heroku run python manage.py shell
