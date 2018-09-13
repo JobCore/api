@@ -148,7 +148,7 @@ class Shift(models.Model):
     position = models.ForeignKey(
         Position, on_delete=models.CASCADE, blank=True)
     application_restriction = models.CharField(
-        max_length=9,
+        max_length=20,
         choices=SHIFT_APPLICATION_RESTRICTIONS,
         default=ANYONE,
         blank=True)
