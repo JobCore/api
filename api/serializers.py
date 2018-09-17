@@ -145,6 +145,11 @@ class VenueSerializer(serializers.ModelSerializer):
         model = Venue
         exclude = ()
 
+class VenueGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
+        exclude = ('street_address','country','updated_at','state')
+
 class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
@@ -341,15 +346,15 @@ class FavoriteListGetSerializer(serializers.ModelSerializer):
         exclude = ('employer',)
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
-    venue = VenueSerializer(read_only=True)
+    venue = VenueGetSmallSerializer(read_only=True)
     position = PositionSerializer(read_only=True)
     employer = EmployerGetSerializer(read_only=True)
     date = ToTimestampField(read_only=True)
 
     class Meta:
         model = Shift
-        exclude = ('maximum_allowed_employees', 'allowed_from_list','required_badges','candidates','employees',
-        'rating')
+        exclude = ('maximum_allowed_employees','minimum_allowed_rating', 'allowed_from_list','required_badges','candidates','employees',
+        'rating','application_restriction','updated_at')
 
 class ShiftGetSerializer(serializers.ModelSerializer):
     venue = VenueSerializer(read_only=True)
@@ -382,7 +387,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         return invite
 
 class ShiftInviteGetSerializer(serializers.ModelSerializer):
-    shift = ShiftGetSerializer(many=False, read_only=True)
+    shift = ShiftGetSmallSerializer(many=False, read_only=True)
 
     class Meta:
         model = ShiftInvite
