@@ -39,7 +39,7 @@ class UserGetSerializer(serializers.ModelSerializer):
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture',)
+        fields = ('picture','id')
                   
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(many=False)
@@ -191,7 +191,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)
-    user = UserGetSmallSerializer(many=True)
 
     class Meta:
         model = Employer
@@ -366,7 +365,24 @@ class ShiftGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class ShiftInviteSerializer(serializers.ModelSerializer):
-    shift = ShiftGetSmallSerializer(many=None)
+
+    class Meta:
+        model = ShiftInvite
+        exclude = ()
+        
+    def create(self, validated_data):
+        
+        # TODO: send email message not working
+        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+        invite.save()
+        
+        # TODO: send email message not working
+        notify.shift_invite(invite)
+        
+        return invite
+
+class ShiftInviteGetSerializer(serializers.ModelSerializer):
+    shift = ShiftGetSerializer(many=False, read_only=True)
 
     class Meta:
         model = ShiftInvite

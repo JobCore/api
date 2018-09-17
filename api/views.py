@@ -312,6 +312,21 @@ class EmployerView(APIView):
         employer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class EmployerUsersView(APIView):
+    def get(self, request, id=False):
+        if (id):
+            try:
+                user = User.objects.get(id=id)
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            serializer = UserGetSmallSerializer(user, many=False)
+        else:
+            users = User.objects.all()
+            serializer = UserGetSmallSerializer(users, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class ProfileView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -652,7 +667,7 @@ class ShiftInviteView(APIView):
             except ShiftInvite.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
-            serializer = ShiftInviteSerializer(invite, many=False)
+            serializer = ShiftInviteGetSerializer(invite, many=False)
         else:
             invites = ShiftInvite.objects.all()
             
@@ -665,7 +680,7 @@ class ShiftInviteView(APIView):
             else:
                 invites = invites.filter(employee__id=request.user.profile.employee.id)
             
-            serializer = ShiftInviteSerializer(invites, many=True)
+            serializer = ShiftInviteGetSerializer(invites, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -674,6 +689,7 @@ class ShiftInviteView(APIView):
         # masive creation of shift invites
         if isinstance(request.data['shifts'],list):
             for s in request.data['shifts']:
+                shift = Shift.objects.get(pk=request.data['shifts'])
                 serializer = ShiftInviteSerializer(data={
                     "employee": request.data['employee'],
                     "sender": request.data['sender'],
@@ -683,15 +699,19 @@ class ShiftInviteView(APIView):
                     serializer.save()
                     invites.append(serializer.data)
                 else:
-                    return Response({'error': 'Error creating invite for shift'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             # add new invite to the shift
-            serializer = ShiftInviteSerializer(data=request.data)
+            serializer = ShiftInviteSerializer(data={
+                    "employee": request.data['employee'],
+                    "sender": request.data['sender'],
+                    "shift": request.data['shifts']
+                })
             if serializer.is_valid():
                 serializer.save()
                 invites.append(serializer.data)
             else:
-                return Response({'error': 'Error creating invite for shift'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(invites, status=status.HTTP_201_CREATED)
         
