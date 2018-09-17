@@ -5,6 +5,8 @@ from api.utils.email import send_email_message
 import api.utils.jwt
 import rest_framework_jwt
 API_URL = os.environ.get('API_URL')
+EMPLOYER_URL = os.environ.get('EMPLOYER_URL')
+EMPLOYEE_URL = os.environ.get('EMPLOYEE_URL')
 
 jwt_encode_handler = rest_framework_jwt.settings.api_settings.JWT_ENCODE_HANDLER;
 
@@ -129,7 +131,7 @@ def jobcore_invite(invite):
         "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
         "EMAIL": invite.email,
         "COMPANY": invite.sender.user.profile.employer.title,
-        "TOKEN": token
+        "LINK": EMPLOYER_URL+"/invite?token="+token
     })
 
 # manual invite
@@ -145,5 +147,6 @@ def shift_invite(invite):
         "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
-        "DATE": invite.shift.date.strftime('%m/%d/%Y')
+        "DATE": invite.shift.date.strftime('%m/%d/%Y'),
+        "LINK": EMPLOYER_URL
     })

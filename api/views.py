@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from .pagination import CustomPagination
@@ -224,7 +225,7 @@ class EmployeeView(APIView, CustomPagination):
             if qBadges:
                 employees = employees.filter(badges__id__in=qBadges)
             
-            serializer = EmployeeGetSerializer(employees, many=True)
+            serializer = EmployeeGetSmallSerializer(employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
             # page = self.paginator.paginate_queryset(employees, request)
 
@@ -264,7 +265,6 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class ApplicantsView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer
@@ -352,10 +352,19 @@ class FavListView(APIView):
             except FavoriteList.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
+            if request.user.profile.employer.id != favList.employer.id:
+                return Response("You are not allowed to access this information", status=status.HTTP_403_FORBIDDEN)
+                
             serializer = FavoriteListGetSerializer(favList, many=False)
         else:
-            favLists = FavoriteList.objects.all()
-            serializer = FavoriteListGetSerializer(favLists, many=True)
+            
+            is_employer = (request.user.profile.employer != None)
+            if not is_employer:
+                raise PermissionDenied("You are not allowed to access this information")
+            else:
+                favLists = FavoriteList.objects.all()
+                favLists = favLists.filter(employer__id=request.user.profile.employer.id)
+                serializer = FavoriteListGetSerializer(favLists, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -647,9 +656,14 @@ class ShiftInviteView(APIView):
         else:
             invites = ShiftInvite.objects.all()
             
-            qEmployee_id = request.GET.get('employee')
-            if qEmployee_id:
-                invites = invites.filter(employee__id=qEmployee_id)
+            is_employer = (request.user.profile.employer != None)
+            if is_employer:
+                invites = invites.filter(sender__employer__id=request.user.profile.employer.id)
+                qEmployee_id = request.GET.get('employee')
+                if qEmployee_id:
+                    invites = invites.filter(employer__id=qEmployee_id)
+            else:
+                invites = invites.filter(employee__id=request.user.profile.employee.id)
             
             serializer = ShiftInviteSerializer(invites, many=True)
 

@@ -1,5 +1,6 @@
 import datetime
 import json
+import sys
 from oauth2_provider import settings as outh2_settings
 from rest_framework import permissions, serializers
 from django.contrib.auth import authenticate
@@ -34,6 +35,18 @@ class UserGetSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'first_name',
                   'last_name', 'email')
+                  
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('picture',)
+                  
+class UserGetSmallSerializer(serializers.ModelSerializer):
+    profile = ProfileGetSmallSerializer(many=False)
+    
+    class Meta:
+        model = User
+        fields = ('first_name','last_name', 'email', 'profile')
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     account_type = serializers.CharField(required=True, write_only=True)
@@ -52,8 +65,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         
         if data['account_type'] not in ('employer', 'employee'):
             raise ValidationError("Account type can only be employer or employee")
-        elif data['account_type'] == 'employer' and 'employer' not in data:
-            raise ValidationError("You need to specify the user employer id")
+        elif data['account_type'] == 'employer':
+            if 'employer' not in data:
+                raise ValidationError("You need to specify the user employer id")
             
         return data
 
@@ -72,12 +86,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         
         try:
                 
-            Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employer=employer)
-            user.profile.save()
+            if account_type == 'employer':
+                Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employer=employer)
+                user.profile.save()
             
-            if account_type == 'employee':
-                Employee.objects.create(profile=user.profile)
-                user.profile.employee.save()
+            elif account_type == 'employee':
+                Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg')
+                user.profile.save()
+                
+                Employee.objects.create(user=user)
+                user.employee.save()
             
             notify.email_validation(user)
         except:
@@ -166,23 +184,6 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         
         return invite
 
-class ShiftInviteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ShiftInvite
-        exclude = ()
-        
-    def create(self, validated_data):
-        
-        # TODO: send email message not working
-        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
-        invite.save()
-        
-        # TODO: send email message not working
-        notify.shift_invite(invite)
-        
-        return invite
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
@@ -190,6 +191,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)
+    user = UserGetSmallSerializer(many=True)
 
     class Meta:
         model = Employer
@@ -206,7 +208,6 @@ class FavoriteListSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
-    profile = ProfileGetSerializer()
     badges = BadgeSerializer(many=True)
     positions = PositionSerializer(many=True)
     favoritelist_set = FavoriteListSerializer(many=True)
@@ -214,6 +215,13 @@ class EmployeeGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         exclude = ()
+
+class EmployeeGetSmallSerializer(serializers.ModelSerializer):
+    user = UserGetSmallSerializer(many=False)
+    favoritelist_set = FavoriteListSerializer(many=True)
+    class Meta:
+        model = Employee
+        exclude = ('available_on_weekends',)
 
 class EmployeeSerializer(serializers.ModelSerializer):
     favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
@@ -327,12 +335,22 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         exclude = ()
         
 class FavoriteListGetSerializer(serializers.ModelSerializer):
-    employer = EmployerSerializer()
-    employees = EmployeeGetSerializer(many=True)
+    employees = EmployeeGetSmallSerializer(many=True)
 
     class Meta:
         model = FavoriteList
-        exclude = ()
+        exclude = ('employer',)
+
+class ShiftGetSmallSerializer(serializers.ModelSerializer):
+    venue = VenueSerializer(read_only=True)
+    position = PositionSerializer(read_only=True)
+    employer = EmployerGetSerializer(read_only=True)
+    date = ToTimestampField(read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = ('maximum_allowed_employees', 'allowed_from_list','required_badges','candidates','employees',
+        'rating')
 
 class ShiftGetSerializer(serializers.ModelSerializer):
     venue = VenueSerializer(read_only=True)
@@ -346,6 +364,24 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = ()
+
+class ShiftInviteSerializer(serializers.ModelSerializer):
+    shift = ShiftGetSmallSerializer(many=None)
+
+    class Meta:
+        model = ShiftInvite
+        exclude = ()
+        
+    def create(self, validated_data):
+        
+        # TODO: send email message not working
+        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+        invite.save()
+        
+        # TODO: send email message not working
+        notify.shift_invite(invite)
+        
+        return invite
 
 class ApplicantGetSerializer(serializers.ModelSerializer):
     employee = EmployeeGetSerializer()

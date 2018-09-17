@@ -39,6 +39,24 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+class Employee(models.Model):
+    response_time = models.IntegerField(blank=True, default=0)  # in minutes
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
+    minimum_hourly_rate = models.DecimalField(
+        max_digits=3, decimal_places=1, default=8, blank=True)
+    rating = models.DecimalField(
+        max_digits=2, decimal_places=1, default=None, blank=True, null=True)
+    available_on_weekends = models.BooleanField(default=True)
+    positions = models.ManyToManyField(
+        Position, blank=True)
+    job_count = models.IntegerField(default=0, blank=True)
+    badges = models.ManyToManyField(Badge, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.profile.user.username
+
 ACTIVE = 'ACTIVE'
 PAUSED = 'PAUSED'
 PENDING = 'PENDING_EMAIL_VALIDATION'
@@ -62,6 +80,7 @@ class Profile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(
         max_length=25,
         choices=PROFILE_STATUS,
@@ -70,25 +89,6 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
-
-class Employee(models.Model):
-    profile = models.OneToOneField(
-        Profile, on_delete=models.CASCADE, blank=True)
-    response_time = models.IntegerField(blank=True, default=0)  # in minutes
-    minimum_hourly_rate = models.DecimalField(
-        max_digits=3, decimal_places=1, default=8, blank=True)
-    rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=None, blank=True, null=True)
-    available_on_weekends = models.BooleanField(default=True)
-    positions = models.ManyToManyField(
-        Position, blank=True)
-    job_count = models.IntegerField(default=0, blank=True)
-    badges = models.ManyToManyField(Badge, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.profile.user.username
         
 class EmployeeWeekAvailability(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
@@ -109,7 +109,7 @@ class FavoriteList(models.Model):
 
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
-    street_address = models.CharField(max_length=60, blank=True)
+    street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
@@ -189,11 +189,11 @@ class ShiftApplication(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-DRAFT = 'DRAFT'
+PENDING = 'PENDING'
 APPLIED = 'APPLIED'
 REJECTED = 'CANCELLED'
 SHIFT_INVITE_STATUS_CHOICES = (
-    (DRAFT, 'Pending'),
+    (PENDING, 'Pending'),
     (APPLIED, 'Applied'),
     (REJECTED, 'Rejected'),
 )
@@ -204,7 +204,7 @@ class ShiftInvite(models.Model):
     status = models.CharField(
         max_length=9,
         choices=SHIFT_INVITE_STATUS_CHOICES,
-        default=DRAFT,
+        default=PENDING,
         blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

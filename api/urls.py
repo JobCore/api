@@ -26,6 +26,7 @@ urlpatterns = [
     path('favlists', views.FavListView.as_view(), name="get-favlists"),
     path('favlists/<int:id>', views.FavListView.as_view(), name="id-favlists"),
     path('shifts/invites', views.ShiftInviteView.as_view(), name="get-jobinvites"),
+    path('shifts/invites/<int:id>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/<int:id>/candidates', views.ShiftCandidatesView.as_view(), name="update-shift-candidates"),
     path('shifts/<int:id>/employees', views.ShiftCandidatesView.as_view(), name="update-shift-employees"),
     path('shifts', views.ShiftView.as_view(), name="get-shifts"),

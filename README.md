@@ -89,3 +89,6 @@ heroku config:set GITHUB_USERNAME=joesmith
 
 ## Start python shell
 heroku run python manage.py shell
+
+## Deploy
+git push heroku master
