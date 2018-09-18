@@ -681,6 +681,10 @@ class ShiftInviteView(APIView):
             else:
                 invites = invites.filter(employee__id=request.user.profile.employee.id)
             
+            qStatus = request.GET.get('status')
+            if qStatus:
+                invites = invites.filter(status=qStatus)
+                
             serializer = ShiftInviteGetSerializer(invites, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
