@@ -353,10 +353,13 @@ class ProfileView(APIView):
         except Profile.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProfileSerializer(profile, data=request.data)
-        if serializer.is_valid():
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        userSerializer = UserUpdateSerializer(profile.user, data=request.data, partial=True)
+        if serializer.is_valid() and userSerializer.is_valid():
             serializer.save()
+            userSerializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FavListView(APIView):
@@ -677,6 +680,8 @@ class ShiftInviteView(APIView):
                 qEmployee_id = request.GET.get('employee')
                 if qEmployee_id:
                     invites = invites.filter(employer__id=qEmployee_id)
+            elif (request.user.profile.employee == None):
+                raise ValidationError('This user doesn\'t seem to be an employee or employer')
             else:
                 invites = invites.filter(employee__id=request.user.profile.employee.id)
             
@@ -689,7 +694,6 @@ class ShiftInviteView(APIView):
         # masive creation of shift invites
         if isinstance(request.data['shifts'],list):
             for s in request.data['shifts']:
-                shift = Shift.objects.get(pk=request.data['shifts'])
                 serializer = ShiftInviteSerializer(data={
                     "employee": request.data['employee'],
                     "sender": request.data['sender'],

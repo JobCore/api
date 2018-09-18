@@ -48,6 +48,23 @@ class UserGetSmallSerializer(serializers.ModelSerializer):
         model = User
         fields = ('first_name','last_name', 'email', 'profile')
 
+class UserGetTinySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name','last_name', 'email')
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        exclude = ('id',)
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'email': {'read_only': True},
+            'password': {'read_only': True},
+            'profile': {'read_only': True},
+        }
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     account_type = serializers.CharField(required=True, write_only=True)
     employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True, queryset=Employer.objects.all())
@@ -91,11 +108,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 user.profile.save()
             
             elif account_type == 'employee':
-                Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg')
-                user.profile.save()
-                
-                Employee.objects.create(user=user)
+                emp = Employee.objects.create(user=user)
                 user.employee.save()
+                
+                profile = Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employee=emp)
+                user.profile.save()
             
             notify.email_validation(user)
         except:
@@ -190,9 +207,16 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         return invite
 
 class ProfileSerializer(serializers.ModelSerializer):
+    user = UserGetTinySerializer(many=False, read_only=True)
     class Meta:
         model = Profile
         exclude = ()
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'employer': {'read_only': True},
+            'employee': {'read_only': True},
+            'status': {'read_only': True}
+        }
 
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)
