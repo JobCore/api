@@ -90,7 +90,7 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
         
-class EmployeeWeekAvailability(models.Model):
+class EmployeeWeekUnvailability(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     starting_at = models.DateTimeField()
     ending_at = models.DateTimeField()

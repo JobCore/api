@@ -266,6 +266,18 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'badges': {'read_only': True}
         }
 
+class EmployeeWeekUnvailabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeWeekUnvailability
+        exclude = ()
+        
+    def create(self, validated_data):
+        return EmployeeWeekUnvailability.objects.create(
+            employee = self.context['request'].user.profile.employee,
+            starting_at=validated_data['starting_at'],
+            ending_at=validated_data['ending_at']
+        )
+
 class ShiftSerializer(serializers.ModelSerializer):
     date = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)

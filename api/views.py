@@ -239,7 +239,7 @@ class EmployeeView(APIView, CustomPagination):
             raise PermissionDenied("You are not allowed to update employee profiles")
         elif request.user.profile.employee != None and id != None:
             raise PermissionDenied("You are only allowed to update your own profile")
-        print("sdf "+str(request.user.profile.employee.id))
+
         if id == None:
             id = request.user.profile.employee.id
         
@@ -263,6 +263,41 @@ class EmployeeView(APIView, CustomPagination):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         employee.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeWeekUnavailabilityView(APIView, CustomPagination):
+    serializer_class = EmployeeWeekUnvailabilitySerializer
+
+    def get(self, request, employee_id=False):
+            
+        if employee_id == False and request.user.profile.employee == None:
+            raise PermissionDenied("You are not allowed to update employee availability")
+        
+        if employee_id == False:
+            employee_id = request.user.profile.employee.id
+                
+        unavailability_blocks = EmployeeWeekUnvailability.objects.all().filter(employee__id=employee_id)
+        
+        serializer = EmployeeWeekUnvailabilitySerializer(unavailability_blocks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, employee_id=None):
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not allowed to update employee availability")
+                
+        serializer = EmployeeWeekUnvailabilitySerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request, unavailability_id):
+        try:
+            unavailability_block = EmployeeWeekUnvailability.objects.get(id=unavailability_id)
+        except EmployeeWeekUnvailability.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        unavailability_block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class EmployeeApplicationsView(APIView, CustomPagination):
