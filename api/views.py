@@ -689,6 +689,31 @@ class ShiftInviteView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request, id, action):
+        
+        try:
+            invite = ShiftInvite.objects.get(id=id)
+        except ShiftInvite.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        if action == 'accept':
+            data={ "status": 'APPLIED' } 
+        elif action == 'reject':
+            data={ "status": 'REJECTED' } 
+        else:
+            raise ValidationError("You can either accept or reject an invite")
+
+        shiftSerializer = ShiftInviteSerializer(invite, data=data, many=False)
+        appSerializer = ShiftApplicationSerializer(data={
+            "shift": invite.shift.id,
+            "employee": invite.employee.id
+        }, many=False)
+        if shiftSerializer.is_valid() and appSerializer.is_valid():
+            shiftSerializer.save()
+            appSerializer.save()
+            return Response(shiftSerializer.data, status=status.HTTP_200_OK)
+        return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     def post(self, request):
         invites = []
         # masive creation of shift invites

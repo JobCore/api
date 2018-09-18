@@ -239,6 +239,7 @@ class EmployeeGetSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)
     positions = PositionSerializer(many=True)
     favoritelist_set = FavoriteListSerializer(many=True)
+    user = UserGetSmallSerializer(many=False)
 
     class Meta:
         model = Employee
@@ -368,6 +369,11 @@ class FavoriteListGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = FavoriteList
         exclude = ('employer',)
+
+class ShiftApplicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShiftApplication
+        exclude = ()
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
