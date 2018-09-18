@@ -23,6 +23,7 @@ urlpatterns = [
     path('employers/<int:id>', views.EmployerView.as_view(), name="id-employers"),
     path('employees', views.EmployeeView.as_view(), name="get-employees"),
     path('employees/<int:id>', views.EmployeeView.as_view(), name="id-employees"),
+    path('employees/<int:id>/applications', views.EmployeeApplicationsView.as_view(), name="employee-applications"),
     path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
     path('favlists', views.FavListView.as_view(), name="get-favlists"),
     path('favlists/<int:id>', views.FavListView.as_view(), name="id-favlists"),

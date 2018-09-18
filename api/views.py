@@ -233,15 +233,18 @@ class EmployeeView(APIView, CustomPagination):
             #     serializer = self.serializer_class(page, many=True)
             #     return self.paginator.get_paginated_response(serializer.data)
 
-    def put(self, request, id):
+    def put(self, request, id=None):
         
         if request.user.profile.employer != None:
             raise PermissionDenied("You are not allowed to update employee profiles")
-        elif request.user.profile.employee != None and request.user.profile.employee.id != id:
-            raise PermissionDenied("You are not allowed to update this employee")
+        elif request.user.profile.employee != None and id != None:
+            raise PermissionDenied("You are only allowed to update your own profile")
+        print("sdf "+str(request.user.profile.employee.id))
+        if id == None:
+            id = request.user.profile.employee.id
         
         try:
-            employee = Employee.objects.get(id=user_id)
+            employee = Employee.objects.get(id=id)
         except Employee.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -261,6 +264,21 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeApplicationsView(APIView, CustomPagination):
+    serializer_class = EmployeeGetSerializer
+
+    def get(self, request, id=False):
+        if (id):
+            try:
+                employee = Employee.objects.get(id=id)
+            except Employee.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            applications = ShiftApplication.objects.all().filter(employer__id=employee.id)
+            
+            serializer = ShiftApplicationSerializer(applications, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ApplicantsView(APIView, CustomPagination):
     serializer_class = EmployeeGetSerializer

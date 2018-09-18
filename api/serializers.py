@@ -253,11 +253,18 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
         exclude = ('available_on_weekends',)
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
+    #favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
     
     class Meta:
         model = Employee
         exclude = ()
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'user': {'read_only': True},
+            'rating': {'read_only': True},
+            'job_count': {'read_only': True},
+            'badges': {'read_only': True}
+        }
 
 class ShiftSerializer(serializers.ModelSerializer):
     date = DatetimeFormatField(required=False)
