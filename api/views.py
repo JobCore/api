@@ -234,8 +234,14 @@ class EmployeeView(APIView, CustomPagination):
             #     return self.paginator.get_paginated_response(serializer.data)
 
     def put(self, request, id):
+        
+        if request.user.profile.employer != None:
+            raise PermissionDenied("You are not allowed to update employee profiles")
+        elif request.user.profile.employee != None and request.user.profile.employee.id != id:
+            raise PermissionDenied("You are not allowed to update this employee")
+        
         try:
-            employee = Employee.objects.get(id=id)
+            employee = Employee.objects.get(id=user_id)
         except Employee.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -245,18 +251,8 @@ class EmployeeView(APIView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = EmployeeSerializer(employee, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    # there shoud be no POST because it is created on signup (registration)
+    
     def delete(self, request, id):
         try:
             employee = Employee.objects.get(id=id)
@@ -696,12 +692,12 @@ class ShiftInviteView(APIView):
         except ShiftInvite.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
-        if action == 'accept':
+        if action == 'apply':
             data={ "status": 'APPLIED' } 
         elif action == 'reject':
             data={ "status": 'REJECTED' } 
         else:
-            raise ValidationError("You can either accept or reject an invite")
+            raise ValidationError("You can either apply or reject an invite")
 
         shiftSerializer = ShiftInviteSerializer(invite, data=data, many=False)
         appSerializer = ShiftApplicationSerializer(data={
