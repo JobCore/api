@@ -65,7 +65,7 @@ def shift_update(user, shift, status='being_updated'):
     if status == 'being_updated':
         for talent in talents_to_notify:
             payload = api.utils.jwt.jwt_payload_handler({
-                "user_id": talent.profile.user.id,
+                "user_id": talent.user.id,
                 "shift_id": shift.id
             })
             token = jwt_encode_handler(payload)
@@ -76,7 +76,7 @@ def shift_update(user, shift, status='being_updated'):
                 employee=talent
             )
 
-            send_email_message('new_shift', talent.profile.user.email, {
+            send_email_message('new_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
@@ -85,7 +85,7 @@ def shift_update(user, shift, status='being_updated'):
             
     if status == 'being_cancelled':
         for talent in talents_to_notify:
-            send_email_message('deleted_shift', talent.profile.user.email, {
+            send_email_message('deleted_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
@@ -96,10 +96,10 @@ def shift_candidate_update(user, shift, talents_to_notify=[]):
     
     for talent in talents_to_notify['accepted']:
         payload = api.utils.jwt.jwt_payload_handler({
-            "user_id": talent.profile.user.id,
+            "user_id": talent.user.id,
             "shift_id": shift.id
         })
-        send_email_message('applicant_accepted', talent.profile.user.email, {
+        send_email_message('applicant_accepted', talent.user.email, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
@@ -108,10 +108,10 @@ def shift_candidate_update(user, shift, talents_to_notify=[]):
     
     for talent in talents_to_notify['rejected']:
         payload = api.utils.jwt.jwt_payload_handler({
-            "user_id": talent.profile.user.id,
+            "user_id": talent.user.id,
             "shift_id": shift.id
         })
-        send_email_message('applicant_rejected', talent.profile.user.email, {
+        send_email_message('applicant_rejected', talent.user.email, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),

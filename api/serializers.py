@@ -39,7 +39,7 @@ class UserGetSerializer(serializers.ModelSerializer):
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture','id')
+        fields = ('picture','id', 'bio')
                   
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(many=False)
