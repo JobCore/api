@@ -290,7 +290,7 @@ class ShiftSerializer(serializers.ModelSerializer):
     def has_sensitive_updates(self,validated_data):
         non_sensitive_fields = ['application_restriction','minimum_allowed_rating','allowed_from_list','required_badges','rating']
         for key in validated_data:
-            if key not in non_sensitive_data:
+            if key not in non_sensitive_fields:
                 return True
         
         return False
