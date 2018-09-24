@@ -1,4 +1,3 @@
-import datetime
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -168,9 +167,8 @@ class Shift(models.Model):
         choices=SHIFT_STATUS_CHOICES,
         default=DRAFT,
         blank=True)
-    date = models.DateTimeField(blank=True)
-    start_time = models.TimeField(blank=True)
-    finish_time = models.TimeField(blank=True)
+    starting_at = models.DateTimeField(blank=True)
+    ending_at = models.DateTimeField(blank=True)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     candidates = models.ManyToManyField(

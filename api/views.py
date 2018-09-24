@@ -476,7 +476,7 @@ class ShiftView(APIView, CustomPagination):
             serializer = ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            shifts = Shift.objects.all().order_by('date')
+            shifts = Shift.objects.all().order_by('starting_at')
             
             qStatus = request.GET.get('not_status')
             if qStatus:
@@ -484,7 +484,7 @@ class ShiftView(APIView, CustomPagination):
             
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
-                shifts = shifts.filter(date__gte=today)
+                shifts = shifts.filter(starting_at__gte=today)
                 
             if request.user.profile.employer is None:
                 shifts = shifts.filter(employees__in = (request.user.profile.id,))

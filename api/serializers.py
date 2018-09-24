@@ -279,7 +279,8 @@ class EmployeeWeekUnvailabilitySerializer(serializers.ModelSerializer):
         )
 
 class ShiftSerializer(serializers.ModelSerializer):
-    date = DatetimeFormatField(required=False)
+    # starting_at = DatetimeFormatField(required=False)
+    # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
 
     class Meta:
@@ -376,7 +377,6 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
         return shift
             
 class ShiftPostSerializer(serializers.ModelSerializer):
-    date = DatetimeFormatField()
 
     class Meta:
         model = Shift
@@ -398,7 +398,6 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionSerializer(read_only=True)
     employer = EmployerGetSerializer(read_only=True)
-    date = ToTimestampField(read_only=True)
 
     class Meta:
         model = Shift
@@ -412,7 +411,6 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     employees = EmployeeGetSerializer(many=True, read_only=True)
     required_badges = BadgeSerializer(many=True, read_only=True)
     allowed_from_list = FavoriteListGetSerializer(many=True, read_only=True)
-    date = ToTimestampField(read_only=True)
 
     class Meta:
         model = Shift
