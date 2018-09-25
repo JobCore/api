@@ -80,7 +80,7 @@ def shift_update(user, shift, status='being_updated'):
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
-                "DATE": shift.date
+                "DATE": shift.starting_at
             })
             
     if status == 'being_cancelled':
@@ -89,7 +89,7 @@ def shift_update(user, shift, status='being_updated'):
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
-                "DATE": shift.date
+                "DATE": shift.starting_at
             })
 
 def shift_candidate_update(user, shift, talents_to_notify=[]):
@@ -103,7 +103,7 @@ def shift_candidate_update(user, shift, talents_to_notify=[]):
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
-            "DATE": shift.date
+            "DATE": shift.starting_at
         })
     
     for talent in talents_to_notify['rejected']:
@@ -115,7 +115,7 @@ def shift_candidate_update(user, shift, talents_to_notify=[]):
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
-            "DATE": shift.date
+            "DATE": shift.starting_at
         })
 
 # manual invite
@@ -147,6 +147,6 @@ def shift_invite(invite):
         "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
-        "DATE": invite.shift.date.strftime('%m/%d/%Y'),
+        "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
         "LINK": EMPLOYER_URL
     })

@@ -295,12 +295,12 @@ class ShiftSerializer(serializers.ModelSerializer):
         
         return False
         
-    def validate(self, data):
-        shift = self.instance
-        if data['status'] != 'DRAFT' and shift.status != 'DRAFT' and self.has_sensitive_updates(data):
-            raise serializers.ValidationError('The shift can only be updated as a draft')
+    # def validate(self, data):
+    #     shift = self.instance
+    #     if data['status'] != 'DRAFT' and shift.status != 'DRAFT' and self.has_sensitive_updates(data):
+    #         raise serializers.ValidationError('The shift can only be updated as a draft')
             
-        return data
+    #     return data
     
     # TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):

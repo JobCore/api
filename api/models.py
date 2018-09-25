@@ -123,6 +123,8 @@ class Venue(models.Model):
 OPEN = 'OPEN'
 FILLED = 'FILLED'
 PAUSED = 'PAUSED'
+EXPIRED = 'EXPIRED'
+COMPLETED = 'COMPLETED'
 DRAFT = 'DRAFT'
 CANCELLED = 'CANCELLED'
 SHIFT_STATUS_CHOICES = (
@@ -130,6 +132,8 @@ SHIFT_STATUS_CHOICES = (
     (FILLED, 'Filled'),
     (PAUSED, 'Paused'),
     (DRAFT, 'Draft'),
+    (EXPIRED, 'Expired'),
+    (COMPLETED, 'Completed'),
     (CANCELLED, 'Cancelled'),
 )
 
