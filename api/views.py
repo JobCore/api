@@ -463,6 +463,23 @@ class FavListView(APIView):
         favList.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class FavListEmployeeView(APIView):
+    def put(self, request, employee_id):
+        
+        if request.user.profile.employer == None:
+            raise PermissionDenied("You are not allowed to have favorite lists")
+
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployeeSerializer(employee, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class ShiftView(APIView, CustomPagination):
     serializer_class = ShiftGetSerializer
 
@@ -769,12 +786,14 @@ class ShiftInviteView(APIView):
     
     def post(self, request):
         invites = []
+        if request.user.profile.employer == None:
+            raise PermissionDenied("You are not allowed to invite talents to shifts")
         # masive creation of shift invites
         if isinstance(request.data['shifts'],list):
             for s in request.data['shifts']:
                 serializer = ShiftInviteSerializer(data={
                     "employee": request.data['employee'],
-                    "sender": request.data['sender'],
+                    "sender": request.user.profile.id,
                     "shift": s
                 })
                 if serializer.is_valid():
@@ -786,7 +805,7 @@ class ShiftInviteView(APIView):
             # add new invite to the shift
             serializer = ShiftInviteSerializer(data={
                     "employee": request.data['employee'],
-                    "sender": request.data['sender'],
+                    "sender": request.user.profile.id,
                     "shift": request.data['shifts']
                 })
             if serializer.is_valid():

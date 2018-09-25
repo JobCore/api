@@ -30,6 +30,7 @@ urlpatterns = [
     path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
     path('favlists', views.FavListView.as_view(), name="get-favlists"),
     path('favlists/<int:id>', views.FavListView.as_view(), name="id-favlists"),
+    path('favlists/employee/<int:employee_id>', views.FavListEmployeeView.as_view(), name="id-favlists"),
     path('shifts/invites', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/invites/<int:id>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
