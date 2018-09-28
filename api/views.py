@@ -265,8 +265,7 @@ class EmployeeView(APIView, CustomPagination):
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class EmployeeWeekUnavailabilityView(APIView, CustomPagination):
-    serializer_class = EmployeeWeekUnvailabilitySerializer
+class AvailabilityBlockView(APIView, CustomPagination):
 
     def get(self, request, employee_id=False):
             
@@ -276,16 +275,17 @@ class EmployeeWeekUnavailabilityView(APIView, CustomPagination):
         if employee_id == False:
             employee_id = request.user.profile.employee.id
                 
-        unavailability_blocks = EmployeeWeekUnvailability.objects.all().filter(employee__id=employee_id)
+        unavailability_blocks = AvailaibityBlock.objects.all().filter(employee__id=employee_id)
         
-        serializer = EmployeeWeekUnvailabilitySerializer(unavailability_blocks, many=True)
+        serializer = AvailabilityBlockSerializer(unavailability_blocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, employee_id=None):
         if request.user.profile.employee == None:
             raise PermissionDenied("You are not allowed to update employee availability")
-                
-        serializer = EmployeeWeekUnvailabilitySerializer(data=request.data, context={"request": request})
+        
+        request.data['employee'] = request.user.profile.employee.id
+        serializer = AvailabilityBlockSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

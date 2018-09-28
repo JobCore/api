@@ -89,12 +89,25 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
         
-class EmployeeWeekUnvailability(models.Model):
+WEEKLY = 'WEEKLY'
+MONTHLY = 'MONTHLY'
+RECURRENCY_TYPE = (
+    (WEEKLY, 'Weekly'),
+    (MONTHLY, 'Monthly'),
+)
+class AvailabilityBlock(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     starting_at = models.DateTimeField()
     ending_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    recurrent = models.BooleanField(default=True)
+    allday = models.BooleanField(default=True)
+    recurrency_type = models.CharField(
+        max_length=25,
+        choices=RECURRENCY_TYPE,
+        default=WEEKLY,
+        blank=True)
 
 class FavoriteList(models.Model):
     title = models.TextField(max_length=100, blank=True)

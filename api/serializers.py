@@ -9,7 +9,7 @@ from django.db.models import Q
 from oauth2_provider.models import AccessToken
 from django.contrib.auth.models import User
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
-from .models import *
+from api.models import *
 from api.utils import notify
 from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
@@ -266,17 +266,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'badges': {'read_only': True}
         }
 
-class EmployeeWeekUnvailabilitySerializer(serializers.ModelSerializer):
+class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EmployeeWeekUnvailability
+        model = AvailabilityBlock
         exclude = ()
-        
-    def create(self, validated_data):
-        return EmployeeWeekUnvailability.objects.create(
-            employee = self.context['request'].user.profile.employee,
-            starting_at=validated_data['starting_at'],
-            ending_at=validated_data['ending_at']
-        )
 
 class ShiftSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
