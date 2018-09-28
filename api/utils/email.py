@@ -14,7 +14,7 @@ def send_email_message(slug, to, data={}):
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=("api", os.environ.get('MAILGUN_API_KEY')),
             data={
-                "from": "Excited User <mailgun@mailgun.jobcore.co>",
+                "from": os.environ.get('MAILGUN_FROM')+" <mailgun@mailgun.jobcore.co>",
                 "to": to,
                 "subject": template['subject'],
                 "text": template['text'],

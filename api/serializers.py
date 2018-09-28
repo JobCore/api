@@ -305,6 +305,9 @@ class ShiftSerializer(serializers.ModelSerializer):
     # TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
         
+        if validated_data['status'] != 'DRAFT' and shift.status != 'DRAFT' and validated_data['status'] != 'CANCELLED':
+            raise serializers.ValidationError('Only draft shifts can be edited')
+        
         # delete all accepeted employees
         if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
             ShiftInvite.objects.filter(shift=shift).delete()
