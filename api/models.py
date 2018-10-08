@@ -5,7 +5,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 
-
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
@@ -45,7 +44,7 @@ class Employee(models.Model):
         max_digits=3, decimal_places=1, default=8, blank=True)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=None, blank=True, null=True)
-    available_on_weekends = models.BooleanField(default=True)
+    maximum_job_distance_miles = models.IntegerField(default=50)
     positions = models.ManyToManyField(
         Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
@@ -54,7 +53,7 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return self.profile.user.username
+        return self.profile.user.email
 
 ACTIVE = 'ACTIVE'
 PAUSED = 'PAUSED'
@@ -196,7 +195,7 @@ class Shift(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} at {} on {}".format(self.position, self.venue, self.date)
+        return "{} at {} on {}".format(self.position, self.venue, self.starting_at)
         
 class ShiftApplication(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)

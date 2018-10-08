@@ -37,7 +37,7 @@ def get_talents_to_notify(shift):
     return talents_to_notify
 
 # password reset
-def password_reset_code(user):
+def notify_password_reset_code(user):
     payload = api.utils.jwt.jwt_payload_handler({
         "user_id": user.id
     })
@@ -47,7 +47,7 @@ def password_reset_code(user):
     })
 
 # user registration
-def email_validation(user):
+def notify_email_validation(user):
     payload = api.utils.jwt.jwt_payload_handler({
         "user_id": user.id
     })
@@ -58,7 +58,7 @@ def email_validation(user):
     })
 
 # automatic notification
-def shift_update(user, shift, status='being_updated'):
+def notify_shift_update(user, shift, status='being_updated'):
     shift = Shift.objects.get(id=shift.id) #IMPORTANT: override the shift
     talents_to_notify = get_talents_to_notify(shift)
     
@@ -92,7 +92,7 @@ def shift_update(user, shift, status='being_updated'):
                 "DATE": shift.starting_at
             })
 
-def shift_candidate_update(user, shift, talents_to_notify=[]):
+def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
     
     for talent in talents_to_notify['accepted']:
         payload = api.utils.jwt.jwt_payload_handler({
@@ -119,7 +119,7 @@ def shift_candidate_update(user, shift, talents_to_notify=[]):
         })
 
 # manual invite
-def jobcore_invite(invite):
+def notify_jobcore_invite(invite):
     
     payload = api.utils.jwt.jwt_payload_handler({
         "sender_id": invite.sender.id,
@@ -135,7 +135,7 @@ def jobcore_invite(invite):
     })
 
 # manual invite
-def shift_invite(invite):
+def notify_shift_invite(invite):
     
     payload = api.utils.jwt.jwt_payload_handler({
         "sender_id": invite.sender.id,

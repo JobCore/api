@@ -21,7 +21,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 from api.models import *
-from api.utils import notify
+from api.utils.notifier import notify_password_reset_code
 from api.serializers import *
 from rest_framework_jwt.settings import api_settings
 
@@ -54,30 +54,6 @@ class ValidateEmailView(APIView):
         template = get_template_content('email_validated')
         return HttpResponse(template['html'])
 
-class TokenUserView(APIView):
-    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
-
-    def post(self, request):
-        try:
-            data = request.data
-            token = AccessToken.objects.filter(
-                token=data["token"]).values().first()
-            user = User.objects.get(id=token["user_id"])
-            user = UserGetSerializer(user)
-
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        return Response({
-            'id': user.data["id"],
-            'email': user.data["email"],
-            'username': user.data["username"],
-            'token': {
-                'token': token["token"],
-                'expired': timezone.now() > token["expires"]
-            }
-        }, status=status.HTTP_200_OK)
-
 class PasswordView(APIView):
     permission_classes = (AllowAny,)
 
@@ -109,7 +85,7 @@ class PasswordView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
 
-        notify.password_reset_code(user)
+        notify_password_reset_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def put(self, request):
@@ -233,26 +209,26 @@ class EmployeeView(APIView, CustomPagination):
             #     serializer = self.serializer_class(page, many=True)
             #     return self.paginator.get_paginated_response(serializer.data)
 
-    def put(self, request, id=None):
+    # def put(self, request, id=None):
         
-        if request.user.profile.employer != None:
-            raise PermissionDenied("You are not allowed to update employee profiles")
-        elif request.user.profile.employee != None and id != None:
-            raise PermissionDenied("You are only allowed to update your own profile")
+    #     if request.user.profile.employer != None:
+    #         raise PermissionDenied("You are not allowed to update employee profiles")
+    #     elif request.user.profile.employee != None and id != None:
+    #         raise PermissionDenied("You are only allowed to update your own profile")
 
-        if id == None:
-            id = request.user.profile.employee.id
+    #     if id == None:
+    #         id = request.user.profile.employee.id
         
-        try:
-            employee = Employee.objects.get(id=id)
-        except Employee.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    #     try:
+    #         employee = Employee.objects.get(id=id)
+    #     except Employee.DoesNotExist:
+    #         return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = EmployeeSerializer(employee, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     serializer = EmployeeSerializer(employee, data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # there shoud be no POST because it is created on signup (registration)
     
@@ -264,6 +240,38 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+        
+class EmployeeMeView(APIView, CustomPagination):
+    serializer_class = EmployeeGetSerializer
+
+    def get(self, request):
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not a talent, you can not update your employee profile")
+            
+        try:
+            employee = Employee.objects.get(id=request.user.profile.employee.id)
+        except Employee.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployeeGetSerializer(employee, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+
+    def put(self, request):
+        
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not a talent, you can not update your employee profile")
+
+        try:
+            employee = Employee.objects.get(id=request.user.profile.employee.id)
+        except Employee.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EmployeeSerializer(employee, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AvailabilityBlockView(APIView, CustomPagination):
 
@@ -439,7 +447,8 @@ class FavListView(APIView):
         serializer = FavoriteListSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serialized.data, status=status.HTTP_201_CREATED)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, id):
@@ -451,7 +460,9 @@ class FavListView(APIView):
         serializer = FavoriteListSerializer(favList, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            serializedFavlist = FavoriteListGetSerializer(favList)
+            return Response(serializedFavlist.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
@@ -871,7 +882,7 @@ class CatalogView(APIView):
     def get(self, request, catalog_type):
         
         if catalog_type == 'employees':
-            employees = User.objects.all()
+            employees = User.objects.exclude(employee__isnull=True)
             
             qName = request.GET.get('full_name')
             if qName:
@@ -890,7 +901,7 @@ class CatalogView(APIView):
             if qBadges:
                 employees = employees.filter(badges__id__in=qBadges)
             
-            employees = map(lambda emp: { "label": emp["first_name"] + ' ' + emp["last_name"], "value": emp["id"] }, employees.values('id', 'first_name', 'last_name'))
+            employees = map(lambda emp: { "label": emp["first_name"] + ' ' + emp["last_name"], "value": emp["profile__employee__id"] }, employees.values('first_name', 'last_name', 'profile__employee__id'))
             return Response(employees, status=status.HTTP_200_OK)
             
         return Response("no catalog", status=status.HTTP_200_OK)

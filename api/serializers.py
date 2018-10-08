@@ -10,7 +10,7 @@ from oauth2_provider.models import AccessToken
 from django.contrib.auth.models import User
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from api.models import *
-from api.utils import notify
+from api.utils import notifier
 from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
 
@@ -114,7 +114,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 profile = Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employee=emp)
                 user.profile.save()
             
-            notify.email_validation(user)
+            notifier.notifier.notify_email_validation(user)
         except:
             user.delete()
             print("Error:", sys.exc_info()[0])
@@ -202,7 +202,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         invite = JobCoreInvite(**validated_data)
         invite.save()
         
-        notify.jobcore_invite(invite)
+        notifier.notifier.notify_jobcore_invite(invite)
         
         return invite
 
@@ -250,7 +250,7 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
     favoritelist_set = FavoriteListSerializer(many=True)
     class Meta:
         model = Employee
-        exclude = ('available_on_weekends',)
+        exclude = ()
 
 class EmployeeSerializer(serializers.ModelSerializer):
     #favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
@@ -265,6 +265,19 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'job_count': {'read_only': True},
             'badges': {'read_only': True}
         }
+        
+    def validate(self, data):
+        employee = self.instance
+        if employee.minimum_hourly_rate < 8:
+            raise serializers.ValidationError('The minimum hourly rate allowed is 8 dollars')
+        if employee.maximum_job_distance_miles < 10:
+            raise serializers.ValidationError('The minimum distance allowed is 10 miles')
+        elif employee.maximum_job_distance_miles > 100:
+            raise serializers.ValidationError('The maximum distance allowed is 100 miles')
+            
+        return data
+        
+    
 
 class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:
@@ -320,7 +333,7 @@ class ShiftSerializer(serializers.ModelSerializer):
             
         Shift.objects.filter(pk=shift.id).update(**validated_data)
         
-        notify.shift_update(user=self.context['request'].user, shift=shift)
+        notifier.notifier.notify_shift_update(user=self.context['request'].user, shift=shift)
 
         return shift
 
@@ -368,7 +381,7 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
                     shift.employees.add(employee.id)
             validated_data.pop('employees')
             
-        notify.shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
+        notifier.notifier.notify_shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
 
         return shift
             
@@ -425,7 +438,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         invite.save()
         
         # TODO: send email message not working
-        notify.shift_invite(invite)
+        notifier.notifier.notify_shift_invite(invite)
         
         return invite
 
@@ -443,7 +456,7 @@ class ShiftInviteGetSerializer(serializers.ModelSerializer):
         invite.save()
         
         # TODO: send email message not working
-        notify.shift_invite(invite)
+        notifier.notifier.notify_shift_invite(invite)
         
         return invite
 

@@ -88,7 +88,3 @@ class TestUrls:
     def test_passwrod_reset_url(self):
         path = reverse('api:password-reset-email')
         assert resolve(path).view_name == 'api:password-reset-email'
-
-    def test_token_for_user_url(self):
-        path = reverse('api:token-user')
-        assert resolve(path).view_name == 'api:token-user'

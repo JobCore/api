@@ -35,11 +35,11 @@ class TestModels(APITestCase):
     def test_profile_str(self):
         assert self.profile.__str__() == self.profile.user.username
 
-    def test_employer_str(self):
-        assert self.employer.__str__() == self.profile.user.username
+    # def test_employer_str(self):
+    #     assert self.employer.__str__() == self.profile.employer.title
 
     def test_employee_str(self):
-        assert self.employee.__str__() == self.profile.user.username
+        assert self.employee.__str__() == self.profile.user.email
 
     def test_favorite_list_str(self):
         assert self.favlist.__str__() == self.favlist.title
@@ -49,5 +49,5 @@ class TestModels(APITestCase):
 
     def test_shift_str(self):
         name = "{} at {} on {}".format(
-            self.shift.position.title, self.shift.venue.title, self.shift.date)
+            self.shift.position.title, self.shift.venue.title, self.shift.starting_at)
         assert self.shift.__str__() == name
