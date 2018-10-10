@@ -3,6 +3,7 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 from api import views
+from api import hooks
 
 app_name = "api"
 
@@ -53,4 +54,6 @@ urlpatterns = [
     
     # Inernal use only
     path('email/<str:slug>', views.EmailView.as_view()),
+    # hooks
+    path('hook/create_default_availablity_blocks', hooks.DefaultAvailabilityHook.as_view()),
 ]
