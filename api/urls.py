@@ -1,7 +1,7 @@
 from django.urls import include, path
 from django.contrib.auth.views import PasswordResetConfirmView
 from rest_framework_jwt.views import ObtainJSONWebToken
-from api.serializers import CustomJWTSerializer
+from api.serializers.auth_serializer import CustomJWTSerializer
 from api import views
 
 app_name = "api"
@@ -24,8 +24,8 @@ urlpatterns = [
     path('employees/<int:id>', views.EmployeeView.as_view(), name="id-employees"),
     path('employees/me', views.EmployeeMeView.as_view(), name="id-employees"),
     path('employees/<int:id>/applications', views.EmployeeApplicationsView.as_view(), name="employee-applications"),
-    path('employees/availability', views.AvailabilityBlockView.as_view(), name="employee-availability"),
-    #path('employees/<int:employee_id>/unavailability', views.EmployeeWeekUnavailabilityView.as_view(), name="employee-unavailability"),
+    path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
+    path('employees/<int:employee_id>/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/availability/<int:availability_id>', views.AvailabilityBlockView.as_view(), name="id-availability"),
     path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
     path('favlists', views.FavListView.as_view(), name="get-favlists"),
