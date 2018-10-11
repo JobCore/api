@@ -42,6 +42,7 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=8, blank=True)
+    stop_receiving_invites = models.BooleanField(default=False)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=None, blank=True, null=True)
     maximum_job_distance_miles = models.IntegerField(default=50)
@@ -135,8 +136,8 @@ class Venue(models.Model):
 OPEN = 'OPEN'
 FILLED = 'FILLED'
 PAUSED = 'PAUSED'
-EXPIRED = 'EXPIRED'
-COMPLETED = 'COMPLETED'
+EXPIRED = 'EXPIRED' #si todavia no ha sido pagado
+COMPLETED = 'COMPLETED' #si ya fue pagado
 DRAFT = 'DRAFT'
 CANCELLED = 'CANCELLED'
 SHIFT_STATUS_CHOICES = (
@@ -190,12 +191,18 @@ class Shift(models.Model):
     candidates = models.ManyToManyField(
         Employee, blank=True, through="ShiftApplication")
     employees = models.ManyToManyField(
-        Employee, blank=True, related_name="shift_accepted_employees")
+        Employee, blank=True, related_name="shift_accepted_employees", through='ShiftEmployee')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "{} at {} on {}".format(self.position, self.venue, self.starting_at)
+        
+class ShiftEmployee(models.Model):
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
+    success = models.BooleanField(default=True)
+    comments = models.TextField(max_length=450, blank=True)
         
 class ShiftApplication(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)

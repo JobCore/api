@@ -23,9 +23,7 @@ urlpatterns = [
     path('employers/<int:id>', views.EmployerView.as_view(), name="id-employers"),
     path('employees', views.EmployeeView.as_view(), name="get-employees"),
     path('employees/<int:id>', views.EmployeeView.as_view(), name="id-employees"),
-    path('employees/me', views.EmployeeMeView.as_view(), name="id-employees"),
     path('employees/<int:id>/applications', views.EmployeeApplicationsView.as_view(), name="employee-applications"),
-    path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/<int:employee_id>/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/availability/<int:availability_id>', views.AvailabilityBlockView.as_view(), name="id-availability"),
     path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
@@ -34,7 +32,6 @@ urlpatterns = [
     path('favlists/employee/<int:employee_id>', views.FavListEmployeeView.as_view(), name="id-favlists"),
     path('shifts/invites', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/invites/<int:id>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
-    path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/<int:id>/candidates', views.ShiftCandidatesView.as_view(), name="update-shift-candidates"),
     path('shifts/<int:id>/employees', views.ShiftCandidatesView.as_view(), name="update-shift-employees"),
     path('shifts', views.ShiftView.as_view(), name="get-shifts"),
@@ -51,6 +48,15 @@ urlpatterns = [
     path('ratings/<int:user_id>', views.RateView.as_view(), name="get-single-ratings"),
     path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     # path('image/<str:image_name>', views.ImageView.as_view())
+    
+    #stuff only callable by an employee
+    path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
+    path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
+    path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
+    path('employees/me/applications', views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
+    path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
+    path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
+    #path('employees/me/profiles', views.ProfileView.as_view(), name="get-profiles"),
     
     # Inernal use only
     path('email/<str:slug>', views.EmailView.as_view()),

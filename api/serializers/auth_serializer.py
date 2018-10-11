@@ -1,9 +1,12 @@
+import sys
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 from api.serializers import employer_serializer
-from api.models import User, Employer, Profile
+from api.actions import employee_actions
+from api.models import User, Employer, Employee, Profile, ShiftInvite, JobCoreInvite
 from django.contrib.auth import authenticate
 from api.utils import notifier
+from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER

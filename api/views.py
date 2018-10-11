@@ -10,13 +10,16 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from api.pagination import CustomPagination
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 from api.models import *
 from api.utils.notifier import notify_password_reset_code
-from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer
+from api.utils import validators
+from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer, auth_serializer
 from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
@@ -95,7 +98,7 @@ class UserRegisterView(APIView):
     #serializer_class = user_serializer.UserSerializer
 
     def post(self, request):
-        serializer = user_serializer.UserRegisterSerializer(data=request.data)
+        serializer = auth_serializer.UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -285,6 +288,16 @@ class EmployeeApplicationsView(APIView, CustomPagination):
             serializer = shift_serializer.ShiftApplicationSerializer(applications, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+class EmployeeMeApplicationsView(APIView, CustomPagination):
+    def get(self, request, id=False):
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not a talent, you can not update your employee profile")
+            
+        applications = ShiftApplication.objects.all().filter(employee__id=request.user.profile.employee.id)
+        
+        serializer = shift_serializer.ShiftApplicationSerializer(applications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class ApplicantsView(APIView, CustomPagination):
     # TODO: Optimization needed
     def get(self, request, id=False):
@@ -451,6 +464,39 @@ class FavListEmployeeView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class EmployeeMeShiftView(APIView, CustomPagination):
+    def get(self, request):
+        
+        if (request.user.profile.employee == None):
+            raise ValidationError("You don't seem to be an employee")
+            
+        shifts = Shift.objects.all().order_by('starting_at')
+        
+        qStatus = request.GET.get('status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            raise ValidationError('Invalid status')
+        elif qStatus:
+            shifts = shifts.filter(status__in = qStatus.split(","))
+        
+        qStatus = request.GET.get('not_status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            raise ValidationError('Invalid status')
+        elif qStatus:
+            shifts = shifts.filter(~Q(status = qStatus))
+        
+        qUpcoming = request.GET.get('upcoming')
+        if qUpcoming == 'true':
+            shifts = shifts.filter(starting_at__gte=today)
+        
+        qFailed = request.GET.get('failed')
+        if qFailed == 'true':
+            shifts = shifts.filter(shiftemployee__success=False)
+            
+        shifts = shifts.filter(employees__in = (request.user.profile.employee.id,))
+        
+        serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class ShiftView(APIView, CustomPagination):
     def get(self, request, id=False):
         if (id):
@@ -464,8 +510,16 @@ class ShiftView(APIView, CustomPagination):
         else:
             shifts = Shift.objects.all().order_by('starting_at')
             
+            qStatus = request.GET.get('status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                raise ValidationError('Invalid status')
+            elif qStatus:
+                shifts = shifts.filter(status__in = qStatus.split(","))
+            
             qStatus = request.GET.get('not_status')
-            if qStatus:
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                raise ValidationError('Invalid status')
+            elif qStatus:
                 shifts = shifts.filter(~Q(status = qStatus))
             
             qUpcoming = request.GET.get('upcoming')
@@ -513,6 +567,7 @@ class ShiftCandidatesView(APIView, CustomPagination):
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+            
         serializer = shift_serializer.ShiftCandidatesSerializer(shift, data=request.data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -741,11 +796,17 @@ class ShiftInviteView(APIView):
             "shift": invite.shift.id,
             "employee": invite.employee.id
         }, many=False)
-        if shiftSerializer.is_valid() and appSerializer.is_valid():
-            shiftSerializer.save()
-            appSerializer.save()
-            return Response(shiftSerializer.data, status=status.HTTP_200_OK)
-        return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if shiftSerializer.is_valid():
+            if appSerializer.is_valid():
+                shiftSerializer.save()
+                appSerializer.save()
+                
+                return Response(appSerializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
     
     def post(self, request):
         invites = []
@@ -787,6 +848,22 @@ class ShiftInviteView(APIView):
 
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ShiftMeInviteView(APIView):
+    def get(self, request, id=False):
+        
+        if (request.user.profile.employee == None):
+            raise ValidationError('You are not an employee or talent')
+        
+        invites = ShiftInvite.objects.filter(employee__id=request.user.profile.employee.id)
+        
+        qStatus = request.GET.get('status')
+        if qStatus:
+            invites = invites.filter(status=qStatus)
+            
+        serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RateView(APIView):
     def get(self, request, user_id=False):

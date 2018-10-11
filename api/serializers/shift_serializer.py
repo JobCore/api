@@ -1,7 +1,8 @@
 from api.serializers import other_serializer, venue_serializer, employer_serializer, employee_serializer, favlist_serializer
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Shift, ShiftInvite, ShiftApplication
+from django.db.models import Q
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee
 
 class ShiftSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
@@ -58,6 +59,7 @@ class ShiftSerializer(serializers.ModelSerializer):
 
 class ShiftCandidatesSerializer(serializers.ModelSerializer):
     candidates = serializers.ListField(write_only=True, required=False)
+    employees = serializers.ListField(write_only=True, required=False)
 
     class Meta:
         model = Shift
@@ -71,7 +73,6 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, shift, validated_data):
-        
         talents_to_notify = { "accepted": [], "rejected": [] }
         # Sync candidates
         if 'candidates' in validated_data:
@@ -89,15 +90,15 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
         # Sync employees
         if 'employees' in validated_data:
             current_employees = shift.employees.all()
-            new_employees = validated_data['employees']
+            new_employees = Employee.objects.filter(id__in=validated_data['employees'])
             for employee in current_employees:
                 if employee not in new_employees:
                     talents_to_notify["rejected"].append(employee)
-                    shift.employees.remove(employee.id)
+                    ShiftEmployee.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
             for employee in new_employees:
                 if employee not in current_employees:
                     talents_to_notify["accepted"].append(employee)
-                    shift.employees.add(employee.id)
+                    ShiftEmployee.objects.create(employee=employee, shift=shift)
             validated_data.pop('employees')
             
         notifier.notify_shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
@@ -171,6 +172,14 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShiftApplication
         exclude = ()
+        
+    def validate(self, data):
+        try:
+            invite = ShiftApplication.objects.get(shift=data["shift"], employee=data["employee"])
+        except ShiftApplication.DoesNotExist:
+            return data
+        
+        raise serializers.ValidationError("You have already applied to this shift")
         
 class ApplicantGetSerializer(serializers.ModelSerializer):
     employee = employee_serializer.EmployeeGetSerializer()
