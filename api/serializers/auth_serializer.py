@@ -3,7 +3,7 @@ from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 from api.serializers import employer_serializer
 from api.actions import employee_actions
-from api.models import User, Employer, Employee, Profile, ShiftInvite, JobCoreInvite
+from api.models import User, Employer, Employee, Profile, ShiftInvite, JobCoreInvite, FCMDevice
 from django.contrib.auth import authenticate
 from api.utils import notifier
 from jobcore.settings import STATIC_URL
@@ -26,6 +26,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
+    registration_id = serializers.CharField(write_only=True, required=False)
 
     def validate(self, attrs):
     
@@ -45,6 +46,14 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
                     payload = jwt_payload_handler(user)
                     profile = Profile.objects.get(user_id=user.id)
+                    
+                    device_id = attrs.get("registration_id")
+                    if device_id is not None:
+                        try:
+                            device = FCMDevice.objects.get(user=user, registration_id=device_id)
+                        except FCMDevice.DoesNotExist:
+                            device = FCMDevice(user=user, registration_id=device_id)
+                            device.save()
                     
                     # try:
                     #     userDic['employee_id'] = profile.employee.id

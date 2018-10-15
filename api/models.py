@@ -2,14 +2,15 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.contrib.postgres.fields import JSONField
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return self.title
@@ -17,8 +18,8 @@ class Position(models.Model):
 class Badge(models.Model):
     title = models.TextField(max_length=100, blank=True)
     image_url = models.TextField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return self.title
@@ -31,8 +32,8 @@ class Employer(models.Model):
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return self.title
@@ -50,8 +51,8 @@ class Employee(models.Model):
         Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
     
     def __str__(self):
         return self.profile.user.email
@@ -76,8 +77,8 @@ class Profile(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True) # validators should be a list
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(
@@ -99,8 +100,6 @@ class AvailabilityBlock(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     starting_at = models.DateTimeField()
     ending_at = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     recurrent = models.BooleanField(default=True)
     allday = models.BooleanField(default=True)
     recurrency_type = models.CharField(
@@ -108,13 +107,15 @@ class AvailabilityBlock(models.Model):
         choices=RECURRENCY_TYPE,
         default=WEEKLY,
         blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 class FavoriteList(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employees = models.ManyToManyField(Employee, blank=True)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return self.title
@@ -127,8 +128,8 @@ class Venue(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return self.title
@@ -192,8 +193,8 @@ class Shift(models.Model):
         Employee, blank=True, through="ShiftApplication")
     employees = models.ManyToManyField(
         Employee, blank=True, related_name="shift_accepted_employees", through='ShiftEmployee')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return "{} at {} on {}".format(self.position, self.venue, self.starting_at)
@@ -207,8 +208,8 @@ class ShiftEmployee(models.Model):
 class ShiftApplication(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 PENDING = 'PENDING'
 APPLIED = 'APPLIED'
@@ -227,8 +228,8 @@ class ShiftInvite(models.Model):
         choices=SHIFT_INVITE_STATUS_CHOICES,
         default=PENDING,
         blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
@@ -249,8 +250,8 @@ class JobCoreInvite(models.Model):
         blank=True)
     phone_number = models.CharField(max_length=17, blank=True) # validators should be a list
     token = models.TextField(max_length=255, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 class Rate(models.Model):
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
@@ -258,5 +259,30 @@ class Rate(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    
+class FCMDevice(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    registration_id = models.TextField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.user.username
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, related_name='notifications', on_delete=models.CASCADE, blank=True, null=True)
+    title = models.TextField()
+    body = models.TextField()
+    data = models.TextField(max_length=1500)
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return self.user.username

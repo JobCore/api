@@ -46,15 +46,20 @@ urlpatterns = [
     path('positions/<int:id>', views.PositionView.as_view(), name="id-positions"),
     path('ratings', views.RateView.as_view(), name="get-ratings"),
     path('ratings/<int:user_id>', views.RateView.as_view(), name="get-single-ratings"),
-    path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     # path('image/<str:image_name>', views.ImageView.as_view())
+    
+    #auth
+    path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     
     #stuff only callable by an employee
     path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
     path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
+    path('employees/me/devices', views.DeviceMeView.as_view(), name="me-all-device"),
+    path('employees/me/devices/<str:device_id>', views.DeviceMeView.as_view(), name="me-device"),
     path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
     path('employees/me/applications', views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
     path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
+    path('employees/me/availability/<int:block_id>', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     #path('employees/me/profiles', views.ProfileView.as_view(), name="get-profiles"),
     

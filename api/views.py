@@ -19,7 +19,7 @@ from oauth2_provider.models import AccessToken
 from api.models import *
 from api.utils.notifier import notify_password_reset_code
 from api.utils import validators
-from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer, auth_serializer
+from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer
 from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
@@ -261,6 +261,22 @@ class AvailabilityBlockView(APIView, CustomPagination):
         
         request.data['employee'] = request.user.profile.employee.id
         serializer = other_serializer.AvailabilityBlockSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, block_id=None):
+        
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not allowed to update employee availability")
+            
+        try:
+            block = AvailabilityBlock.objects.get(id=block_id, employee=request.user.profile.employee)
+        except AvailabilityBlock.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = other_serializer.AvailabilityBlockSerializer(block, data=request.data, context={"request": request}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -944,3 +960,53 @@ class CatalogView(APIView):
             return Response(badges, status=status.HTTP_200_OK)
             
         return Response("no catalog", status=status.HTTP_200_OK)
+
+class DeviceMeView(APIView):
+    def get(self, request, device_id=None):
+        
+        if request.user is None:
+            return Response({'error': 'You have to be loged in'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if device_id is not None:
+            try:
+                device = FCMDevice.objects.get(registration_id=device_id, user=request.user.id)
+                serializer = notification_serializer.FCMDeviceSerializer(device, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except FCMDevice.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            devices = FCMDevice.objects.filter(user=request.user.id)
+            serializer = notification_serializer.FCMDeviceSerializer(devices, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+    def put(self, request, device_id):
+        
+        if request.user is None:
+            return Response({'error': 'No user was identified'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            device = FCMDevice.objects.get(registration_id=device_id, user=request.user.id)
+            serializer = notification_serializer.FCMDeviceSerializer(device, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except FCMDevice.DoesNotExist:
+            return Response({'message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+    def delete(self, request, device_id=None):
+        
+        if request.user is None:
+            return Response({'error': 'No user was identified'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            if device_id is None:
+                devices = FCMDevice.objects.filter(user=request.user.id)
+                devices.delete()
+            else:
+                device = FCMDevice.objects.get(registration_id=device_id, user=request.user.id)
+                device.delete()
+                
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except FCMDevice.DoesNotExist:
+            return Response({'message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
