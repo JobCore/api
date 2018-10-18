@@ -13,6 +13,7 @@ from api.pagination import CustomPagination
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
+
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
@@ -24,6 +25,11 @@ from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+from django.utils import timezone
+import datetime
+today = datetime.datetime.now(tz=timezone.utc)
 
 # from .utils import GeneralException
 import logging
@@ -78,7 +84,7 @@ class PasswordView(APIView):
             
         try:
             user = User.objects.get(email=email)
-            serializer = user_serializer.UserLoginSerializer(user)
+            serializer = auth_serializer.UserLoginSerializer(user)
         except User.DoesNotExist:
             return Response({'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -87,7 +93,7 @@ class PasswordView(APIView):
         
     def put(self, request):
         
-        serializer = user_serializer.ChangePasswordSerializer(data=request.data)
+        serializer = auth_serializer.ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -770,7 +776,7 @@ class ShiftInviteView(APIView):
             except ShiftInvite.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
-            serializer = ShiftInviteGetSerializer(invite, many=False)
+            serializer = shift_serializer.ShiftInviteGetSerializer(invite, many=False)
         else:
             invites = ShiftInvite.objects.all()
             
@@ -822,7 +828,6 @@ class ShiftInviteView(APIView):
                 return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
     
     def post(self, request):
         invites = []
