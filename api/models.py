@@ -31,6 +31,7 @@ class Employer(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
+    total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -46,6 +47,7 @@ class Employee(models.Model):
     stop_receiving_invites = models.BooleanField(default=False)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=None, blank=True, null=True)
+    total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     maximum_job_distance_miles = models.IntegerField(default=50)
     positions = models.ManyToManyField(
         Position, blank=True)
