@@ -317,7 +317,7 @@ class EmployeeMeApplicationsView(APIView, CustomPagination):
             
         applications = ShiftApplication.objects.all().filter(employee__id=request.user.profile.employee.id)
         
-        serializer = shift_serializer.ShiftApplicationSerializer(applications, many=True)
+        serializer = shift_serializer.ApplicantGetSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ApplicantsView(APIView, CustomPagination):

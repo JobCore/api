@@ -169,7 +169,6 @@ class ShiftInviteGetSerializer(serializers.ModelSerializer):
         return invite
 
 class ShiftApplicationSerializer(serializers.ModelSerializer):
-    shift = ShiftGetSmallSerializer(many=False, read_only=True)
     
     class Meta:
         model = ShiftApplication
