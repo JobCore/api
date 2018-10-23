@@ -20,7 +20,7 @@ from oauth2_provider.models import AccessToken
 from api.models import *
 from api.utils.notifier import notify_password_reset_code
 from api.utils import validators
-from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer
+from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer, clockin_serializer
 from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
@@ -321,11 +321,21 @@ class EmployeeMeApplicationsView(APIView, CustomPagination):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ApplicantsView(APIView, CustomPagination):
-    # TODO: Optimization needed
-    def get(self, request, id=False):
-        applications = shift_serializer.ShiftApplication.objects.select_related('employee','shift').all()
-        # data = [applicant.id for applicant in applications]
-        serializer = shift_serializer.ApplicantGetSerializer(applications, many=True)
+
+    def get(self, request, application_id=False):
+        
+        if(application_id):
+            try:
+                application = ShiftApplication.objects.get(id=application_id)
+            except ShiftApplication.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            serializer = shift_serializer.ApplicantGetSmallSerializer(application, many=False)
+        else:
+            applications = ShiftApplication.objects.select_related('employee','shift').all()
+            # data = [applicant.id for applicant in applications]
+            serializer = shift_serializer.ApplicantGetSmallSerializer(applications, many=True)
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class EmployerView(APIView):
@@ -402,6 +412,40 @@ class ProfileView(APIView):
     def put(self, request, id):
         try:
             profile = Profile.objects.get(id=id)
+        except Profile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = profile_serializer.ProfileSerializer(profile, data=request.data, partial=True)
+        userSerializer = user_serializer.UserUpdateSerializer(profile.user, data=request.data, partial=True)
+        if serializer.is_valid() and userSerializer.is_valid():
+            serializer.save()
+            userSerializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileMeView(APIView):
+    def get(self, request):
+        if request.user.profile == None:
+            raise PermissionDenied("You dont seem to have a profile")
+            
+        try:
+            profile = Profile.objects.get(id=request.user.profile.id)
+        except Profile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = profile_serializer.ProfileGetSerializer(profile, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # No POST request needed
+    # as Profiles are created automatically along with User register
+
+    def put(self, request):
+        if request.user.profile == None:
+            raise PermissionDenied("You dont seem to have a profile")
+            
+        try:
+            profile = Profile.objects.get(id=request.user.profile.id)
         except Profile.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -1015,3 +1059,78 @@ class DeviceMeView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except FCMDevice.DoesNotExist:
             return Response({'message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+class ClockinsView(APIView):
+    def get(self, request, id=False):
+        if (id):
+            try:
+                rate = Clockin.objects.get(id=user_id)
+            except Clockin.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            serializer = clockin_serializer.ClockinSerializer(rate, many=False)
+        else:
+            clockins = Clockin.objects.all()
+            
+            qEmployee = request.GET.get('employee')
+            qShift = request.GET.get('shift')
+            if qEmployee:
+                clockins = clockins.filter(employee__id=qEmployee)
+            elif qShift:
+                clockins = clockins.filter(shift__id=qShift)
+                
+            serializer = clockin_serializer.ClockinSerializer(clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = clockins_serializer.ClockinSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, id):
+        try:
+            clockin = Clockin.objects.get(id=id)
+        except Clockin.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        clockin.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ClockinsMeView(APIView):
+    def get(self, request, id=False):
+        
+        if request.user.profile.employee == None:
+            raise ValidationError('You are not an employee')
+            
+        clockins = Clockin.objects.filter(employee_id=request.user.profile.employee.id)
+        
+        qShift = request.GET.get('shift')
+        if qShift:
+            clockins = clockins.filter(shift__id=qShift)
+            
+        serializer = clockin_serializer.ClockinSerializer(clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = clockin_serializer.ClockinSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, id):
+        try:
+            clockin = Clockin.objects.get(id=id)
+        except Clockin.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        clockin.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

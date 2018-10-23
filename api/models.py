@@ -288,3 +288,12 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.user.username
+        
+class Clockin(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
+    started_at = models.DateTimeField(blank=True)
+    ended_at = models.DateTimeField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)

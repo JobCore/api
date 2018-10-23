@@ -189,3 +189,11 @@ class ApplicantGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShiftApplication
         exclude = ()
+
+class ApplicantGetSmallSerializer(serializers.ModelSerializer):
+    employee = employee_serializer.EmployeeGetSmallSerializer()
+    shift = ShiftGetSmallSerializer()
+
+    class Meta:
+        model = ShiftApplication
+        exclude = ()

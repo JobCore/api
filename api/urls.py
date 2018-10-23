@@ -16,7 +16,8 @@ urlpatterns = [
     path('user/<int:id>', views.UserView.as_view(), name="id-user"),
     path('user/register', views.UserRegisterView.as_view(), name="register"),
     path('user/<int:user_id>/employees', views.EmployeeView.as_view(), name="create-employees"),
-    path('applicants', views.ApplicantsView.as_view(), name="get-applicants"),
+    path('applications', views.ApplicantsView.as_view(), name="get-applicants"),
+    path('applications/<int:application_id>/', views.ApplicantsView.as_view(), name="get-applicants"),
     path('catalog/<str:catalog_type>', views.CatalogView.as_view(), name="get-catalog"),
     path('employers/users', views.EmployerUsersView.as_view(), name="get-employers"),
     path('employers', views.EmployerView.as_view(), name="get-employers"),
@@ -46,17 +47,23 @@ urlpatterns = [
     path('positions/<int:id>', views.PositionView.as_view(), name="id-positions"),
     path('ratings', views.RateView.as_view(), name="get-ratings"),
     path('ratings/<int:user_id>', views.RateView.as_view(), name="get-single-ratings"),
+    
+    path('clockins/', views.ClockinsView.as_view(), name="all-clockins"),
+    path('clockins/<int:employee_id>', views.ClockinsView.as_view(), name="me-employees"),
     # path('image/<str:image_name>', views.ImageView.as_view())
     
     #auth
     path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     
     #stuff only callable by an employee
+    path('profiles/me', views.ProfileMeView.as_view(), name="me-profiles"),
     path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
+    #path('clockins/me', views.PaymentMeView.as_view(), name="me-employees"),
     path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
     path('employees/me/devices', views.DeviceMeView.as_view(), name="me-all-device"),
     path('employees/me/devices/<str:device_id>', views.DeviceMeView.as_view(), name="me-device"),
     path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
+    path('employees/me/clockins', views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/applications', views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
     path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/me/availability/<int:block_id>', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
