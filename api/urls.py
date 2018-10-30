@@ -8,6 +8,8 @@ from api import hooks
 app_name = "api"
 
 urlpatterns = [
+    #path('apple-app-site-association', views.AppSiteAssociationView.as_view(), name="app-site-association"),
+    
     path('jobcore-invites', views.JobCoreInviteView.as_view(), name="get-jcinvites"),
     path('jobcore-invites/<int:id>', views.JobCoreInviteView.as_view(), name="id-jcinvites"),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),

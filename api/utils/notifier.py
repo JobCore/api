@@ -1,7 +1,8 @@
 import os
+import json
 from base64 import b64encode, b64decode
-from api.models import Employee, ShiftInvite, Shift
-from api.utils.email import send_email_message
+from api.models import Employee, ShiftInvite, Shift, FCMDevice
+from api.utils.email import send_email_message, send_fcm_notification
 import api.utils.jwt
 import rest_framework_jwt
 API_URL = os.environ.get('API_URL')
@@ -80,7 +81,8 @@ def notify_shift_update(user, shift, status='being_updated'):
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
-                "DATE": shift.starting_at
+                "DATE": shift.starting_at,
+                "DATA": json.dumps({ "type": "shift", "id": shift.id })
             })
             
     if status == 'being_cancelled':
@@ -89,7 +91,8 @@ def notify_shift_update(user, shift, status='being_updated'):
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
-                "DATE": shift.starting_at
+                "DATE": shift.starting_at,
+                "DATA": json.dumps({ "type": "shift", "id": shift.id })
             })
 
 def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
@@ -103,7 +106,8 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
-            "DATE": shift.starting_at
+            "DATE": shift.starting_at,
+            #"DATA": json.dumps({ "type": "application", "id": invite.id })
         })
     
     for talent in talents_to_notify['rejected']:
@@ -115,7 +119,8 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
-            "DATE": shift.starting_at
+            "DATE": shift.starting_at,
+            #"DATA": json.dumps({ "type": "application", "id": invite.id })
         })
 
 # manual invite
@@ -131,11 +136,12 @@ def notify_jobcore_invite(invite):
         "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
         "EMAIL": invite.email,
         "COMPANY": invite.sender.user.profile.employer.title,
-        "LINK": EMPLOYER_URL+"/invite?token="+token
+        "LINK": EMPLOYER_URL+"/invite?token="+token,
+        "DATA": json.dumps({ "type": "invite", "id": invite.id })
     })
 
 # manual invite
-def notify_shift_invite(invite):
+def notify_single_shift_invite(invite):
     
     payload = api.utils.jwt.jwt_payload_handler({
         "sender_id": invite.sender.id,
@@ -143,10 +149,23 @@ def notify_shift_invite(invite):
     })
     token = jwt_encode_handler(payload)
     
+    # invite.employee.user.email
     send_email_message("invite_to_shift", "alejandro@bestmiamiweddings.com", {
         "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
         "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYER_URL
+        "LINK": EMPLOYER_URL,
+        "DATA": json.dumps({ "type": "invite", "id": invite.id })
+    })
+    
+    device_set = FCMDevice.objects.filter(user = invite.employee.user.id)
+    devices_list = [device.registration_id for device in device_set]
+    send_fcm_notification("invite_to_shift", devices_list, {
+        "SENDER": invite.sender.user.first_name + ' ' + invite.sender.user.last_name,
+        "COMPANY": invite.sender.user.profile.employer.title,
+        "POSITION": invite.shift.position.title,
+        "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
+        "LINK": EMPLOYER_URL,
+        "DATA": json.dumps({ "type": "invite", "id": invite.id })
     })

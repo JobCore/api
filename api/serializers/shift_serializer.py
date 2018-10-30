@@ -21,13 +21,6 @@ class ShiftSerializer(serializers.ModelSerializer):
         
         return False
         
-    # def validate(self, data):
-    #     shift = self.instance
-    #     if data['status'] != 'DRAFT' and shift.status != 'DRAFT' and self.has_sensitive_updates(data):
-    #         raise serializers.ValidationError('The shift can only be updated as a draft')
-            
-    #     return data
-    
     # TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
         
@@ -146,7 +139,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         invite.save()
         
         # TODO: send email message not working
-        notifier.notify_shift_invite(invite)
+        notifier.notify_single_shift_invite(invite)
         
         return invite
 
@@ -157,17 +150,6 @@ class ShiftInviteGetSerializer(serializers.ModelSerializer):
         model = ShiftInvite
         exclude = ()
         
-    def create(self, validated_data):
-        
-        # TODO: send email message not working
-        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
-        invite.save()
-        
-        # TODO: send email message not working
-        notifier.notify_shift_invite(invite)
-        
-        return invite
-
 class ShiftApplicationSerializer(serializers.ModelSerializer):
     
     class Meta:

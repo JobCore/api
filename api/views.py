@@ -41,7 +41,23 @@ class EmailView(APIView):
     def get(self, request, slug):
         template = get_template_content(slug)
         return HttpResponse(template['html'])
-        
+
+# class AppSiteAssociationView(APIView):
+#     permission_classes = [AllowAny]
+#     def get(self, request, slug):
+#         sitemap = {
+#             "applinks": {
+#                 "apps": [],
+#                 "details": [
+#                     {
+#                         "appID": "co.jobcore.talent",
+#                         "paths": [ "*" ]
+#                     }
+#                 ]
+#             }
+#         }
+#         return Response(sitemap, status=status.HTTP_200_OK)
+
 class ValidateEmailView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -601,6 +617,11 @@ class ShiftView(APIView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        
+        if(request.user.profile.employer == None):
+            raise ValidationError('This user doesn\'t seem to be an employer, only employers can create shifts')
+        
+        request.data["employer"] = request.user.profile.employer.id
         serializer = shift_serializer.ShiftPostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
