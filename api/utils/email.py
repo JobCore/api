@@ -37,7 +37,7 @@ def send_fcm_notification(slug, registration_ids, data={}):
         data['data'] = {}
             
         message_data = data['data']
-        result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, message_data=message_data)
+        result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, data_message=message_data)
         print('FMC_SENT: '+slug+' to '+"".join(map(str, registration_ids)))
         return result
     else:
