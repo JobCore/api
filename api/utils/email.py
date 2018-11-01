@@ -31,8 +31,10 @@ def send_fcm_notification(slug, registration_ids, data={}):
         template = get_template_content(slug, data)
         message_title = template['subject']
         message_body = template['text']
-        if 'data' not in data:
-            raise Exception("There is no data for the notification")
+        #print(data)
+        # if 'data' not in data:
+        #     raise Exception("There is no data for the notification")
+        data['data'] = {}
             
         message_data = data['data']
         result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, message_data=message_data)
