@@ -74,9 +74,15 @@ class Profile(models.Model):
     picture = models.URLField(blank=True)
     bio = models.TextField(max_length=250, blank=True)
     show_tutorial = models.BooleanField(default=True)
-    address = models.CharField(max_length=250, blank=True)
+    
+    # location information
+    street_address = models.CharField(max_length=250, blank=True)
+    country = models.CharField(max_length=30, blank=True)
+    state = models.CharField(max_length=30, blank=True)
+    zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
+    
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True) # validators should be a list
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
