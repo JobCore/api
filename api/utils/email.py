@@ -51,12 +51,14 @@ def send_fcm_notification(slug, user_id, data={}):
     registration_ids = [device.registration_id for device in device_set]
     send_fcm(slug, registration_ids, data)
         
-def get_template_content(slug, data={}, silent=False):
+def get_template_content(slug, data={}, templates=None):
     info = get_template_info(slug)
     
-    plaintext = get_template(info['type']+'/'+slug+'.txt')
-    html     = get_template(info['type']+'/'+slug+'.html')
-    fms     = get_template(info['type']+'/'+slug+'.fms')
+    if templates is None or "email" in templates:
+        plaintext = get_template(info['type']+'/'+slug+'.txt')
+        html = get_template(info['type']+'/'+slug+'.html')
+    if templates is None or "fms" in templates:
+        fms = get_template(info['type']+'/'+slug+'.fms')
     #d = Context({ 'username': username })
     con = {
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
