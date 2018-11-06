@@ -76,8 +76,10 @@ class Profile(models.Model):
     show_tutorial = models.BooleanField(default=True)
     
     # location information
+    location = models.CharField(max_length=250, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
+    city = models.CharField(max_length=30, blank=True)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
