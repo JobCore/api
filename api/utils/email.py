@@ -57,7 +57,7 @@ def get_template_content(slug, data={}, templates=None):
     if templates is None or "email" in templates:
         plaintext = get_template(info['type']+'/'+slug+'.txt')
         html = get_template(info['type']+'/'+slug+'.html')
-    if templates is None or "fms" in templates:
+    if templates is not None and "fms" in templates:
         fms = get_template(info['type']+'/'+slug+'.fms')
     #d = Context({ 'username': username })
     con = {
@@ -70,12 +70,15 @@ def get_template_content(slug, data={}, templates=None):
     }
     z = con.copy()   # start with x's keys and values
     z.update(data)
-    return {
+    templates = {
         "text": plaintext.render(z),
         "html": html.render(z),
-        "fms": fms.render(z),
         "subject": info['subject']
     }
+    if templates is not None and "fms" in templates:
+        templates["fms"] = fms.render(z)
+    
+    return templates
     
 def get_template_info(slug):
     subjects = {
