@@ -3,6 +3,7 @@ import os
 from django.template.loader import get_template
 from django.template import Context
 from pyfcm import FCMNotification
+from api.models import FCMDevice
 
 import requests
 
@@ -13,7 +14,6 @@ push_service = FCMNotification(api_key=FIREBASE_KEY)
 
 def send_email_message(slug, to, data={}):
     template = get_template_content(slug, data)
-    print('EMAL_SENT: '+slug+' to '+to)
     if NOTIFICATIONS_ENABLED:
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
@@ -26,29 +26,37 @@ def send_email_message(slug, to, data={}):
                 "html": template['html']
             })
             
-def send_fcm_notification(slug, registration_ids, data={}):
+def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0):
         template = get_template_content(slug, data)
         message_title = template['subject']
-        message_body = template['text']
-        #print(data)
-        # if 'data' not in data:
-        #     raise Exception("There is no data for the notification")
-        data['data'] = {}
-            
-        message_data = data['data']
+        message_body = template['fms']
+        if 'DATA' not in data:
+            raise Exception("There is no data for the notification")
+        message_data = data['DATA']
+        print(message_body)
         result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, data_message=message_data)
         print('FMC_SENT: '+slug+' to '+"".join(map(str, registration_ids)))
+        
+        if(result["failure"] or not result["success"]):
+            raise BaseException("Problem sending the notification")
+
         return result
     else:
         print('FMC_SENT: no registration_ids found')
         return False
+            
+def send_fcm_notification(slug, user_id, data={}):
+    device_set = FCMDevice.objects.filter(user = user_id)
+    registration_ids = [device.registration_id for device in device_set]
+    send_fcm(slug, registration_ids, data)
         
-def get_template_content(slug, data={}):
+def get_template_content(slug, data={}, silent=False):
     info = get_template_info(slug)
     
     plaintext = get_template(info['type']+'/'+slug+'.txt')
     html     = get_template(info['type']+'/'+slug+'.html')
+    fms     = get_template(info['type']+'/'+slug+'.fms')
     #d = Context({ 'username': username })
     con = {
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
@@ -63,6 +71,7 @@ def get_template_content(slug, data={}):
     return {
         "text": plaintext.render(z),
         "html": html.render(z),
+        "fms": fms.render(z),
         "subject": info['subject']
     }
     

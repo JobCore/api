@@ -13,7 +13,7 @@ from api.pagination import CustomPagination
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-
+from api.utils.email import send_fcm
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
@@ -41,6 +41,25 @@ class EmailView(APIView):
     def get(self, request, slug):
         template = get_template_content(slug)
         return HttpResponse(template['html'])
+class FMCView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+
+        if "message_slug" not in body:
+            body["message_slug"] = "invite_to_shift"
+            
+        result = send_fcm(body["message_slug"], [body["registration_id"]], {
+            "COMPANY": "Blizard Inc",
+            "POSITION": "Server",
+            "DATE": "Whenever you have time",
+            "LINK": 'https://jobcore.co/talent/invite',
+            "DATA": body["data"]
+        })
+        
+        return Response(result, status=status.HTTP_200_OK)
 
 # class AppSiteAssociationView(APIView):
 #     permission_classes = [AllowAny]
