@@ -13,7 +13,7 @@ FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
 push_service = FCMNotification(api_key=FIREBASE_KEY)
 
 def send_email_message(slug, to, data={}):
-    template = get_template_content(slug, data)
+    template = get_template_content(slug, data, ["email"])
     if NOTIFICATIONS_ENABLED:
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
@@ -28,7 +28,7 @@ def send_email_message(slug, to, data={}):
             
 def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0):
-        template = get_template_content(slug, data)
+        template = get_template_content(slug, data, ["email", "fms"])
         message_title = template['subject']
         message_body = template['fms']
         if 'DATA' not in data:
