@@ -340,7 +340,7 @@ class EmployeeApplicationsView(APIView, CustomPagination):
             except Employee.DoesNotExist:
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
-            applications = ShiftApplication.objects.all().filter(employer__id=employee.id)
+            applications = ShiftApplication.objects.all().filter(employer__id=employee.id).order_by('shift__starting_at')
             
             serializer = shift_serializer.ShiftApplicationSerializer(applications, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -350,7 +350,7 @@ class EmployeeMeApplicationsView(APIView, CustomPagination):
         if request.user.profile.employee == None:
             raise PermissionDenied("You are not a talent, you can not update your employee profile")
             
-        applications = ShiftApplication.objects.all().filter(employee__id=request.user.profile.employee.id)
+        applications = ShiftApplication.objects.all().filter(employee__id=request.user.profile.employee.id).order_by('shift__starting_at')
         
         serializer = shift_serializer.ApplicantGetSerializer(applications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
