@@ -29,6 +29,10 @@ def send_email_message(slug, to, data={}):
 def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0):
         template = get_template_content(slug, data, ["email", "fms"])
+        
+        if 'fms' not in template:
+            raise BaseException("The template "+slug+" does not seem to have a valid FMS version")
+            
         message_title = template['subject']
         message_body = template['fms']
         if 'DATA' not in data:
