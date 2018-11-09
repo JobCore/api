@@ -55,14 +55,9 @@ def send_fcm_notification(slug, user_id, data={}):
     registration_ids = [device.registration_id for device in device_set]
     send_fcm(slug, registration_ids, data)
         
-def get_template_content(slug, data={}, templates=None):
+def get_template_content(slug, data={}, formats=None):
     info = get_template_info(slug)
     
-    if templates is None or "email" in templates:
-        plaintext = get_template(info['type']+'/'+slug+'.txt')
-        html = get_template(info['type']+'/'+slug+'.html')
-    if templates is not None and "fms" in templates:
-        fms = get_template(info['type']+'/'+slug+'.fms')
     #d = Context({ 'username': username })
     con = {
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
@@ -74,12 +69,19 @@ def get_template_content(slug, data={}, templates=None):
     }
     z = con.copy()   # start with x's keys and values
     z.update(data)
+
     templates = {
-        "text": plaintext.render(z),
-        "html": html.render(z),
         "subject": info['subject']
     }
-    if templates is not None and "fms" in templates:
+    
+    if formats is None or "email" in formats:
+        plaintext = get_template(info['type']+'/'+slug+'.txt')
+        html = get_template(info['type']+'/'+slug+'.html')
+        templates["text"] = plaintext.render(z)
+        templates["html"] = html.render(z)
+        
+    if formats is not None and "fms" in formats:
+        fms = get_template(info['type']+'/'+slug+'.fms')
         templates["fms"] = fms.render(z)
     
     return templates

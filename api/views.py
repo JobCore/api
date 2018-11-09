@@ -372,6 +372,17 @@ class ApplicantsView(APIView, CustomPagination):
             serializer = shift_serializer.ApplicantGetSmallSerializer(applications, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    def delete(self, request, application_id):
+        
+        try:
+            application = ShiftApplication.objects.get(id=application_id)
+        except ShiftApplication.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        application.delete()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class EmployerView(APIView):
     def get(self, request, id=False):
@@ -900,6 +911,7 @@ class ShiftInviteView(APIView):
         shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False)
         appSerializer = shift_serializer.ShiftApplicationSerializer(data={
             "shift": invite.shift.id,
+            "invite": invite.id,
             "employee": invite.employee.id
         }, many=False)
         if shiftSerializer.is_valid():

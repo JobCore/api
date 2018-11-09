@@ -1,3 +1,6 @@
+import pytz
+utc=pytz.UTC
+from datetime import datetime
 from api.serializers import other_serializer, venue_serializer, employer_serializer, employee_serializer, favlist_serializer
 from rest_framework import serializers
 from api.utils import notifier
@@ -24,8 +27,12 @@ class ShiftSerializer(serializers.ModelSerializer):
     # TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
         
-        if validated_data['status'] != 'DRAFT' and shift.status != 'DRAFT' and validated_data['status'] != 'CANCELLED':
-            raise serializers.ValidationError('Only draft shifts can be edited')
+        if ('status' in validated_data):
+            if validated_data['status'] != 'DRAFT' and validated_data['status'] != 'CANCELLED' and shift.status != 'DRAFT':
+                raise serializers.ValidationError('Only draft shifts can be edited')
+        else:
+            if shift.status != 'DRAFT':
+                raise serializers.ValidationError('Only draft shifts can be edited')
         
         # delete all accepeted employees
         if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
@@ -149,20 +156,48 @@ class ShiftInviteGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShiftInvite
         exclude = ()
-        
+
 class ShiftApplicationSerializer(serializers.ModelSerializer):
+    invite = serializers.IntegerField(write_only=True)
     
     class Meta:
         model = ShiftApplication
         exclude = ()
         
     def validate(self, data):
-        try:
-            invite = ShiftApplication.objects.get(shift=data["shift"], employee=data["employee"])
-        except ShiftApplication.DoesNotExist:
-            return data
         
-        raise serializers.ValidationError("You have already applied to this shift")
+        #validate that you have not applied before
+        try:
+            application = ShiftApplication.objects.get(shift=data["shift"], employee=data["employee"])
+            
+            invite = ShiftInvite.objects.get(id=data["invite"])
+            if invite.status == 'PENDING':
+                invite.delete()
+            
+            raise serializers.ValidationError("You have already applied to this shift")
+        except ShiftApplication.DoesNotExist:
+            pass
+        
+        #get related shift    
+        shift = data["shift"]
+        
+        #validate that is accepting applications
+        if shift.status != 'OPEN':
+            raise serializers.ValidationError("This shift is not open for new applications anymore")
+            
+        #validate that the shift has not passed
+        present = utc.localize(datetime.now())
+        if(shift.starting_at < present):
+            raise serializers.ValidationError("This shift has already passed: "+shift.starting_at.strftime("%Y-%m-%d %H:%M:%S")+ " < "+present.strftime("%Y-%m-%d %H:%M:%S"))
+            
+        return data
+            
+    def create(self, validated_data):
+        
+        application = ShiftApplication(shift=validated_data['shift'], employee=validated_data['employee'])
+        application.save()
+        
+        return application
         
 class ApplicantGetSerializer(serializers.ModelSerializer):
     employee = employee_serializer.EmployeeGetSerializer()

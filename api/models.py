@@ -82,8 +82,8 @@ class Profile(models.Model):
     city = models.CharField(max_length=30, blank=True)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
+    latitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    longitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
     
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True) # validators should be a list
