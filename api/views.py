@@ -495,6 +495,11 @@ class ProfileMeView(APIView):
         except Profile.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+        if "latitude" in request.data:
+            request.data["latitude"] = round(request.data["latitude"], 6)
+        if "longitude" in request.data:
+            request.data["longitude"] = round(request.data["longitude"], 6) 
+        
         serializer = profile_serializer.ProfileSerializer(profile, data=request.data, partial=True)
         userSerializer = user_serializer.UserUpdateSerializer(profile.user, data=request.data, partial=True)
         if serializer.is_valid() and userSerializer.is_valid():

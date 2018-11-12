@@ -29,3 +29,36 @@ class ProfileSerializer(serializers.ModelSerializer):
             'employee': {'read_only': True},
             'status': {'read_only': True}
         }
+    
+    def validate_latitude(self, value):
+        """
+        Check that the latitud does not have more than 8 digits
+        """
+        return round(value, 6)
+    
+    def validate_longitude(self, value):
+        """
+        Check that the latitud does not have more than 8 digits
+        """
+        return round(value, 6)
+    
+    # def validate(self, validated_data):
+        
+    #     print("34534534")
+    #     if "latitude" in validated_data:
+    #         validated_data["latitude"] = round(validated_data["latitude"], 6)
+    #     if "longitude" in validated_data:
+    #         validated_data["longitude"] = round(validated_data["longitude"], 6) 
+            
+    #     ##data = super(ProfileSerializer, self).validate(data)
+    #     return data
+        
+    # def update(self, instance, validated_data):
+    #     if "latitude" in validated_data:
+    #         validated_data["latitude"] = round(validated_data["latitude"], 6)
+    #     if "longitude" in validated_data:
+    #         validated_data["longitude"] = round(validated_data["latitude"], 6) 
+            
+    #     instance = super(UserSerializer, self).update(instance, validated_data)
+
+    #     return instance
