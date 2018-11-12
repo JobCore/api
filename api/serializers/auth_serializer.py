@@ -34,7 +34,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
         user_obj = User.objects.filter(email=attrs.get("username_or_email")).first() or User.objects.filter(username=attrs.get("username_or_email")).first()
         if user_obj is not None:
             credentials = {
-                'username':user_obj.username,
+                'username': user_obj.username,
                 'password': password
             }
             if all(credentials.values()):
@@ -49,11 +49,10 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                     
                     device_id = attrs.get("registration_id")
                     if device_id is not None:
-                        try:
-                            device = FCMDevice.objects.get(user=user, registration_id=device_id)
-                        except FCMDevice.DoesNotExist:
-                            device = FCMDevice(user=user, registration_id=device_id)
-                            device.save()
+                        FCMDevice.objects.filter(registration_id=device_id).delete()
+
+                        device = FCMDevice(user=user, registration_id=device_id)
+                        device.save()
                     
                     # try:
                     #     userDic['employee_id'] = profile.employee.id
