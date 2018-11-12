@@ -1,5 +1,5 @@
 Hello {{ USERNAME }}
 
-{{ SENDER_NAME }} has invited you work as a {{ POSITION }} on {{ DATE }}
+{{ COMPANY }} has updated a previous shift you work as a {{ POSITION }} on {{ DATE }}
 
 The JobCore Team

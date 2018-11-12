@@ -11,16 +11,20 @@ class ShiftSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
     # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
+    employer = employer_serializer.EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
         exclude = ()
         
-    def has_sensitive_updates(self,validated_data):
-        non_sensitive_fields = ['application_restriction','minimum_allowed_rating','allowed_from_list','required_badges','rating']
-        for key in validated_data:
-            if key not in non_sensitive_fields:
-                return True
+    def has_sensitive_updates(self, new_data, old_data=None):
+        sensitive_fields = ['starting_at','ending_at','venue', 'minimum_hourly_rate', 'status']
+        for key in new_data:
+            if key in sensitive_fields:
+                if old_data is None:
+                    return True
+                elif old_data is not None and new_data[key] != old_data[key]:
+                    return True
         
         return False
         
@@ -34,10 +38,6 @@ class ShiftSerializer(serializers.ModelSerializer):
             if shift.status != 'DRAFT':
                 raise serializers.ValidationError('Only draft shifts can be edited')
         
-        # delete all accepeted employees
-        if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
-            ShiftInvite.objects.filter(shift=shift).delete()
-            shift.employees.clear()
         
         # Sync employees
         if 'allowed_from_list' in validated_data:
@@ -51,9 +51,33 @@ class ShiftSerializer(serializers.ModelSerializer):
                     shift.allowed_from_list.add(favlist)
             validated_data.pop('allowed_from_list')
             
+        old_shift = Shift.objects.get(pk=shift.id)
+        old_data = {
+            "starting_at": old_shift.starting_at,
+            "ending_at": old_shift.ending_at,
+            "position": old_shift.position,
+            "status": old_shift.status,
+            "minimum_hourly_rate": old_shift.minimum_hourly_rate,
+            "venue": old_shift.venue.title
+        }
+        
+        # before updating the shift I have to let the employees know that the shift is no longer available
+        if self.has_sensitive_updates(validated_data, old_data) and shift.status == 'DRAFT':
+            notifier.notify_shift_update(user=self.context['request'].user, shift=shift, status='being_cancelled', old_data=old_shift)
+
+        # now i can finally update the shift
         Shift.objects.filter(pk=shift.id).update(**validated_data)
         
-        notifier.notify_shift_update(user=self.context['request'].user, shift=shift)
+        # I have to delete all previous employes and invite all the new prospects
+        if self.has_sensitive_updates(validated_data, old_data):
+            
+            notifier.notify_shift_update(user=self.context['request'].user, shift=shift, status='being_updated', old_data=old_shift)
+            # delete all accepeted employees
+            if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
+                ShiftInvite.objects.filter(shift=shift).delete()
+                ShiftApplication.objects.filter(shift=shift).delete()
+                shift.candidates.clear()
+                shift.employees.clear()
 
         return shift
 
@@ -194,8 +218,12 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
             
     def create(self, validated_data):
         
-        application = ShiftApplication(shift=validated_data['shift'], employee=validated_data['employee'])
-        application.save()
+        if validated_data['shift'].employer.automatically_accept_from_favlists == True:
+            #automatically accept
+            pass
+        else:
+            application = ShiftApplication(shift=validated_data['shift'], employee=validated_data['employee'])
+            application.save()
         
         return application
         

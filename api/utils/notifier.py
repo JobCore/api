@@ -1,5 +1,7 @@
 import os
 import json
+import itertools
+from django.db.models import Q
 from base64 import b64encode, b64decode
 from api.models import Employee, ShiftInvite, Shift
 from api.utils.email import send_email_message, send_fcm_notification
@@ -17,24 +19,20 @@ def get_talents_to_notify(shift):
     if shift.status == 'OPEN':
         rating = shift.minimum_allowed_rating
         favorite_lists = shift.allowed_from_list.all()
-        if len(favorite_lists) == 0:
-            talents_to_notify = Employee.objects.filter(
-                rating__gte=rating,
-                #the employee gets to pick the minimum hourly rate
-                minimum_hourly_rate__lte=shift.minimum_hourly_rate
-            )
-        else:
-            talents_to_notify = Employee.objects.filter(
-                rating__gte=rating, 
+        talents_to_notify = Employee.objects.filter(
+            Q(rating__gte=rating) | Q(rating__isnull=True),
+            #the employee gets to pick the minimum hourly rate
+            Q(minimum_hourly_rate__lte=shift.minimum_hourly_rate)
+        )
+        if len(favorite_lists) > 0:
+            talents_to_notify = talents_to_notify.filter(
                 #the employer gets to pick employers only from his favlists
-                favoritelist__in=favorite_lists,
-                #the employee gets to pick the minimum hourly rate
-                minimum_hourly_rate__lte=shift.minimum_hourly_rate
+                Q(favoritelist__in=favorite_lists)
             )
     
-    if shift.status == 'CANCELLED':
+    elif shift.status == 'CANCELLED' or shift.status == 'DRAFT':
         talents_to_notify = shift.candidates.all() | shift.employees.all()
-    
+
     return talents_to_notify
 
 # password reset
@@ -59,29 +57,40 @@ def notify_email_validation(user):
     })
 
 # automatic notification
-def notify_shift_update(user, shift, status='being_updated'):
+def notify_shift_update(user, shift, status='being_updated', old_data=None):
     shift = Shift.objects.get(id=shift.id) #IMPORTANT: override the shift
     talents_to_notify = get_talents_to_notify(shift)
-    
+
     if status == 'being_updated':
+        print("Talents to notify: "+str(len(talents_to_notify)))
+        
         for talent in talents_to_notify:
             payload = api.utils.jwt.jwt_payload_handler({
                 "user_id": talent.user.id,
                 "shift_id": shift.id
             })
             token = jwt_encode_handler(payload)
-            
+
             ShiftInvite.objects.create(
                 sender=user.profile, 
                 shift=shift, 
                 employee=talent
             )
 
-            send_email_message('updated_shift', talent.user.email, {
+            send_email_message('new_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "TOKEN": token,
                 "DATE": shift.starting_at,
+                "DATA": { "type": "shift", "id": shift.id }
+            })
+            
+            send_fcm_notification("new_shift", talent.user.id, {
+                "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
+                "COMPANY": user.profile.employer.title,
+                "POSITION": shift.position.title,
+                "LINK": EMPLOYER_URL,
+                "DATE": shift.starting_at.strftime('%m/%d/%Y'),
                 "DATA": { "type": "shift", "id": shift.id }
             })
             
@@ -117,14 +126,14 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
-            "DATA": { "type": "invite", "id": invite.id }
+            "DATA": { "type": "shift", "id": shift.id }
         })
         send_fcm_notification('applicant_accepted', talent.user.id, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
             "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
-            "DATA": { "type": "invite", "id": invite.id }
+            "DATA": { "type": "shift", "id": shift.id }
         })
     
     for talent in talents_to_notify['rejected']:

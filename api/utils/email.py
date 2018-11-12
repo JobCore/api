@@ -107,6 +107,10 @@ def get_template_info(slug):
             "type": "shift", 
             "subject": "One of your upcoming shifts have been cancelled"
         },
+        "updated_shift":  { 
+            "type": "shift", 
+            "subject": "Atention Needed: One of your upcoming shifts was updated"
+        },
         "new_shift": { 
             "type": "invite", 
             "subject": "There is a new shift waiting for you to apply"
@@ -123,4 +127,4 @@ def get_template_info(slug):
     if slug in subjects:
         return subjects[slug]
     else:
-        raise ValueError('Invalid template slug: No subject found')
+        raise ValueError('Invalid template slug: "'+slug+"' no subject found")

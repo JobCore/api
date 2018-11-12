@@ -31,6 +31,7 @@ class Employer(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
+    automatically_accept_from_favlists = models.BooleanField(default=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
