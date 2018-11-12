@@ -31,7 +31,7 @@ def send_fcm(slug, registration_ids, data={}):
         template = get_template_content(slug, data, ["email", "fms"])
         
         if 'fms' not in template:
-            raise BaseException("The template "+slug+" does not seem to have a valid FMS version")
+            raise APIException("The template "+slug+" does not seem to have a valid FMS version")
             
         message_title = template['subject']
         message_body = template['fms']
@@ -43,7 +43,7 @@ def send_fcm(slug, registration_ids, data={}):
         print('FMC_SENT: '+slug+' to '+"".join(map(str, registration_ids)))
         
         if(result["failure"] or not result["success"]):
-            raise BaseException("Problem sending the notification")
+            raise APIException("Problem sending the notification")
 
         return result
     else:
