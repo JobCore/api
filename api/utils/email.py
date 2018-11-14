@@ -43,8 +43,8 @@ def send_fcm(slug, registration_ids, data={}):
         result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, data_message=message_data)
         print('FMC_SENT: '+slug+' to '+"".join(map(str, registration_ids)))
         
-        if(result["failure"] or not result["success"]):
-            raise APIException("Problem sending the notification")
+        # if(result["failure"] or not result["success"]):
+        #     raise APIException("Problem sending the notification")
 
         return result
     else:
