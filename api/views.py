@@ -115,13 +115,13 @@ class PasswordView(APIView):
     def post(self, request):
         email = request.data.get('email', None)
         if not email:
-            return Response({'error': 'Email not found on the database'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('Email not found on the database'), status=status.HTTP_400_BAD_REQUEST)
             
         try:
             user = User.objects.get(email=email)
             serializer = auth_serializer.UserLoginSerializer(user)
         except User.DoesNotExist:
-            return Response({'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Email not found on the database'), status=status.HTTP_404_NOT_FOUND)
 
         notify_password_reset_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -153,7 +153,7 @@ class UserView(APIView):
             user = User.objects.get(id=id)
             serializer = user_serializer.UserGetSerializer(user)
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The user was not found'), status=status.HTTP_404_NOT_FOUND)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -161,7 +161,7 @@ class UserView(APIView):
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The user was not found'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = user_serializer.UserSerializer(user, data=request.data)
         if serializer.is_valid():
@@ -173,7 +173,7 @@ class UserView(APIView):
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The user was not found'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = user_serializer.ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
@@ -193,7 +193,7 @@ class UserView(APIView):
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The user was not found'), status=status.HTTP_404_NOT_FOUND)
 
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -654,7 +654,7 @@ class ShiftView(APIView, CustomPagination):
     def post(self, request):
         
         if(request.user.profile.employer == None):
-            raise ValidationError('This user doesn\'t seem to be an employer, only employers can create shifts')
+            raise ValidationError('This user doesn\'t seem to be an employer, only employers can create shifts.')
         
         request.data["employer"] = request.user.profile.employer.id
         serializer = shift_serializer.ShiftPostSerializer(data=request.data)
@@ -667,7 +667,7 @@ class ShiftView(APIView, CustomPagination):
         try:
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({ "detail": "This shift was not found, talk to the employer for any more details about what happened."},status=status.HTTP_404_NOT_FOUND)
         serializer = shift_serializer.ShiftSerializer(shift, data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
@@ -678,7 +678,7 @@ class ShiftView(APIView, CustomPagination):
         try:
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({ "detail": "This shift was not found, talk to the employer for any more details about what happened."}, status=status.HTTP_404_NOT_FOUND)
 
         shift.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -874,7 +874,7 @@ class ShiftInviteView(APIView):
             try:
                 invite = ShiftInvite.objects.get(id=id)
             except ShiftInvite.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = shift_serializer.ShiftInviteGetSerializer(invite, many=False)
         else:
@@ -904,7 +904,7 @@ class ShiftInviteView(APIView):
         try:
             invite = ShiftInvite.objects.get(id=id)
         except ShiftInvite.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
         
         if action == 'apply':
             data={ "status": 'APPLIED' } 
@@ -966,7 +966,7 @@ class ShiftInviteView(APIView):
         try:
             invite = ShiftInvite.objects.get(id=id)
         except ShiftInvite.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
 
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

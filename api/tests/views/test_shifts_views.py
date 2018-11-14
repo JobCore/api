@@ -201,3 +201,5 @@ class TestViews(APITestCase, CustomPagination):
         request = self.factory.delete(path)
         response = ShiftView.delete(self, request, id=9999)
         assert response.status_code == 404
+        
+    # TODO: Que las invitaciones se auto-accepten cuando este: automatically_accept_from_favlists = true
