@@ -73,7 +73,7 @@ class ShiftSerializer(serializers.ModelSerializer):
             
             notifier.notify_shift_update(user=self.context['request'].user, shift=shift, status='being_updated', old_data=old_shift)
             # delete all accepeted employees
-            if validated_data['status'] in ['DRAFT'] or shift.status in ['DRAFT']:
+            if validated_data['status'] in ['DRAFT', 'CANCELLED'] or shift.status in ['DRAFT', 'CANCELLED']:
                 ShiftInvite.objects.filter(shift=shift).delete()
                 ShiftApplication.objects.filter(shift=shift).delete()
                 shift.candidates.clear()
