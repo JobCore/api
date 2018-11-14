@@ -138,11 +138,11 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-if(os.environ.get('DEBUG') != 'TRUE'):
+# if(os.environ.get('DEBUG') != 'TRUE'):
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-else:
-    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+# else:
+    # STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
     
     
     
