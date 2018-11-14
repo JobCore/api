@@ -218,12 +218,12 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
             
     def create(self, validated_data):
         
-        if validated_data['shift'].employer.automatically_accept_from_favlists == True:
-            #automatically accept
-            pass
-        else:
-            application = ShiftApplication(shift=validated_data['shift'], employee=validated_data['employee'])
-            application.save()
+        # if validated_data['shift'].employer.automatically_accept_from_favlists == True:
+        #     #automatically accept
+        #     pass
+        # else:
+        application = ShiftApplication(shift=validated_data['shift'], employee=validated_data['employee'])
+        application.save()
         
         return application
         
