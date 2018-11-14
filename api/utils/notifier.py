@@ -97,6 +97,13 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None):
             
     if status == 'being_cancelled':
         for talent in talents_to_notify:
+            
+            payload = api.utils.jwt.jwt_payload_handler({
+                "user_id": talent.user.id,
+                "shift_id": shift.id
+            })
+            token = jwt_encode_handler(payload)
+            
             send_email_message('cancelled_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
