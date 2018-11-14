@@ -669,7 +669,7 @@ class ShiftView(APIView, CustomPagination):
         except Shift.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = shift_serializer.ShiftSerializer(shift, data=request.data, context={"request": request})
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -5,9 +5,10 @@ from api.models import *
 from api.views import *
 from api.serializers import *
 from api.pagination import CustomPagination
+from api.utils.notifier import get_talents_to_notify
 from django.contrib.auth.models import User, AnonymousUser
 from mixer.backend.django import mixer
-from rest_framework.test import APITestCase, APIRequestFactory
+from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from django.urls import reverse, resolve
 from rest_framework_jwt.views import ObtainJSONWebToken
 
@@ -21,8 +22,6 @@ class TestViews(APITestCase, CustomPagination):
         # Data
         cls.password = '*12345678'
         # Create Users
-        cls.unauthorized_user = mixer.blend(
-            User, email='user@gmail.com', password=cls.password)
         cls.user_employee = mixer.blend(
             User, email='user_employee@gmail.com', password=cls.password)
         cls.user_employer = mixer.blend(
@@ -34,46 +33,40 @@ class TestViews(APITestCase, CustomPagination):
         cls.unauthorized_user.save()
         cls.user_employee.save()
         cls.user_employer.save()
+
+        cls.employee = mixer.blend(
+            'api.Employee', user=cls.user_employee)
+        cls.employer = mixer.blend(
+            'api.Employer')
+        cls.unauthorized_employer = mixer.blend(
+            'api.Employer')
+
+        cls.unauthorized_employer_profile = mixer.blend(
+            'api.Profile', user=cls.unauthorized_user, employer=cls.employer)
+        cls.employee_profile = mixer.blend(
+            'api.Profile', user=cls.user_employee, employee=cls.employee)
+        cls.employer_profile = mixer.blend(
+            'api.Profile', user=cls.user_employer, employer=cls.employer)
+            
         # Basic models
+        
         cls.badge = mixer.blend('api.Badge')
         cls.position = mixer.blend('api.Position')
         cls.venue = mixer.blend('api.Venue')
         cls.shift = mixer.blend('api.Shift')
-        cls.unauthorized_profile = mixer.blend(
-            'api.Profile', user=cls.unauthorized_user)
-        cls.employee_profile = mixer.blend(
-            'api.Profile', user=cls.user_employee)
-        cls.employer_profile = mixer.blend(
-            'api.Profile', user=cls.user_employer)
-        cls.unauthorized_employer = mixer.blend(
-            'api.Employer', profile=cls.unauthorized_profile)
-        cls.employee = mixer.blend(
-            'api.Employee', profile=cls.employee_profile)
-        cls.employer = mixer.blend(
-            'api.Employer', profile=cls.employer_profile)
+        
+        cls.jobcore_invite = mixer.blend('api.JobCoreInvite', 
+            sender=cls.employer_profile, shift=cls.shift, email='aalejo+frank@gmail.com')
+            
         cls.favlist = mixer.blend('api.FavoriteList', owner=cls.employer)
         # Request factory
         cls.factory = APIRequestFactory()
-
-    # REGISTER
-
-    def test_employer_register_success(self):
+    
+    def test_shift_view_get_single(self):
         """
-        Ensure successful employer register
+        Ensure eveyone gets notification
         """
-        path = reverse('api:register')
-        request = self.factory.post(path)
-        request.data = {
-            'username': 'new_employer@gmail.com',
-            'email': 'new_employer@gmail.com',
-            'first_name': 'Employer name',
-            'last_name': 'Employer lastname',
-            'account_type': "employee",
-            'password': self.password
-        }
-        response = UserRegisterView.post(self, request)
-        assert response.status_code == 201
-        user = User.objects.get(email=request.data['email'])
-        profile = Profile.objects.get(user_id=user.id)
-        employer = Employer.objects.get(profile=profile.id)
-        assert employer.profile.user.username == request.data['username']
+        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        request = self.factory.get(path)
+        response = ShiftView.get(self, request, id=self.shift.id)
+        assert response.status_code == 200

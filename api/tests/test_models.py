@@ -21,9 +21,9 @@ class TestModels(APITestCase):
         cls.profile = mixer.blend(
             'api.Profile', user=cls.user)
         cls.employer = mixer.blend(
-            'api.Employer', profile=cls.profile)
+            'api.Employer', user=cls.profile.user)
         cls.employee = mixer.blend(
-            'api.Employee', profile=cls.profile)
+            'api.Employee', user=cls.profile.user)
         cls.favlist = mixer.blend('api.FavoriteList', owner=cls.employer)
 
     def test_position_str(self):

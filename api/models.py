@@ -196,8 +196,8 @@ class Shift(models.Model):
         choices=SHIFT_STATUS_CHOICES,
         default=DRAFT,
         blank=True)
-    starting_at = models.DateTimeField(blank=True)
-    ending_at = models.DateTimeField(blank=True)
+    starting_at = models.DateTimeField(blank=False)
+    ending_at = models.DateTimeField(blank=False)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     candidates = models.ManyToManyField(

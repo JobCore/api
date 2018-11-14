@@ -138,11 +138,11 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-# if(os.environ.get('DEBUG') != 'TRUE'):
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# else:
-#     STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+if(os.environ.get('DEBUG') != 'TRUE'):
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+else:
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
     
     
     
@@ -179,7 +179,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'DEBUG',
+            #'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
         },
@@ -191,7 +191,7 @@ LOGGING = {
         'django': {
             'handlers': ['file'],
             #'handlers': ['file', 'console'],
-            'level': 'DEBUG',
+            #'level': 'DEBUG',
             'propagate': True,
         },
     },

@@ -52,8 +52,9 @@ def notify_email_validation(user):
     })
     token = jwt_encode_handler(payload)
     send_email_message("registration", user.email, {
-        "link": API_URL+'/api/user/email/validate?token='+token,
-        "first_name": user.first_name 
+        "SUBJECT": "Please validate your email in JobCore",
+        "LINK": API_URL+'/api/user/email/validate?token='+token,
+        "FIRST_NAME": user.first_name 
     })
 
 # automatic notification
