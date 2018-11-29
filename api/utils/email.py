@@ -121,7 +121,7 @@ def get_template_info(slug):
             "subject": "Job application accepted, time to work :)"
         },
         "applicant_rejected": { 
-            "type": "application", 
+            "type": "shift", 
             "subject": "Job application rejected, we are sorry :("
         },
     }

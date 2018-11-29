@@ -29,7 +29,7 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 from django.utils import timezone
 import datetime
-today = datetime.datetime.now(tz=timezone.utc)
+TODAY = datetime.datetime.now(tz=timezone.utc)
 
 # from .utils import GeneralException
 import logging
@@ -61,22 +61,6 @@ class FMCView(APIView):
         
         return Response(result, status=status.HTTP_200_OK)
 
-# class AppSiteAssociationView(APIView):
-#     permission_classes = [AllowAny]
-#     def get(self, request, slug):
-#         sitemap = {
-#             "applinks": {
-#                 "apps": [],
-#                 "details": [
-#                     {
-#                         "appID": "co.jobcore.talent",
-#                         "paths": [ "*" ]
-#                     }
-#                 ]
-#             }
-#         }
-#         return Response(sitemap, status=status.HTTP_200_OK)
-
 class ValidateEmailView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -87,7 +71,7 @@ class ValidateEmailView(APIView):
             user.profile.status = ACTIVE #email validation completed
             user.profile.save()
         except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
             
         template = get_template_content('email_validated')
         return HttpResponse(template['html'])
@@ -204,7 +188,7 @@ class EmployeeView(APIView, CustomPagination):
             try:
                 employee = Employee.objects.get(id=id)
             except Employee.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employee_serializer.EmployeeGetSerializer(employee, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -246,7 +230,7 @@ class EmployeeView(APIView, CustomPagination):
         try:
             employee = Employee.objects.get(id=id)
         except Employee.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -259,7 +243,7 @@ class EmployeeMeView(APIView, CustomPagination):
         try:
             employee = Employee.objects.get(id=request.user.profile.employee.id)
         except Employee.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = employee_serializer.EmployeeGetSerializer(employee, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -273,7 +257,7 @@ class EmployeeMeView(APIView, CustomPagination):
         try:
             employee = Employee.objects.get(id=request.user.profile.employee.id)
         except Employee.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = employee_serializer.EmployeeSettingsSerializer(employee, data=request.data)
         if serializer.is_valid():
@@ -315,7 +299,7 @@ class AvailabilityBlockView(APIView, CustomPagination):
         try:
             block = AvailabilityBlock.objects.get(id=block_id, employee=request.user.profile.employee)
         except AvailabilityBlock.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
         
         serializer = other_serializer.AvailabilityBlockSerializer(block, data=request.data, context={"request": request}, partial=True)
         if serializer.is_valid():
@@ -327,7 +311,7 @@ class AvailabilityBlockView(APIView, CustomPagination):
         try:
             unavailability_block = EmployeeWeekUnvailability.objects.get(id=unavailability_id)
         except EmployeeWeekUnvailability.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         unavailability_block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -338,7 +322,7 @@ class EmployeeApplicationsView(APIView, CustomPagination):
             try:
                 employee = Employee.objects.get(id=id)
             except Employee.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             applications = ShiftApplication.objects.all().filter(employer__id=employee.id).order_by('shift__starting_at')
             
@@ -363,7 +347,7 @@ class ApplicantsView(APIView, CustomPagination):
             try:
                 application = ShiftApplication.objects.get(id=application_id)
             except ShiftApplication.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = shift_serializer.ApplicantGetSmallSerializer(application, many=False)
         else:
@@ -378,7 +362,7 @@ class ApplicantsView(APIView, CustomPagination):
         try:
             application = ShiftApplication.objects.get(id=application_id)
         except ShiftApplication.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         application.delete()
         
@@ -390,7 +374,7 @@ class EmployerView(APIView):
             try:
                 employer = Employer.objects.get(id=id)
             except Employer.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employer_serializer.EmployerGetSerializer(employer, many=False)
         else:
@@ -403,7 +387,7 @@ class EmployerView(APIView):
         try:
             employer = Employer.objects.get(id=id)
         except Employer.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = employer_serializer.EmployerSerializer(employer, data=request.data)
         if serializer.is_valid():
@@ -415,7 +399,7 @@ class EmployerView(APIView):
         try:
             employer = Employer.objects.get(id=id)
         except Employer.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         employer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -426,7 +410,7 @@ class EmployerUsersView(APIView):
             try:
                 user = User.objects.get(id=id)
             except User.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = UserGetSmallSerializer(user, many=False)
         else:
@@ -441,7 +425,7 @@ class ProfileView(APIView):
             try:
                 profile = Profile.objects.get(id=id)
             except Profile.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = profile_serializer.ProfileGetSerializer(profile, many=False)
         else:
@@ -459,7 +443,7 @@ class ProfileView(APIView):
         try:
             profile = Profile.objects.get(id=id)
         except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = profile_serializer.ProfileSerializer(profile, data=request.data, partial=True)
         userSerializer = user_serializer.UserUpdateSerializer(profile.user, data=request.data, partial=True)
@@ -478,7 +462,7 @@ class ProfileMeView(APIView):
         try:
             profile = Profile.objects.get(id=request.user.profile.id)
         except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = profile_serializer.ProfileGetSerializer(profile, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -493,7 +477,7 @@ class ProfileMeView(APIView):
         try:
             profile = Profile.objects.get(id=request.user.profile.id)
         except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         if "latitude" in request.data:
             request.data["latitude"] = round(request.data["latitude"], 6)
@@ -515,7 +499,7 @@ class FavListView(APIView):
             try:
                 favList = FavoriteList.objects.get(id=id)
             except FavoriteList.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             if request.user.profile.employer.id != favList.employer.id:
                 return Response("You are not allowed to access this information", status=status.HTTP_403_FORBIDDEN)
@@ -545,7 +529,7 @@ class FavListView(APIView):
         try:
             favList = FavoriteList.objects.get(id=id)
         except FavoriteList.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = favlist_serializer.FavoriteListSerializer(favList, data=request.data)
         if serializer.is_valid():
@@ -559,7 +543,7 @@ class FavListView(APIView):
         try:
             favList = favlist_serializer.FavoriteList.objects.get(id=id)
         except FavoriteList.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         favList.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -573,7 +557,7 @@ class FavListEmployeeView(APIView):
         try:
             employee = Employee.objects.get(id=employee_id)
         except Employee.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = employee_serializer.EmployeeSerializer(employee, data=request.data)
         if serializer.is_valid():
@@ -603,7 +587,7 @@ class EmployeeMeShiftView(APIView, CustomPagination):
         
         qUpcoming = request.GET.get('upcoming')
         if qUpcoming == 'true':
-            shifts = shifts.filter(starting_at__gte=today)
+            shifts = shifts.filter(starting_at__gte=TODAY)
         
         qFailed = request.GET.get('failed')
         if qFailed == 'true':
@@ -614,13 +598,36 @@ class EmployeeMeShiftView(APIView, CustomPagination):
         serializer = shift_serializer.ShiftSerializer(shifts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class PayrollView(APIView, CustomPagination):
+    def get(self, request):
+
+            clockins = Clockin.objects.all()#.filter(status__in = ('EXPIRED', 'OPEN'), ending_at_lte=TODAY)
+            
+            payrolDic = {}
+            for clockin in clockins:
+                clockinSerialized = clockin_serializer.ClockinGetSerializer(clockin)
+                if str(clockin.employee.id) in payrolDic:
+                    payrolDic[str(clockin.employee.id)]["clockins"].append(clockinSerialized.data)
+                else:
+                    employeeSerialized = employee_serializer.EmployeeGetSmallSerializer(clockin.employee)
+                    payrolDic[str(clockin.employee.id)] = {
+                        "clockins": [clockinSerialized.data],
+                        "talent": employeeSerialized.data
+                    }
+            
+            payrol = []
+            for key, value in payrolDic.items():
+                payrol.append(value)
+                
+            return Response(payrol, status=status.HTTP_200_OK)
+
 class ShiftView(APIView, CustomPagination):
     def get(self, request, id=False):
         if (id):
             try:
                 shift = Shift.objects.get(id=id)
             except Shift.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -641,7 +648,7 @@ class ShiftView(APIView, CustomPagination):
             
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
-                shifts = shifts.filter(starting_at__gte=today)
+                shifts = shifts.filter(starting_at__gte=TODAY)
                 
             if request.user.profile.employer is None:
                 shifts = shifts.filter(employees__in = (request.user.profile.id,))
@@ -688,10 +695,10 @@ class ShiftCandidatesView(APIView, CustomPagination):
         try:
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
             
         serializer = shift_serializer.ShiftCandidatesSerializer(shift, data=request.data, context={"request": request})
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -702,7 +709,7 @@ class VenueView(APIView):
             try:
                 venue = Venue.objects.get(id=id)
             except Venue.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = venue_serializer.VenueSerializer(venue, many=False)
         else:
@@ -722,7 +729,7 @@ class VenueView(APIView):
         try:
             venue = Venue.objects.get(id=id)
         except Venue.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = venue_serializer.VenueSerializer(venue, data=request.data)
         if serializer.is_valid():
@@ -734,7 +741,7 @@ class VenueView(APIView):
         try:
             venue = Venue.objects.get(id=id)
         except Venue.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         venue.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -745,7 +752,7 @@ class PositionView(APIView):
             try:
                 position = Position.objects.get(id=id)
             except Position.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = other_serializer.PositionSerializer(position, many=False)
         else:
@@ -765,7 +772,7 @@ class PositionView(APIView):
         try:
             position = Position.objects.get(id=id)
         except Position.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = other_serializer.PositionSerializer(position, data=request.data)
         if serializer.is_valid():
@@ -777,7 +784,7 @@ class PositionView(APIView):
         try:
             position = Position.objects.get(id=id)
         except Position.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         position.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -788,7 +795,7 @@ class BadgeView(APIView):
             try:
                 badge = Badge.objects.get(id=id)
             except Badge.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = other_serializer.BadgeSerializer(badge, many=False)
         else:
@@ -808,7 +815,7 @@ class BadgeView(APIView):
         try:
             badge = Badge.objects.get(id=id)
         except Badge.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = other_serializer.BadgeSerializer(badge, data=request.data)
         if serializer.is_valid():
@@ -820,7 +827,7 @@ class BadgeView(APIView):
         try:
             badge = Badge.objects.get(id=id)
         except Badge.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         badge.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -831,7 +838,7 @@ class JobCoreInviteView(APIView):
             try:
                 invite = JobCoreInvite.objects.get(id=id)
             except JobCoreInvite.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = other_serializer.JobCoreInviteGetSerializer(invite, many=False)
         else:
@@ -851,7 +858,7 @@ class JobCoreInviteView(APIView):
         try:
             invite = JobCoreInvite.objects.get(id=id)
         except JobCoreInvite.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = other_serializer.BadgeSerializer(invite, data=request.data)
         if serializer.is_valid():
@@ -863,7 +870,7 @@ class JobCoreInviteView(APIView):
         try:
             invite = JobCoreInvite.objects.get(id=id)
         except JobCoreInvite.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -993,7 +1000,7 @@ class RateView(APIView):
             try:
                 rate = Rate.objects.get(id=user_id)
             except Rate.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = other_serializer.RateSerializer(rate, many=False)
         else:
@@ -1016,7 +1023,7 @@ class RateView(APIView):
             serializer.save()
             invites.append(serializer.data)
         else:
-            return Response({'error': 'Error saving rating'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('Error saving rating'), status=status.HTTP_400_BAD_REQUEST)
         
         return Response(invites, status=status.HTTP_201_CREATED)
 
@@ -1024,7 +1031,7 @@ class RateView(APIView):
         try:
             rate = Rate.objects.get(id=id)
         except Rate.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         rate.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1071,7 +1078,7 @@ class DeviceMeView(APIView):
     def get(self, request, device_id=None):
         
         if request.user is None:
-            return Response({'error': 'You have to be loged in'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('You have to be loged in'), status=status.HTTP_400_BAD_REQUEST)
         
         if device_id is not None:
             try:
@@ -1079,7 +1086,7 @@ class DeviceMeView(APIView):
                 serializer = notification_serializer.FCMDeviceSerializer(device, many=False)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except FCMDevice.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
         else:
             devices = FCMDevice.objects.filter(user=request.user.id)
             serializer = notification_serializer.FCMDeviceSerializer(devices, many=True)
@@ -1088,7 +1095,7 @@ class DeviceMeView(APIView):
     def put(self, request, device_id):
         
         if request.user is None:
-            return Response({'error': 'No user was identified'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('No user was identified'), status=status.HTTP_400_BAD_REQUEST)
         
         try:
             device = FCMDevice.objects.get(registration_id=device_id, user=request.user.id)
@@ -1098,12 +1105,12 @@ class DeviceMeView(APIView):
                 return Response(serializer.data,status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except FCMDevice.DoesNotExist:
-            return Response({'message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Device not found'), status=status.HTTP_404_NOT_FOUND)
             
     def delete(self, request, device_id=None):
         
         if request.user is None:
-            return Response({'error': 'No user was identified'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('No user was identified'), status=status.HTTP_400_BAD_REQUEST)
         
         try:
             if device_id is None:
@@ -1115,7 +1122,7 @@ class DeviceMeView(APIView):
                 
             return Response(status=status.HTTP_204_NO_CONTENT)
         except FCMDevice.DoesNotExist:
-            return Response({'message': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Device not found'), status=status.HTTP_404_NOT_FOUND)
             
 class ClockinsView(APIView):
     def get(self, request, id=False):
@@ -1123,7 +1130,7 @@ class ClockinsView(APIView):
             try:
                 rate = Clockin.objects.get(id=user_id)
             except Clockin.DoesNotExist:
-                return Response(status=status.HTTP_404_NOT_FOUND)
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = clockin_serializer.ClockinSerializer(rate, many=False)
         else:
@@ -1149,11 +1156,11 @@ class ClockinsView(APIView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, id):
+    def delete(self, request, clockin_id):
         try:
-            clockin = Clockin.objects.get(id=id)
+            clockin = Clockin.objects.get(id=clockin_id)
         except Clockin.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         clockin.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1170,24 +1177,26 @@ class ClockinsMeView(APIView):
         if qShift:
             clockins = clockins.filter(shift__id=qShift)
             
-        serializer = clockin_serializer.ClockinSerializer(clockins, many=True)
+        serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = clockin_serializer.ClockinSerializer(data=request.data)
+        
+        if request.user.profile.employee == None:
+            raise PermissionDenied("You are not allowed to check in or out yourself")
+            
+        request.data['employee'] = request.user.profile.employee.id
+        try:
+            clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
+            serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
+        except Clockin.DoesNotExist:
+            serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
+            pass
+        
         if serializer.is_valid():
             serializer.save()
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        try:
-            clockin = Clockin.objects.get(id=id)
-        except Clockin.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        clockin.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)

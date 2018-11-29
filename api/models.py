@@ -181,6 +181,7 @@ class Shift(models.Model):
         default=ANYONE,
         blank=True)
     maximum_allowed_employees = models.IntegerField(default=0, blank=True)
+    #maximum_checkin_delay_minutes = models.IntegerField(default=30, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=0, blank=True)
     minimum_allowed_rating = models.DecimalField(
@@ -297,12 +298,27 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.user.username
-        
+
+
+APPROVED = 'APPROVED'
+PENDING = 'PENDING'
+PAID = 'PAID'
+CLOCKIN_STATUS = (
+    (APPROVED, 'Approved'),
+    (PENDING, 'Pending'),
+    (PAID, 'Paid')
+)  
 class Clockin(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
-    ended_at = models.DateTimeField(blank=True)
+    latitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    longitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    ended_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(
+        max_length=9,
+        choices=CLOCKIN_STATUS,
+        default=PENDING)

@@ -2,6 +2,11 @@ from api.serializers import user_serializer, other_serializer, favlist_serialize
 from rest_framework import serializers
 from api.models import Employee
 
+class EmployeeGetTinySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        exclude = ()
+        
 class EmployeeGetSmallSerializer(serializers.ModelSerializer):
     user = user_serializer.UserGetSmallSerializer(many=False)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)

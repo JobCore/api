@@ -88,6 +88,10 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = ()
+        extra_kwargs = {
+            'starting_at': {'read_only': True},
+            'ending_at': {'read_only': True}
+        }
         
     def validate(self, data):
         shift = Shift.objects.get(id=self.instance.id)

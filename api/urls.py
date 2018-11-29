@@ -8,16 +8,25 @@ from api import hooks
 app_name = "api"
 
 urlpatterns = [
-    #path('apple-app-site-association', views.AppSiteAssociationView.as_view(), name="app-site-association"),
     
-    path('jobcore-invites', views.JobCoreInviteView.as_view(), name="get-jcinvites"),
-    path('jobcore-invites/<int:id>', views.JobCoreInviteView.as_view(), name="id-jcinvites"),
+    #
+    # AUTHENTICATION
+    #
+    
+    path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),
     path('user/password/reset', views.PasswordView.as_view(), name="password-reset-email"),
     path('user/email/validate', views.ValidateEmailView.as_view(), name="validate-email"),
     path('user/<int:id>', views.UserView.as_view(), name="id-user"),
     path('user/register', views.UserRegisterView.as_view(), name="register"),
     path('user/<int:user_id>/employees', views.EmployeeView.as_view(), name="create-employees"),
+    
+    #
+    # FOR THE EMPLOYER
+    #
+    
+    path('jobcore-invites', views.JobCoreInviteView.as_view(), name="get-jcinvites"),
+    path('jobcore-invites/<int:id>', views.JobCoreInviteView.as_view(), name="id-jcinvites"),
     path('applications', views.ApplicantsView.as_view(), name="get-applicants"),
     path('applications/<int:application_id>', views.ApplicantsView.as_view(), name="get-applicants"),
     path('catalog/<str:catalog_type>', views.CatalogView.as_view(), name="get-catalog"),
@@ -52,12 +61,13 @@ urlpatterns = [
     
     path('clockins/', views.ClockinsView.as_view(), name="all-clockins"),
     path('clockins/<int:employee_id>', views.ClockinsView.as_view(), name="me-employees"),
+    path('payroll', views.PayrollView.as_view(), name="all-payroll"),
     # path('image/<str:image_name>', views.ImageView.as_view())
     
-    #auth
-    path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
+    #
+    # FOR THE TALENT
+    #
     
-    #stuff only callable by an employee
     path('profiles/me', views.ProfileMeView.as_view(), name="me-profiles"),
     path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
     #path('clockins/me', views.PaymentMeView.as_view(), name="me-employees"),
@@ -66,13 +76,17 @@ urlpatterns = [
     path('employees/me/devices/<str:device_id>', views.DeviceMeView.as_view(), name="me-device"),
     path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
     path('employees/me/clockins', views.ClockinsMeView.as_view(), name="me-employees"),
+    path('employees/me/clockins/<str:clockin_id>', views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/applications', views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
     path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/me/availability/<int:block_id>', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     #path('employees/me/profiles', views.ProfileView.as_view(), name="get-profiles"),
     
-    # Inernal use only
+    #
+    # INTERNAL USE ONLY
+    #
+    
     path('email/<str:slug>', views.EmailView.as_view()),
     path('fmc', views.FMCView.as_view()),
     # hooks
