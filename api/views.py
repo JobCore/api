@@ -620,6 +620,33 @@ class PayrollView(APIView, CustomPagination):
                 payrol.append(value)
                 
             return Response(payrol, status=status.HTTP_200_OK)
+    
+    def put(self, request, id):
+        
+        if (request.user.profile.employer == None):
+            raise ValidationError("You don't seem to be an employer")
+        
+        try:
+            emp = Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            return Response({ "detail": "The employee was not found"},status=status.HTTP_404_NOT_FOUND)
+        
+        some = False
+        for clockin in request.data:
+            some = True
+            try:
+                old_clockin = Clockin.objects.get(id=clockin["id"])
+                serializer = clockin_serializer.ClockinPayrollSerializer(old_clockin, data=clockin)
+            except Clockin.DoesNotExist:
+                serializer = clockin_serializer.ClockinPayrollSerializer(data=clockin)
+                
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if some:   
+            serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ShiftView(APIView, CustomPagination):
     def get(self, request, id=False):

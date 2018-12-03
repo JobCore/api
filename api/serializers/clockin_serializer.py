@@ -45,7 +45,21 @@ class ClockinSerializer(serializers.ModelSerializer):
 
 class ClockinGetSerializer(serializers.ModelSerializer):
     shift = shift_serializer.ShiftGetSmallSerializer()
+    employee = employee_serializer.EmployeeGetSmallSerializer()
 
     class Meta:
         model = Clockin
         exclude = ()
+        
+
+class ClockinPayrollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clockin
+        exclude = ()
+        
+    def validate(self, data):
+        
+        if 'started_at' not in data and 'ended_at' not in data:
+            raise serializers.ValidationError("You need to specify the started or ended time")
+                
+        return data

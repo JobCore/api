@@ -308,6 +308,7 @@ CLOCKIN_STATUS = (
     (PENDING, 'Pending'),
     (PAID, 'Paid')
 )  
+
 class Clockin(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)

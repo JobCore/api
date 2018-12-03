@@ -36,6 +36,7 @@ urlpatterns = [
     path('employees', views.EmployeeView.as_view(), name="get-employees"),
     path('employees/<int:id>', views.EmployeeView.as_view(), name="id-employees"),
     path('employees/<int:id>/applications', views.EmployeeApplicationsView.as_view(), name="employee-applications"),
+    path('employees/<int:id>/payroll', views.PayrollView.as_view(), name="employee-payroll"),
     path('employees/<int:employee_id>/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/availability/<int:availability_id>', views.AvailabilityBlockView.as_view(), name="id-availability"),
     path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
@@ -60,7 +61,7 @@ urlpatterns = [
     path('ratings/<int:user_id>', views.RateView.as_view(), name="get-single-ratings"),
     
     path('clockins/', views.ClockinsView.as_view(), name="all-clockins"),
-    path('clockins/<int:employee_id>', views.ClockinsView.as_view(), name="me-employees"),
+    path('clockins/<int:clockin_id>', views.ClockinsView.as_view(), name="me-employees"),
     path('payroll', views.PayrollView.as_view(), name="all-payroll"),
     # path('image/<str:image_name>', views.ImageView.as_view())
     
