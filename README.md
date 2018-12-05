@@ -74,6 +74,12 @@
     $ python manage.py runserver $IP:$PORT
     ```
     
+    
+### Lod fixtures (if needed)
+```python
+python manage.py loaddata api/fixtures/*.yaml
+```
+
 ### Extra useful stuff
 
 Find static files:

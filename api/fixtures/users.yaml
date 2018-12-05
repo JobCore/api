@@ -1,0 +1,70 @@
+- model: auth.User
+  pk: 1
+  fields:
+    first_name: Ramon
+    last_name: Peralta
+    email: aalejo+peralta@gmail.com
+    username: aalejo+peralta@gmail.com
+    password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
+- model: api.employer
+  pk: 1
+  fields:
+    title: "Fetes and Events"
+    website: "https://fetesevents.com"
+    bio: "Catering company in Coral Gables"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.profile
+  pk: 1
+  fields:
+    user: 1
+    employer: 1
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+
+- model: auth.User
+  pk: 2
+  fields:
+    first_name: John
+    last_name: Lennon
+    email: aalejo+lennon@gmail.com
+    username: aalejo+lennon@gmail.com
+    password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
+- model: api.employee
+  pk: 2
+  fields:
+    user: 2
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.profile
+  pk: 2
+  fields:
+    employee: 2
+    user: 2
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+
+
+- model: auth.User
+  pk: 3
+  fields:
+    first_name: Paul
+    last_name: McCartney
+    email: aalejo+mccartney@gmail.com
+    username: aalejo+mccartney@gmail.com
+    password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
+- model: api.employee
+  pk: 3
+  fields:
+    user: 3
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.profile
+  pk: 3
+  fields:
+    user: 3
+    employee: 3
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"

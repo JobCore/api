@@ -43,12 +43,14 @@ urlpatterns = [
     path('favlists', views.FavListView.as_view(), name="get-favlists"),
     path('favlists/<int:id>', views.FavListView.as_view(), name="id-favlists"),
     path('favlists/employee/<int:employee_id>', views.FavListEmployeeView.as_view(), name="id-favlists"),
+    
     path('shifts/invites', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/invites/<int:id>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
     path('shifts/<int:id>/candidates', views.ShiftCandidatesView.as_view(), name="update-shift-candidates"),
     path('shifts/<int:id>/employees', views.ShiftCandidatesView.as_view(), name="update-shift-employees"),
     path('shifts', views.ShiftView.as_view(), name="get-shifts"),
     path('shifts/<int:id>', views.ShiftView.as_view(), name="id-shifts"),
+    
     path('badges', views.BadgeView.as_view(), name="get-badges"),
     path('badges/<int:id>', views.BadgeView.as_view(), name="id-badges"),
     path('profiles', views.ProfileView.as_view(), name="get-profiles"),
@@ -57,8 +59,9 @@ urlpatterns = [
     path('venues/<int:id>', views.VenueView.as_view(), name="id-venues"),
     path('positions', views.PositionView.as_view(), name="get-positions"),
     path('positions/<int:id>', views.PositionView.as_view(), name="id-positions"),
+    
     path('ratings', views.RateView.as_view(), name="get-ratings"),
-    path('ratings/<int:user_id>', views.RateView.as_view(), name="get-single-ratings"),
+    path('ratings/<int:id>', views.RateView.as_view(), name="single-ratings"),
     
     path('clockins/', views.ClockinsView.as_view(), name="all-clockins"),
     path('clockins/<int:clockin_id>', views.ClockinsView.as_view(), name="me-employees"),

@@ -1,0 +1,70 @@
+- model: api.venue
+  pk: 1
+  fields:
+    title: "The Club of Knights"
+    street_address: "270 Catalonia, Coral Gables"
+    country: "US"
+    latitude: 25.744526
+    longitude: -80.260033
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.position
+  pk: 1
+  fields:
+    title: "Server"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.position
+  pk: 2
+  fields:
+    title: "Kitchen Assistant"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.position
+  pk: 3
+  fields:
+    title: "Floor Manager"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+    
+    
+- model: api.Shift
+  pk: 1
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    starting_at: "2018-09-13T19:45:00Z"
+    ending_at: "2018-09-13T23:45:00Z"
+    
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+    
+- model: api.Shift
+  pk: 2
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    starting_at: "2018-09-10T19:45:00Z"
+    ending_at: "2018-09-10T23:45:00Z"
+    
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+    
+- model: api.Shift
+  pk: 3
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    starting_at: "2018-09-05T19:45:00Z"
+    ending_at: "2018-09-05T23:45:00Z"
+    
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"

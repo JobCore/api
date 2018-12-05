@@ -598,56 +598,6 @@ class EmployeeMeShiftView(APIView, CustomPagination):
         serializer = shift_serializer.ShiftSerializer(shifts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class PayrollView(APIView, CustomPagination):
-    def get(self, request):
-
-            clockins = Clockin.objects.all()#.filter(status__in = ('EXPIRED', 'OPEN'), ending_at_lte=TODAY)
-            
-            payrolDic = {}
-            for clockin in clockins:
-                clockinSerialized = clockin_serializer.ClockinGetSerializer(clockin)
-                if str(clockin.employee.id) in payrolDic:
-                    payrolDic[str(clockin.employee.id)]["clockins"].append(clockinSerialized.data)
-                else:
-                    employeeSerialized = employee_serializer.EmployeeGetSmallSerializer(clockin.employee)
-                    payrolDic[str(clockin.employee.id)] = {
-                        "clockins": [clockinSerialized.data],
-                        "talent": employeeSerialized.data
-                    }
-            
-            payrol = []
-            for key, value in payrolDic.items():
-                payrol.append(value)
-                
-            return Response(payrol, status=status.HTTP_200_OK)
-    
-    def put(self, request, id):
-        
-        if (request.user.profile.employer == None):
-            raise ValidationError("You don't seem to be an employer")
-        
-        try:
-            emp = Employee.objects.get(id=id)
-        except Employee.DoesNotExist:
-            return Response({ "detail": "The employee was not found"},status=status.HTTP_404_NOT_FOUND)
-        
-        some = False
-        for clockin in request.data:
-            some = True
-            try:
-                old_clockin = Clockin.objects.get(id=clockin["id"])
-                serializer = clockin_serializer.ClockinPayrollSerializer(old_clockin, data=clockin)
-            except Clockin.DoesNotExist:
-                serializer = clockin_serializer.ClockinPayrollSerializer(data=clockin)
-                
-            if not serializer.is_valid():
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        if some:   
-            serializer.save()
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
 class ShiftView(APIView, CustomPagination):
     def get(self, request, id=False):
         if (id):
@@ -676,6 +626,10 @@ class ShiftView(APIView, CustomPagination):
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
                 shifts = shifts.filter(starting_at__gte=TODAY)
+            
+            qUnrated = request.GET.get('unrated')
+            if qUnrated == 'true':
+                shifts = shifts.filter(rate_set=None)
                 
             if request.user.profile.employer is None:
                 shifts = shifts.filter(employees__in = (request.user.profile.id,))
@@ -1022,10 +976,10 @@ class ShiftMeInviteView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RateView(APIView):
-    def get(self, request, user_id=False):
-        if (user_id):
+    def get(self, request, id=False):
+        if (id):
             try:
-                rate = Rate.objects.get(id=user_id)
+                rate = Rate.objects.get(id=id)
             except Rate.DoesNotExist:
                 return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
@@ -1227,3 +1181,69 @@ class ClockinsMeView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+class PayrollView(APIView, CustomPagination):
+    def get(self, request):
+
+        clockins = Clockin.objects.all()
+
+        qStatus = request.GET.get('status')
+        if qStatus is not None:
+            clockins = Clockin.objects.filter(status = qStatus)
+        
+        qShift = request.GET.get('shift')
+        if qShift is not None and qShift is not '':
+            clockins = clockins.filter(shift=qShift)
+        else:    
+            qEnded_at = request.GET.get('ending_at')
+            if qEnded_at is not None and qEnded_at is not '':
+                clockins = clockins.filter(ended_at__lte=qEnded_at)
+    
+            qStarted_at = request.GET.get('starting_at')
+            if qStarted_at is not None and qStarted_at is not '':
+                clockins = clockins.filter(started_at__gte=qStarted_at)
+            
+        payrolDic = {}
+        for clockin in clockins:
+            clockinSerialized = clockin_serializer.ClockinGetSerializer(clockin)
+            if str(clockin.employee.id) in payrolDic:
+                payrolDic[str(clockin.employee.id)]["clockins"].append(clockinSerialized.data)
+            else:
+                employeeSerialized = employee_serializer.EmployeeGetSmallSerializer(clockin.employee)
+                payrolDic[str(clockin.employee.id)] = {
+                    "clockins": [clockinSerialized.data],
+                    "talent": employeeSerialized.data
+                }
+        
+        payrol = []
+        for key, value in payrolDic.items():
+            payrol.append(value)
+            
+        return Response(payrol, status=status.HTTP_200_OK)
+    
+    def put(self, request, id):
+        
+        if (request.user.profile.employer == None):
+            raise ValidationError("You don't seem to be an employer")
+        
+        try:
+            emp = Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            return Response({ "detail": "The employee was not found"},status=status.HTTP_404_NOT_FOUND)
+        
+        _serializers = []
+        for clockin in request.data:
+            try:
+                old_clockin = Clockin.objects.get(id=clockin["id"])
+                serializer = clockin_serializer.ClockinPayrollSerializer(old_clockin, data=clockin)
+            except Clockin.DoesNotExist:
+                serializer = clockin_serializer.ClockinPayrollSerializer(data=clockin)
+                
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            _serializers.append(serializer)
+        
+        for serializer in _serializers:   
+            serializer.save()
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
