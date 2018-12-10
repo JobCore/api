@@ -37,6 +37,7 @@
     user: 2
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
+    badges: [1,2]
 - model: api.profile
   pk: 2
   fields:
@@ -59,6 +60,7 @@
   pk: 3
   fields:
     user: 3
+    badges: [3,4]
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
 - model: api.profile

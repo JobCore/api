@@ -1,7 +1,10 @@
-
-from api.serializers import profile_serializer, employer_serializer
-from api.models import User, Employee, JobCoreInvite, Employer
+from api.models import User, JobCoreInvite, Profile
 from rest_framework import serializers
+
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('picture','id', 'bio')
 
 class UserGetTinySerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,7 +12,7 @@ class UserGetTinySerializer(serializers.ModelSerializer):
         fields = ('first_name','last_name', 'email')
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
-    profile = profile_serializer.ProfileGetSmallSerializer(many=False)
+    profile = ProfileGetSmallSerializer(many=False)
     
     class Meta:
         model = User
@@ -37,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required=False, write_only=True)
     username = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
-    profile = profile_serializer.ProfileSerializer()
+    profile = ProfileGetSmallSerializer(read_only=True)
 
     class Meta:
         model = User

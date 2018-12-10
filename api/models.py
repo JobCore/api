@@ -181,7 +181,6 @@ class Shift(models.Model):
         default=ANYONE,
         blank=True)
     maximum_allowed_employees = models.IntegerField(default=0, blank=True)
-    #maximum_checkin_delay_minutes = models.IntegerField(default=30, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=0, blank=True)
     minimum_allowed_rating = models.DecimalField(
@@ -207,6 +206,14 @@ class Shift(models.Model):
         Employee, blank=True, related_name="shift_accepted_employees", through='ShiftEmployee')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    
+    # if this option is None, the talent will be able to checkout anytime he wants
+    # by default, he can only checkout within 15 min of the starting time (before or after)
+    maximum_clockin_delta_minutes = models.IntegerField(blank=True, default=15, null=True)
+    
+    # if this option is None, the talent will be able to checkout anytome, by default the application will
+    # auto checkout after 15 min
+    maximum_clockout_delay_minutes = models.IntegerField(blank=True, default=15, null=True)  # in minutes
 
     def __str__(self):
         return "{} at {} on {}".format(self.position, self.venue, self.starting_at)
@@ -216,6 +223,8 @@ class ShiftEmployee(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     success = models.BooleanField(default=True)
     comments = models.TextField(max_length=450, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
         
 class ShiftApplication(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
@@ -270,6 +279,7 @@ class Rate(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, null=True)
+    comments = models.TextField()
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -315,8 +325,10 @@ class Clockin(models.Model):
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
-    latitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
-    longitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    latitude_in = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    longitude_in = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    latitude_out = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    longitude_out = models.DecimalField(max_digits=14, decimal_places=11, default=0)
     ended_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)

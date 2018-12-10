@@ -60,6 +60,46 @@ class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         exclude = ()
+        
+    def validate(self, data):
+
+        current_user = self.context['request'].user;
+        data["sender"] = current_user.profile
+
+        if 'shift' not in data:
+            raise serializers.ValidationError('You need to speficy the shift related to this rating')
+            
+        # if it is an employee
+        if(current_user.profile.employee != None):
+            if 'employee' in data:
+                raise serializers.ValidationError('Only employers can rate talents')
+                
+            try:
+                rate = Rate.objects.get(shift=data["shift"].id, employer=data["employer"].id)
+                raise serializers.ValidationError("You have already rated this employer for this shift")
+            except Rate.DoesNotExist:
+                pass
+            except Rate.MultipleObjectsReturned:
+                raise serializers.ValidationError("You have already rated this talent for this shift")
+                
+        # if it is an employer
+        elif(current_user.profile.employer != None):
+            if 'employer' in data:
+                raise serializers.ValidationError('Only talents can rate employers')
+            
+            if data["shift"].employer.id != current_user.profile.employer.id:
+                raise serializers.ValidationError('As an employer, you can only rate talents that have work on your own shifts')
+                
+            try:
+                rate = Rate.objects.get(shift=data["shift"].id, employee=data["employee"].id)
+                raise serializers.ValidationError("You have already rated this talent for this shift")
+            except Rate.DoesNotExist:
+                pass
+            except Rate.MultipleObjectsReturned:
+                raise serializers.ValidationError("You have already rated this talent for this shift")
+                
+        
+        return data
 
 class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:

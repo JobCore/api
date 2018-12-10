@@ -1,24 +1,42 @@
-from api.serializers import user_serializer, other_serializer, favlist_serializer
+from api.serializers import other_serializer, favlist_serializer
 from rest_framework import serializers
-from api.models import Employee
+from api.models import Employee, Profile, User
 
+#
+# NESTED
+#
+
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('picture', 'bio')
+
+class UserGetSmallSerializer(serializers.ModelSerializer):
+    profile = ProfileGetSmallSerializer(many=False)
+    
+    class Meta:
+        model = User
+        fields = ('first_name','last_name', 'email', 'profile')
+
+#
+# MAIN
+#
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         exclude = ()
         
 class EmployeeGetSmallSerializer(serializers.ModelSerializer):
-    user = user_serializer.UserGetSmallSerializer(many=False)
+    user = UserGetSmallSerializer(many=False)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     class Meta:
         model = Employee
         exclude = ()
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
-    badges = other_serializer.BadgeSerializer(many=True)
     positions = other_serializer.PositionSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
-    user = user_serializer.UserGetSmallSerializer(many=False)
+    user = UserGetSmallSerializer(many=False)
 
     class Meta:
         model = Employee
@@ -50,8 +68,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return data
 
 class EmployeeSettingsSerializer(serializers.ModelSerializer):
-    #favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
-    
     class Meta:
         model = Employee
         exclude = ()

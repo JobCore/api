@@ -493,6 +493,15 @@ class ProfileMeView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class EmployeeMeRatingsView(APIView):
+    def get(self, request):
+        if request.user.profile == None:
+            raise PermissionDenied("You dont seem to have a profile")
+            
+        ratings = Rate.objects.filter(employee=request.user.profile.id)
+        serializer = other_serializer.RateSerializer(ratings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class FavListView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -640,7 +649,7 @@ class ShiftView(APIView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        
+
         if(request.user.profile.employer == None):
             raise ValidationError('This user doesn\'t seem to be an employer, only employers can create shifts.')
         
@@ -993,20 +1002,24 @@ class RateView(APIView):
                 rates = rates.filter(employee__id=qEmployee)
             elif qEmployer:
                 rates = rates.filter(employee__id=qEmployer)
+            
+            qShift = request.GET.get('shift')
+            if qShift:
+                rates = rates.filter(shift__id=qShift)
                 
             serializer = other_serializer.RateSerializer(rates, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = other_serializer.RateSerializer(data=request.data)
+
+        serializer = other_serializer.RateSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
-            invites.append(serializer.data)
         else:
-            return Response(validators.error_object('Error saving rating'), status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response(invites, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         try:

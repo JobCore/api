@@ -1,6 +1,21 @@
-from api.serializers import other_serializer
 from rest_framework import serializers
-from api.models import Employer
+from api.models import Employer, Badge
+
+
+#
+# NESTED
+#
+class BadgeGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ('title', 'image_url')
+
+
+
+
+#
+# MAIN
+#
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,7 +23,7 @@ class EmployerGetSmallSerializer(serializers.ModelSerializer):
         exclude = ()
         
 class EmployerGetSerializer(serializers.ModelSerializer):
-    badges = other_serializer.BadgeSerializer(many=True)
+    badges = BadgeGetSmallSerializer(many=True)
 
     class Meta:
         model = Employer

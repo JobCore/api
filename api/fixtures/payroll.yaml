@@ -3,8 +3,10 @@
   fields:
     employee: 2
     shift: 1
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-13T20:20:00Z"
     ended_at: "2018-09-13T23:45:00Z"
@@ -17,8 +19,10 @@
   fields:
     employee: 2
     shift: 2
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-10T20:20:00Z"
     ended_at: "2018-09-10T23:45:00Z"
@@ -30,8 +34,10 @@
   fields:
     employee: 2
     shift: 3
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-05T20:20:00Z"
     ended_at: "2018-09-05T23:45:00Z"
@@ -47,8 +53,10 @@
   fields:
     employee: 3
     shift: 1
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-13T20:10:00Z"
     ended_at: "2018-09-13T23:35:00Z"
@@ -61,8 +69,10 @@
   fields:
     employee: 3
     shift: 2
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-10T20:15:00Z"
     ended_at: "2018-09-10T23:55:00Z"
@@ -74,8 +84,10 @@
   fields:
     employee: 3
     shift: 3
-    latitude: 25.744526
-    longitude: -80.260033
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
     status: "PENDING"
     started_at: "2018-09-05T20:10:00Z"
     ended_at: "2018-09-05T23:47:00Z"

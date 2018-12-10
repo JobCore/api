@@ -76,6 +76,7 @@ urlpatterns = [
     path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
     #path('clockins/me', views.PaymentMeView.as_view(), name="me-employees"),
     path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
+    path('employees/me/ratings', views.EmployeeMeRatingsView.as_view(), name="me-employees-ratings"),
     path('employees/me/devices', views.DeviceMeView.as_view(), name="me-all-device"),
     path('employees/me/devices/<str:device_id>', views.DeviceMeView.as_view(), name="me-device"),
     path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),

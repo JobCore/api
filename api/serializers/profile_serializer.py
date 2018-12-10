@@ -1,10 +1,29 @@
 from rest_framework import serializers
-from api.models import Profile, User
+from api.models import Profile, User, Employer, Employee, Badge
+
+class BadgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ('id', 'title')
+        
+class EmployeeGetTinySerializer(serializers.ModelSerializer):
+    badges = BadgeSerializer(many=True)
+    class Meta:
+        model = Employee
+        exclude = ()
+        
+class EmployerGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employer
+        exclude = ()
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name','last_name', 'email', 'profile')
+        fields = ('first_name','last_name', 'email')
+
+
+
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,6 +32,8 @@ class ProfileGetSmallSerializer(serializers.ModelSerializer):
         
 class ProfileGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer()
+    employer = EmployerGetSmallSerializer()
+    employee = EmployeeGetTinySerializer()
 
     class Meta:
         model = Profile

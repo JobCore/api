@@ -35,6 +35,8 @@
     position: 1
     employer: 1
     status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 11
     starting_at: "2018-09-13T19:45:00Z"
     ending_at: "2018-09-13T23:45:00Z"
     
@@ -49,6 +51,8 @@
     position: 1
     employer: 1
     status: "OPEN"
+    maximum_allowed_employees: 3
+    minimum_hourly_rate: 18
     starting_at: "2018-09-10T19:45:00Z"
     ending_at: "2018-09-10T23:45:00Z"
     
@@ -63,8 +67,50 @@
     position: 1
     employer: 1
     status: "OPEN"
+    maximum_allowed_employees: 1
+    minimum_hourly_rate: 15
     starting_at: "2018-09-05T19:45:00Z"
     ending_at: "2018-09-05T23:45:00Z"
     
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.ShiftEmployee
+  pk: 1
+  fields:
+    shift: 1
+    employee: 2
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.ShiftEmployee
+  pk: 2
+  fields:
+    shift: 1
+    employee: 3
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.ShiftApplication
+  pk: 3
+  fields:
+    shift: 2
+    employee: 2
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.ShiftApplication
+  pk: 4
+  fields:
+    shift: 2
+    employee: 3
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.ShiftApplication
+  pk: 5
+  fields:
+    shift: 3
+    employee: 3
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"

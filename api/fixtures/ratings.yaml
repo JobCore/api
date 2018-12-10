@@ -2,7 +2,7 @@
   pk: 1
   fields:
     sender: 1
-    employee: 1
+    employee: 2
     shift: 1
     rating: 4.3
     created_at: "2018-09-13T19:45:00Z"
@@ -12,7 +12,7 @@
   pk: 2
   fields:
     sender: 1
-    employee: 2
+    employee: 3
     shift: 2
     rating: 5
     created_at: "2018-09-13T19:45:00Z"
