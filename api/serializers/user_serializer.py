@@ -4,7 +4,7 @@ from rest_framework import serializers
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture','id', 'bio')
+        fields = ('picture','id', 'bio', 'employer', 'employee')
 
 class UserGetTinySerializer(serializers.ModelSerializer):
     class Meta:
