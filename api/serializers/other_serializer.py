@@ -70,7 +70,7 @@ class RateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('You need to speficy the shift related to this rating')
             
         # if it is an employee
-        if(current_user.profile.employee != None):
+        if current_user.profile.employee != None:
             if 'employee' in data:
                 raise serializers.ValidationError('Only employers can rate talents')
                 
@@ -83,7 +83,7 @@ class RateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You have already rated this talent for this shift")
                 
         # if it is an employer
-        elif(current_user.profile.employer != None):
+        elif current_user.profile.employer != None:
             if 'employer' in data:
                 raise serializers.ValidationError('Only talents can rate employers')
             
@@ -100,6 +100,27 @@ class RateSerializer(serializers.ModelSerializer):
                 
         
         return data
+        
+    def create(self, validated_data):
+
+        rate = Rate(**validated_data)
+        rate.save()
+        
+        if rate.employee != None:
+            rate.employee.rating = ((rate.employee.total_ratings * rate.employee.total_ratings) + rate.rating) / (rate.employee.total_ratings+1)
+            rate.employee.total_ratings += 1
+            rate.employee.save()
+            
+        if rate.employer != None:
+            rate.employer.rating = ((rate.employer.total_ratings * rate.employer.total_ratings) + rate.rating) / (rate.employer.total_ratings+1)
+            rate.employer.total_ratings += 1
+            rate.employer.save()
+            
+        
+        # TODO: notify new rating to whomever cares (employer or employee)
+        # notifier.notify_jobcore_invite(invite)
+        
+        return rate
 
 class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:
