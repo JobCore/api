@@ -73,6 +73,7 @@ urlpatterns = [
     #
     
     path('profiles/me', views.ProfileMeView.as_view(), name="me-profiles"),
+    path('profiles/me/image', views.ProfileMeImageView.as_view(), name="me-profiles-image"),
     path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
     #path('clockins/me', views.PaymentMeView.as_view(), name="me-employees"),
     path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),

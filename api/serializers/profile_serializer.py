@@ -62,7 +62,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         Check that the latitud does not have more than 8 digits
         """
         return round(value, 6)
-    
+        
     # def validate(self, validated_data):
         
     #     print("34534534")

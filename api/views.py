@@ -36,6 +36,10 @@ import logging
 logger = logging.getLogger(__name__)
 from api.utils.email import get_template_content
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 class EmailView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, slug):
@@ -484,7 +488,7 @@ class ProfileMeView(APIView):
         if "longitude" in request.data:
             request.data["longitude"] = round(request.data["longitude"], 6) 
         
-        serializer = profile_serializer.ProfileSerializer(profile, data=request.data, partial=True)
+        serializer = profile_serializer.ProfileSerializer(profile, data=request.data, context={"request": request}, partial=True)
         userSerializer = user_serializer.UserUpdateSerializer(profile.user, data=request.data, partial=True)
         if serializer.is_valid() and userSerializer.is_valid():
             serializer.save()
@@ -492,6 +496,54 @@ class ProfileMeView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileMeImageView(APIView):
+    def get(self, request):
+        if request.user.profile == None:
+            raise PermissionDenied("You dont seem to have a profile")
+            
+        try:
+            profile = Profile.objects.get(id=request.user.profile.id)
+        except Profile.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = profile_serializer.ProfileGetSerializer(profile, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # No POST request needed
+    # as Profiles are created automatically along with User register
+
+    def put(self, request):
+        if request.user.profile == None:
+            raise PermissionDenied("You dont seem to have a profile")
+            
+        try:
+            profile = Profile.objects.get(id=request.user.profile.id)
+        except Profile.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        
+        
+        result = cloudinary.uploader.upload(
+            request.FILES['image'],      
+            public_id = 'profile'+str(request.user.profile.id), 
+            crop = 'limit',
+            width = 450,
+            height = 450,
+            eager = [
+                { 
+                    'width': 200, 'height': 200, 
+                    'crop': 'thumb', 'gravity': 'face',
+                    'radius': 100
+                },
+            ],                                     
+            tags = ['profile_picture']
+        )
+        
+        profile.picture = result['secure_url']
+        profile.save()
+        serializer = profile_serializer.ProfileSerializer(profile)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class EmployeeMeRatingsView(APIView):
     def get(self, request):

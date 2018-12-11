@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'corsheaders',
     'api',
+    'cloudinary'
 ]
 
 LOGIN_URL = '/admin'

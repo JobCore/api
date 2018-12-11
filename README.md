@@ -98,3 +98,12 @@ heroku run python manage.py shell
 
 ## Deploy
 git push heroku master
+
+
+
+### Packages i don;t know if I should install
+```
+distribute==0.6.27
+poster==0.8.1
+wsgiref==0.1.2
+```
