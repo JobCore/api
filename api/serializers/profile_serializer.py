@@ -28,7 +28,7 @@ class UserGetSmallSerializer(serializers.ModelSerializer):
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture','id', 'bio')
+        fields = ('picture','id', 'bio', 'status')
         
 class ProfileGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer()
