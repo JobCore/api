@@ -18,7 +18,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             else:
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
-                    raise serializers.ValidationError("You need to be 100mt near "+data["shift"].venue.title+" to clock in or out")
+                    raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock in or out and right now your are at "+distance+" miles")
                     
             # previous clockin opened
             clockins = Clockin.objects.filter(ended_at=None, employee=data["employee"])

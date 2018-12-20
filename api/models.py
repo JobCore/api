@@ -294,7 +294,6 @@ class FCMDevice(models.Model):
     def __str__(self):
         return self.user.username
 
-
 class Notification(models.Model):
     user = models.ForeignKey(User, related_name='notifications', on_delete=models.CASCADE, blank=True, null=True)
     title = models.TextField()
@@ -313,13 +312,10 @@ class Notification(models.Model):
 
 APPROVED = 'APPROVED'
 PENDING = 'PENDING'
-PAID = 'PAID'
 CLOCKIN_STATUS = (
     (APPROVED, 'Approved'),
     (PENDING, 'Pending'),
-    (PAID, 'Paid')
 )  
-
 class Clockin(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
@@ -336,3 +332,48 @@ class Clockin(models.Model):
         max_length=9,
         choices=CLOCKIN_STATUS,
         default=PENDING)
+        
+        
+        
+# PENDING = 'PENDING'
+# PAID = 'PAID'
+# PAYMENT_STATUS = (
+#     (PENDING, 'Pending'),
+#     (PAID, 'Paid')
+# )
+# class Payment(models.Model):
+#     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+#     regular_hours = models.DecimalField(
+#         max_digits=3, decimal_places=1, default=0, blank=True)
+#     over_time = models.DecimalField(
+#         max_digits=3, decimal_places=1, default=0, blank=True)
+#     hourly_rate = models.DecimalField(
+#         max_digits=3, decimal_places=1, default=0, blank=True)
+#     total_amount = models.DecimalField(
+#         max_digits=3, decimal_places=1, default=0, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, editable=False)
+#     updated_at = models.DateTimeField(auto_now=True, editable=False)
+#     status = models.CharField(
+#         max_length=9,
+#         choices=PAYMENT_STATUS,
+#         default=PENDING)
+        
+        
+        
+# PENDING = 'PENDING'
+# PAID = 'PAID'
+# PAYROLL_STATUS = (
+#     (PENDING, 'Pending'),
+#     (PAID, 'Paid')
+# )  
+# class Payroll(models.Model):
+#     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+#     author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
+#     started_at = models.DateTimeField(blank=True)
+#     ended_at = models.DateTimeField(blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, editable=False)
+#     updated_at = models.DateTimeField(auto_now=True, editable=False)
+#     status = models.CharField(
+#         max_length=9,
+#         choices=PAYROLL_STATUS,
+#         default=PENDING)
