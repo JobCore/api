@@ -20,7 +20,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             else:
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
-                    raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock in or out and right now your are at "+str(distance)+" miles")
+                    raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock in and right now your are at "+str(distance)+" miles")
                     
             # previous clockin opened
             clockins = Clockin.objects.filter(ended_at=None, employee=data["employee"])
@@ -38,12 +38,15 @@ class ClockinSerializer(serializers.ModelSerializer):
             else:
                 distance = haversine(data['latitude_out'], data['longitude_out'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
-                    raise serializers.ValidationError("You need to be 100mt near "+data["shift"].venue.title+" to clock in or out")
-                    
+                    raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock out and right now your are at "+str(distance)+" miles")
+        elif 'ended_at' in request.data:
+
             try:
-                clockin = Clockin.objects.get(shift=data["shift"], employee=data["employee"])
+                clockin = Clockin.objects.get(shift=data["shift"], employee=data["employee"], ended_at=None)
             except Clockin.DoesNotExist:
                 raise serializers.ValidationError("You have not clocked in yet or the shift does not exists")
+            except Clockin.MultipleObjectsReturned:
+                raise serializers.ValidationError("It seems there is more than one clockin without clockout for this shif")
                 
             if clockin.started_at == None:
                 raise serializers.ValidationError("You need to clock in first to this shift")

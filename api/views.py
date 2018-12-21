@@ -10,7 +10,6 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from api.pagination import CustomPagination
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 
 from api.utils.email import send_fcm
@@ -539,7 +538,18 @@ class EmployeeMeRatingsView(APIView):
         
         qShift = request.GET.get('shift')
         if qShift is not None:
+            try:
+                clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
+            except Clockin.DoesNotExist:
+                return Response(validators.error_object('This talent has not worked on this shift, no clockins have been found'), status=status.HTTP_400_BAD_REQUEST)
+            except Clockin.MultipleObjectsReturned:
+                pass
+            
             ratings = ratings.filter(shift=qShift)
+
+        qEmployer = request.GET.get('employer')
+        if qEmployer is not None:
+            ratings = ratings.filter(shift__employer=qEmployer)
         
         serializer = other_serializer.RateSerializer(ratings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -620,19 +630,19 @@ class EmployeeMeShiftView(APIView, CustomPagination):
     def get(self, request):
         
         if (request.user.profile.employee == None):
-            raise ValidationError("You don't seem to be an employee")
+            return Response(validators.error_object("You don't seem to be an employee"), status=status.HTTP_400_BAD_REQUEST)
             
         shifts = Shift.objects.all().order_by('starting_at')
         
         qStatus = request.GET.get('status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            raise ValidationError('Invalid status')
+            return Response(validators.error_object("Invalid status"), status=status.HTTP_400_BAD_REQUEST)
         elif qStatus:
             shifts = shifts.filter(status__in = qStatus.split(","))
         
         qStatus = request.GET.get('not_status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            raise ValidationError('Invalid status')
+            return Response(validators.error_object("Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
         elif qStatus:
             shifts = shifts.filter(~Q(status = qStatus))
         
@@ -664,13 +674,13 @@ class ShiftView(APIView, CustomPagination):
             
             qStatus = request.GET.get('status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-                raise ValidationError('Invalid status')
+                return Response(validators.error_object("Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
             elif qStatus:
                 shifts = shifts.filter(status__in = qStatus.split(","))
             
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-                raise ValidationError('Invalid status')
+                return Response(validators.error_object("Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
             elif qStatus:
                 shifts = shifts.filter(~Q(status = qStatus))
             
@@ -693,7 +703,7 @@ class ShiftView(APIView, CustomPagination):
     def post(self, request):
 
         if(request.user.profile.employer == None):
-            raise ValidationError('This user doesn\'t seem to be an employer, only employers can create shifts.')
+            return Response(validators.error_object("This user doesn't seem to be an employer, only employers can create shifts."), status=status.HTTP_400_BAD_REQUEST)
         
         request.data["employer"] = request.user.profile.employer.id
         serializer = shift_serializer.ShiftPostSerializer(data=request.data)
@@ -926,7 +936,7 @@ class ShiftInviteView(APIView):
                 if qEmployee_id:
                     invites = invites.filter(employer__id=qEmployee_id)
             elif (request.user.profile.employee == None):
-                raise ValidationError('This user doesn\'t seem to be an employee or employer')
+                return Response(validators.error_object("This user does not seem to be a talent or employer"), status=status.HTTP_400_BAD_REQUEST)
             else:
                 invites = invites.filter(employee__id=request.user.profile.employee.id)
             
@@ -950,7 +960,7 @@ class ShiftInviteView(APIView):
         elif action == 'reject':
             data={ "status": 'REJECTED' } 
         else:
-            raise ValidationError("You can either apply or reject an invite")
+            return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
 
         shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False)
         appSerializer = shift_serializer.ShiftApplicationSerializer(data={
@@ -1014,7 +1024,7 @@ class ShiftMeInviteView(APIView):
     def get(self, request, id=False):
         
         if (request.user.profile.employee == None):
-            raise ValidationError('You are not an employee or talent')
+            return Response(validators.error_object("You are not a talent or employee"), status=status.HTTP_400_BAD_REQUEST)
         
         invites = ShiftInvite.objects.filter(employee__id=request.user.profile.employee.id)
         
@@ -1205,7 +1215,7 @@ class ClockinsMeView(APIView):
     def get(self, request, id=False):
         
         if request.user.profile.employee == None:
-            raise ValidationError('You are not an employee')
+            return Response(validators.error_object("You are not a talent"), status=status.HTTP_400_BAD_REQUEST)
             
         clockins = Clockin.objects.filter(employee_id=request.user.profile.employee.id)
         
@@ -1234,11 +1244,11 @@ class ClockinsMeView(APIView):
                 clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"], ended_at=None)
                 serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
             except Clockin.DoesNotExist:
-                raise ValidationError("There is no previous clockin for this shift")
+                return Response(validators.error_object("There is no previous clockin for this shift"), status=status.HTTP_400_BAD_REQUEST)
             except Clockin.MultipleObjectsReturned:
-                raise ValidationError("It seems there is more than one clockin without clockout for this shift")
+                return Response(validators.error_object("It seems there is more than one clockin without clockout for this shif"), status=status.HTTP_400_BAD_REQUEST)
         else:
-            raise ValidationError("You need to specify started_at or ended_at")
+            return Response(validators.error_object("You need to specify started_at or ended_at"), status=status.HTTP_400_BAD_REQUEST)
             
         
         if serializer.is_valid():
@@ -1290,7 +1300,7 @@ class PayrollView(APIView, CustomPagination):
     def put(self, request, id):
         
         if (request.user.profile.employer == None):
-            raise ValidationError("You don't seem to be an employer")
+            return Response(validators.error_object("You don't seem to be an employer"), status=status.HTTP_400_BAD_REQUEST)
         
         try:
             emp = Employee.objects.get(id=id)
