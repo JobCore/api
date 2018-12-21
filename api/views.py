@@ -539,7 +539,7 @@ class EmployeeMeRatingsView(APIView):
         qShift = request.GET.get('shift')
         if qShift is not None:
             try:
-                clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
+                clockin = Clockin.objects.get(shift=qShift, employee=request.user.profile.id)
             except Clockin.DoesNotExist:
                 return Response(validators.error_object('This talent has not worked on this shift, no clockins have been found'), status=status.HTTP_400_BAD_REQUEST)
             except Clockin.MultipleObjectsReturned:
