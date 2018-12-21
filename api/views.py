@@ -1224,10 +1224,12 @@ class ClockinsMeView(APIView):
             
         request.data['employee'] = request.user.profile.employee.id
         
-        #checkin
-        if request.data['started_at'] is not None:
+        # checkin
+        if 'started_at' in request.data:
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
-        elif request.data['ended_at'] is not None:
+            
+        # checkout
+        elif 'ended_at' in request.data:
             try:
                 clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
                 serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
