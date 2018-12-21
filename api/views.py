@@ -1231,10 +1231,12 @@ class ClockinsMeView(APIView):
         # checkout
         elif 'ended_at' in request.data:
             try:
-                clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
+                clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"], ended_at=None)
                 serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
             except Clockin.DoesNotExist:
                 raise ValidationError("There is no previous clockin for this shift")
+            except Clockin.MultipleObjectsReturned:
+                raise ValidationError("It seems there is more than one clockin without clockout for this shift")
         else:
             raise ValidationError("You need to specify started_at or ended_at")
             
