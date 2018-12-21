@@ -534,12 +534,12 @@ class EmployeeMeRatingsView(APIView):
         if request.user.profile == None:
             raise PermissionDenied("You dont seem to have a profile")
             
-        ratings = Rate.objects.filter(employee=request.user.profile.id)
+        ratings = Rate.objects.filter(employee=request.user.profile.employee)
         
         qShift = request.GET.get('shift')
         if qShift is not None:
             try:
-                clockin = Clockin.objects.get(shift=qShift, employee=request.user.profile.id)
+                clockin = Clockin.objects.get(shift=qShift, employee=request.user.profile.employee)
             except Clockin.DoesNotExist:
                 return Response(validators.error_object('This talent has not worked on this shift, no clockins have been found'), status=status.HTTP_400_BAD_REQUEST)
             except Clockin.MultipleObjectsReturned:
