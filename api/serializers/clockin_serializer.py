@@ -11,6 +11,8 @@ class ClockinSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         
+        # @todo: you need to be part of the shift to be able to clockin or clockout
+        
         if 'started_at' in data:
             
             if 'latitude_in' not in data or 'longitude_in' not in data:
@@ -24,6 +26,11 @@ class ClockinSerializer(serializers.ModelSerializer):
             clockins = Clockin.objects.filter(ended_at=None, employee=data["employee"])
             if len(clockins) > 0:
                 raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")
+                
+            # previous clockin opened
+            # clockins = Clockin.objects.filter(ended_at=None, employee=data["employee"])
+            # if len(clockins) > 0:
+            #     raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")
 
         elif 'ended_at' in data:
             if 'latitude_out' not in data or 'longitude_out' not in data:
@@ -59,7 +66,6 @@ class ClockinGetSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ()
         
-
 class ClockinPayrollSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clockin

@@ -536,6 +536,11 @@ class EmployeeMeRatingsView(APIView):
             raise PermissionDenied("You dont seem to have a profile")
             
         ratings = Rate.objects.filter(employee=request.user.profile.id)
+        
+        qShift = request.GET.get('shift')
+        if qShift is not None:
+            ratings = ratings.filter(shift=qShift)
+        
         serializer = other_serializer.RateSerializer(ratings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1218,12 +1223,19 @@ class ClockinsMeView(APIView):
             raise PermissionDenied("You are not allowed to check in or out yourself")
             
         request.data['employee'] = request.user.profile.employee.id
-        try:
-            clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
-            serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
-        except Clockin.DoesNotExist:
+        
+        #checkin
+        if request.data['started_at'] is not None:
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
-            pass
+        elif request.data['ended_at'] is not None:
+            try:
+                clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"])
+                serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
+            except Clockin.DoesNotExist:
+                raise ValidationError("There is no previous clockin for this shift")
+        else:
+            raise ValidationError("You need to specify started_at or ended_at")
+            
         
         if serializer.is_valid():
             serializer.save()
