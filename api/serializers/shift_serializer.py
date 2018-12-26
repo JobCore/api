@@ -5,13 +5,40 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee, Position, Venue
+
+
+#
+# NESTED
+#
+
+class PositionGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = ('title', 'id')
+
+class EmployerGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = ('title', 'id')
+        
+class VenueGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
+        fields = ('title','id', 'latitude', 'longitude')
+
+
+#
+# MAIN
+#
 
 class ShiftSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
     # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
-    employer = employer_serializer.EmployerGetSmallSerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    venue = VenueGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
@@ -140,9 +167,9 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
-    venue = venue_serializer.VenueGetSmallSerializer(read_only=True)
-    position = other_serializer.PositionSerializer(read_only=True)
-    employer = employer_serializer.EmployerGetSerializer(read_only=True)
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
@@ -150,10 +177,10 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
         'rating','application_restriction','updated_at')
 
 class ShiftGetSerializer(serializers.ModelSerializer):
-    venue = venue_serializer.VenueSerializer(read_only=True)
-    position = other_serializer.PositionSerializer(read_only=True)
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
     candidates = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
-    employees = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
+    employees = EmployerGetSmallSerializer(many=True, read_only=True)
     required_badges = other_serializer.BadgeSerializer(many=True, read_only=True)
     allowed_from_list = favlist_serializer.FavoriteListGetSerializer(many=True, read_only=True)
 
@@ -232,7 +259,7 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
         return application
         
 class ApplicantGetSerializer(serializers.ModelSerializer):
-    employee = employee_serializer.EmployeeGetSerializer()
+    employee = EmployerGetSmallSerializer(read_only=True)
     shift = ShiftGetSerializer()
 
     class Meta:
@@ -240,8 +267,8 @@ class ApplicantGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class ApplicantGetSmallSerializer(serializers.ModelSerializer):
-    employee = employee_serializer.EmployeeGetSmallSerializer()
-    shift = ShiftGetSmallSerializer()
+    employee = EmployerGetSmallSerializer(read_only=True)
+    shift = ShiftGetSmallSerializer(read_only=True)
 
     class Meta:
         model = ShiftApplication
