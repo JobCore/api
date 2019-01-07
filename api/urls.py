@@ -93,9 +93,14 @@ urlpatterns = [
     # INTERNAL USE ONLY
     #
     
-    path('email/<str:slug>', views.EmailView.as_view()),
-    path('fmc', views.FMCView.as_view()),
-    # hooks
+    path('employees/<int:employee_id>/badges', views.EmployeeBadgesView.as_view(), name="id-employees"), #update the talent badges
+    path('email/<str:slug>', views.EmailView.as_view()), # test email
+    path('fmc', views.FMCView.as_view()), # test mobile notification
+    
+    
+    #
+    # HOOKS
+    #
     path('hook/delete_all_shifts', hooks.DeleteAllShifts.as_view()),
     path('hook/create_default_availablity_blocks', hooks.DefaultAvailabilityHook.as_view()),
 ]

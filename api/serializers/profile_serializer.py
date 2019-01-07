@@ -4,7 +4,7 @@ from api.models import Profile, User, Employer, Employee, Badge
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
-        fields = ('id', 'title')
+        fields = ('id', 'title','image_url')
         
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)

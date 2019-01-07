@@ -94,3 +94,19 @@
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
+    
+- model: api.Clockin
+  pk: 7
+  fields:
+    employee: 3
+    shift: 4
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    latitude_out: 25.744526
+    longitude_out: -80.260033
+    status: "PENDING"
+    started_at: "2018-09-09T20:10:00Z"
+    ended_at: "2018-09-10T00:47:00Z"
+
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"

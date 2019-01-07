@@ -237,6 +237,25 @@ class EmployeeView(APIView, CustomPagination):
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeBadgesView(APIView, CustomPagination):
+    def get(self, request, employee_id):
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = other_serializer.BadgeSerializer(employee.badges, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, employee_id = None):
+
+        request.data['employee'] = employee_id
+        serializer = other_serializer.EmployeeBadgeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class EmployeeMeView(APIView, CustomPagination):
     def get(self, request):
