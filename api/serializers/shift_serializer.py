@@ -194,11 +194,34 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         model = ShiftInvite
         exclude = ()
         
+    def validate(self, data):
+
+        data = super(ShiftInviteSerializer, self).validate(data)
+        
+        current_user = self.context['request'].user;
+        # if it is a talent rating an employer
+        if current_user.profile.employer == None:
+            raise serializers.ValidationError('Only employers can invite talents')
+                
+        employees = ShiftEmployee.objects.filter(shift=data["shift"], employee=data['employee'])
+        if(len(employees) > 0):
+            raise serializers.ValidationError('This talent is already working on this shift')
+        
+        return data
+        
     def create(self, validated_data):
         
-        # TODO: send email message not working
-        invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
-        invite.save()
+        try:
+            #if there is already an invite, i just update it
+            invite = ShiftInvite.objects.get(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+            invite.status = 'PENDING'
+            invite.save()
+            print('Invite updated')
+        except ShiftInvite.DoesNotExist:
+            #or i create a new one
+            invite = ShiftInvite(sender=validated_data['sender'], shift=validated_data['shift'], employee=validated_data['employee'])
+            invite.save()
+            print('Invite created')
         
         # TODO: send email message not working
         notifier.notify_single_shift_invite(invite)

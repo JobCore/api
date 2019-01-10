@@ -1,0 +1,6 @@
+Hello {{ EMAIL }}
+
+{{ SENDER }} has rated you the shift that you worked at {{ VENUE }} on {{ DATE }}, click here to review it
+{{ LINK }}
+
+The JobCore Team

@@ -77,7 +77,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                 raise serializers.ValidationError(msg)
 
         else:
-            msg = 'Account with this email/username does not exists'
+            msg = 'Account with this email does not exists'
             raise serializers.ValidationError(msg)
             
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -125,7 +125,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         try:
                 
             if account_type == 'employer':
-                Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employer=employer)
+                Profile.objects.create(user=user, picture='', employer=employer)
                 user.profile.save()
             
             elif account_type == 'employee':
@@ -135,7 +135,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 # availably all week by default
                 employee_actions.create_default_availablity(emp)
                 
-                profile = Profile.objects.create(user=user, picture=STATIC_URL+'positions/chef.svg', employee=emp)
+                profile = Profile.objects.create(user=user, picture='', employee=emp)
                 user.profile.save()
             
             notifier.notify_email_validation(user)

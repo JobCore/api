@@ -2,8 +2,7 @@ from django.urls import include, path
 from django.contrib.auth.views import PasswordResetConfirmView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
-from api import views
-from api import hooks
+from api.views import admin_views, general_views, employer_views, employee_views, hooks
 
 app_name = "api"
 
@@ -15,87 +14,99 @@ urlpatterns = [
     
     path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),
-    path('user/password/reset', views.PasswordView.as_view(), name="password-reset-email"),
-    path('user/email/validate', views.ValidateEmailView.as_view(), name="validate-email"),
-    path('user/<int:id>', views.UserView.as_view(), name="id-user"),
-    path('user/register', views.UserRegisterView.as_view(), name="register"),
-    path('user/<int:user_id>/employees', views.EmployeeView.as_view(), name="create-employees"),
+    path('user/password/reset',general_views.PasswordView.as_view(), name="password-reset-email"),
+    path('user/email/validate',general_views.ValidateEmailView.as_view(), name="validate-email"),
+    path('user/<int:id>',general_views.UserView.as_view(), name="id-user"),
+    path('user/register',general_views.UserRegisterView.as_view(), name="register"),
+    path('user/<int:user_id>/employees',general_views.EmployeeView.as_view(), name="create-employees"),
+
+    #
+    # FOR EVERYONE LOGGED IN
+    #
+    
+    path('profiles/me',general_views.ProfileMeView.as_view(), name="me-profiles"),
+    path('profiles/me/image',general_views.ProfileMeImageView.as_view(), name="me-profiles-image"),
+    
+    path('jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
+    path('jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
+    
+    path('catalog/<str:catalog_type>',general_views.CatalogView.as_view(), name="get-catalog"),
+    path('employers',general_views.EmployerView.as_view(), name="get-employers"),
+    path('employers/<int:id>',general_views.EmployerView.as_view(), name="id-employers"),
+    path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
+    path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
+    path('employees/<int:id>/applications',general_views.EmployeeApplicationsView.as_view(), name="employee-applications"),
+    path('employees/<int:id>/payroll',general_views.PayrollShiftsView.as_view(), name="employee-payroll"),
+    path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
+    path('favlists',general_views.FavListView.as_view(), name="get-favlists"),
+    path('favlists/<int:id>',general_views.FavListView.as_view(), name="id-favlists"),
+    path('favlists/employee/<int:employee_id>',general_views.FavListEmployeeView.as_view(), name="id-favlists"),
+    
+    path('shifts/<int:id>/candidates',general_views.ShiftCandidatesView.as_view(), name="update-shift-candidates"),
+    path('shifts/<int:id>/employees',general_views.ShiftCandidatesView.as_view(), name="update-shift-employees"),
+    path('shifts',general_views.ShiftView.as_view(), name="get-shifts"),
+    path('shifts/<int:id>',general_views.ShiftView.as_view(), name="id-shifts"),
+    
+    path('badges',general_views.BadgeView.as_view(), name="get-badges"),
+    path('badges/<int:id>',general_views.BadgeView.as_view(), name="id-badges"),
+    path('profiles',general_views.ProfileView.as_view(), name="get-profiles"),
+    path('profiles/<int:id>',general_views.ProfileView.as_view(), name="id-profiles"),
+    path('venues',general_views.VenueView.as_view(), name="get-venues"),
+    path('venues/<int:id>',general_views.VenueView.as_view(), name="id-venues"),
+    path('positions',general_views.PositionView.as_view(), name="get-positions"),
+    path('positions/<int:id>',general_views.PositionView.as_view(), name="id-positions"),
+    
+    path('ratings',general_views.RateView.as_view(), name="get-ratings"),
+    path('ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
+    
+    path('clockins/',general_views.ClockinsView.as_view(), name="all-clockins"),
+    path('clockins/<int:clockin_id>',general_views.ClockinsView.as_view(), name="me-employees"),
+    path('payroll',general_views.PayrollShiftsView.as_view(), name="all-payroll"),
+    path('employer/<int:employer_id>/payroll_projection',general_views.ProjectedPaymentsView.as_view(), name="employer-payroll-projection"),
+    
+    # path('image/<str:image_name>',general_views.ImageView.as_view())
+    
     
     #
     # FOR THE EMPLOYER
     #
     
-    path('jobcore-invites', views.JobCoreInviteView.as_view(), name="get-jcinvites"),
-    path('jobcore-invites/<int:id>', views.JobCoreInviteView.as_view(), name="id-jcinvites"),
-    path('applications', views.ApplicantsView.as_view(), name="get-applicants"),
-    path('applications/<int:application_id>', views.ApplicantsView.as_view(), name="get-applicants"),
-    path('catalog/<str:catalog_type>', views.CatalogView.as_view(), name="get-catalog"),
-    path('employers/users', views.EmployerUsersView.as_view(), name="get-employers"),
-    path('employers', views.EmployerView.as_view(), name="get-employers"),
-    path('employers/<int:id>', views.EmployerView.as_view(), name="id-employers"),
-    path('employees', views.EmployeeView.as_view(), name="get-employees"),
-    path('employees/<int:id>', views.EmployeeView.as_view(), name="id-employees"),
-    path('employees/<int:id>/applications', views.EmployeeApplicationsView.as_view(), name="employee-applications"),
-    path('employees/<int:id>/payroll', views.PayrollView.as_view(), name="employee-payroll"),
-    path('employees/<int:employee_id>/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
-    path('employees/availability/<int:availability_id>', views.AvailabilityBlockView.as_view(), name="id-availability"),
-    path('employees/<int:id>/shifts', views.ShiftView.as_view(), name="employees-shifts"),
-    path('favlists', views.FavListView.as_view(), name="get-favlists"),
-    path('favlists/<int:id>', views.FavListView.as_view(), name="id-favlists"),
-    path('favlists/employee/<int:employee_id>', views.FavListEmployeeView.as_view(), name="id-favlists"),
-    
-    path('shifts/invites', views.ShiftInviteView.as_view(), name="get-jobinvites"),
-    path('shifts/invites/<int:id>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
-    path('shifts/<int:id>/candidates', views.ShiftCandidatesView.as_view(), name="update-shift-candidates"),
-    path('shifts/<int:id>/employees', views.ShiftCandidatesView.as_view(), name="update-shift-employees"),
-    path('shifts', views.ShiftView.as_view(), name="get-shifts"),
-    path('shifts/<int:id>', views.ShiftView.as_view(), name="id-shifts"),
-    
-    path('badges', views.BadgeView.as_view(), name="get-badges"),
-    path('badges/<int:id>', views.BadgeView.as_view(), name="id-badges"),
-    path('profiles', views.ProfileView.as_view(), name="get-profiles"),
-    path('profiles/<int:id>', views.ProfileView.as_view(), name="id-profiles"),
-    path('venues', views.VenueView.as_view(), name="get-venues"),
-    path('venues/<int:id>', views.VenueView.as_view(), name="id-venues"),
-    path('positions', views.PositionView.as_view(), name="get-positions"),
-    path('positions/<int:id>', views.PositionView.as_view(), name="id-positions"),
-    
-    path('ratings', views.RateView.as_view(), name="get-ratings"),
-    path('ratings/<int:id>', views.RateView.as_view(), name="single-ratings"),
-    
-    path('clockins/', views.ClockinsView.as_view(), name="all-clockins"),
-    path('clockins/<int:clockin_id>', views.ClockinsView.as_view(), name="me-employees"),
-    path('payroll', views.PayrollView.as_view(), name="all-payroll"),
-    # path('image/<str:image_name>', views.ImageView.as_view())
+    path('employers/me/periods', employer_views.EmployerPayrollPeriodView.as_view(), name="employer-periods"),
+    path('employers/me/users',employer_views.EmployerMeUsersView.as_view(), name="get-employer-users"),
+    path('employers/me/periods/<int:period_id>',employer_views.EmployerPayrollPeriodView.as_view(), name="employer-single-periods"),
+    path('employers/me/applications',employer_views.ApplicantsView.as_view(), name="get-applicants"),
+    path('employers/me/applications/<int:application_id>',employer_views.ApplicantsView.as_view(), name="get-applicants"),
+    path('employers/me/shifts/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
+    path('employers/me/shifts/invites/<int:id>',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
     
     #
     # FOR THE TALENT
     #
     
-    path('profiles/me', views.ProfileMeView.as_view(), name="me-profiles"),
-    path('profiles/me/image', views.ProfileMeImageView.as_view(), name="me-profiles-image"),
-    path('employees/me', views.EmployeeMeView.as_view(), name="me-employees"),
-    #path('clockins/me', views.PaymentMeView.as_view(), name="me-employees"),
-    path('employees/me/shifts', views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
-    path('employees/me/ratings', views.EmployeeMeRatingsView.as_view(), name="me-employees-ratings"),
-    path('employees/me/devices', views.DeviceMeView.as_view(), name="me-all-device"),
-    path('employees/me/devices/<str:device_id>', views.DeviceMeView.as_view(), name="me-device"),
-    path('employees/me/shifts/invites', views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
-    path('employees/me/clockins', views.ClockinsMeView.as_view(), name="me-employees"),
-    path('employees/me/clockins/<str:clockin_id>', views.ClockinsMeView.as_view(), name="me-employees"),
-    path('employees/me/applications', views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
-    path('employees/me/availability', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
-    path('employees/me/availability/<int:block_id>', views.AvailabilityBlockView.as_view(), name="employee-unavailability"),
-    path('shifts/invites/<int:id>/<str:action>', views.ShiftInviteView.as_view(), name="get-jobinvites"),
-    #path('employees/me/profiles', views.ProfileView.as_view(), name="get-profiles"),
+    path('employees/me',employee_views.EmployeeMeView.as_view(), name="me-employees"),
+    #path('clockins/me',general_views.PaymentMeView.as_view(), name="me-employees"),
+    path('employees/me/shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
+    path('employees/me/shifts/invites/<int:id>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
+    path('employees/me/shifts',employee_views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
+    path('employees/me/ratings',employee_views.EmployeeMeRatingsView.as_view(), name="me-employees-ratings"),
+    path('employees/me/devices',employee_views.EmployeeDeviceMeView.as_view(), name="me-all-device"),
+    path('employees/me/devices/<str:device_id>',employee_views.EmployeeDeviceMeView.as_view(), name="me-device"),
+    path('employees/me/shifts/invites',employee_views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
+    path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
+    path('employees/me/clockins/<str:clockin_id>',employee_views.ClockinsMeView.as_view(), name="me-employees"),
+    path('employees/me/applications',employee_views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
+    path('employees/me/availability',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
+    path('employees/me/availability/<int:block_id>',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
+    path('shifts/invites/<int:id>/<str:action>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     
     #
-    # INTERNAL USE ONLY
+    # ADMIN USE ONLY
     #
-    
-    path('employees/<int:employee_id>/badges', views.EmployeeBadgesView.as_view(), name="id-employees"), #update the talent badges
-    path('email/<str:slug>', views.EmailView.as_view()), # test email
-    path('fmc', views.FMCView.as_view()), # test mobile notification
+    path('employees/<int:employee_id>/badges', admin_views.EmployeeBadgesView.as_view(), name="id-employees"), #update the talent badges
+    path('periods', admin_views.PayrollPeriodView.as_view(), name="get-periods"),
+    path('periods/<int:period_id>', admin_views.PayrollPeriodView.as_view(), name="get-periods"),
+    path('email/<str:slug>', admin_views.EmailView.as_view()), # test email
+    path('fmc', admin_views.FMCView.as_view()), # test mobile notification
     
     
     #
@@ -103,4 +114,10 @@ urlpatterns = [
     #
     path('hook/delete_all_shifts', hooks.DeleteAllShifts.as_view()),
     path('hook/create_default_availablity_blocks', hooks.DefaultAvailabilityHook.as_view()),
+    
+    #
+    # CRONJOBS 
+    #
+    
+    path('employer/<int:employer_id>/generate_periods', admin_views.GeneratePeriodsView.as_view(), name="employer-payment"), # every hour, will generate payment periods
 ]

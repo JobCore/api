@@ -6,6 +6,9 @@ from django.contrib.postgres.fields import JSONField
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 
+NOW = timezone.now()
+MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
+
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
@@ -24,6 +27,12 @@ class Badge(models.Model):
     def __str__(self):
         return self.title
 
+DAYS = 'DAYS'
+MONTHS = 'MONTHS'
+PAYROLL_LENGTH_TYPE = (
+    (DAYS, 'Days'),
+    (MONTHS, 'Months'),
+)
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     website = models.CharField(max_length=30, blank=True)
@@ -34,6 +43,24 @@ class Employer(models.Model):
     automatically_accept_from_favlists = models.BooleanField(default=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
+    
+    # the company can configure how it wants the payroll period
+    payroll_period_starting_time = models.DateTimeField(blank=True, default=MIDNIGHT) #12:00am GMT
+    payroll_period_length = models.IntegerField(blank=True, default=7)
+    payroll_period_type = models.CharField(
+        max_length=25,
+        choices=PAYROLL_LENGTH_TYPE,
+        default=DAYS,
+        blank=True)
+        
+    # if this option is None, the talent will be able to checkout anytime he wants
+    # by default, he can only checkout within 15 min of the starting time (before or after)
+    maximum_clockin_delta_minutes = models.IntegerField(blank=True, default=None, null=True)
+    
+    # if this option is None, the talent will be able to checkout anytome, by default the application will
+    # auto checkout after 15 min
+    maximum_clockout_delay_minutes = models.IntegerField(blank=True, default=None, null=True)  # in minutes
+    
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -333,47 +360,55 @@ class Clockin(models.Model):
         choices=CLOCKIN_STATUS,
         default=PENDING)
         
+FINALIZED = 'FINALIZED'
+OPEN = 'OPEN'
+PERIOD_STATUS = (
+    (PENDING, 'Finalized'),
+    (OPEN, 'Open')
+)
+class PayrollPeriod(models.Model):
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+    length = models.IntegerField(blank=True, default=7)
+    length_type = models.CharField(
+        max_length=25,
+        choices=PAYROLL_LENGTH_TYPE,
+        default=DAYS,
+        blank=True)
+    status = models.CharField(
+        max_length=9,
+        choices=PERIOD_STATUS,
+        default=OPEN)
+    
+    starting_at = models.DateTimeField(blank=False)
+    ending_at = models.DateTimeField(blank=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    
+PENDING = 'PENDING'
+PAID = 'PAID'
+PAYMENT_STATUS = (
+    (PENDING, 'Pending'),
+    (PAID, 'Paid')
+)
+class PayrollPeriodPayment(models.Model):
+    paryroll_period = models.ForeignKey(PayrollPeriod, related_name='payments', on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
+    splited_payment = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=9,
+        choices=PAYMENT_STATUS,
+        default=PENDING)
         
-        
-# PENDING = 'PENDING'
-# PAID = 'PAID'
-# PAYMENT_STATUS = (
-#     (PENDING, 'Pending'),
-#     (PAID, 'Paid')
-# )
-# class Payment(models.Model):
-#     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
-#     regular_hours = models.DecimalField(
-#         max_digits=3, decimal_places=1, default=0, blank=True)
-#     over_time = models.DecimalField(
-#         max_digits=3, decimal_places=1, default=0, blank=True)
-#     hourly_rate = models.DecimalField(
-#         max_digits=3, decimal_places=1, default=0, blank=True)
-#     total_amount = models.DecimalField(
-#         max_digits=3, decimal_places=1, default=0, blank=True)
-#     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-#     updated_at = models.DateTimeField(auto_now=True, editable=False)
-#     status = models.CharField(
-#         max_length=9,
-#         choices=PAYMENT_STATUS,
-#         default=PENDING)
-        
-        
-        
-# PENDING = 'PENDING'
-# PAID = 'PAID'
-# PAYROLL_STATUS = (
-#     (PENDING, 'Pending'),
-#     (PAID, 'Paid')
-# )  
-# class Payroll(models.Model):
-#     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
-#     author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
-#     started_at = models.DateTimeField(blank=True)
-#     ended_at = models.DateTimeField(blank=True)
-#     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-#     updated_at = models.DateTimeField(auto_now=True, editable=False)
-#     status = models.CharField(
-#         max_length=9,
-#         choices=PAYROLL_STATUS,
-#         default=PENDING)
+    regular_hours = models.DecimalField(
+        max_digits=3, decimal_places=1, default=0, blank=True)
+    over_time = models.DecimalField(
+        max_digits=3, decimal_places=1, default=0, blank=True)
+    hourly_rate = models.DecimalField(
+        max_digits=3, decimal_places=1, default=0, blank=True)
+    total_amount = models.DecimalField(
+        max_digits=3, decimal_places=1, default=0, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)

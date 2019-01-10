@@ -1,5 +1,8 @@
 from math import radians, cos, sin, asin, sqrt
 
+from django.utils.timezone import is_aware, make_aware
+from django.utils.dateparse import parse_datetime
+
 def custom_index(array, compare_function):
     for i, v in enumerate(array):
         if compare_function(v):
@@ -28,3 +31,9 @@ def haversine(lat1, lon1, lat2, lon2):
     # Radius of earth in kilometers is 6371
     km = 6371* c
     return km
+    
+def get_aware_datetime(date_str):
+    ret = parse_datetime(date_str)
+    if not is_aware(ret):
+        ret = make_aware(ret)
+    return ret
