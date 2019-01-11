@@ -111,6 +111,7 @@ urlpatterns = [
     # This endpoints have to be changed on the all
     path('applications/<int:application_id>',general_views.SingleApplicantView.as_view(), name="get-single-applicantion"),#this one will be replaced with employees/me/applications/id
     path('shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="old-get-jobinvites"), #this one will be replaced with employees/me/shifts/invites
+    path('shifts/invites/<int:id>',employee_views.EmployeeShiftInviteView.as_view(), name="get-emploje-jobinvites"),
     
     #
     # ADMIN USE ONLY
