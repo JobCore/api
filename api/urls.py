@@ -99,6 +99,9 @@ urlpatterns = [
     path('employees/me/availability/<int:block_id>',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('shifts/invites/<int:id>/<str:action>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     
+    #This endpoints have to be changed on the all
+    path('shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="old-get-jobinvites"), #this one will be replaced with employees/me/shifts/invites
+    
     #
     # ADMIN USE ONLY
     #
