@@ -276,10 +276,7 @@ class EmployeeShiftInviteView(EmployeeView):
         except ShiftInvite.DoesNotExist:
             return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
         
-        data = {
-            "invite": invite,
-            "employee": self.employee
-        }
+        data = {}
         if action == 'apply':
             data["status"] = 'APPLIED'
         elif action == 'reject':
@@ -287,7 +284,7 @@ class EmployeeShiftInviteView(EmployeeView):
         else:
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
 
-        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request})
+        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request })
         appSerializer = shift_serializer.ShiftApplicationSerializer(data={
             "shift": invite.shift.id,
             "invite": invite.id,
