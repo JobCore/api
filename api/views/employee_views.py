@@ -180,6 +180,7 @@ class ClockinsMeView(EmployeeView):
         print("ClockinsMeView ...")
         # checkin
         if 'started_at' in request.data:
+            print("Es un clocking ...")
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
             
         # checkout
@@ -194,9 +195,11 @@ class ClockinsMeView(EmployeeView):
         else:
             return Response(validators.error_object("You need to specify started_at or ended_at"), status=status.HTTP_400_BAD_REQUEST)
             
-        
+        print("Validando ...")
         if serializer.is_valid():
+            print("si es valido ...")
             serializer.save()
+            print("Guardado ...")
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
