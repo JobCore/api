@@ -20,6 +20,12 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         fields = ('id','position', 'employer','minimum_hourly_rate','starting_at','ending_at')
+        
+class RatingGetSerializer(serializers.ModelSerializer):
+    shift = ShiftGetSmallSerializer(read_only=True)
+    class Meta:
+        model = Rate
+        exclude = ()
 
 
 class PositionSerializer(serializers.ModelSerializer):
