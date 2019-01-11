@@ -342,3 +342,4 @@ class EmployeeDeviceMeView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except FCMDevice.DoesNotExist:
             return Response(validators.error_object('Device not found'), status=status.HTTP_404_NOT_FOUND)
+            

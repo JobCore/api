@@ -182,3 +182,218 @@ class EmployerPayrollPeriodView(EmployerView):
             serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+class EmployerVenueView(EmployerView):
+    def get(self, request, id=False):
+        self.validate_employer(request)
+        if (id):
+            try:
+                venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+            except Venue.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = venue_serializer.VenueSerializer(venue, many=False)
+        else:
+            venues = Venue.objects.filter(employer__id=self.employer.id)
+            serializer = venue_serializer.VenueSerializer(venues, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        self.validate_employer(request)
+        
+        request.data['employer'] = self.employer.id
+        serializer = venue_serializer.VenueSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+        except Venue.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = venue_serializer.VenueSerializer(venue, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+        except Venue.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        venue.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+class FavListView(EmployerView):
+    def get(self, request, id=False):
+        self.validate_employer(request)
+        
+        if (id):
+            try:
+                favList = FavoriteList.objects.get(id=id, employer__id = self.employer.id)
+            except FavoriteList.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = favlist_serializer.FavoriteListGetSerializer(favList, many=False)
+        else:
+            
+            favLists = FavoriteList.objects.all()
+            favLists = favLists.filter(employer__id=self.employer.id)
+            serializer = favlist_serializer.FavoriteListGetSerializer(favLists, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        self.validate_employer(request)
+        
+        request.data['employer'] = self.employer.id
+        serializer = favlist_serializer.FavoriteListSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            favList = FavoriteList.objects.get(id=id, employer__id = self.employer.id)
+        except FavoriteList.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = favlist_serializer.FavoriteListSerializer(favList, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            
+            serializedFavlist = favlist_serializer.FavoriteListGetSerializer(favList)
+            return Response(serializedFavlist.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            favList = favlist_serializer.FavoriteList.objects.get(id=id, employer__id = self.employer.id)
+        except FavoriteList.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        favList.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+class FavListEmployeeView(EmployerView):
+    def put(self, request, employee_id):
+        self.validate_employer(request)
+
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = employee_serializer.EmployeeSerializer(employee, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class EmployerShiftView(EmployerView, CustomPagination):
+    def get(self, request, id=False):
+        self.validate_employer(request)
+        
+        if (id):
+            try:
+                shift = Shift.objects.get(id=id, employer__id=self.employer.id)
+            except Shift.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+        
+            shifts = Shift.objects.filter(employer__id=self.employer.id).order_by('starting_at')
+            
+            qStatus = request.GET.get('status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(validators.error_object("Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(status__in = qStatus.split(","))
+            
+            qStatus = request.GET.get('not_status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(validators.error_object("Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(~Q(status = qStatus))
+            
+            qUpcoming = request.GET.get('upcoming')
+            if qUpcoming == 'true':
+                shifts = shifts.filter(starting_at__gte=TODAY)
+            
+            qUnrated = request.GET.get('unrated')
+            if qUnrated == 'true':
+                shifts = shifts.filter(rate_set=None)
+                
+            if request.user.profile.employer is None:
+                shifts = shifts.filter(employees__in = (request.user.profile.id,))
+            else:
+                shifts = shifts.filter(employer = request.user.profile.employer.id)
+            
+            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+    def post(self, request):
+        self.validate_employer(request)
+        
+        request.data["employer"] = self.employer.id
+        serializer = shift_serializer.ShiftPostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            shift = Shift.objects.get(id=id, employer__id = self.employer.id)
+        except Shift.DoesNotExist:
+            return Response({ "detail": "This shift was not found"},status=status.HTTP_404_NOT_FOUND)
+        serializer = shift_serializer.ShiftSerializer(shift, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        self.validate_employer(request)
+        
+        try:
+            shift = Shift.objects.get(id=id, employer__id = self.employer.id)
+        except Shift.DoesNotExist:
+            return Response({ "detail": "This shift was not found, talk to the employer for any more details about what happened."}, status=status.HTTP_404_NOT_FOUND)
+
+        shift.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployerShiftCandidatesView(EmployerView, CustomPagination):
+    def put(self, request, id):
+        try:
+            shift = Shift.objects.get(id=id)
+        except Shift.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = shift_serializer.ShiftCandidatesSerializer(shift, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        

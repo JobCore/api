@@ -160,6 +160,7 @@ class FavoriteList(models.Model):
 
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
