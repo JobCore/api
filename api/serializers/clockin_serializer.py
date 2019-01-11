@@ -11,7 +11,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         exclude = ()
         
     def validate(self, data):
-        
+        print("Start...")
         # @todo: you need to be part of the shift to be able to clockin or clockout
         
         if 'started_at' in data:
@@ -66,7 +66,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError("You need to specify the started or ended time")
-        
+        print("Last...")
         return data
 
 class ClockinGetSerializer(serializers.ModelSerializer):
