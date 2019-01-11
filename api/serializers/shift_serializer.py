@@ -219,7 +219,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         # if current_user.profile.employer == None:
         #     raise serializers.ValidationError('Only talents can invite talents')
                 
-        employees = ShiftEmployee.objects.filter(shift=data["invite"].shift, employee=data['employee'])
+        employees = ShiftEmployee.objects.filter(shift__id=data["invite"].shift.id, employee__id=data['employee'].id)
         if(len(employees) > 0):
             raise serializers.ValidationError('This talent is already working on this shift')
         
