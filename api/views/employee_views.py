@@ -180,14 +180,14 @@ class ClockinsMeView(EmployeeView):
         request.data['employee'] = self.employee.id
         # checkin
         if 'started_at' in request.data:
-            request.data['latitude_in'] = round(decimal.Decimal(request.data['latitude_in']), 11) if data['latitude_in'] else None
-            request.data['longitude_in'] = round(decimal.Decimal(request.data['longitude_in']), 11) if data['longitude_in'] else None
+            request.data['latitude_in'] = round(decimal.Decimal(request.data['latitude_in']), 11) if request.data['latitude_in'] else None
+            request.data['longitude_in'] = round(decimal.Decimal(request.data['longitude_in']), 11) if request.data['longitude_in'] else None
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
             
         # checkout
         elif 'ended_at' in request.data:
-            data['latitude_out'] = round(decimal.Decimal(data['latitude_out']), 11) if data['latitude_out'] else None
-            data['longitude_out'] = round(decimal.Decimal(data['longitude_out']), 11) if data['longitude_out'] else None
+            request.data['latitude_out'] = round(decimal.Decimal(request.data['latitude_out']), 11) if request.data['latitude_out'] else None
+            request.data['longitude_out'] = round(decimal.Decimal(request.data['longitude_out']), 11) if request.data['longitude_out'] else None
             try:
                 clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"], ended_at=None)
                 serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
