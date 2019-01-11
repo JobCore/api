@@ -12,15 +12,16 @@ class ClockinSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         # @todo: you need to be part of the shift to be able to clockin or clockout
-        
+        print("Empezando a validar...")
         if 'started_at' in data:
-            
+            print("Es un checkin...")    
             if 'latitude_in' not in data or 'longitude_in' not in data:
                 raise serializers.ValidationError("You need to specify latitude_in,longitude_in")
             else:
+                print("Llego estas latitudes..."+str(data['latitude_in'])+" - "+str(data['latitude_in']))   
                 data['latitude_in'] = round(decimal.Decimal(data['latitude_in']), 11)
                 data['longitude_in'] = round(decimal.Decimal(data['longitude_in']), 11)
-                raise serializers.ValidationError("log: "+str(data['latitude_in'])+ " - " + str(data['longitude_in']))
+                print("Se transformaron en esto..."+str(data['latitude_in'])+" - "+str(data['latitude_in']))   
                 
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
@@ -38,6 +39,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             #     raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")
 
         elif 'ended_at' in data:
+   
             if 'latitude_out' not in data or 'longitude_out' not in data:
                 raise serializers.ValidationError("You need to specify latitude_out,longitude_out")
             else:
@@ -60,12 +62,17 @@ class ClockinSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You need to clock in first to this shift")
             if clockin.ended_at != None:
                 raise serializers.ValidationError("You have already check out of this shift")
+                
+        print("Terminando la validacion...") 
         
         if 'started_at' in data and 'ended_at' in data:
             raise serializers.ValidationError("You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")
             
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError("You need to specify the started or ended time")
+            
+                
+        print("Fin del validate..") 
         return data
 
 class ClockinGetSerializer(serializers.ModelSerializer):
