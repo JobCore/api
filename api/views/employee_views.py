@@ -60,7 +60,7 @@ class EmployeeMeRatingsView(EmployeeView):
             try:
                 clockin = Clockin.objects.get(shift=qShift, employee__id=self.employee.id)
             except Clockin.DoesNotExist:
-                return Response(validators.error_object('This talent has not worked on this shift, no clockins have been found'), status=status.HTTP_400_BAD_REQUEST)
+                return return Response([], status=status.HTTP_200_OK)
             except Clockin.MultipleObjectsReturned:
                 pass
             
