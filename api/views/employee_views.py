@@ -276,10 +276,14 @@ class EmployeeShiftInviteView(EmployeeView):
         except ShiftInvite.DoesNotExist:
             return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
         
+        data = {
+            "invite": invite,
+            "employee": self.employee
+        }
         if action == 'apply':
-            data={ "status": 'APPLIED' } 
+            data["status"] = 'APPLIED'
         elif action == 'reject':
-            data={ "status": 'REJECTED' } 
+            data["status"] = 'REJECTED'
         else:
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
 
