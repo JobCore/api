@@ -11,7 +11,6 @@ class ClockinSerializer(serializers.ModelSerializer):
         exclude = ()
         
     def validate(self, data):
-        print("Start...")
         # @todo: you need to be part of the shift to be able to clockin or clockout
         
         if 'started_at' in data:
@@ -21,7 +20,9 @@ class ClockinSerializer(serializers.ModelSerializer):
             else:
                 data['latitude_in'] = round(decimal.Decimal(data['latitude_in']), 11)
                 data['longitude_in'] = round(decimal.Decimal(data['longitude_in']), 11)
-                print(data)
+                
+                raise serializers.ValidationError("log: "+str(data['latitude_in'])+ " - " + str(data['longitude_in']))
+                
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
                     raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock in and right now your are at "+str(distance)+" miles")
@@ -66,7 +67,6 @@ class ClockinSerializer(serializers.ModelSerializer):
             
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError("You need to specify the started or ended time")
-        print("Last...")
         return data
 
 class ClockinGetSerializer(serializers.ModelSerializer):
