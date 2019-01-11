@@ -178,16 +178,16 @@ class ClockinsMeView(EmployeeView):
     def post(self, request):
         self.validate_employee(request)
         request.data['employee'] = self.employee.id
-        print("ClockinsMeView ...")
         # checkin
         if 'started_at' in request.data:
-            print("Es un clocking ...")
-            request.data['latitude_in'] = round(decimal.Decimal(request.data['latitude_in']), 11)
-            request.data['longitude_in'] = round(decimal.Decimal(request.data['longitude_in']), 11)
+            request.data['latitude_in'] = round(decimal.Decimal(request.data['latitude_in']), 11) if data['latitude_in'] else None
+            request.data['longitude_in'] = round(decimal.Decimal(request.data['longitude_in']), 11) if data['longitude_in'] else None
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
             
         # checkout
         elif 'ended_at' in request.data:
+            data['latitude_out'] = round(decimal.Decimal(data['latitude_out']), 11) if data['latitude_out'] else None
+            data['longitude_out'] = round(decimal.Decimal(data['longitude_out']), 11) if data['longitude_out'] else None
             try:
                 clockin = Clockin.objects.get(shift=request.data["shift"], employee=request.data["employee"], ended_at=None)
                 serializer = clockin_serializer.ClockinSerializer(clockin, data=request.data, context={"request": request})
@@ -198,11 +198,8 @@ class ClockinsMeView(EmployeeView):
         else:
             return Response(validators.error_object("You need to specify started_at or ended_at"), status=status.HTTP_400_BAD_REQUEST)
             
-        print("Validando ...")
         if serializer.is_valid():
-            print("si es valido ...")
             serializer.save()
-            print("Guardado ...")
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
