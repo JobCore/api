@@ -229,7 +229,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
 
-        data = super(ShiftInviteSerializer, self).validate(data)
+        data = super(ShiftCreateInviteSerializer, self).validate(data)
         
         current_user = self.context['request'].user;
         # if it is a talent rating an employer
