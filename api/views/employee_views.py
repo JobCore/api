@@ -60,7 +60,7 @@ class EmployeeMeRatingsView(EmployeeView):
             try:
                 clockin = Clockin.objects.get(shift=qShift, employee__id=self.employee.id)
             except Clockin.DoesNotExist:
-                return return Response([], status=status.HTTP_200_OK)
+                return Response([], status=status.HTTP_200_OK)
             except Clockin.MultipleObjectsReturned:
                 pass
             
