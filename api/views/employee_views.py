@@ -283,7 +283,7 @@ class EmployeeShiftInviteView(EmployeeView):
         else:
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
 
-        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False)
+        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request})
         appSerializer = shift_serializer.ShiftApplicationSerializer(data={
             "shift": invite.shift.id,
             "invite": invite.id,
