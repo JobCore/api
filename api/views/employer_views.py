@@ -96,7 +96,7 @@ class ApplicantsView(EmployerView):
         
         return Response(status=status.HTTP_204_NO_CONTENT)
         
-class EmployerShiftInviteView(APIView):
+class EmployerShiftInviteView(EmployerView):
     def get(self, request, id=False):
         self.validate_employer(request)
         if (id):
@@ -163,7 +163,7 @@ class EmployerShiftInviteView(APIView):
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class EmployerPayrollPeriodView(APIView):
+class EmployerPayrollPeriodView(EmployerView):
     def get(self, request, period_id=None):
         self.validate_employer(request)
         
