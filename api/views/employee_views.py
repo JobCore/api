@@ -1,6 +1,7 @@
 import json
 import os
 import functools
+import decimal
 import operator
 from django.utils.dateparse import parse_datetime
 from django.http import HttpResponse
