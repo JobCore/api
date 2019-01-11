@@ -53,7 +53,7 @@ class EmployeeMeRatingsView(EmployerView):
     def get(self, request):
         self.validate_employee(request)
             
-        ratings = Rate.objects.filter(employee__id=self.employee)
+        ratings = Rate.objects.filter(employee__id=self.employee.id)
         
         qShift = request.GET.get('shift')
         if qShift is not None:
