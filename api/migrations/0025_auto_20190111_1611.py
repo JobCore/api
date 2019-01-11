@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='venue',
             name='employer',
-            field=models.ForeignKey(blank=True, default=1, on_delete=django.db.models.deletion.CASCADE, to='api.Employer'),
+            field=models.ForeignKey(blank=True, null=True, default=None, on_delete=django.db.models.deletion.CASCADE, to='api.Employer'),
             preserve_default=False,
         ),
         migrations.AlterField(
