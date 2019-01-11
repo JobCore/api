@@ -19,8 +19,9 @@ class ClockinSerializer(serializers.ModelSerializer):
             if 'latitude_in' not in data or 'longitude_in' not in data:
                 raise serializers.ValidationError("You need to specify latitude_in,longitude_in")
             else:
-                data['latitude_in'] = round(decimal.Decimal(data['latitude_in']), 13)
-                data['longitude_in'] = round(decimal.Decimal(data['longitude_in']), 13)
+                data['latitude_in'] = round(decimal.Decimal(data['latitude_in']), 11)
+                data['longitude_in'] = round(decimal.Decimal(data['longitude_in']), 11)
+                print(data)
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
                     raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock in and right now your are at "+str(distance)+" miles")
@@ -40,8 +41,9 @@ class ClockinSerializer(serializers.ModelSerializer):
             if 'latitude_out' not in data or 'longitude_out' not in data:
                 raise serializers.ValidationError("You need to specify latitude_out,longitude_out")
             else:
-                data['latitude_out'] = round(decimal.Decimal(data['latitude_out']), 13)
-                data['longitude_out'] = round(decimal.Decimal(data['longitude_out']), 13)
+                data['latitude_out'] = round(decimal.Decimal(data['latitude_out']), 11)
+                data['longitude_out'] = round(decimal.Decimal(data['longitude_out']), 11)
+                print(data)
                 distance = haversine(data['latitude_out'], data['longitude_out'], data["shift"].venue.latitude, data["shift"].venue.longitude)
                 if distance > 0.1: # 0.1 miles
                     raise serializers.ValidationError("You need to be 0.1 miles near "+data["shift"].venue.title+" to clock out and right now your are at "+str(distance)+" miles")
