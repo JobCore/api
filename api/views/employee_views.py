@@ -181,6 +181,8 @@ class ClockinsMeView(EmployeeView):
         # checkin
         if 'started_at' in request.data:
             print("Es un clocking ...")
+            request.data['latitude_in'] = round(decimal.Decimal(request.data['latitude_in']), 11)
+            request.data['longitude_in'] = round(decimal.Decimal(request.data['longitude_in']), 11)
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})
             
         # checkout
