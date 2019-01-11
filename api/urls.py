@@ -100,11 +100,13 @@ urlpatterns = [
     path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/clockins/<str:clockin_id>',employee_views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/applications',employee_views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
+    path('employees/me/applications/<int:application_id>',employee_views.EmployeeMeApplicationsView.as_view(), name="me-single-application"),
     path('employees/me/availability',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/me/availability/<int:block_id>',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('shifts/invites/<int:id>/<str:action>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     
-    #This endpoints have to be changed on the all
+    # This endpoints have to be changed on the all
+    path('applications/<int:application_id>',general_views.SingleApplicantView.as_view(), name="get-single-applicantion"),#this one will be replaced with employees/me/applications/id
     path('shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="old-get-jobinvites"), #this one will be replaced with employees/me/shifts/invites
     
     #

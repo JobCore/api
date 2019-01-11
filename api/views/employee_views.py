@@ -74,12 +74,19 @@ class EmployeeMeRatingsView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
         
 class EmployeeMeApplicationsView(EmployerView, CustomPagination):
-    def get(self, request, id=False):
+    def get(self, request, application_id=False):
         self.validate_employee(request)
-
-        applications = ShiftApplication.objects.all().filter(employee__id=self.employee.id).order_by('shift__starting_at')
         
-        serializer = shift_serializer.ApplicantGetSerializer(applications, many=True)
+        if(application_id):
+            try:
+                application = ShiftApplication.objects.get(id=application_id)
+            except ShiftApplication.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            serializer = shift_serializer.ApplicantGetSmallSerializer(application, many=False)
+        else:
+            applications = ShiftApplication.objects.all().filter(employee__id=self.employee.id).order_by('shift__starting_at')
+            serializer = shift_serializer.ApplicantGetSerializer(applications, many=True)
+            
         return Response(serializer.data, status=status.HTTP_200_OK)
         
 class EmployeeMeShiftView(EmployerView, CustomPagination):

@@ -811,3 +811,14 @@ class ShiftView(APIView, CustomPagination):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class SingleApplicantView(APIView):
+    def get(self, request, application_id):
+        try:
+            application = ShiftApplication.objects.get(id=application_id)
+        except ShiftApplication.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = shift_serializer.ApplicantGetSmallSerializer(application, many=False)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
