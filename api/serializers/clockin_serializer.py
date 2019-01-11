@@ -11,6 +11,11 @@ class ClockinSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         
+        data['latitude_in'] = round(data['latitude_in'], 14)
+        data['longitude_in'] = round(data['longitude_in'], 14)
+        data['longitude_out'] = round(data['longitude_out'], 14)
+        data['longitude_out'] = round(data['longitude_out'], 14)
+        
         # @todo: you need to be part of the shift to be able to clockin or clockout
         
         if 'started_at' in data:

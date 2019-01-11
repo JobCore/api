@@ -256,26 +256,15 @@ class EmployerView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, id):
-        try:
-            employer = Employer.objects.get(id=id)
-        except Employer.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = employer_serializer.EmployerSerializer(employer, data=request.data)
+        if request.user.profile.employer == None:
+            raise PermissionDenied("You don't seem to be an employer")
+            
+        serializer = employer_serializer.EmployerSerializer(request.user.profile.employer, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id):
-        try:
-            employer = Employer.objects.get(id=id)
-        except Employer.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        employer.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
+        
 class ProfileView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -723,7 +712,7 @@ class JobCoreInviteView(APIView):
             
         request.data['sender'] = request.user.profile.id
             
-        serializer = other_serializer.JobCoreInvitePostSerializer(data=request.data)
+        serializer = other_serializer.JobCoreInvitePostSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

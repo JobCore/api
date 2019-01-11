@@ -49,6 +49,14 @@ class EmployerView(APIView):
             raise PermissionDenied("You don't seem to be an employer")
         self.employer = request.user.profile.employer
         
+class EmployerMeView(EmployerView):
+    def get(self, request):
+        self.validate_employer(request)
+
+        serializer = employer_serializer.EmployerGetSerializer(request.user.profile.employer, many=False)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
 class EmployerMeUsersView(EmployerView):
     def get(self, request, id=False):
         self.validate_employer(request)

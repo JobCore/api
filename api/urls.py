@@ -24,6 +24,8 @@ urlpatterns = [
     # FOR EVERYONE LOGGED IN
     #
     
+    path('employers',general_views.EmployerView.as_view(), name="get-employers"),
+    path('employers/<int:id>',general_views.EmployerView.as_view(), name="id-employers"),
     path('profiles/me',general_views.ProfileMeView.as_view(), name="me-profiles"),
     path('profiles/me/image',general_views.ProfileMeImageView.as_view(), name="me-profiles-image"),
     path('jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
@@ -35,8 +37,6 @@ urlpatterns = [
     # @TODO: Classify endpoint permissions to employer, empoyee, admin, logged_in or public
     #
     
-    path('employers',general_views.EmployerView.as_view(), name="get-employers"),
-    path('employers/<int:id>',general_views.EmployerView.as_view(), name="id-employers"),
     path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
     path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
     path('employees/<int:id>/applications',general_views.EmployeeApplicationsView.as_view(), name="employee-applications"),
@@ -68,8 +68,11 @@ urlpatterns = [
     #
     
     path('employers/me/periods', employer_views.EmployerPayrollPeriodView.as_view(), name="employer-periods"),
+    path('employers/me', employer_views.EmployerMeView.as_view(), name="employer-me"),
     path('employers/me/users',employer_views.EmployerMeUsersView.as_view(), name="get-employer-users"),
     path('employers/me/periods/<int:period_id>',employer_views.EmployerPayrollPeriodView.as_view(), name="employer-single-periods"),
+    path('employers/me/jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
+    path('employers/me/jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
     path('employers/me/applications',employer_views.ApplicantsView.as_view(), name="get-applicants"),
     path('employers/me/applications/<int:application_id>',employer_views.ApplicantsView.as_view(), name="get-applicants"),
     path('employers/me/shifts/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),

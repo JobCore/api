@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
-from api.models import Badge, Position, JobCoreInvite, Rate, AvailabilityBlock, Employer, Shift, Employee, Clockin
+from api.models import Badge, Position, JobCoreInvite, Rate, AvailabilityBlock, Employer, Shift, Employee, Clockin,User
 
 class PositionSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -89,7 +89,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         exclude = ()
         
     def validate(self,data):
-        error = True;
+        error = True
         try:
             user = User.objects.get(email=data["email"])
             if(user): 
@@ -98,7 +98,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
             error = False
         
         try:
-            user = JobCoreInvite.objects.get(sender=self.context['request'].user.id, email=data["email"])
+            user = JobCoreInvite.objects.get(sender=self.context['request'].user.profile.id, email=data["email"])
             if(user):
                 raise ValidationError("User with this email has already been invited")
         

@@ -5,13 +5,23 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee, Position, Venue
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee, Position, Venue,User,Profile
 
 
 #
 # NESTED
 #
-
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('picture',)
+        
+class UserGetSerializer(serializers.ModelSerializer):
+    profile = ProfileGetSmallSerializer(read_only=True)
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name','profile')
+                  
 class PositionGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
@@ -21,6 +31,12 @@ class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = ('title', 'id')
+
+class EmployeeGetSmallSerializer(serializers.ModelSerializer):
+    user = UserGetSerializer(read_only=True)
+    class Meta:
+        model = Position
+        fields = ('user', 'id')
         
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -282,7 +298,7 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
         return application
         
 class ApplicantGetSerializer(serializers.ModelSerializer):
-    employee = EmployerGetSmallSerializer(read_only=True)
+    employee = EmployeeGetSmallSerializer(read_only=True)
     shift = ShiftGetSerializer()
 
     class Meta:
@@ -290,7 +306,7 @@ class ApplicantGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class ApplicantGetSmallSerializer(serializers.ModelSerializer):
-    employee = EmployerGetSmallSerializer(read_only=True)
+    employee = EmployeeGetSmallSerializer(read_only=True)
     shift = ShiftGetSmallSerializer(read_only=True)
 
     class Meta:

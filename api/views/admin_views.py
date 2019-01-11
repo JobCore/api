@@ -138,3 +138,39 @@ class GeneratePeriodsView(APIView):
         serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
+class AdminEmployerView(APIView):
+    def get(self, request, id=False):
+        if (id):
+            try:
+                employer = Employer.objects.get(id=id)
+            except Employer.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employer_serializer.EmployerGetSerializer(employer, many=False)
+        else:
+            employers = Employer.objects.all()
+            serializer = employer_serializer.EmployerGetSerializer(employers, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, id):
+        try:
+            employer = Employer.objects.get(id=id)
+        except Employer.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = employer_serializer.EmployerSerializer(employer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            employer = Employer.objects.get(id=id)
+        except Employer.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        employer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

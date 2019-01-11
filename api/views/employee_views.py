@@ -43,13 +43,13 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-class EmployerView(APIView):
+class EmployeeView(APIView):
     def validate_employee(self, request):
         if request.user.profile.employee == None:
             raise PermissionDenied("You don't seem to be a talent")
         self.employee = self.request.user.profile.employee
         
-class EmployeeMeRatingsView(EmployerView):
+class EmployeeMeRatingsView(EmployeeView):
     def get(self, request):
         self.validate_employee(request)
             
@@ -73,7 +73,7 @@ class EmployeeMeRatingsView(EmployerView):
         serializer = other_serializer.RatingGetSerializer(ratings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-class EmployeeMeApplicationsView(EmployerView, CustomPagination):
+class EmployeeMeApplicationsView(EmployeeView, CustomPagination):
     def get(self, request, application_id=False):
         self.validate_employee(request)
         
@@ -89,7 +89,7 @@ class EmployeeMeApplicationsView(EmployerView, CustomPagination):
             
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-class EmployeeMeShiftView(EmployerView, CustomPagination):
+class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request):
         self.validate_employee(request)
             
@@ -120,7 +120,7 @@ class EmployeeMeShiftView(EmployerView, CustomPagination):
         serializer = shift_serializer.ShiftSerializer(shifts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-class EmployeeMeView(EmployerView, CustomPagination):
+class EmployeeMeView(EmployeeView, CustomPagination):
     def get(self, request):
         self.validate_employee(request)
 
@@ -146,7 +146,7 @@ class EmployeeMeView(EmployerView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-class ShiftMeInviteView(EmployerView):
+class ShiftMeInviteView(EmployeeView):
     def get(self, request, id=False):
         self.validate_employee(request)
         
@@ -160,7 +160,7 @@ class ShiftMeInviteView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
             
-class ClockinsMeView(EmployerView):
+class ClockinsMeView(EmployeeView):
     def get(self, request, id=False):
         self.validate_employee(request)
         
@@ -202,7 +202,7 @@ class ClockinsMeView(EmployerView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-class EmployeeAvailabilityBlockView(EmployerView, CustomPagination):
+class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
 
     def get(self, request, employee_id=False):
         self.validate_employee(request)
@@ -247,7 +247,7 @@ class EmployeeAvailabilityBlockView(EmployerView, CustomPagination):
         unavailability_block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
         
-class EmployeeShiftInviteView(EmployerView):
+class EmployeeShiftInviteView(EmployeeView):
     def get(self, request, id=False):
         self.validate_employee(request)
         
@@ -300,7 +300,7 @@ class EmployeeShiftInviteView(EmployerView):
         else:
             return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class EmployeeDeviceMeView(APIView):
+class EmployeeDeviceMeView(EmployeeView):
     def get(self, request, device_id=None):
         
         if request.user is None:
