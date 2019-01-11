@@ -135,7 +135,7 @@ class EmployerShiftInviteView(EmployerView):
         # masive creation of shift invites
         if isinstance(request.data['shifts'],list):
             for s in request.data['shifts']:
-                serializer = shift_serializer.ShiftInviteSerializer(data={
+                serializer = shift_serializer.ShiftCreateInviteSerializer(data={
                     "employee": request.data['employee'],
                     "sender": request.user.profile.id,
                     "shift": s
@@ -147,7 +147,7 @@ class EmployerShiftInviteView(EmployerView):
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             # add new invite to the shift
-            serializer = shift_serializer.ShiftInviteSerializer(data={
+            serializer = shift_serializer.ShiftCreateInviteSerializer(data={
                     "employee": request.data['employee'],
                     "sender": request.user.profile.id,
                     "shift": request.data['shifts']

@@ -215,11 +215,28 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         data = super(ShiftInviteSerializer, self).validate(data)
         
         current_user = self.context['request'].user;
-        # # if it is a talent rating an employer
-        # if current_user.profile.employer == None:
-        #     raise serializers.ValidationError('Only talents can invite talents')
-                
         employees = ShiftEmployee.objects.filter(shift__id=self.instance.shift.id, employee__id=current_user.profile.employee.id)
+        if(len(employees) > 0):
+            raise serializers.ValidationError('This talent is already working on this shift')
+        
+        return data
+
+class ShiftCreateInviteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShiftInvite
+        exclude = ()
+        
+    def validate(self, data):
+
+        data = super(ShiftInviteSerializer, self).validate(data)
+        
+        current_user = self.context['request'].user;
+        # if it is a talent rating an employer
+        if current_user.profile.employer == None:
+            raise serializers.ValidationError('Only talents can invite talents')
+                
+        employees = ShiftEmployee.objects.filter(shift__id=data['shift'].id, employee__id=data['employee'].id)
         if(len(employees) > 0):
             raise serializers.ValidationError('This talent is already working on this shift')
         
@@ -282,6 +299,7 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
         #validate that the shift has not passed
         present = utc.localize(datetime.now())
         if(shift.starting_at < present):
+            # @TODO: if the shift has already passsed the invitation needs to be deleted
             raise serializers.ValidationError("This shift has already passed: "+shift.starting_at.strftime("%Y-%m-%d %H:%M:%S")+ " < "+present.strftime("%Y-%m-%d %H:%M:%S"))
             
         return data
