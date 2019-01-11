@@ -177,7 +177,7 @@ class ClockinsMeView(EmployeeView):
     def post(self, request):
         self.validate_employee(request)
         request.data['employee'] = self.employee.id
-        
+        print("ClockinsMeView ...")
         # checkin
         if 'started_at' in request.data:
             serializer = clockin_serializer.ClockinSerializer(data=request.data, context={"request": request})

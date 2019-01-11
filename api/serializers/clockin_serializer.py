@@ -20,7 +20,6 @@ class ClockinSerializer(serializers.ModelSerializer):
             else:
                 data['latitude_in'] = round(decimal.Decimal(data['latitude_in']), 11)
                 data['longitude_in'] = round(decimal.Decimal(data['longitude_in']), 11)
-                
                 raise serializers.ValidationError("log: "+str(data['latitude_in'])+ " - " + str(data['longitude_in']))
                 
                 distance = haversine(data['latitude_in'], data['longitude_in'], data["shift"].venue.latitude, data["shift"].venue.longitude)
