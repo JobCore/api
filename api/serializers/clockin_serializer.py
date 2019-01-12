@@ -29,7 +29,8 @@ class ClockinSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")
             
             try:
-                validate_clock_in(data["shift"].starting_at, data["shift"].ending_at, data["shift"].employer.maximum_clockin_delta_minutes)
+                clockins = Clockin.objects.filter(shift__id=data["shift"].id, employee__id=data["employee"].id)
+                validate_clock_in(data["shift"].starting_at, data["shift"].ending_at, data["shift"].employer.maximum_clockin_delta_minutes, is_first_clockin=(len(clockins) == 0))
             except ValueError as e:
                 raise serializers.ValidationError(str(e))
 
@@ -106,7 +107,7 @@ class ClockinPayrollSerializer(serializers.ModelSerializer):
 
 
     
-def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None):
+def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None, is_first_clockin=False):
     now = timezone.now()
     
     if now > ended_at:
@@ -118,12 +119,13 @@ def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None):
         return
     
     # Delta exists
-    delta = datetime.timedelta(minutes=maximum_clockin_delta_minutes)
-    if now < started_at - delta:
-       raise ValueError("You can't Clock In before the Shift starting time")
-           
-    if now > started_at + delta:
-        raise ValueError("You can't Clock In after the Shift starting time")
+    if is_first_clockin:
+        delta = datetime.timedelta(minutes=maximum_clockin_delta_minutes)
+        if now < started_at - delta:
+           raise ValueError("You can only clock in "+maximum_clockin_delta_minutes+" min before the Shift starting time")
+               
+        if now > started_at + delta:
+           raise ValueError("You can only clock in "+maximum_clockin_delta_minutes+" min after the Shift starting time")
 
 
 def validate_clock_out(clockin_object, maximum_clockout_delta_minutes=None):
