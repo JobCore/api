@@ -127,9 +127,9 @@ def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None):
 
 
 def validate_clock_out(clockin_object, maximum_clockout_delta_minutes=None):
-    if clockin.started_at == None:    
+    if clockin_objec.shift.started_at == None:    
        raise ValueError("You need to clock in first to this Shift")
-    if clockin.ended_at != None:
+    if clockin_object.shift.ended_at != None:
         raise ValueErrorr("You have already clock out of this Shift")
     
     if maximum_clockout_delta_minutes is None:
@@ -137,5 +137,5 @@ def validate_clock_out(clockin_object, maximum_clockout_delta_minutes=None):
     
     now = timezone.now()
     
-    if now > clockin.ended_at +  datetime.timedelta(minutes=maximum_clockout_delta_minutes):
+    if now > clockin_object.shift.ended_at +  datetime.timedelta(minutes=maximum_clockout_delta_minutes):
         raise ValueError("The system has already clock you out of this Shift")
