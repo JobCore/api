@@ -29,7 +29,7 @@ class ClockinSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")
             
             try:
-                validate_clock_in(data["shift"].started_at, data["shift"].ended_at, data["shift"].employer.maximum_clockin_delta_minutes)
+                validate_clock_in(data["shift"].starting_at, data["shift"].ending_at, data["shift"].employer.maximum_clockin_delta_minutes)
             except ValueError as e:
                 raise serializers.ValidationError(str(e))
 
