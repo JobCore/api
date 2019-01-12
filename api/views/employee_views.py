@@ -147,19 +147,74 @@ class EmployeeMeView(EmployeeView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-class ShiftMeInviteView(EmployeeView):
+class EmployeeShiftInviteView(EmployeeView):
     def get(self, request, id=False):
         self.validate_employee(request)
         
-        invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
-        
-        qStatus = request.GET.get('status')
-        if qStatus:
-            invites = invites.filter(status=qStatus)
+        if (id):
+            try:
+                invite = ShiftInvite.objects.get(id=id, employee__id=self.employee.id)
+            except ShiftInvite.DoesNotExist:
+                return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = shift_serializer.ShiftInviteGetSerializer(invite, many=False)
+        else:
+            invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
             
-        serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
+            qStatus = request.GET.get('status')
+            if qStatus:
+                invites = invites.filter(status=qStatus)
+                
+            serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, id, action):
+        self.validate_employee(request)
+        try:
+            invite = ShiftInvite.objects.get(id=id, employee__id=self.employee.id)
+        except ShiftInvite.DoesNotExist:
+            return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
+        
+        data = {}
+        if action == 'apply':
+            data["status"] = 'APPLIED'
+        elif action == 'reject':
+            data["status"] = 'REJECTED'
+        else:
+            return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
+
+        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request })
+        appSerializer = shift_serializer.ShiftApplicationSerializer(data={
+            "shift": invite.shift.id,
+            "invite": invite.id,
+            "employee": invite.employee.id
+        }, many=False)
+        if shiftSerializer.is_valid():
+            if appSerializer.is_valid():
+                shiftSerializer.save()
+                appSerializer.save()
+                
+                return Response(appSerializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# @TODO: DELETE ShiftMeInviteView
+# class ShiftMeInviteView(EmployeeView):
+#     def get(self, request, id=False):
+#         self.validate_employee(request)
+        
+#         invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
+        
+#         qStatus = request.GET.get('status')
+#         if qStatus:
+#             invites = invites.filter(status=qStatus)
+            
+#         serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
+
+#         return Response(serializer.data, status=status.HTTP_200_OK)
             
 class ClockinsMeView(EmployeeView):
     def get(self, request, id=False):
@@ -250,59 +305,6 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         unavailability_block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
         
-class EmployeeShiftInviteView(EmployeeView):
-    def get(self, request, id=False):
-        self.validate_employee(request)
-        
-        if (id):
-            try:
-                invite = ShiftInvite.objects.get(id=id, employee__id=self.employee.id)
-            except ShiftInvite.DoesNotExist:
-                return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = shift_serializer.ShiftInviteGetSerializer(invite, many=False)
-        else:
-            invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
-            
-            qStatus = request.GET.get('status')
-            if qStatus:
-                invites = invites.filter(status=qStatus)
-                
-            serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, id, action):
-        self.validate_employee(request)
-        try:
-            invite = ShiftInvite.objects.get(id=id, employee__id=self.employee.id)
-        except ShiftInvite.DoesNotExist:
-            return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
-        
-        data = {}
-        if action == 'apply':
-            data["status"] = 'APPLIED'
-        elif action == 'reject':
-            data["status"] = 'REJECTED'
-        else:
-            return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
-
-        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request })
-        appSerializer = shift_serializer.ShiftApplicationSerializer(data={
-            "shift": invite.shift.id,
-            "invite": invite.id,
-            "employee": invite.employee.id
-        }, many=False)
-        if shiftSerializer.is_valid():
-            if appSerializer.is_valid():
-                shiftSerializer.save()
-                appSerializer.save()
-                
-                return Response(appSerializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmployeeDeviceMeView(EmployeeView):
     def get(self, request, device_id=None):

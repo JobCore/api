@@ -99,7 +99,6 @@ urlpatterns = [
     path('employees/me/ratings',employee_views.EmployeeMeRatingsView.as_view(), name="me-employees-ratings"),
     path('employees/me/devices',employee_views.EmployeeDeviceMeView.as_view(), name="me-all-device"),
     path('employees/me/devices/<str:device_id>',employee_views.EmployeeDeviceMeView.as_view(), name="me-device"),
-    path('employees/me/shifts/invites',employee_views.ShiftMeInviteView.as_view(), name="me-jobinvites"),
     path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/clockins/<str:clockin_id>',employee_views.ClockinsMeView.as_view(), name="me-employees"),
     path('employees/me/applications',employee_views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
