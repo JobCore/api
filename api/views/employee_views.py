@@ -50,7 +50,7 @@ class EmployeeView(APIView):
             raise PermissionDenied("You don't seem to be a talent")
         self.employee = self.request.user.profile.employee
         
-class EmployeeMeRatingsView(EmployeeView):
+class EmployeeMeReceivedRatingsView(EmployeeView):
     def get(self, request):
         self.validate_employee(request)
             
@@ -58,14 +58,24 @@ class EmployeeMeRatingsView(EmployeeView):
         
         qShift = request.GET.get('shift')
         if qShift is not None:
-            try:
-                clockin = Clockin.objects.get(shift=qShift, employee__id=self.employee.id)
-            except Clockin.DoesNotExist:
-                return Response([], status=status.HTTP_200_OK)
-            except Clockin.MultipleObjectsReturned:
-                pass
+            ratings = ratings.filter(shift__id=qShift)
+
+        qEmployer = request.GET.get('employer')
+        if qEmployer is not None:
+            ratings = ratings.filter(shift__employer=qEmployer)
+        
+        serializer = other_serializer.RatingGetSerializer(ratings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+class EmployeeMeSentRatingsView(EmployeeView):
+    def get(self, request):
+        self.validate_employee(request)
             
-            ratings = ratings.filter(shift=qShift)
+        ratings = Rate.objects.filter(sender__id=self.employee.id)
+        
+        qShift = request.GET.get('shift')
+        if qShift is not None:
+            ratings = ratings.filter(shift__id=qShift)
 
         qEmployer = request.GET.get('employer')
         if qEmployer is not None:

@@ -107,7 +107,7 @@ class ClockinPayrollSerializer(serializers.ModelSerializer):
 
 
     
-def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None, is_first_clockin=False):
+def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None, is_first_clockin=True):
     now = timezone.now()
     
     if now > ended_at:
@@ -122,10 +122,10 @@ def validate_clock_in(started_at, ended_at, maximum_clockin_delta_minutes=None, 
     if is_first_clockin:
         delta = datetime.timedelta(minutes=maximum_clockin_delta_minutes)
         if now < started_at - delta:
-           raise ValueError("You can only clock in "+maximum_clockin_delta_minutes+" min before the Shift starting time")
+           raise ValueError("You can only clock in "+str(maximum_clockin_delta_minutes)+" min before the Shift starting time")
                
         if now > started_at + delta:
-           raise ValueError("You can only clock in "+maximum_clockin_delta_minutes+" min after the Shift starting time")
+           raise ValueError("You can only clock in "+str(maximum_clockin_delta_minutes)+" min after the Shift starting time")
 
 
 def validate_clock_out(clockin_object, maximum_clockout_delta_minutes=None):

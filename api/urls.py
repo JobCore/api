@@ -31,7 +31,9 @@ urlpatterns = [
     path('jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
     path('jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
     path('catalog/<str:catalog_type>',general_views.CatalogView.as_view(), name="get-catalog"),
-
+    path('ratings',general_views.RateView.as_view(), name="get-ratings"),
+    path('ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
+    
     #
     # UNCLASIFIED ENDPOINTS
     # @TODO: Classify endpoint permissions to employer, empoyee, admin, logged_in or public
@@ -51,9 +53,6 @@ urlpatterns = [
     path('profiles/<int:id>',general_views.ProfileView.as_view(), name="id-profiles"),
     path('positions',general_views.PositionView.as_view(), name="get-positions"),
     path('positions/<int:id>',general_views.PositionView.as_view(), name="id-positions"),
-    
-    path('ratings',general_views.RateView.as_view(), name="get-ratings"),
-    path('ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
     
     path('clockins/',general_views.ClockinsView.as_view(), name="all-clockins"),
     path('clockins/<int:clockin_id>',general_views.ClockinsView.as_view(), name="me-employees"),
@@ -96,7 +95,8 @@ urlpatterns = [
     path('employees/me/shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     path('employees/me/shifts/invites/<int:id>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     path('employees/me/shifts',employee_views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
-    path('employees/me/ratings',employee_views.EmployeeMeRatingsView.as_view(), name="me-employees-ratings"),
+    path('employees/me/ratings/sent',employee_views.EmployeeMeSentRatingsView.as_view(), name="me-employees-ratings"),
+    path('employees/me/ratings/received',employee_views.EmployeeMeReceivedRatingsView.as_view(), name="me-employees-ratings"),
     path('employees/me/devices',employee_views.EmployeeDeviceMeView.as_view(), name="me-all-device"),
     path('employees/me/devices/<str:device_id>',employee_views.EmployeeDeviceMeView.as_view(), name="me-device"),
     path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
