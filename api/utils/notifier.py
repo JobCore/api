@@ -213,7 +213,7 @@ def notify_new_rating(rating):
     
     to = rating.employee if rating.employee != None else rating.employer
 
-    send_email_message("new_rating", to.user.email, {
+    send_email_message("new_rating", to.profile.user.email, {
         "SENDER": rating.sender.user.profile.employer.title if rating.employee else rating.sender.user.first_name + ' ' + rating.sender.user.last_name,
         "VENUE": rating.shift.venue.title,
         "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
@@ -221,7 +221,7 @@ def notify_new_rating(rating):
         "DATA": { "type": "rating", "id": rating.id }
     })
     
-    send_fcm_notification("new_rating", to.user.id, {
+    send_fcm_notification("new_rating", to.profile.user.id, {
         "SENDER": rating.sender.user.profile.employer.title if rating.employee else rating.sender.user.first_name + ' ' + rating.sender.user.last_name,
         "VENUE": rating.shift.venue.title,
         "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
