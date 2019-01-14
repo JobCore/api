@@ -23,9 +23,11 @@ class TestCI(unittest.TestCase):
         # 
         started_at = timezone.now() - sixty_minutes #the shift started 60min ago
         ends_in_five_minutes = timezone.now() + five_minutes #the ends in 5 min
-        ended_at_ended_five_min_ago = timezone.now() + five_minutes #the ended five minutes ago
+        ended_at_ended_five_min_ago = timezone.now() - five_minutes #the ended five minutes ago
         self.assertIsNone(clockin_serializer.validate_clock_in(started_at, ends_in_five_minutes, None)) # without delay
         self.assertIsNone(clockin_serializer.validate_clock_in(started_at, ends_in_five_minutes, 70)) # with 70 min delay
+        self.assertRaises(ValueError, clockin_serializer.validate_clock_in, started_at, ended_at_ended_five_min_ago, None) # no delay allowed
+        self.assertRaises(ValueError, clockin_serializer.validate_clock_in, started_at, ended_at_ended_five_min_ago, 4) # 4 min delay allowed
 
    
 if __name__ == '__main__':

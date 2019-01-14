@@ -62,7 +62,7 @@ class RatingSerializer(serializers.ModelSerializer):
                 pass
                 
             try:
-                rate = Rate.objects.get(shift=data["shift"].id, employer=data["employer"].id)
+                rate = Rate.objects.get(shift=data["shift"].id, employer=data["employer"].id, sender__id = current_user.profile.id)
                 raise serializers.ValidationError("You have already rated this employer for this shift")
             except Rate.DoesNotExist:
                 pass
