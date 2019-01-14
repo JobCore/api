@@ -3,7 +3,7 @@ import json
 import itertools
 from django.db.models import Q
 from base64 import b64encode, b64decode
-from api.models import Employee, ShiftInvite, Shift
+from api.models import Employee, ShiftInvite, Shift, Profile
 from api.utils.email import send_email_message, send_fcm_notification
 import api.utils.jwt
 import rest_framework_jwt
@@ -211,20 +211,30 @@ def notify_single_shift_invite(invite):
 
 def notify_new_rating(rating):
     
-    to = rating.employee if rating.employee != None else rating.employer
-
-    send_email_message("new_rating", to.profile.user.email, {
-        "SENDER": rating.sender.user.profile.employer.title if rating.employee else rating.sender.user.first_name + ' ' + rating.sender.user.last_name,
-        "VENUE": rating.shift.venue.title,
-        "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
-        "DATA": { "type": "rating", "id": rating.id }
-    })
-    
-    send_fcm_notification("new_rating", to.profile.user.id, {
-        "SENDER": rating.sender.user.profile.employer.title if rating.employee else rating.sender.user.first_name + ' ' + rating.sender.user.last_name,
-        "VENUE": rating.shift.venue.title,
-        "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
-        "DATA": { "type": "rating", "id": rating.id }
-    })
+    if rating.employee != None:
+        send_email_message("new_rating", rating.employee.user.email, {
+            "SENDER": rating.sender.employer.title,
+            "VENUE": rating.shift.venue.title,
+            "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
+            "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+            "DATA": { "type": "rating", "id": rating.id }
+        })
+        
+        send_fcm_notification("new_rating", to.profile.user.id, {
+            "SENDER": rating.sender.employer.title,
+            "VENUE": rating.shift.venue.title,
+            "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
+            "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+            "DATA": { "type": "rating", "id": rating.id }
+        })
+        
+    elif rating.employer != None:
+        employer_users = Profile.objects.filter(employer__id = rating.employer.id)
+        for profile in employer_users:
+            send_email_message("new_rating", profile.user.email, {
+                "SENDER": rating.sender.user.first_name + ' ' + rating.sender.user.last_name,
+                "VENUE": rating.shift.venue.title,
+                "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
+                "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+                "DATA": { "type": "rating", "id": rating.id }
+            })

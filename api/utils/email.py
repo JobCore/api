@@ -120,7 +120,7 @@ def get_template_info(slug):
             "subject": "There is a new shift waiting for you to apply"
         },
         "new_rating": { 
-            "type": "rate", 
+            "type": "rating", 
             "subject": "You have received a new rating"
         },
         "applicant_accepted": { 
