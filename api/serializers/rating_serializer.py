@@ -57,7 +57,7 @@ class RatingSerializer(serializers.ModelSerializer):
             try:
                 clockin = Clockin.objects.get(shift=data["shift"], employee=current_user.profile.employee)
             except Clockin.DoesNotExist:
-                return Response(validators.error_object('You have not worked in this shift yet, no clockins have been found'), status=status.HTTP_400_BAD_REQUEST)
+                raise serializers.ValidationError("You have not worked in this shift yet, no clockins have been found")
             except Clockin.MultipleObjectsReturned:
                 pass
                 
