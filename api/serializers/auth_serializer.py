@@ -46,9 +46,9 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         msg = _('User account is disabled.')
                         raise serializers.ValidationError(msg)
 
-                    exp = attrs.get("expiration_days", None)
-                    if exp is not None:
-                        exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
+                    # exp = attrs.get("expiration_days", None)
+                    # if exp is not None:
+                    #     exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
 
                     payload = jwt_payload_handler(user=user)
                     profile = Profile.objects.get(user_id=user.id)
@@ -60,15 +60,6 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         device = FCMDevice(user=user, registration_id=device_id)
                         device.save()
                     
-                    # try:
-                    #     userDic['employee_id'] = profile.employee.id
-                    # except Employee.DoesNotExist:
-                    #     try:
-                    #         userDic["employer_id"] = profile.employer.id
-                    #     except Employee.DoesNotExist:
-                    #         msg = _('User is not an employer nor employee')
-                    #         raise serializers.ValidationError(msg)
-                        
                     return {
                         'token': jwt_encode_handler(payload),
                         'user': user
@@ -124,6 +115,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             employer = validated_data['employer']
             validated_data.pop('employer', None)
             
+        # @TODO: Use IP address to get the initial address, latitude and longitud.
+            
         user = super(UserRegisterSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
@@ -141,7 +134,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 # availably all week by default
                 employee_actions.create_default_availablity(emp)
                 
-                profile = Profile.objects.create(user=user, picture='', employee=emp)
+                # @TODO: if the user is comming from an invite it gets status=ACTIVE, it not it gets the default PENDING_EMAIL_VALIDATION
+                profile = Profile.objects.create(user=user, picture='', employee=emp, status='ACTIVE')
                 user.profile.save()
             
             notifier.notify_email_validation(user)

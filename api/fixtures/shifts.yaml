@@ -6,6 +6,7 @@
     country: "US"
     latitude: 25.744526
     longitude: -80.260033
+    employer_id: 1
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
 - model: api.venue
@@ -16,6 +17,7 @@
     country: "US"
     latitude: 25.744526
     longitude: -80.260033
+    employer_id: 1
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
 - model: api.position
@@ -114,6 +116,21 @@
     minimum_hourly_rate: 15
     starting_at: "2019-09-09T19:45:00Z"
     ending_at: "2019-09-10T02:45:00Z"
+    
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
+- model: api.Shift
+  pk: 6
+  fields:
+    venue: 2
+    position: 3
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 15
+    starting_at: "2018-09-09T19:45:00Z"
+    ending_at: "2018-09-10T02:45:00Z"
     
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"

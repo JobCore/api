@@ -26,6 +26,7 @@ from api.serializers import user_serializer, profile_serializer, shift_serialize
 from api.serializers import favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer, clockin_serializer
 from api.serializers import rating_serializer
 from rest_framework_jwt.settings import api_settings
+from django.db.models import Count
 
 import api.utils.jwt
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -33,7 +34,6 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 from django.utils import timezone
 import datetime
-TODAY = datetime.datetime.now(tz=timezone.utc)
 
 # from .utils import GeneralException
 import logging
@@ -103,8 +103,11 @@ class EmployeeMeApplicationsView(EmployeeView, CustomPagination):
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request):
         self.validate_employee(request)
-            
-        shifts = Shift.objects.all().order_by('starting_at')
+        
+        NOW = datetime.datetime.now(tz=timezone.utc)
+        
+        shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
+        shifts = Shift.objects.filter(employees__in = (self.employee.id,)).order_by('starting_at')
         
         qStatus = request.GET.get('status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -120,14 +123,13 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
         
         qUpcoming = request.GET.get('upcoming')
         if qUpcoming == 'true':
-            shifts = shifts.filter(starting_at__gte=TODAY)
+            shifts = shifts.filter(starting_at__gte=NOW)
         
         qFailed = request.GET.get('failed')
         if qFailed == 'true':
-            shifts = shifts.filter(shiftemployee__success=False)
+            clockin = Clockin.objects.get(shift=data["shift"], employee=data["employee"], ended_at=None)
+            shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
             
-        shifts = shifts.filter(employees__in = (self.employee.id,))
-        
         serializer = shift_serializer.ShiftSerializer(shifts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
