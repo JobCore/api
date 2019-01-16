@@ -125,6 +125,10 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
         if qUpcoming == 'true':
             shifts = shifts.filter(starting_at__gte=NOW)
         
+        qExpired = request.GET.get('expired')
+        if qExpired == 'true':
+            shifts = shifts.filter(ending_at__lte=NOW)
+        
         qFailed = request.GET.get('failed')
         if qFailed == 'true':
             shifts = shifts.filter(ending_at__lte=NOW, clockins=0)

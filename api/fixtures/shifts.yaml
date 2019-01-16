@@ -163,6 +163,14 @@
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
     
+- model: api.ShiftEmployee
+  pk: 4
+  fields:
+    shift: 6
+    employee: 2
+    created_at: "2018-08-13T19:45:00Z"
+    updated_at: "2018-08-13T19:45:00Z"
+    
     
 #  
 # Applications
