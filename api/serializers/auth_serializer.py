@@ -50,7 +50,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                     if exp is not None:
                         exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
 
-                    payload = jwt_payload_handler(user=user, exp=exp)
+                    payload = jwt_payload_handler(user=user)
                     profile = Profile.objects.get(user_id=user.id)
                     
                     device_id = attrs.get("registration_id")
