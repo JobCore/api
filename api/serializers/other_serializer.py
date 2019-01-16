@@ -98,11 +98,10 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
             error = False
         
         try:
-            user = JobCoreInvite.objects.get(sender=self.context['request'].user.profile.id, email=data["email"])
-            if(user):
+            invite = JobCoreInvite.objects.get(sender=self.context['request'].user.profile.id, email=data["email"])
+            if(invite):
                 raise serializers.ValidationError("User with this email has already been invited")
-        
-        except User.DoesNotExist:
+        except JobCoreInvite.DoesNotExist:
             error = False
             
         if(error):
