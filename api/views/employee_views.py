@@ -107,7 +107,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
         NOW = datetime.datetime.now(tz=timezone.utc)
         
         shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
-        shifts = Shift.objects.filter(employees__in = (self.employee.id,)).order_by('starting_at')
+        shifts = shifts.filter(employees__in = (self.employee.id,)).order_by('starting_at')
         
         qStatus = request.GET.get('status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -127,7 +127,6 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
         
         qFailed = request.GET.get('failed')
         if qFailed == 'true':
-            clockin = Clockin.objects.get(shift=data["shift"], employee=data["employee"], ended_at=None)
             shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
             
         serializer = shift_serializer.ShiftSerializer(shifts, many=True)
