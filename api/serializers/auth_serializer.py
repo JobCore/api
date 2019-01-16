@@ -46,7 +46,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         msg = _('User account is disabled.')
                         raise serializers.ValidationError(msg)
 
-                    exp = attrs.get("expiration_days")
+                    exp = attrs.get("expiration_days", None)
                     if exp is not None:
                         exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
 

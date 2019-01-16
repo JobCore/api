@@ -9,7 +9,7 @@ def jwt_response_payload_handler(token, user=None, request=None):
         'user': user_serializer.UserSerializer(user, context={'request': request}).data
     }
     
-def jwt_payload_handler(payload):
+def jwt_payload_handler(payload, exp=None):
 
     payload['exp'] = datetime.datetime.utcnow() + datetime.timedelta(seconds= (60 * 15))
     if hasattr(payload, 'user_id'):
