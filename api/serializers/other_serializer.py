@@ -93,20 +93,20 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         try:
             user = User.objects.get(email=data["email"])
             if(user): 
-                raise ValidationError("The user is already registered in jobcore")
+                raise serializers.ValidationError("The user is already registered in jobcore")
         except User.DoesNotExist:
             error = False
         
         try:
             user = JobCoreInvite.objects.get(sender=self.context['request'].user.profile.id, email=data["email"])
             if(user):
-                raise ValidationError("User with this email has already been invited")
+                raise serializers.ValidationError("User with this email has already been invited")
         
         except User.DoesNotExist:
             error = False
             
         if(error):
-            raise ValidationError("Uknown error on the request") 
+            raise serializers.ValidationError("Uknown error on the request") 
         
         return data
         

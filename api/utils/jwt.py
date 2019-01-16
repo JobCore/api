@@ -9,9 +9,13 @@ def jwt_response_payload_handler(token, user=None, request=None):
         'user': user_serializer.UserSerializer(user, context={'request': request}).data
     }
     
-def jwt_payload_handler(payload):
+def jwt_payload_handler(payload, exp=None):
 
-    payload['exp'] = datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
+    if exp is not None:
+        payload['exp'] = datetime.utcnow() + exp
+    else:
+        payload['exp'] = datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
+        
     if hasattr(payload, 'user_id'):
         payload['user_id'] = user.email
     if hasattr(payload, 'email'):

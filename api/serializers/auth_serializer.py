@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate
 from api.utils import notifier
 from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
+import datetime
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -27,6 +28,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
     registration_id = serializers.CharField(write_only=True, required=False)
+    exp_days = serializers.IntegerField(write_only=True, required=False)
 
     def validate(self, attrs):
     
@@ -44,7 +46,11 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                         msg = _('User account is disabled.')
                         raise serializers.ValidationError(msg)
 
-                    payload = jwt_payload_handler(user)
+                    exp = attrs.get("expiration_days")
+                    if exp is not None:
+                        exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
+
+                    payload = jwt_payload_handler(user=user, exp=exp)
                     profile = Profile.objects.get(user_id=user.id)
                     
                     device_id = attrs.get("registration_id")
