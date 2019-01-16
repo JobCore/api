@@ -148,7 +148,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     
     
 JWT_AUTH = {
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=99999), #original: 900
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=9999), #original: 900
     'JWT_ALLOW_REFRESH': True,
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=30),
     'JWT_RESPONSE_PAYLOAD_HANDLER':'api.utils.jwt.jwt_response_payload_handler',
