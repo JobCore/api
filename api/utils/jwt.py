@@ -11,7 +11,7 @@ def jwt_response_payload_handler(token, user=None, request=None):
     
 def jwt_payload_handler(payload):
 
-    payload['exp'] = datetime.utcnow() + datetime.timedelta(secons= (60 * 15))
+    payload['exp'] = datetime.utcnow() + datetime.timedelta(seconds= (60 * 15))
     if hasattr(payload, 'user_id'):
         payload['user_id'] = user.email
     if hasattr(payload, 'email'):
