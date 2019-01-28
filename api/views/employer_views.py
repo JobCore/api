@@ -362,10 +362,11 @@ class EmployerShiftView(EmployerView, CustomPagination):
         self.validate_employer(request)
         
         request.data["employer"] = self.employer.id
-        serializer = shift_serializer.ShiftPostSerializer(data=request.data)
+        serializer = shift_serializer.ShiftPostSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return_serializer = shift_serializer.ShiftGetSerializer(serializer.instance, many=False)
+            return Response(return_serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, id):

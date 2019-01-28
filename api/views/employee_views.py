@@ -19,7 +19,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 from api.models import *
-from api.utils.notifier import notify_password_reset_code
+from api.utils.notifier import notify_password_reset_code, notify_shift_candidate_update
 from api.utils import validators
 from api.utils.utils import get_aware_datetime
 from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, payment_serializer
@@ -198,23 +198,32 @@ class EmployeeShiftInviteView(EmployeeView):
             data["status"] = 'REJECTED'
         else:
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
-
-        shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request })
-        appSerializer = shift_serializer.ShiftApplicationSerializer(data={
-            "shift": invite.shift.id,
-            "invite": invite.id,
-            "employee": invite.employee.id
-        }, many=False)
-        if shiftSerializer.is_valid():
-            if appSerializer.is_valid():
-                shiftSerializer.save()
-                appSerializer.save()
-                
-                return Response(appSerializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        #if the talent is on a preferred_talent list, automatically approve him
+        preferred_talent = FavoriteList.objects.filter(employer__id=invite.shift.employer__id, auto_accept_employees_on_this_list=True, employees__in=[self.employee])
+        if(len(preferred_talent) > 0):
+            ShiftEmployee.objects.create(employee=self.employee, shift=invite.shift)
+            notify_shift_candidate_update(user=self.context['request'].user, shift=invite.shift, talents_to_notify=[self.employee])
+            
+            return Response({ "details": "Your application was automatically approved because you are one of the vendors preferred talents" }, status=status.HTTP_200_OK)
         else:
-            return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            #else, create the application
+            shiftSerializer = shift_serializer.ShiftInviteSerializer(invite, data=data, many=False, context={"request": request })
+            appSerializer = shift_serializer.ShiftApplicationSerializer(data={
+                "shift": invite.shift.id,
+                "invite": invite.id,
+                "employee": invite.employee.id
+            }, many=False)
+            if shiftSerializer.is_valid():
+                if appSerializer.is_valid():
+                    shiftSerializer.save()
+                    appSerializer.save()
+                    
+                    return Response(appSerializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(appSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # @TODO: DELETE ShiftMeInviteView
 # class ShiftMeInviteView(EmployeeView):

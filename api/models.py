@@ -40,9 +40,11 @@ class Employer(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
-    automatically_accept_from_favlists = models.BooleanField(default=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
+
+    # talents on employer's favlist's will be automatically accepted
+    automatically_accept_from_favlists = models.BooleanField(default=True)
     
     # the company can configure how it wants the payroll period
     payroll_period_starting_time = models.DateTimeField(blank=True, default=MIDNIGHT) #12:00am GMT
@@ -154,13 +156,16 @@ class FavoriteList(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    
+    # talents on employer's favlist's will be automatically accepted
+    auto_accept_employees_on_this_list = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title
 
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
-    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)

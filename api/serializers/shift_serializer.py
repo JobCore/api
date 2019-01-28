@@ -71,7 +71,7 @@ class ShiftSerializer(serializers.ModelSerializer):
         
         return False
         
-    # TODO: Validate that only draft shifts can me updated
+    # @TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
         
         if ('status' in validated_data):
@@ -177,10 +177,23 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
         return shift
             
 class ShiftPostSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Shift
         exclude = ()
+        
+    # TODO: Validate that only draft shifts can me updated
+    def create(self, validated_data):
+        
+        shift = super(ShiftPostSerializer, self).create(validated_data)
+        shift.status = "OPEN"
+        shift.save()
+
+        talents = notifier.get_talents_to_notify(shift)
+        for talent in talents:
+            invite = ShiftInvite(employee=talent, sender=self.context['request'].user.profile, shift=shift)
+            notifier.notify_single_shift_invite(invite)
+
+        return shift
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
