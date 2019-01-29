@@ -75,6 +75,7 @@ urlpatterns = [
     path('employers/me/applications',employer_views.ApplicantsView.as_view(), name="get-applicants"),
     path('employers/me/applications/<int:application_id>',employer_views.ApplicantsView.as_view(), name="get-applicants"),
     path('employers/me/shifts/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
+    path('employers/me/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
     path('employers/me/shifts/invites/<int:id>',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
     path('employers/me/venues',employer_views.EmployerVenueView.as_view(), name="get-venues"),
     path('employers/me/venues/<int:id>',employer_views.EmployerVenueView.as_view(), name="id-venues"),

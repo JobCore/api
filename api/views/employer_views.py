@@ -116,9 +116,14 @@ class EmployerShiftInviteView(EmployerView):
             serializer = shift_serializer.ShiftInviteGetSerializer(invite, many=False)
         else:
             invites = ShiftInvite.objects.filter(sender__employer__id=self.employer.id)
+            
             qEmployee_id = request.GET.get('employee')
             if qEmployee_id:
                 invites = invites.filter(employer__id=qEmployee_id)
+
+            qShift_id = request.GET.get('shift')
+            if qShift_id:
+                invites = invites.filter(shift__id=qShift_id)
             
             qStatus = request.GET.get('status')
             if qStatus:

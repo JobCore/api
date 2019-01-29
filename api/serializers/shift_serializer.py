@@ -219,7 +219,7 @@ class ShiftGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class ShiftInviteSerializer(serializers.ModelSerializer):
-
+    
     class Meta:
         model = ShiftInvite
         exclude = ()
@@ -277,7 +277,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
 
 class ShiftInviteGetSerializer(serializers.ModelSerializer):
     shift = ShiftGetSmallSerializer(many=False, read_only=True)
-
+    employee = EmployeeGetSmallSerializer(read_only=True)
     class Meta:
         model = ShiftInvite
         exclude = ()

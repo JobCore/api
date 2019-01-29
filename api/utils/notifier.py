@@ -22,7 +22,9 @@ def get_talents_to_notify(shift):
         talents_to_notify = Employee.objects.filter(
             Q(rating__gte=rating) | Q(rating__isnull=True),
             #the employee gets to pick the minimum hourly rate
-            Q(minimum_hourly_rate__lte=shift.minimum_hourly_rate)
+            Q(minimum_hourly_rate__lte=shift.minimum_hourly_rate),
+            # is accepting invites
+            Q(stop_receiving_invites=False)
         )
         if len(favorite_lists) > 0:
             talents_to_notify = talents_to_notify.filter(
