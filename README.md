@@ -79,6 +79,11 @@
 ```python
 python manage.py loaddata api/fixtures/*.yaml
 ```
+    
+### Run tests
+
+1. For a particular test: `pytest api/tests/test_invites.py`
+2. For all tests: `pytest`
 
 ### Extra useful stuff
 

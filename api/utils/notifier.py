@@ -181,6 +181,14 @@ def notify_jobcore_invite(invite):
         "DATA": { "type": "invite", "id": invite.id }
     })
 
+def notify_invite_accepted(invite):
+    
+    return send_email_message("invite_accepted", invite.sender.user.email, {
+        "TALENT": invite.first_name + ' ' + invite.last_name,
+        "LINK": EMPLOYER_URL,
+        "DATA": { "type": "registration" }
+    })
+
 # manual invite
 def notify_single_shift_invite(invite):
     

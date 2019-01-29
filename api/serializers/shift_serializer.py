@@ -191,6 +191,7 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         talents = notifier.get_talents_to_notify(shift)
         for talent in talents:
             invite = ShiftInvite(employee=talent, sender=self.context['request'].user.profile, shift=shift)
+            invite.save()
             notifier.notify_single_shift_invite(invite)
 
         return shift

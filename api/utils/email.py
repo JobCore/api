@@ -14,8 +14,8 @@ FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
 push_service = FCMNotification(api_key=FIREBASE_KEY)
 
 def send_email_message(slug, to, data={}):
-    template = get_template_content(slug, data, ["email"])
     if NOTIFICATIONS_ENABLED:
+        template = get_template_content(slug, data, ["email"])
         print('Email notification '+slug+' sent')
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
@@ -29,6 +29,7 @@ def send_email_message(slug, to, data={}):
             })
     else:
         print('Email not sent because notifications are not enabled')
+        return True
             
 def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0):
@@ -106,6 +107,10 @@ def get_template_info(slug):
         "invite_to_shift":  { 
             "type": "invite", 
             "subject": "You have been invited to work on a shift"
+        },
+        "invite_accepted":  { 
+            "type": "registration", 
+            "subject": "Someone you invited has join JobCore"
         },
         "cancelled_shift":  { 
             "type": "shift", 
