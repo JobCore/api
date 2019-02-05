@@ -313,7 +313,7 @@ class FavListEmployeeView(EmployerView):
         except Employee.DoesNotExist:
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = employee_serializer.EmployeeSerializer(employee, data=request.data)
+        serializer = employee_serializer.EmployeeFavlistSerializer(employee, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

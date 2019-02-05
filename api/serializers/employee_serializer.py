@@ -1,6 +1,6 @@
 from api.serializers import other_serializer, favlist_serializer
 from rest_framework import serializers
-from api.models import Employee, Profile, User
+from api.models import Employee, Profile, User, FavoriteList
 
 #
 # NESTED
@@ -66,6 +66,14 @@ class EmployeeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('The maximum distance allowed is 100 miles')
             
         return data
+
+#to update the employee favorite lists
+class EmployeeFavlistSerializer(serializers.ModelSerializer):
+    favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
+    
+    class Meta:
+        model = Employee
+        exclude = ()
 
 class EmployeeSettingsSerializer(serializers.ModelSerializer):
     class Meta:
