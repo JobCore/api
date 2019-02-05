@@ -2,7 +2,9 @@ import pytest
 import json
 import datetime
 from api.models import *
-from api.views import *
+from api.views.general_views import *
+from api.views.employer_views import *
+from api.views.employee_views import *
 from api.serializers import *
 from api.pagination import CustomPagination
 from django.contrib.auth.models import User, AnonymousUser

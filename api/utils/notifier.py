@@ -125,7 +125,7 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None):
 
 
 def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
-    
+    print(talents_to_notify)
     for talent in talents_to_notify['accepted']:
         payload = api.utils.jwt.jwt_payload_handler({
             "user_id": talent.user.id,

@@ -200,10 +200,13 @@ class EmployeeShiftInviteView(EmployeeView):
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
             
         #if the talent is on a preferred_talent list, automatically approve him
-        preferred_talent = FavoriteList.objects.filter(employer__id=invite.shift.employer__id, auto_accept_employees_on_this_list=True, employees__in=[self.employee])
+        preferred_talent = FavoriteList.objects.filter(employer__id=invite.shift.employer.id, auto_accept_employees_on_this_list=True, employees__in=[self.employee])
         if(len(preferred_talent) > 0):
             ShiftEmployee.objects.create(employee=self.employee, shift=invite.shift)
-            notify_shift_candidate_update(user=self.context['request'].user, shift=invite.shift, talents_to_notify=[self.employee])
+            notify_shift_candidate_update(user=self.employee.user, shift=invite.shift, talents_to_notify={ 
+                "accepted": [self.employee],
+                "rejected": []
+            })
             
             return Response({ "details": "Your application was automatically approved because you are one of the vendors preferred talents" }, status=status.HTTP_200_OK)
         else:
