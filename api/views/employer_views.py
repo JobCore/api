@@ -360,7 +360,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
             else:
                 shifts = shifts.filter(employer = request.user.profile.employer.id)
             
-            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            serializer = shift_serializer.ShiftGetSerializer(shifts, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
             
     def post(self, request):
@@ -405,7 +405,20 @@ class EmployerShiftCandidatesView(EmployerView, CustomPagination):
         except Shift.DoesNotExist:
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
             
-        serializer = shift_serializer.ShiftCandidatesSerializer(shift, data=request.data, context={"request": request})
+        serializer = shift_serializer.ShiftCandidatesAndEmployeesSerializer(shift, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmployerShiftEmployeesView(EmployerView, CustomPagination):
+    def put(self, request, id):
+        try:
+            shift = Shift.objects.get(id=id)
+        except Shift.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            
+        serializer = shift_serializer.ShiftCandidatesAndEmployeesSerializer(shift, data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

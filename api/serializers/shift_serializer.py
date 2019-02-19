@@ -5,7 +5,7 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, ShiftEmployee, Position, Venue,User,Profile
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue,User,Profile
 
 
 #
@@ -29,14 +29,21 @@ class PositionGetSmallSerializer(serializers.ModelSerializer):
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Position
+        model = Employer
         fields = ('title', 'id')
 
 class EmployeeGetSmallSerializer(serializers.ModelSerializer):
     user = UserGetSerializer(read_only=True)
     class Meta:
-        model = Position
+        model = Employee
         fields = ('user', 'id')
+
+class EmployeeGetSerializer(serializers.ModelSerializer):
+    user = UserGetSerializer(read_only=True)
+    favoritelist_set = favlist_serializer.FavoriteListSmallSerializer(many=True)
+    class Meta:
+        model = Employee
+        fields = ('user', 'id', 'badges', 'positions','favoritelist_set')
         
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -124,7 +131,7 @@ class ShiftSerializer(serializers.ModelSerializer):
 
         return shift
 
-class ShiftCandidatesSerializer(serializers.ModelSerializer):
+class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
     candidates = serializers.ListField(write_only=True, required=False)
     employees = serializers.ListField(write_only=True, required=False)
 
@@ -144,38 +151,18 @@ class ShiftCandidatesSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, shift, validated_data):
-        talents_to_notify = { "accepted": [], "rejected": [] }
         # Sync candidates
         if 'candidates' in validated_data:
-            current_candidates = shift.candidates.all()
-            new_candidates = Employee.objects.filter(id__in=validated_data['candidates'])
-            for employee in current_candidates:
-                if employee not in new_candidates:
-                    ShiftApplication.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
-            for employee in new_candidates:
-                if employee not in current_candidates:
-                    ShiftApplication.objects.create(employee=employee, shift=shift)
+            update_shift_candidates(shift, validated_data['candidates'])
             validated_data.pop('candidates')
-        
-        
         # Sync employees
         if 'employees' in validated_data:
-            current_employees = shift.employees.all()
-            new_employees = Employee.objects.filter(id__in=validated_data['employees'])
-            for employee in current_employees:
-                if employee not in new_employees:
-                    talents_to_notify["rejected"].append(employee)
-                    ShiftEmployee.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
-            for employee in new_employees:
-                if employee not in current_employees:
-                    talents_to_notify["accepted"].append(employee)
-                    ShiftEmployee.objects.create(employee=employee, shift=shift)
+            talents_to_notify = update_shift_employees(shift, validated_data['employees'])
+            notifier.notify_shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
             validated_data.pop('employees')
             
-        notifier.notify_shift_candidate_update(user=self.context['request'].user, shift=shift, talents_to_notify=talents_to_notify)
-
         return shift
-            
+
 class ShiftPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
@@ -210,7 +197,7 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     candidates = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
-    employees = EmployerGetSmallSerializer(many=True, read_only=True)
+    employees = EmployeeGetSerializer(many=True, read_only=True)
     required_badges = other_serializer.BadgeSerializer(many=True, read_only=True)
     allowed_from_list = favlist_serializer.FavoriteListGetSerializer(many=True, read_only=True)
 
@@ -344,3 +331,34 @@ class ApplicantGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShiftApplication
         exclude = ()
+        
+        
+##
+# REUSABLE FUNCTIONS
+##
+def update_shift_employees(shift, updated_employees):
+    talents_to_notify = { "accepted": [], "rejected": [] }
+    current_employees = shift.employees.all()
+    new_employees = Employee.objects.filter(id__in=updated_employees)
+    for employee in current_employees:
+        if employee not in new_employees:
+            talents_to_notify["rejected"].append(employee)
+            ShiftEmployee.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
+    for employee in new_employees:
+        if employee not in current_employees:
+            talents_to_notify["accepted"].append(employee)
+            ShiftEmployee.objects.create(employee=employee, shift=shift)
+    
+    return talents_to_notify
+
+def update_shift_candidates(shift, updated_candidates):
+    current_candidates = shift.candidates.all()
+    new_candidates = Employee.objects.filter(id__in=updated_candidates)
+    for employee in current_candidates:
+        if employee not in new_candidates:
+            ShiftApplication.objects.filter(employee__id=employee.id, shift__id=shift.id).delete()
+    for employee in new_candidates:
+        if employee not in current_candidates:
+            ShiftApplication.objects.create(employee=employee, shift=shift)
+    
+    return None

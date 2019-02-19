@@ -19,3 +19,8 @@ class FavoriteListSerializer(serializers.ModelSerializer):
     class Meta:
         model = FavoriteList
         exclude = ()
+        
+class FavoriteListSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavoriteList
+        fields = ('id','title','employer')

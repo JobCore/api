@@ -83,7 +83,7 @@ urlpatterns = [
     path('employers/me/favlists/<int:id>',employer_views.FavListView.as_view(), name="id-favlists"),
     path('employers/me/favlists/employee/<int:employee_id>',employer_views.FavListEmployeeView.as_view(), name="id-favlists"),
     path('employers/me/shifts/<int:id>/candidates',employer_views.EmployerShiftCandidatesView.as_view(), name="update-shift-candidates"),
-    path('employers/me/shifts/<int:id>/employees',employer_views.EmployerShiftCandidatesView.as_view(), name="update-shift-employees"),
+    path('employers/me/shifts/<int:id>/employees',employer_views.EmployerShiftEmployeesView.as_view(), name="update-shift-employees"),
     path('employers/me/shifts',employer_views.EmployerShiftView.as_view(), name="get-shifts"),
     path('employers/me/shifts/<int:id>',employer_views.EmployerShiftView.as_view(), name="id-shifts"),
 

@@ -147,9 +147,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         # check for pending invites
         jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
         for invite in jobcore_invites:
-            notifier.notify_invite_accepted(invite)
             invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=user.profile.employee)
             invite.save()
+            notifier.notify_invite_accepted(invite)
         jobcore_invites.delete()
         
         return user
