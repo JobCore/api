@@ -146,11 +146,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         
         # check for pending invites
         jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
-        for invite in jobcore_invites:
-            invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=user.profile.employee)
-            invite.save()
-            notifier.notify_invite_accepted(invite)
-        jobcore_invites.delete()
+        shift_invites = create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
         
         return user
 
@@ -177,3 +173,17 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(validated_data['new_password'])
         user.save()
         return user
+        
+        
+
+# FUNCTIONS
+
+def create_shift_invites_from_jobcore_invites(jc_invites, employee):
+    shift_invites = []
+    for invite in jc_invites:
+        invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=employee)
+        invite.save()
+        shift_invites.insert(0,shift_invites)
+        #notifier.notify_invite_accepted(invite)
+    jc_invites.delete()
+    return shift_invites
