@@ -5,18 +5,16 @@ from django.template.loader import get_template
 from django.template import Context
 from pyfcm import FCMNotification
 from api.models import FCMDevice
-
+from django.conf import settings
 import requests
-
-NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'TRUE')
 
 FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
 push_service = FCMNotification(api_key=FIREBASE_KEY)
 
 def send_email_message(slug, to, data={}):
-    if NOTIFICATIONS_ENABLED:
+    if settings.EMAIL_NOTIFICATIONS_ENABLED:
         template = get_template_content(slug, data, ["email"])
-        print('Email notification '+slug+' sent')
+        # print('Email notification '+slug+' sent')
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=("api", os.environ.get('MAILGUN_API_KEY')),
@@ -26,7 +24,7 @@ def send_email_message(slug, to, data={}):
                 "subject": template['subject'],
                 "text": template['text'],
                 "html": template['html']
-            })
+            }).status_code == 200
     else:
         print('Email not sent because notifications are not enabled')
         return True
