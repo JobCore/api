@@ -1,3 +1,4 @@
+import unittest
 from api.utils.notifier import notify_invite_accepted
 from api.models import JobCoreInvite
 import pytest, datetime

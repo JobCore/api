@@ -26,7 +26,7 @@ def send_email_message(slug, to, data={}):
                 "html": template['html']
             }).status_code == 200
     else:
-        print('Email not sent because notifications are not enabled')
+        # print('Email not sent because notifications are not enabled')
         return True
             
 def send_fcm(slug, registration_ids, data={}):

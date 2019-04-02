@@ -1,12 +1,10 @@
 import pytest
 import json
 import datetime
-from api.models import *
-from api.views import *
-from api.serializers import *
+from api.views.general_views import ShiftView
 from api.pagination import CustomPagination
 from api.utils.notifier import get_talents_to_notify
-from django.contrib.auth.models import User, AnonymousUser
+# from django.contrib.auth.models import User, AnonymousUser
 from mixer.backend.django import mixer
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 from django.urls import reverse, resolve
@@ -23,11 +21,16 @@ class TestViews(APITestCase, CustomPagination):
         cls.password = '*12345678'
         # Create Users
         cls.user_employee = mixer.blend(
-            User, email='user_employee@gmail.com', password=cls.password)
+            'auth.User', email='user_employee@gmail.com', password=cls.password)
         cls.user_employer = mixer.blend(
-            User, email='user_employer@gmail.com', password=cls.password)
+            'auth.User', email='user_employer@gmail.com', password=cls.password)
         # Set/Hash Users' passwords
+
+        cls.unauthorized_user = mixer.blend(
+            'auth.User', email='unauth@gmail.com', password=cls.password)
+
         cls.unauthorized_user.set_password(cls.unauthorized_user.password)
+
         cls.user_employee.set_password(cls.user_employee.password)
         cls.user_employer.set_password(cls.user_employer.password)
         cls.unauthorized_user.save()

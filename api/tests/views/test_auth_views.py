@@ -1,8 +1,11 @@
 import pytest
 import json
 import datetime
-from api.models import *
-from api.views import *
+from api.models import (Position, Badge, Employer, Employee, Profile, AvailabilityBlock, 
+    FavoriteList, Venue, Shift, ShiftEmployee, ShiftApplication, ShiftInvite, JobCoreInvite, 
+    Rate, FCMDevice, Notification, Clockin, PayrollPeriod, PayrollPeriodPayment, 
+)
+from api.views.general_views import (EmployerView, UserRegisterView, PasswordView)
 from api.serializers import *
 from api.pagination import CustomPagination
 from django.contrib.auth.models import User, AnonymousUser
@@ -10,8 +13,13 @@ from mixer.backend.django import mixer
 from rest_framework.test import APITestCase, APIRequestFactory
 from django.urls import reverse, resolve
 from rest_framework_jwt.views import ObtainJSONWebToken
+from django.core.exceptions import ValidationError
+from django.test import override_settings
+
 
 @pytest.mark.django_db
+@override_settings(STATICFILES_STORAGE=None)
+@override_settings(EMAIL_NOTIFICATIONS_ENABLED=False)
 class TestViews(APITestCase, CustomPagination):
     #pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
