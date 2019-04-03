@@ -2,12 +2,22 @@ from django.test import TestCase
 from mixer.backend.django import mixer
 from django.apps import apps
 import json
+from rest_framework_jwt.settings import api_settings
+
+jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
 class LoginTestSuite(TestCase):
     """
     Endpoint tests for login
     """
-    url = '/api/login'
+    LOGIN_URL = '/api/login'
+
+    def setUp(self):
+        self.test_user = self._make_user_with_profile(
+            username='test_user',
+            email='test_user@testdoma.in',
+            is_active=True,
+        )
 
     def _make_user_with_profile(self, **kwargs):
         test_user = mixer.blend(
@@ -21,18 +31,11 @@ class LoginTestSuite(TestCase):
         test_profile = mixer.blend('api.Profile', user=test_user)
         test_profile.save()
         return test_user
-        
-    def setUp(self):
-        self.test_user = self._make_user_with_profile(
-            username='test_user',
-            email='test_user@testdoma.in',
-            is_active=True,
-        )
-    
+   
     def _simple_login_flow(self, payload):
         
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
             
@@ -42,8 +45,17 @@ class LoginTestSuite(TestCase):
 
         self.assertIn('token', response_json, 'it should have a token')
         self.assertIn('user', response_json, 'it should have user details')
+
+        jwt_decoded = jwt_decode_handler(response_json['token'])
         
-        self.assertEquals(self.test_user.id, response_json['user']['id'], 'It should be the same test user')
+        self.assertEquals(self.test_user.id, response_json['user']['id'], 'Response should have be the same user id')
+        self.assertEquals(self.test_user.id, jwt_decoded['user_id'], 'Token should have the same user id')
+
+        self.assertEquals(self.test_user.username, response_json['user']['username'], 'Response should have be the same username')
+        self.assertEquals(self.test_user.username, jwt_decoded['username'], 'Token should have the same username')
+        
+        self.assertEquals(self.test_user.email, response_json['user']['email'], 'Response should have be the same email')
+        self.assertEquals(self.test_user.email, jwt_decoded['email'], 'Token should have the same email')
 
     def test_good_user_password(self):
         """
@@ -74,7 +86,7 @@ class LoginTestSuite(TestCase):
             'password': '',
         }
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
             
@@ -93,7 +105,7 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
 
@@ -112,7 +124,7 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
 
@@ -130,7 +142,7 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
 
@@ -143,7 +155,7 @@ class LoginTestSuite(TestCase):
         """
         Login with an inactive user
         """
-        inactive_user = self._make_user_with_profile( # pylint-disable: unused-variable
+        inactive_user = self._make_user_with_profile( # pylint: disable=unused-variable
             username='test_user2',
             email='test_user2@testdoma.in',
             is_active=False,
@@ -153,7 +165,7 @@ class LoginTestSuite(TestCase):
             'password': 'pass1234',
         }
         response = self.client.post(
-            self.url, 
+            self.LOGIN_URL, 
             data=json.dumps(payload), 
             content_type="application/json")
 
