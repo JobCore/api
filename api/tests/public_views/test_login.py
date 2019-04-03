@@ -161,3 +161,19 @@ class LoginTestSuite(TestCase):
         
         response_json = response.json()
         self.assertIn('non_field_errors', response_json, 'It should return feedback messages')
+
+    def test_login_with_regid(self):
+        """
+        Login with enabled Push Notifications
+        """
+        payload = {
+            'username_or_email': 'test_user',
+            'password': 'pass1234',
+            'registration_id': ':push-notif-id:',
+        }
+        self._simple_login_flow(payload)
+
+        FCMDevice = apps.get_model('api.FCMDevice')
+        device = FCMDevice.objects.filter(user=self.test_user, registration_id=payload['registration_id']).first()
+
+        self.assertIsNotNone(device, 'Devise should be created')
