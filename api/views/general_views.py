@@ -431,6 +431,8 @@ class BadgeView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        permission_classes = (IsAdminUser,)
+        
         serializer = other_serializer.BadgeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -438,6 +440,8 @@ class BadgeView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, id):
+        permission_classes = (IsAdminUser,)
+        
         try:
             badge = Badge.objects.get(id=id)
         except Badge.DoesNotExist:
@@ -450,6 +454,8 @@ class BadgeView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
+        permission_classes = (IsAdminUser,)
+        
         try:
             badge = Badge.objects.get(id=id)
         except Badge.DoesNotExist:
