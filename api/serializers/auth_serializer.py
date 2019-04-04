@@ -1,4 +1,5 @@
-import sys
+import sys, datetime
+from django.utils import timezone
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 from api.serializers import employer_serializer
@@ -8,7 +9,6 @@ from django.contrib.auth import authenticate
 from api.utils import notifier
 from jobcore.settings import STATIC_URL
 from rest_framework_jwt.settings import api_settings
-import datetime
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -92,6 +92,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if user.exists():
             raise ValidationError("This email already exist.")
 
+        print("user email: "+data["email"])
         if len(data["email"]) > 150:
             raise ValidationError("You email cannot contain more than 150 characters")
 
@@ -178,12 +179,14 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 # FUNCTIONS
 
+# tested
 def create_shift_invites_from_jobcore_invites(jc_invites, employee):
     shift_invites = []
     for invite in jc_invites:
-        invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=employee)
-        invite.save()
-        shift_invites.insert(0,shift_invites)
-        #notifier.notify_invite_accepted(invite)
+        if invite.shift.starting_at > timezone.now():
+            invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=employee)
+            invite.save()
+            shift_invites.insert(0,shift_invites)
+            #notifier.notify_invite_accepted(invite)
     jc_invites.delete()
     return shift_invites

@@ -336,7 +336,6 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
 
         unavailability_block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-        
 
 class EmployeeDeviceMeView(EmployeeView):
     def get(self, request, device_id=None):
@@ -387,4 +386,3 @@ class EmployeeDeviceMeView(EmployeeView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except FCMDevice.DoesNotExist:
             return Response(validators.error_object('Device not found'), status=status.HTTP_404_NOT_FOUND)
-            

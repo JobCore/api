@@ -719,24 +719,6 @@ class JobCoreInviteView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, id):
-        
-        if request.user is None:
-            raise PermissionDenied("You don't seem to be logged in")
-            
-        request.data['sender'] = request.user.profile.id
-            
-        try:
-            invite = JobCoreInvite.objects.get(id=id, sender__id=request.user.profile.id)
-        except JobCoreInvite.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = other_serializer.BadgeSerializer(invite, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     def delete(self, request, id):
         
         if request.user is None:
