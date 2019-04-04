@@ -136,18 +136,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 employee_actions.create_default_availablity(emp)
                 
                 # @TODO: if the user is comming from an invite it gets status=ACTIVE, it not it gets the default PENDING_EMAIL_VALIDATION
+                # we would have to receive the invitation token here or something like that.
                 profile = Profile.objects.create(user=user, picture='', employee=emp, status='ACTIVE')
                 user.profile.save()
             
+                # Si te estas registrando como un empleado, debemos ver quien te invito a la plataforma (JobCoreInvite), 
+                # si la(s) invitacion que te enviaron tienen shift asociados debemos invitarte a esos shifts de una vez te registremos (ShiftInvite). 
+                jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
+                shift_invites = create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
+                
             notifier.notify_email_validation(user)
         except:
             user.delete()
             print("Error:", sys.exc_info()[0])
             raise
-        
-        # check for pending invites
-        jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
-        shift_invites = create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
         
         return user
 
