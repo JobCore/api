@@ -9,6 +9,18 @@
     phone_number: 3334456733
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
+    
+- model: api.JobCoreInvite
+  pk: 2
+  fields:
+    sender: 1
+    first_name: "Ixax"
+    last_name: "Alvarez"
+    shift: 1
+    email: "alejandro+ixax@bestmiamiweddings.com"
+    phone_number: 3334456733
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
 #
 # Shift Invites
 #

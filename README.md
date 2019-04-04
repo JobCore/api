@@ -81,9 +81,14 @@ python manage.py loaddata api/fixtures/*.yaml
 ```
     
 ### Run tests
+```
+python manage.py test api
+```
 
-1. For a particular test: `pytest api/tests/test_invites.py`
-2. For all tests: `pytest`
+Note: If you are running the old tests:  
+
+- For a particular test: `pytest api/tests/test_invites.py`
+- For all tests: `pytest`
 
 ### Extra useful stuff
 

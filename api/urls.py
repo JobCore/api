@@ -21,7 +21,7 @@ urlpatterns = [
     #path('user/<int:user_id>/employees',general_views.EmployeeView.as_view(), name="create-employees"),
 
     #
-    # FOR EVERYONE LOGGED IN (both employeer and employee)
+    # FOR EVERYONE LOGGED IN (execution permissions may vary depending on your privileges)
     #
     
     path('employers',general_views.EmployerView.as_view(), name="get-employers"),
@@ -38,6 +38,9 @@ urlpatterns = [
     path('ratings',general_views.RateView.as_view(), name="get-ratings"),
     path('ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
     
+    path('badges',general_views.BadgeView.as_view(), name="get-badges"),
+    path('badges/<int:id>',general_views.BadgeView.as_view(), name="id-badges"), #manage the badges
+    
     #
     # UNCLASIFIED ENDPOINTS
     # @TODO: Classify endpoint permissions to employer, empoyee, admin, logged_in or public
@@ -46,8 +49,7 @@ urlpatterns = [
     path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
     path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
     
-    # path('badges',general_views.BadgeView.as_view(), name="get-badges"),
-    # path('badges/<int:id>',general_views.BadgeView.as_view(), name="id-badges"),
+
     # path('profiles',general_views.ProfileView.as_view(), name="get-profiles"),
     # path('profiles/<int:id>',general_views.ProfileView.as_view(), name="id-profiles"),
     path('payroll',general_views.PayrollShiftsView.as_view(), name="all-payroll"),
@@ -117,6 +119,7 @@ urlpatterns = [
     #
     # ADMIN USE ONLY
     #
+    
     path('employees/<int:employee_id>/badges', admin_views.EmployeeBadgesView.as_view(), name="id-employees"), #update the talent badges
     path('positions',general_views.PositionView.as_view(), name="get-positions"),
     path('positions/<int:id>',general_views.PositionView.as_view(), name="id-positions"),
