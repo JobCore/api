@@ -127,6 +127,7 @@ class RegistrationTestSuite(TestCase):
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
+    @expectedFailure
     def test_employer_all_good(self, mocked_requests):
         """
         """
