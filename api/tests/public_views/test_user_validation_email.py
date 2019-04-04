@@ -1,18 +1,14 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure, skipIf
+from unittest import expectedFailure
 from mixer.backend.django import mixer
-from django.apps import apps
-import json
 from django.urls.base import reverse_lazy
-from django.test import tag
-from mock import patch, call
 from rest_framework_jwt.settings import api_settings
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
+
 @override_settings(STATICFILES_STORAGE=None)
-@tag('here')
 class UserValidationEmailTestSuite(TestCase):
     """
     Endpoint tests for password reset
@@ -28,7 +24,7 @@ class UserValidationEmailTestSuite(TestCase):
 
     def _make_user_with_profile(self, **kwargs):
         test_user = mixer.blend(
-            'auth.User', 
+            'auth.User',
             **kwargs
             )
 
@@ -57,15 +53,18 @@ class UserValidationEmailTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-    
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
     @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
 
         @todo: no fufiona, jwt.exceptions.InvalidSignatureError
-            además, nunca se usa el jwt_payload_handler interno 
+            además, nunca se usa el jwt_payload_handler interno
             cuando se llama a api_settings.JWT_PAYLOAD_HANDLER
 
         """
@@ -83,7 +82,10 @@ class UserValidationEmailTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
 
     def test_reset_good_token(self):
         """
@@ -103,6 +105,41 @@ class UserValidationEmailTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 200, 'It should return an error response')
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return an error response')
 
+    @expectedFailure
+    def test_revalidate(self):
+        """
+        Try to revalidate user
+        """
 
+        jtw_payload = jwt_payload_handler(self.test_user)
+
+        token = jwt_encode_handler(jtw_payload)
+
+        payload = {
+            'token': token,
+        }
+
+        response = self.client.get(
+            self.USER_VALID_URL,
+            data=payload,
+        )
+
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+
+        response = self.client.get(
+            self.USER_VALID_URL,
+            data=payload,
+        )
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return error when retry')

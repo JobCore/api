@@ -1,15 +1,14 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure, skipIf
+from unittest import expectedFailure
 from mixer.backend.django import mixer
-from django.apps import apps
 import json
 from django.urls.base import reverse_lazy
-from django.test import tag
-from mock import patch, call
+from mock import patch
 from rest_framework_jwt.settings import api_settings
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
 
 @override_settings(STATICFILES_STORAGE=None)
 class PasswordResetTestSuite(TestCase):
@@ -27,7 +26,7 @@ class PasswordResetTestSuite(TestCase):
 
     def _make_user_with_profile(self, **kwargs):
         test_user = mixer.blend(
-            'auth.User', 
+            'auth.User',
             **kwargs
             )
 
@@ -50,14 +49,19 @@ class PasswordResetTestSuite(TestCase):
             'email': 'test_user@testdoma.in',
         }
         response = self.client.post(
-            self.PW_RESET_URL, 
-            data=json.dumps(payload), 
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 200, 'It should return a success response')
-        self.assertEquals(mocked_requests.post.called, True, 'It should have called requests.post to send mail')
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+        self.assertEquals(
+            mocked_requests.post.called,
+            True,
+            'It should have called requests.post to send mail')
 
-    
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=False)
     def test_send_link_with_good_input_notify_disabled(self, mocked_requests):
@@ -68,13 +72,19 @@ class PasswordResetTestSuite(TestCase):
             'email': 'test_user@testdoma.in',
         }
         response = self.client.post(
-            self.PW_RESET_URL, 
-            data=json.dumps(payload), 
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 200, 'It should return a success response')
-        self.assertEquals(mocked_requests.post.called, False, 'It should NOT have called requests.post to send mail')
-    
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+        self.assertEquals(
+            mocked_requests.post.called,
+            False,
+            'It should NOT have called requests.post to send mail')
+
     @patch('api.utils.email.requests')
     def test_change_pw_non_existing_user(self, mocked_requests):
         """
@@ -84,13 +94,20 @@ class PasswordResetTestSuite(TestCase):
             'email': 'nonsensical_user@testdoma.in',
         }
         response = self.client.post(
-            self.PW_RESET_URL, 
-            data=json.dumps(payload), 
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 404, 'It should return an error response')
-        self.assertEquals(mocked_requests.post.called, False, 'It should NOT have called requests.post to send mail')
-    
+        self.assertEquals(
+            response.status_code,
+            404,
+            'It should return an error response')
+
+        self.assertEquals(
+            mocked_requests.post.called,
+            False,
+            'It should NOT have called requests.post to send mail')
+
     @patch('api.utils.email.requests')
     def test_change_pw_no_mail(self, mocked_requests):
         """
@@ -99,13 +116,19 @@ class PasswordResetTestSuite(TestCase):
         payload = {
         }
         response = self.client.post(
-            self.PW_RESET_URL, 
-            data=json.dumps(payload), 
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        self.assertEquals(mocked_requests.post.called, False, 'It should NOT have called requests.post to send mail')
-    
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+        self.assertEquals(
+            mocked_requests.post.called,
+            False,
+            'It should NOT have called requests.post to send mail')
+
     @expectedFailure
     def test_reset_bad_token(self):
         """
@@ -130,15 +153,18 @@ class PasswordResetTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-    
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
     @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
 
         @todo: no fufiona, jwt.exceptions.InvalidSignatureError
-            además, nunca se usa el jwt_payload_handler interno 
+            además, nunca se usa el jwt_payload_handler interno
             cuando se llama a api_settings.JWT_PAYLOAD_HANDLER
 
         """
@@ -156,7 +182,10 @@ class PasswordResetTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
 
     def test_reset_good_token(self):
         """
@@ -176,14 +205,17 @@ class PasswordResetTestSuite(TestCase):
             data=payload,
         )
 
-        self.assertEquals(response.status_code, 200, 'It should return an error response')
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return an error response')
 
     @expectedFailure
     def test_reset_pw_bad_token(self):
         """
         Reset password with a bad token
 
-        @todo: 
+        @todo:
             jwt.exceptions.DecodeError: Not enough segments
             File "env/lib64/python3.6/site-packages/jwt/api_jws.py", line 183, in _load
         """
@@ -200,14 +232,17 @@ class PasswordResetTestSuite(TestCase):
             content_type="application/json"
         )
 
-        self.assertEquals(response.status_code, 200, 'It should return an error response')
-    
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return an error response')
+
     @expectedFailure
     def test_reset_pw_kindof_good_token(self):
         """
         Reset password with a bad token
 
-        @todo: 
+        @todo:
             jwt.exceptions.InvalidSignatureError: Signature verification failed
             File "env/lib64/python3.6/site-packages/jwt/api_jws.py", line 223, in _verify_signature
         """
@@ -227,14 +262,17 @@ class PasswordResetTestSuite(TestCase):
             content_type="application/json"
         )
 
-        self.assertEquals(response.status_code, 200, 'It should return an error response')
-    
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return an error response')
+
     @expectedFailure
     def test_reset_pw_not_matching_pw(self):
         """
         Reset password with not maching password1/2
 
-        @todo: 
+        @todo:
             NameError: name 'ValidationError' is not defined
             File "api/serializers/auth_serializer.py", line 166, in validate
         """
@@ -255,13 +293,16 @@ class PasswordResetTestSuite(TestCase):
             content_type="application/json"
         )
 
-        self.assertEquals(response.status_code, 200, 'It should return an error response')
-    
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return an error response')
+
     def test_reset_pw_all_good(self):
         """
         Reset password with good input
 
-        @todo: 
+        @todo:
             NameError: name 'ValidationError' is not defined
             File "api/serializers/auth_serializer.py", line 166, in validate
         """
@@ -282,6 +323,46 @@ class PasswordResetTestSuite(TestCase):
             content_type="application/json"
         )
 
-        self.assertEquals(response.status_code, 204, 'It should return a success response')
+        self.assertEquals(
+            response.status_code,
+            204,
+            'It should return a success response')
 
+    @expectedFailure
+    def test_missing_email_from_db(self):
+        """
+        Test if email dissapear from database
 
+        @todo:
+            NameError: name 'ValidationError' is not defined
+            File "api/serializers/auth_serializer.py", line 163, in validate
+        """
+
+        another_test_user = self._make_user_with_profile(
+            username='test_user2',
+            email='test_user@testdoma.in',
+            is_active=True,
+        )
+
+        jtw_payload = jwt_payload_handler(another_test_user)
+
+        token = jwt_encode_handler(jtw_payload)
+
+        another_test_user.delete()
+
+        payload = {
+            'token': token,
+            'new_password': 'password123456',
+            'repeat_password': 'password123456',
+        }
+
+        response = self.client.put(
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+
+        self.assertEquals(
+            response.status_code,
+            204,
+            'It should return a success response')

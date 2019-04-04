@@ -21,7 +21,7 @@ class LoginTestSuite(TestCase):
 
     def _make_user_with_profile(self, **kwargs):
         test_user = mixer.blend(
-            'auth.User', 
+            'auth.User',
             **kwargs
             )
 
@@ -31,29 +31,34 @@ class LoginTestSuite(TestCase):
         test_profile = mixer.blend('api.Profile', user=test_user)
         test_profile.save()
         return test_user
-   
+
     def _simple_login_flow(self, payload):
-        
+        """
+        Login Helper
+        """
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
-            
-        self.assertEquals(response.status_code, 200, 'It should return a success response')
-        
+
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+
         response_json = response.json()
 
         self.assertIn('token', response_json, 'it should have a token')
         self.assertIn('user', response_json, 'it should have user details')
 
         jwt_decoded = jwt_decode_handler(response_json['token'])
-        
+
         self.assertEquals(self.test_user.id, response_json['user']['id'], 'Response should have be the same user id')
         self.assertEquals(self.test_user.id, jwt_decoded['user_id'], 'Token should have the same user id')
 
         self.assertEquals(self.test_user.username, response_json['user']['username'], 'Response should have be the same username')
         self.assertEquals(self.test_user.username, jwt_decoded['username'], 'Token should have the same username')
-        
+
         self.assertEquals(self.test_user.email, response_json['user']['email'], 'Response should have be the same email')
         self.assertEquals(self.test_user.email, jwt_decoded['email'], 'Token should have the same email')
 
@@ -66,7 +71,7 @@ class LoginTestSuite(TestCase):
             'password': 'pass1234',
         }
         self._simple_login_flow(payload)
-    
+
     def test_good_email_password(self):
         """
         Login with valid user/password
@@ -76,7 +81,7 @@ class LoginTestSuite(TestCase):
             'password': 'pass1234',
         }
         self._simple_login_flow(payload)
-    
+
     def test_no_password(self):
         """
         Login with no password
@@ -86,16 +91,22 @@ class LoginTestSuite(TestCase):
             'password': '',
         }
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
-            
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
         response_json = response.json()
 
-        self.assertIn('password', response_json, 'It should return feedback messages')
-        
+        self.assertIn(
+            'password',
+            response_json,
+            'It should return feedback messages')
+
     def test_no_email(self):
         """
         Login with no email
@@ -105,16 +116,21 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
         response_json = response.json()
-        self.assertIn('username_or_email', response_json, 'It should return feedback messages')
-        
-    
+        self.assertIn(
+            'username_or_email',
+            response_json,
+            'It should return feedback messages')
+
     def test_invalid_username_password(self):
         """
         Login with invalid user/password
@@ -124,15 +140,21 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
         response_json = response.json()
-        self.assertIn('non_field_errors', response_json, 'It should return feedback messages')
-    
+        self.assertIn(
+            'non_field_errors',
+            response_json,
+            'It should return feedback messages')
+
     def test_invalid_email_password(self):
         """
         Login with invalid email/password
@@ -142,20 +164,26 @@ class LoginTestSuite(TestCase):
             'password': ':lolololol:',
         }
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
         response_json = response.json()
-        self.assertIn('non_field_errors', response_json, 'It should return feedback messages')
-    
+        self.assertIn(
+            'non_field_errors',
+            response_json,
+            'It should return feedback messages')
+
     def test_login_inactive_user(self):
         """
         Login with an inactive user
         """
-        inactive_user = self._make_user_with_profile( # pylint: disable=unused-variable
+        inactive_user = self._make_user_with_profile(  # NOQA
             username='test_user2',
             email='test_user2@testdoma.in',
             is_active=False,
@@ -165,14 +193,20 @@ class LoginTestSuite(TestCase):
             'password': 'pass1234',
         }
         response = self.client.post(
-            self.LOGIN_URL, 
-            data=json.dumps(payload), 
+            self.LOGIN_URL,
+            data=json.dumps(payload),
             content_type="application/json")
 
-        self.assertEquals(response.status_code, 400, 'It should return an error response')
-        
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
         response_json = response.json()
-        self.assertIn('non_field_errors', response_json, 'It should return feedback messages')
+        self.assertIn(
+            'non_field_errors',
+            response_json,
+            'It should return feedback messages')
 
     def test_login_with_regid(self):
         """
@@ -186,6 +220,12 @@ class LoginTestSuite(TestCase):
         self._simple_login_flow(payload)
 
         FCMDevice = apps.get_model('api.FCMDevice')
-        device = FCMDevice.objects.filter(user=self.test_user, registration_id=payload['registration_id']).first()
+        device = (
+            FCMDevice.objects
+            .filter(
+                user=self.test_user,
+                registration_id=payload['registration_id']
+            ).first()
+        )
 
         self.assertIsNotNone(device, 'Devise should be created')
