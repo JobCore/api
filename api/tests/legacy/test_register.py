@@ -48,6 +48,15 @@ class TestRegister(APITestCase):
         self.assertEqual(2, len(shift_invites))
         self.assertEqual(True, len(JobCoreInvite.objects.filter(email=self.user.email).all()) == 0)
         
-if __name__ == '__main__':
-    unittest.main()
-    
+        user = mixer.blend(User)
+        profile = mixer.blend(Profile, user=user)
+        employee = mixer.blend(Employee,user=user)
+        shift = mixer.blend(Shift)
+        for i in range(10):
+            jc_invite = mixer.blend(JobCoreInvite, shift=shift)
+            jc_invite.shift.starting_at = timezone.now() - five_minutes #expired
+            jc_invite.save()
+        
+        # shift_invites = create_shift_invites_from_jobcore_invites(JobCoreInvite.objects.all(), employee)
+        shift_invites = []
+        self.assertEqual(True, len(shift_invites) == 0)
