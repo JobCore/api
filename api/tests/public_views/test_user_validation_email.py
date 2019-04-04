@@ -109,3 +109,37 @@ class UserValidationEmailTestSuite(TestCase):
             response.status_code,
             200,
             'It should return an error response')
+
+    @expectedFailure
+    def test_revalidate(self):
+        """
+        Try to revalidate user
+        """
+
+        jtw_payload = jwt_payload_handler(self.test_user)
+
+        token = jwt_encode_handler(jtw_payload)
+
+        payload = {
+            'token': token,
+        }
+
+        response = self.client.get(
+            self.USER_VALID_URL,
+            data=payload,
+        )
+
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+
+        response = self.client.get(
+            self.USER_VALID_URL,
+            data=payload,
+        )
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return error when retry')

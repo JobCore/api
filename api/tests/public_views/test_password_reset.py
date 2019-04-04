@@ -327,3 +327,42 @@ class PasswordResetTestSuite(TestCase):
             response.status_code,
             204,
             'It should return a success response')
+
+    @expectedFailure
+    def test_missing_email_from_db(self):
+        """
+        Test if email dissapear from database
+
+        @todo:
+            NameError: name 'ValidationError' is not defined
+            File "api/serializers/auth_serializer.py", line 163, in validate
+        """
+
+        another_test_user = self._make_user_with_profile(
+            username='test_user2',
+            email='test_user@testdoma.in',
+            is_active=True,
+        )
+
+        jtw_payload = jwt_payload_handler(another_test_user)
+
+        token = jwt_encode_handler(jtw_payload)
+
+        another_test_user.delete()
+
+        payload = {
+            'token': token,
+            'new_password': 'password123456',
+            'repeat_password': 'password123456',
+        }
+
+        response = self.client.put(
+            self.PW_RESET_URL,
+            data=json.dumps(payload),
+            content_type="application/json"
+        )
+
+        self.assertEquals(
+            response.status_code,
+            204,
+            'It should return a success response')
