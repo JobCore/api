@@ -1,5 +1,7 @@
+from unittest import skip, TestCase
 
-
+@skip
+class X(TestCase):
     # USER
 
     def test_user_view_get(self):

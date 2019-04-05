@@ -53,14 +53,35 @@ class LoginTestSuite(TestCase):
 
         jwt_decoded = jwt_decode_handler(response_json['token'])
 
-        self.assertEquals(self.test_user.id, response_json['user']['id'], 'Response should have be the same user id')
-        self.assertEquals(self.test_user.id, jwt_decoded['user_id'], 'Token should have the same user id')
+        self.assertEquals(
+            self.test_user.id,
+            response_json['user']['id'],
+            'Response should have be the same user id')
 
-        self.assertEquals(self.test_user.username, response_json['user']['username'], 'Response should have be the same username')
-        self.assertEquals(self.test_user.username, jwt_decoded['username'], 'Token should have the same username')
+        self.assertEquals(
+            self.test_user.id,
+            jwt_decoded['user_id'],
+            'Token should have the same user id')
 
-        self.assertEquals(self.test_user.email, response_json['user']['email'], 'Response should have be the same email')
-        self.assertEquals(self.test_user.email, jwt_decoded['email'], 'Token should have the same email')
+        self.assertEquals(
+            self.test_user.username,
+            response_json['user']['username'],
+            'Response should have be the same username')
+
+        self.assertEquals(
+            self.test_user.username,
+            jwt_decoded['username'],
+            'Token should have the same username')
+
+        self.assertEquals(
+            self.test_user.email,
+            response_json['user']['email'],
+            'Response should have be the same email')
+
+        self.assertEquals(
+            self.test_user.email,
+            jwt_decoded['email'],
+            'Token should have the same email')
 
     def test_good_user_password(self):
         """
@@ -128,6 +149,34 @@ class LoginTestSuite(TestCase):
         response_json = response.json()
         self.assertIn(
             'username_or_email',
+            response_json,
+            'It should return feedback messages')
+
+    def test_nothing_provided(self):
+        """
+        Login with no email
+        """
+        payload = {
+            'username_or_email': '',
+            'password': '',
+        }
+        response = self.client.post(
+            self.LOGIN_URL,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+        response_json = response.json()
+        self.assertIn(
+            'username_or_email',
+            response_json,
+            'It should return feedback messages')
+        self.assertIn(
+            'password',
             response_json,
             'It should return feedback messages')
 
