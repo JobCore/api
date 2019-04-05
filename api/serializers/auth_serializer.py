@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 from api.serializers import employer_serializer
-from api.actions import employee_actions
+from api.actions import employee_actions, auth_actions
 from api.models import User, Employer, Employee, Profile, ShiftInvite, JobCoreInvite, FCMDevice
 from django.contrib.auth import authenticate
 from api.utils import notifier
@@ -143,7 +143,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 # Si te estas registrando como un empleado, debemos ver quien te invito a la plataforma (JobCoreInvite), 
                 # si la(s) invitacion que te enviaron tienen shift asociados debemos invitarte a esos shifts de una vez te registremos (ShiftInvite). 
                 jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
-                shift_invites = create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
+                shift_invites = auth_actions.create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
                 
             notifier.notify_email_validation(user)
         except:
@@ -176,19 +176,3 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(validated_data['new_password'])
         user.save()
         return user
-        
-        
-
-# FUNCTIONS
-
-# tested
-def create_shift_invites_from_jobcore_invites(jc_invites, employee):
-    shift_invites = []
-    for invite in jc_invites:
-        if invite.shift.starting_at > timezone.now():
-            invite = ShiftInvite(sender=invite.sender, shift=invite.shift, employee=employee)
-            invite.save()
-            shift_invites.insert(0,invite)
-            #notifier.notify_invite_accepted(invite)
-    jc_invites.delete()
-    return shift_invites

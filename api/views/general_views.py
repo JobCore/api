@@ -8,8 +8,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from api.pagination import CustomPagination
 from django.db.models import Q
 
@@ -112,7 +111,7 @@ class UserRegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly, TokenHasReadWriteScope]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, id):
         try:
@@ -124,6 +123,8 @@ class UserView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, id):
+        permission_classes = [IsAdminUser]
+        
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
@@ -136,6 +137,8 @@ class UserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, id):
+        permission_classes = [IsAdminUser]
+        
         try:
             user = User.objects.get(id=id)
         except User.DoesNotExist:
@@ -154,7 +157,7 @@ class UserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
-        permission_classes = [IsAuthenticated]
+        permission_classes = [IsAdminUser]
 
         try:
             user = User.objects.get(id=id)
