@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 from api.pagination import CustomPagination
 from django.db.models import Q
 
