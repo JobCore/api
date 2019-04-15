@@ -1,5 +1,5 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from mixer.backend.django import mixer
 from django.urls.base import reverse_lazy
 from rest_framework_jwt.settings import api_settings
@@ -201,7 +201,7 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
+    # @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_repeat_email(self, mocked_requests):
@@ -231,7 +231,7 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
+    # @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_wrong_account_type(self, mocked_requests):
