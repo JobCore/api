@@ -3,8 +3,9 @@ from mixer.backend.django import mixer
 import json
 from mock import patch
 from django.urls import reverse_lazy
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from django.apps import apps
+
 
 class JobcoreInviteTestSuite(TestCase):
     """
@@ -106,7 +107,7 @@ class JobcoreInviteTestSuite(TestCase):
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    @expectedFailure
+    # @expectedFailure
     def test_send_jobcore_invite(self, mocked_requests):
         """
         Send an invite
@@ -141,7 +142,7 @@ class JobcoreInviteTestSuite(TestCase):
             True,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
+    # @expectedFailure
     def test_send_jobcore_invite_empty_payload(self):
         """
         Send an invite
@@ -192,7 +193,7 @@ class JobcoreInviteTestSuite(TestCase):
             'It should NOT have called requests.post to send mail')
 
     @patch('api.utils.email.requests')
-    @expectedFailure
+    # @expectedFailure
     def test_send_double_jobcore_invite(self, mocked_requests):
         """
         @todo igual que `test_send_jobcore_invite`

@@ -1,4 +1,4 @@
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from django.test import TestCase
 from mixer.backend.django import mixer
 import json
@@ -81,7 +81,7 @@ class ProfileTestSuite(TestCase):
         # self.assertNotIn(
         #     'employer', response_json, "It shouldn't show employer data")
 
-    @expectedFailure
+    # @expectedFailure
     def test_get_profile_non_existing(self):
         """
         Get user profile for a user without profile
@@ -110,7 +110,7 @@ class ProfileTestSuite(TestCase):
             404,
             'It should return a success response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_not_enough_info(self):
         """
         Edit profile with lacking data

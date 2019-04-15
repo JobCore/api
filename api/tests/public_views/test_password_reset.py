@@ -1,5 +1,5 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from mixer.backend.django import mixer
 import json
 from django.urls.base import reverse_lazy
@@ -129,7 +129,7 @@ class PasswordResetTestSuite(TestCase):
             False,
             'It should NOT have called requests.post to send mail')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_bad_token(self):
         """
         Try to reach the form with a bad token
@@ -158,7 +158,7 @@ class PasswordResetTestSuite(TestCase):
             400,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
@@ -210,7 +210,7 @@ class PasswordResetTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_pw_bad_token(self):
         """
         Reset password with a bad token
@@ -237,7 +237,7 @@ class PasswordResetTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_pw_kindof_good_token(self):
         """
         Reset password with a bad token
@@ -267,7 +267,7 @@ class PasswordResetTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_pw_not_matching_pw(self):
         """
         Reset password with not maching password1/2
@@ -328,7 +328,7 @@ class PasswordResetTestSuite(TestCase):
             204,
             'It should return a success response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_missing_email_from_db(self):
         """
         Test if email dissapear from database
