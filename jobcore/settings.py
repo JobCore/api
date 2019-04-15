@@ -198,3 +198,5 @@ LOGGING = {
         },
     },
 }
+
+EMAIL_NOTIFICATIONS_ENABLED = (os.environ.get('ENABLE_NOTIFICATIONS') == 'TRUE')
