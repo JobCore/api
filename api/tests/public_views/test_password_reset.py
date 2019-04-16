@@ -133,12 +133,6 @@ class PasswordResetTestSuite(TestCase):
         Try to reach the form with a bad token
         """
 
-        # jtw_payload = jwt_payload_handler({
-        #     "user_id": self.test_user.id
-        # })
-
-        # token = jwt_encode_handler(jtw_payload)
-
         payload = {
             'token': ':really-evil-token:',
         }

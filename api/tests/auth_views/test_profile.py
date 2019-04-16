@@ -85,9 +85,6 @@ class ProfileTestSuite(TestCase):
     def test_get_profile_non_existing(self):
         """
         Get user profile for a user without profile
-
-        @todo esto falla miserablemente por:
-            User.profile.RelatedObjectDoesNotExist: User has no profile.
         """
 
         user = mixer.blend(
@@ -115,7 +112,7 @@ class ProfileTestSuite(TestCase):
         """
         Edit profile with lacking data
 
-        @todo esto falla miserablemente, no hay validaciones
+        @todo Faltan validaciones en el serializer.
         """
         payload = {
             'picture': '',

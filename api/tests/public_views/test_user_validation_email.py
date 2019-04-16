@@ -39,9 +39,6 @@ class UserValidationEmailTestSuite(TestCase):
     def test_with_bad_token(self):
         """
         Try to reach the view with a bad token
-
-        @todo: no fufiona si el token es muy invalido.
-        raises: jwt.exceptions.DecodeError
         """
 
         payload = {
@@ -62,11 +59,6 @@ class UserValidationEmailTestSuite(TestCase):
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
-
-        @todo: no fufiona, jwt.exceptions.InvalidSignatureError
-            además, nunca se usa el jwt_payload_handler interno
-            cuando se llama a api_settings.JWT_PAYLOAD_HANDLER
-
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)

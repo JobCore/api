@@ -144,8 +144,6 @@ class RatingTestSuite(TestCase):
     def test_post_rating_employee(self):
         """
         Gets ratings
-
-        @todo: fix Notifier
         """
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employee)
@@ -235,8 +233,6 @@ class RatingTestSuite(TestCase):
     def test_rate_without_clocking_in(self, *a):
         """
         Gets ratings
-
-        @todo: fix Notifier
         """
         new_shift, *_ = self._make_shift(
             employer=self.test_employer)
@@ -264,8 +260,6 @@ class RatingTestSuite(TestCase):
     def test_rate_integer(self, *a):
         """
         Gets ratings
-
-        @todo: fix Notifier
         """
         new_shift, *_ = self._make_shift(
             employer=self.test_employer)
