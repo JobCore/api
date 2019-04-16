@@ -1,5 +1,4 @@
 from django.test import TestCase, override_settings
-# from unittest import expectedFailure
 from mixer.backend.django import mixer
 import json
 from django.urls.base import reverse_lazy
@@ -129,13 +128,9 @@ class PasswordResetTestSuite(TestCase):
             False,
             'It should NOT have called requests.post to send mail')
 
-    # @expectedFailure
     def test_reset_bad_token(self):
         """
         Try to reach the form with a bad token
-
-        @todo: no fufiona si el token es muy invalido.
-        raises: jwt.exceptions.DecodeError
         """
 
         # jtw_payload = jwt_payload_handler({
@@ -158,15 +153,9 @@ class PasswordResetTestSuite(TestCase):
             400,
             'It should return an error response')
 
-    # @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
-
-        @todo: no fufiona, jwt.exceptions.InvalidSignatureError
-            además, nunca se usa el jwt_payload_handler interno
-            cuando se llama a api_settings.JWT_PAYLOAD_HANDLER
-
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)
@@ -210,14 +199,9 @@ class PasswordResetTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    # @expectedFailure
     def test_reset_pw_bad_token(self):
         """
         Reset password with a bad token
-
-        @todo:
-            jwt.exceptions.DecodeError: Not enough segments
-            File "env/lib64/python3.6/site-packages/jwt/api_jws.py", line 183, in _load
         """
 
         payload = {
@@ -234,17 +218,12 @@ class PasswordResetTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            200,
+            400,
             'It should return an error response')
 
-    # @expectedFailure
     def test_reset_pw_kindof_good_token(self):
         """
         Reset password with a bad token
-
-        @todo:
-            jwt.exceptions.InvalidSignatureError: Signature verification failed
-            File "env/lib64/python3.6/site-packages/jwt/api_jws.py", line 223, in _verify_signature
         """
         jtw_payload = jwt_payload_handler(self.test_user)
 
@@ -264,17 +243,12 @@ class PasswordResetTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            200,
+            400,
             'It should return an error response')
 
-    # @expectedFailure
     def test_reset_pw_not_matching_pw(self):
         """
         Reset password with not maching password1/2
-
-        @todo:
-            NameError: name 'ValidationError' is not defined
-            File "api/serializers/auth_serializer.py", line 166, in validate
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)
@@ -295,16 +269,12 @@ class PasswordResetTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            200,
+            400,
             'It should return an error response')
 
     def test_reset_pw_all_good(self):
         """
         Reset password with good input
-
-        @todo:
-            NameError: name 'ValidationError' is not defined
-            File "api/serializers/auth_serializer.py", line 166, in validate
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)
@@ -328,14 +298,9 @@ class PasswordResetTestSuite(TestCase):
             204,
             'It should return a success response')
 
-    # @expectedFailure
     def test_missing_email_from_db(self):
         """
         Test if email dissapear from database
-
-        @todo:
-            NameError: name 'ValidationError' is not defined
-            File "api/serializers/auth_serializer.py", line 163, in validate
         """
 
         another_test_user = self._make_user_with_profile(
@@ -364,5 +329,5 @@ class PasswordResetTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            204,
-            'It should return a success response')
+            400,
+            'It should return an error response')

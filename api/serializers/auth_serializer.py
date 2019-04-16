@@ -8,6 +8,8 @@ from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 
+from jwt.exceptions import DecodeError
+
 from api.serializers import employer_serializer
 from api.actions import employee_actions, auth_actions
 from api.models import (
@@ -162,7 +164,11 @@ class ChangePasswordSerializer(serializers.Serializer):
     repeat_password = serializers.CharField(required=True)
 
     def validate(self, data):
-        payload = jwt_decode_handler(data["token"])
+        try:
+            payload = jwt_decode_handler(data["token"])
+        except DecodeError:
+            raise serializers.ValidationError("Invalid token")
+
         try:
             User.objects.get(id=payload["user_id"])
         except User.DoesNotExist:
@@ -174,7 +180,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        payload = jwt_decode_handler(validated_data["token"])
+        try:
+            payload = jwt_decode_handler(validated_data["token"])
+        except DecodeError:
+            raise serializers.ValidationError("Invalid token")
+
         user = User.objects.get(id=payload["user_id"])
         user.set_password(validated_data['new_password'])
         user.save()
