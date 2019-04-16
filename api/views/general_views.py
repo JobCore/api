@@ -42,6 +42,7 @@ from api.serializers import (
 from api.serializers import rating_serializer
 from api.utils.email import get_template_content
 
+from api.models import ACTIVE as USER_ACTIVE_STATUS
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -63,6 +64,9 @@ class ValidateEmailView(APIView):
 
         try:
             user = User.objects.get(id=payload["user_id"])
+            if user.profile.status == USER_ACTIVE_STATUS:
+                raise ValidationError('This link has expired')
+
             user.profile.status = ACTIVE  # email validation completed
             user.profile.save()
         except User.DoesNotExist:
