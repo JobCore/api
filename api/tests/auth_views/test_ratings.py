@@ -1,4 +1,4 @@
-# from django.test import TestCase, override_settings
+from django.test import TestCase
 from mixer.backend.django import mixer
 import json
 from mock import patch
@@ -9,7 +9,8 @@ from django.urls import reverse_lazy
 
 class RatingTestSuite(TestCase):
     """
-    Endpoint tests for login
+    Endpoint tests for Rating
+    @revisionNeeded
     """
     def setUp(self):
         (
@@ -176,8 +177,6 @@ class RatingTestSuite(TestCase):
     def test_post_rating_employer(self, *a):
         """
         Gets ratings
-
-        @todo: fix Notifier
         """
         # maybe ugly hack, but first employee rates
         self.test_post_rating_employee()
@@ -198,9 +197,8 @@ class RatingTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            400,
-            'It should return an error response, '
-            'cannot rate before employee')
+            201,
+            'It should return a success response.')
 
         response_json = response.json()
 
@@ -213,8 +211,6 @@ class RatingTestSuite(TestCase):
     def test_post_rating_employer_before_employee(self, *a):
         """
         Gets ratings
-
-        @todo: fix Notifier
         """
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
@@ -235,13 +231,6 @@ class RatingTestSuite(TestCase):
             400,
             'It should return an error response, '
             'cannot rate before employee')
-
-        response_json = response.json()
-
-        self.assertIn('comments', response_json)
-        self.assertIn('shift', response_json)
-        self.assertIn('id', response_json)
-        self.assertIn('rating', response_json)
 
     def test_rate_without_clocking_in(self, *a):
         """

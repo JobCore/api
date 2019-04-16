@@ -173,6 +173,7 @@ def notify_jobcore_invite(invite):
         "sender_id": invite.sender.id,
         "invite_id": invite.id
     })
+
     token = jwt_encode_handler(payload)
         
     send_email_message("invite_to_jobcore", invite.email, {

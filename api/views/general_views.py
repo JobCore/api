@@ -335,7 +335,10 @@ class ProfileView(APIView):
 
 class ProfileMeView(APIView):
     def get(self, request):
-        if request.user.profile == None:
+        try:
+            # access to trigger sql query & error
+            getattr(request.user, 'profile')
+        except Profile.DoesNotExist:
             raise PermissionDenied("You dont seem to have a profile")
 
         try:
@@ -509,20 +512,28 @@ class RateView(APIView):
 
             serializer = rating_serializer.RatingGetSerializer(rate, many=False)
         else:
-            rates = Rate.objects.all()
+            qs_employer = request.GET.get('employer')
+            qs_employee = request.GET.get('employee')
+            lookup = {}
 
-            qEmployer = request.GET.get('employer')
-            qEmployee = request.GET.get('employee')
-            if qEmployee:
-                rates = rates.filter(employee__id=qEmployee)
-            elif qEmployer:
-                rates = rates.filter(employee__id=qEmployer)
+            # intentionally rewrite lookup to consider
+            # employee OR employer, but not both at the same time
 
-            qShift = request.GET.get('shift')
-            if qShift:
-                rates = rates.filter(shift__id=qShift)
+            if qs_employee:
+                lookup = {'employee__id': qs_employee}
 
-            serializer = rating_serializer.RatingGetSerializer(rates, many=True)
+            if qs_employer:
+                lookup = {'employer__id': qs_employer}
+
+            qs_shift = request.GET.get('shift')
+
+            if qs_shift:
+                lookup['shift__id'] = qs_shift
+
+            rates = Rate.objects.filter(**lookup)
+
+            serializer = rating_serializer.RatingGetSerializer(
+                rates, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

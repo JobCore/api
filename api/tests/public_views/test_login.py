@@ -6,6 +6,7 @@ from rest_framework_jwt.settings import api_settings
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
+
 class LoginTestSuite(TestCase):
     """
     Endpoint tests for login
@@ -111,6 +112,32 @@ class LoginTestSuite(TestCase):
             'username_or_email': 'test_user@testdoma.in',
             'password': '',
         }
+        response = self.client.post(
+            self.LOGIN_URL,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+        response_json = response.json()
+
+        self.assertIn(
+            'password',
+            response_json,
+            'It should return feedback messages')
+
+    def test_non_existing_username(self):
+        """
+        Login non-existing username
+        """
+        payload = {
+            'username_or_email': 'test_userz@testdoma.in',
+            'password': '',
+        }
+
         response = self.client.post(
             self.LOGIN_URL,
             data=json.dumps(payload),
