@@ -1,5 +1,5 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from mixer.backend.django import mixer
 from django.urls.base import reverse_lazy
 from rest_framework_jwt.settings import api_settings
@@ -35,7 +35,7 @@ class UserValidationEmailTestSuite(TestCase):
         test_profile.save()
         return test_user
 
-    @expectedFailure
+    # @expectedFailure
     def test_with_bad_token(self):
         """
         Try to reach the view with a bad token
@@ -58,7 +58,7 @@ class UserValidationEmailTestSuite(TestCase):
             400,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
@@ -110,7 +110,7 @@ class UserValidationEmailTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_revalidate(self):
         """
         Try to revalidate user
