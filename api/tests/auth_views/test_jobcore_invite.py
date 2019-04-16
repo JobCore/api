@@ -3,10 +3,10 @@ from mixer.backend.django import mixer
 import json
 from mock import patch
 from django.urls import reverse_lazy
-# from unittest import expectedFailure
 from django.apps import apps
 
 
+@override_settings(STATICFILES_STORAGE=None)
 class JobcoreInviteTestSuite(TestCase):
     """
     Endpoint tests for login
@@ -107,17 +107,9 @@ class JobcoreInviteTestSuite(TestCase):
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    # @expectedFailure
     def test_send_jobcore_invite(self, mocked_requests):
         """
         Send an invite
-
-        @todo: Falla miserablemente, el JWT Handler no
-            retorna nada y no se puede concatenar el token.
-
-            Esto se repara centralizando el JWT Handler en vez
-            de usar a veces el standard y otras veces el
-            personalizado (api.utils.jwt.jwt_*)
         """
 
         url = reverse_lazy('api:get-jcinvites')
@@ -134,7 +126,7 @@ class JobcoreInviteTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            401,
+            201,
             'It should return a success response')
 
         self.assertEquals(
@@ -161,10 +153,11 @@ class JobcoreInviteTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            401,
+            400,
             'It should return a success response')
 
     @patch('api.utils.email.requests')
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_send_jobcore_invite_already_in_jobcore(self, mocked_requests):
         """
         Send an invite
@@ -193,10 +186,10 @@ class JobcoreInviteTestSuite(TestCase):
             'It should NOT have called requests.post to send mail')
 
     @patch('api.utils.email.requests')
-    # @expectedFailure
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_send_double_jobcore_invite(self, mocked_requests):
         """
-        @todo igual que `test_send_jobcore_invite`
+        Send 2 invitations to the same email.
         """
 
         url = reverse_lazy('api:get-jcinvites')
@@ -213,12 +206,12 @@ class JobcoreInviteTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            200,
+            201,
             'It should return a success response')
 
         self.assertEquals(
-            mocked_requests.post.called,
-            True,
+            mocked_requests.post.call_count,
+            1,
             'It should have called requests.post to send mail')
 
         response = self.client.post(
@@ -232,13 +225,13 @@ class JobcoreInviteTestSuite(TestCase):
             'It should return an error response')
 
         self.assertEquals(
-            mocked_requests.post.called,
-            False,
+            mocked_requests.post.call_count,
+            1,
             'It should NOT have called requests.post to send mail')
 
     def test_delete_jobcore_invite(self):
         """
-        @todo igual que `test_send_jobcore_invite`
+        Delete an invitation
         """
 
         url = reverse_lazy(
@@ -264,7 +257,7 @@ class JobcoreInviteTestSuite(TestCase):
 
     def test_delete_jobcore_invite_evil_id(self):
         """
-        @todo igual que `test_send_jobcore_invite`
+        Delete an evil id
         """
 
         url = reverse_lazy(

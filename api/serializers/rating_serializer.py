@@ -48,7 +48,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
         if 'shift' not in data:
             raise serializers.ValidationError('You need to speficy the shift related to this rating')
-            
+
         # if it is a talent rating an employer
         if current_user.profile.employee != None:
             if 'employee' in data:
@@ -91,8 +91,16 @@ class RatingSerializer(serializers.ModelSerializer):
                 pass
             except Rate.MultipleObjectsReturned:
                 raise serializers.ValidationError("You have already rated this talent for this shift")
-                
-        
+
+            try:
+                # getting the rate from employee first.
+                Rate.objects.get(
+                    shift=data["shift"].id,
+                    employer=current_user.profile.employer)
+            except Rate.DoesNotExist:
+                raise serializers.ValidationError(
+                    'You cannot rate before your employee')
+
         return data
         
     def create(self, validated_data):

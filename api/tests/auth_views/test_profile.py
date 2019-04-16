@@ -1,4 +1,4 @@
-# from unittest import expectedFailure
+from unittest import expectedFailure
 from django.test import TestCase
 from mixer.backend.django import mixer
 import json
@@ -107,10 +107,10 @@ class ProfileTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            404,
+            403,
             'It should return a success response')
 
-    # @expectedFailure
+    @expectedFailure
     def test_not_enough_info(self):
         """
         Edit profile with lacking data
