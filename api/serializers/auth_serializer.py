@@ -1,17 +1,24 @@
-import sys, datetime
-from django.utils import timezone
+import sys
+
+from django.contrib.auth import authenticate
+from django.db.models import Q
+from django.utils.translation import ugettext_lazy as _
+
+from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
+
 from api.serializers import employer_serializer
 from api.actions import employee_actions, auth_actions
-from api.models import User, Employer, Employee, Profile, ShiftInvite, JobCoreInvite, FCMDevice
-from django.contrib.auth import authenticate
+from api.models import (
+    User, Employer, Employee, Profile,
+    JobCoreInvite, FCMDevice)
 from api.utils import notifier
-from jobcore.settings import STATIC_URL
-from rest_framework_jwt.settings import api_settings
+
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
+
 
 class UserLoginSerializer(serializers.ModelSerializer):
     employee = serializers.CharField(required=False)
@@ -24,6 +31,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
                   'token', 'employer', 'employee')
         extra_kwargs = {"password": {"write_only": True}}
 
+
 class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
@@ -31,56 +39,50 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
     exp_days = serializers.IntegerField(write_only=True, required=False)
 
     def validate(self, attrs):
-    
+        lookup = Q(email=attrs.get("username_or_email")) \
+            | Q(username=attrs.get("username_or_email"))
+
         password = attrs.get("password")
-        user_obj = User.objects.filter(email=attrs.get("username_or_email")).first() or User.objects.filter(username=attrs.get("username_or_email")).first()
-        if user_obj is not None:
-            credentials = {
-                'username': user_obj.username,
-                'password': password
-            }
-            if all(credentials.values()):
-                user = authenticate(**credentials)
-                if user:
-                    if not user.is_active:
-                        msg = _('User account is disabled.')
-                        raise serializers.ValidationError(msg)
 
-                    # exp = attrs.get("expiration_days", None)
-                    # if exp is not None:
-                    #     exp = datetime.datetime.utcnow() + datetime.timedelta(days=int(exp))
-
-                    payload = jwt_payload_handler(user=user)
-                    profile = Profile.objects.get(user_id=user.id)
-                    
-                    device_id = attrs.get("registration_id")
-                    if device_id is not None:
-                        FCMDevice.objects.filter(registration_id=device_id).delete()
-
-                        device = FCMDevice(user=user, registration_id=device_id)
-                        device.save()
-                    
-                    return {
-                        'token': jwt_encode_handler(payload),
-                        'user': user
-                    };
-                else:
-                    msg = 'Unable to log in with provided credentials.'
-                    raise serializers.ValidationError(msg)
-
-            else:
-                msg = 'Must include "{username_field}" and "password".'
-                msg = msg.format(username_field=self.username_field)
-                raise serializers.ValidationError(msg)
-
-        else:
-            msg = 'Account with this email does not exists'
+        try:
+            user_obj = User.objects.filter(lookup)[:1].get()
+        except User.DoesNotExist:
+            msg = 'Account with this credentials does not exists'
             raise serializers.ValidationError(msg)
-            
+
+        if not user_obj.is_active:
+            msg = _('User account is disabled.')
+            raise serializers.ValidationError(msg)
+
+        credentials = {
+            'username': user_obj.username,
+            'password': password
+        }
+
+        user = authenticate(**credentials)
+
+        if not user:
+            msg = 'Unable to log in with provided credentials.'
+            raise serializers.ValidationError(msg)
+
+        payload = jwt_payload_handler(user=user)
+        device_id = attrs.get("registration_id")
+
+        if device_id is not None:
+            FCMDevice.objects.filter(registration_id=device_id).delete()
+            device = FCMDevice(user=user, registration_id=device_id)
+            device.save()
+
+        return {
+            'token': jwt_encode_handler(payload),
+            'user': user
+        }
+
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     account_type = serializers.CharField(required=True, write_only=True)
     employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True, queryset=Employer.objects.all())
-    
+
     class Meta:
         model = User
         fields = ('id', 'username', 'first_name',
@@ -90,86 +92,87 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = User.objects.filter(email=data["email"])
         if user.exists():
-            raise ValidationError("This email already exist.")
+            raise serializers.ValidationError("This email already exist.")
 
         print("user email: "+data["email"])
         if len(data["email"]) > 150:
-            raise ValidationError("You email cannot contain more than 150 characters")
+            raise serializers.ValidationError("You email cannot contain more than 150 characters")
 
         if len(data["first_name"]) == 0 or len(data["last_name"]) == 0:
-            raise ValidationError("Your first and last names must not be empty")
+            raise serializers.ValidationError("Your first and last names must not be empty")
 
         if data['account_type'] not in ('employer', 'employee'):
-            raise ValidationError("Account type can only be employer or employee")
+            raise serializers.ValidationError("Account type can only be employer or employee")
         elif data['account_type'] == 'employer':
             if 'employer' not in data:
-                raise ValidationError("You need to specify the user employer id")
-            
+                raise serializers.ValidationError("You need to specify the user employer id")
+
         return data
 
     def create(self, validated_data):
         account_type = validated_data['account_type']
         validated_data.pop('account_type', None)
-        
+
         employer = None
         if 'employer' in validated_data:
             employer = validated_data['employer']
             validated_data.pop('employer', None)
-            
+
         # @TODO: Use IP address to get the initial address, latitude and longitud.
-            
+
         user = super(UserRegisterSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
-        
+
         try:
-                
+
             if account_type == 'employer':
                 Profile.objects.create(user=user, picture='', employer=employer)
                 user.profile.save()
-            
+
             elif account_type == 'employee':
                 emp = Employee.objects.create(user=user)
                 user.employee.save()
-                
+
                 # availably all week by default
                 employee_actions.create_default_availablity(emp)
-                
+
                 # @TODO: if the user is comming from an invite it gets status=ACTIVE, it not it gets the default PENDING_EMAIL_VALIDATION
                 # we would have to receive the invitation token here or something like that.
                 profile = Profile.objects.create(user=user, picture='', employee=emp, status='ACTIVE')
                 user.profile.save()
-            
-                # Si te estas registrando como un empleado, debemos ver quien te invito a la plataforma (JobCoreInvite), 
-                # si la(s) invitacion que te enviaron tienen shift asociados debemos invitarte a esos shifts de una vez te registremos (ShiftInvite). 
+
+                # Si te estas registrando como un empleado, debemos ver quien te invito a la plataforma (JobCoreInvite),
+                # si la(s) invitacion que te enviaron tienen shift asociados debemos invitarte a esos shifts de una vez te registremos (ShiftInvite).
                 jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
                 shift_invites = auth_actions.create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
-                
+
             notifier.notify_email_validation(user)
         except:
             user.delete()
             print("Error:", sys.exc_info()[0])
             raise
-        
+
         return user
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
     repeat_password = serializers.CharField(required=True)
-    
+
     def validate(self, data):
         payload = jwt_decode_handler(data["token"])
         try:
-            user = User.objects.get(id=payload["user_id"])
+            User.objects.get(id=payload["user_id"])
         except User.DoesNotExist:
-            raise ValidationError("User does not exist.")
-        
+            raise serializers.ValidationError("User does not exist.")
+
         if data['new_password'] != data['repeat_password']:
-            raise ValidationError("Passwords don't match")
-        
+            raise serializers.ValidationError("Passwords don't match")
+
         return data
-        
+
     def create(self, validated_data):
         payload = jwt_decode_handler(validated_data["token"])
         user = User.objects.get(id=payload["user_id"])

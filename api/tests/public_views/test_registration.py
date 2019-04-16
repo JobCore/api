@@ -1,5 +1,5 @@
 from django.test import TestCase, override_settings
-# from unittest import expectedFailure
+from unittest import expectedFailure
 from mixer.backend.django import mixer
 from django.urls.base import reverse_lazy
 from rest_framework_jwt.settings import api_settings
@@ -57,7 +57,7 @@ class RegistrationTestSuite(TestCase):
 
         self.assertEquals(response.status_code, 400)
 
-    @expectedFailure
+    # @expectedFailure
     def test_long_email(self):
         payload = {
             'username': 'test',
@@ -72,7 +72,7 @@ class RegistrationTestSuite(TestCase):
 
         self.assertEquals(response.status_code, 400)
 
-    @expectedFailure
+    # @expectedFailure
     def test_missing_names(self):
         payload = {
             'username': 'test',
@@ -157,7 +157,7 @@ class RegistrationTestSuite(TestCase):
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    @expectedFailure
+    # @expectedFailure
     def test_employer_all_good(self, mocked_requests):
         """
         """
@@ -211,7 +211,7 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
+    # @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employer_no_employer(self, mocked_requests):
