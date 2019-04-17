@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from api.serializers import profile_serializer
 from api.utils import notifier
-from api.models import Position, Rate, Employer, Shift, Employee, Clockin, Venue
+from api.models import Position, Rate, Shift, Clockin, Venue
 from django.db.models import Avg, Count
 
 #
@@ -67,7 +66,7 @@ class RatingSerializer(serializers.ModelSerializer):
                     'Only employers can rate talents')
 
             try:
-                clockin = Clockin.objects.get(
+                Clockin.objects.get(
                     shift=data["shift"],
                     employee=current_user.profile.employee
                     )
@@ -79,7 +78,7 @@ class RatingSerializer(serializers.ModelSerializer):
                 pass
 
             try:
-                rate = Rate.objects.get(
+                Rate.objects.get(
                     shift_id=data["shift"].id,
                     employer_id=data["employer"].id,
                     sender_id=current_user.profile.id

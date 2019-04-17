@@ -307,7 +307,7 @@ class LoginTestSuite(TestCase):
         )
 
         self.assertIsNotNone(device, 'Devise should be created')
-    
+
     def test_login_with_regid_change_Devise(self):
         """
         Login with enabled Push Notifications
