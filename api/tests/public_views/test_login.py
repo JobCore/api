@@ -305,3 +305,41 @@ class LoginTestSuite(TestCase):
         )
 
         self.assertIsNotNone(device, 'Devise should be created')
+    
+    def test_login_with_regid_change_Devise(self):
+        """
+        Login with enabled Push Notifications
+        """
+        payload = {
+            'username_or_email': 'test_user',
+            'password': 'pass1234',
+            'registration_id': ':push-notif-id-1:',
+        }
+        self._simple_login_flow(payload)
+
+        FCMDevice = apps.get_model('api.FCMDevice')
+        device1 = (
+            FCMDevice.objects
+            .filter(
+                user=self.test_user,
+                registration_id=payload['registration_id']
+            ).first()
+        )
+
+        self.assertIsNotNone(device1, 'Devise should be created')
+
+        payload['registration_id'] = ':push-notif-id-2:',
+
+        self._simple_login_flow(payload)
+
+        device2 = (
+            FCMDevice.objects
+            .filter(
+                user=self.test_user,
+                registration_id=payload['registration_id']
+            ).first()
+        )
+
+        self.assertIsNotNone(device2, 'Devise should be created')
+
+        self.assertNotEquals(device1.registration_id, device2.registration_id)

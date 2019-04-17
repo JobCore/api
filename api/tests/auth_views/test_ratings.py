@@ -23,6 +23,10 @@ class RatingTestSuite(TestCase):
                 username='employee1',
                 email='employee1@testdoma.in',
                 is_active=True,
+            ),
+            employexkwargs=dict(
+                ratings=0,
+                total_ratings=0,
             )
         )
 
@@ -36,6 +40,10 @@ class RatingTestSuite(TestCase):
                 username='employer1',
                 email='employer@testdoma.in',
                 is_active=True,
+            ),
+            employexkwargs=dict(
+                rating=0,
+                total_ratings=0,
             )
         )
 
@@ -150,7 +158,7 @@ class RatingTestSuite(TestCase):
 
         payload = {
             'employer': self.test_employer.id,
-            'rating': 9.9,
+            'rating': 4,
             'shift': self.test_shift.id,
             'comments': 'Lorem ipsum dolor sit amet'
         }
@@ -171,6 +179,11 @@ class RatingTestSuite(TestCase):
         self.assertIn('id', response_json)
         self.assertIn('rating', response_json)
 
+        self.test_employer.refresh_from_db()
+
+        self.assertEquals(float(self.test_employer.rating), 4)
+        self.assertEquals(self.test_employer.total_ratings, 1)
+
     @patch('api.serializers.rating_serializer.notifier.notify_new_rating')
     def test_post_rating_employer(self, *a):
         """
@@ -184,7 +197,7 @@ class RatingTestSuite(TestCase):
 
         payload = {
             'employee': self.test_employee.id,
-            'rating': 9.9,
+            'rating': 4,
             'shift': self.test_shift.id,
             'comments': 'Lorem ipsum dolor sit amet'
         }
@@ -205,6 +218,11 @@ class RatingTestSuite(TestCase):
         self.assertIn('id', response_json)
         self.assertIn('rating', response_json)
 
+        self.test_employee.refresh_from_db()
+
+        self.assertEquals(float(self.test_employee.rating), 4)
+        self.assertEquals(self.test_employee.total_ratings, 1)
+
     @patch('api.serializers.rating_serializer.notifier.notify_new_rating')
     def test_post_rating_employer_before_employee(self, *a):
         """
@@ -215,7 +233,7 @@ class RatingTestSuite(TestCase):
 
         payload = {
             'employee': self.test_employee.id,
-            'rating': 9.9,
+            'rating': 4,
             'shift': self.test_shift.id,
             'comments': 'Lorem ipsum dolor sit amet'
         }
@@ -243,7 +261,7 @@ class RatingTestSuite(TestCase):
 
         payload = {
             'employer': self.test_employer.id,
-            'rating': 9.9,
+            'rating': 4,
             'shift': new_shift.id,
             'comments': 'Lorem ipsum dolor sit amet'
         }
@@ -269,7 +287,33 @@ class RatingTestSuite(TestCase):
 
         payload = {
             'employer': self.test_employer.id,
-            'rating': 9.9,
+            'rating': 4,
+            'shift': new_shift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+    def test_rate_num_out_of_range(self, *a):
+        """
+        Gets ratings
+        """
+        new_shift, *_ = self._make_shift(
+            employer=self.test_employer)
+
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employee)
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 9,
             'shift': new_shift.id,
             'comments': 'Lorem ipsum dolor sit amet'
         }

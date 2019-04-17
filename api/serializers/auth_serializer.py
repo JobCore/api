@@ -1,5 +1,3 @@
-import sys
-
 from django.contrib.auth import authenticate
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
@@ -45,10 +43,9 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             | Q(username=attrs.get("username_or_email"))
 
         password = attrs.get("password")
+        user_obj = User.objects.filter(lookup).first()
 
-        try:
-            user_obj = User.objects.filter(lookup)[:1].get()
-        except User.DoesNotExist:
+        if not user_obj:
             msg = 'Account with this credentials does not exists'
             raise serializers.ValidationError(msg)
 
@@ -71,9 +68,8 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
         device_id = attrs.get("registration_id")
 
         if device_id is not None:
-            FCMDevice.objects.filter(registration_id=device_id).delete()
-            device = FCMDevice(user=user, registration_id=device_id)
-            device.save()
+            FCMDevice.object.filter(
+                user=user).update(registration_id=device_id)
 
         return {
             'token': jwt_encode_handler(payload),
@@ -83,7 +79,10 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     account_type = serializers.CharField(required=True, write_only=True)
-    employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True, queryset=Employer.objects.all())
+
+    employer = serializers.PrimaryKeyRelatedField(
+        required=False, many=False, write_only=True,
+        queryset=Employer.objects.all())
 
     class Meta:
         model = User
@@ -98,16 +97,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         print("user email: "+data["email"])
         if len(data["email"]) > 150:
-            raise serializers.ValidationError("You email cannot contain more than 150 characters")
+            raise serializers.ValidationError(
+                "You email cannot contain more than 150 characters")
 
         if len(data["first_name"]) == 0 or len(data["last_name"]) == 0:
-            raise serializers.ValidationError("Your first and last names must not be empty")
+            raise serializers.ValidationError(
+                "Your first and last names must not be empty")
 
         if data['account_type'] not in ('employer', 'employee'):
-            raise serializers.ValidationError("Account type can only be employer or employee")
+            raise serializers.ValidationError(
+                "Account type can only be employer or employee")
         elif data['account_type'] == 'employer':
             if 'employer' not in data:
-                raise serializers.ValidationError("You need to specify the user employer id")
+                raise serializers.ValidationError(
+                    "You need to specify the user employer id")
 
         return data
 
@@ -120,40 +123,48 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             employer = validated_data['employer']
             validated_data.pop('employer', None)
 
-        # @TODO: Use IP address to get the initial address, latitude and longitud.
+        # @TODO: Use IP address to get the initial address,
+        #        latitude and longitud.
 
         user = super(UserRegisterSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
 
-        try:
+        if account_type == 'employer':
+            Profile.objects.create(user=user, picture='', employer=employer)
+            # user.profile.save()
 
-            if account_type == 'employer':
-                Profile.objects.create(user=user, picture='', employer=employer)
-                user.profile.save()
+        elif account_type == 'employee':
+            emp = Employee.objects.create(user=user)
+            user.employee.save()
 
-            elif account_type == 'employee':
-                emp = Employee.objects.create(user=user)
-                user.employee.save()
+            # availably all week by default
+            employee_actions.create_default_availablity(emp)
 
-                # availably all week by default
-                employee_actions.create_default_availablity(emp)
+            # @TODO: if the user is comming from an invite it gets
+            #         status=ACTIVE, it not it gets the default
+            #         PENDING_EMAIL_VALIDATION
+            # we would have to receive the invitation token here or
+            #         something like that.ç
 
-                # @TODO: if the user is comming from an invite it gets status=ACTIVE, it not it gets the default PENDING_EMAIL_VALIDATION
-                # we would have to receive the invitation token here or something like that.
-                profile = Profile.objects.create(user=user, picture='', employee=emp, status='ACTIVE')
-                user.profile.save()
+            Profile.objects.create(
+                user=user, picture='', employee=emp, status='ACTIVE')
+            # user.profile.save()
 
-                # Si te estas registrando como un empleado, debemos ver quien te invito a la plataforma (JobCoreInvite),
-                # si la(s) invitacion que te enviaron tienen shift asociados debemos invitarte a esos shifts de una vez te registremos (ShiftInvite).
-                jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email)
-                shift_invites = auth_actions.create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
+            # Si te estas registrando como un empleado, debemos ver quien te
+            # invito a la plataforma (JobCoreInvite),
 
-            notifier.notify_email_validation(user)
-        except:
-            user.delete()
-            print("Error:", sys.exc_info()[0])
-            raise
+            # si la(s) invitacion que te enviaron tienen shift asociados
+            # debemos invitarte a esos shifts de una vez te registremos
+            # (ShiftInvite).
+
+            jobcore_invites = JobCoreInvite.objects.all().filter(
+                email=user.email)
+
+            auth_actions.create_shift_invites_from_jobcore_invites(
+                jobcore_invites, user.profile.employee)
+
+        notifier.notify_email_validation(user)
 
         return user
 
