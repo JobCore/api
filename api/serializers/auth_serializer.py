@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.db.models import Q
+from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework_jwt.settings import api_settings
@@ -68,8 +69,10 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
         device_id = attrs.get("registration_id")
 
         if device_id is not None:
-            FCMDevice.object.filter(
-                user=user).update(registration_id=device_id)
+            with transaction.atomic():
+                FCMDevice.objects.filter(registration_id=device_id).delete()
+                device = FCMDevice(user=user, registration_id=device_id)
+                device.save()
 
         return {
             'token': jwt_encode_handler(payload),

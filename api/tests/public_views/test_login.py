@@ -84,6 +84,8 @@ class LoginTestSuite(TestCase):
             jwt_decoded['email'],
             'Token should have the same email')
 
+        return response_json
+
     def test_good_user_password(self):
         """
         Login with valid user/password
@@ -328,7 +330,7 @@ class LoginTestSuite(TestCase):
 
         self.assertIsNotNone(device1, 'Devise should be created')
 
-        payload['registration_id'] = ':push-notif-id-2:',
+        payload['registration_id'] = ':push-z-id-2:'
 
         self._simple_login_flow(payload)
 
