@@ -382,10 +382,11 @@ class ProfileMeView(APIView):
 class ProfileMeImageView(APIView):
 
     def put(self, request):
-        if request.user.profile is None:
-            raise PermissionDenied("You dont seem to have a profile")
 
-        profile = request.user.profile
+        try:
+            profile = Profile.objects.get(user=self.request.user)
+        except Profile.DoesNotExist:
+            raise PermissionDenied("You dont seem to have a profile")
 
         if 'image' not in request.FILES:
             return Response(
@@ -550,15 +551,6 @@ class RateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        try:
-            rate = Rate.objects.get(id=id)
-        except Rate.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        rate.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CatalogView(APIView):
