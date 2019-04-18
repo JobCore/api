@@ -84,3 +84,32 @@ class ProfileTestSuite(TestCase):
             'It should return a success response')
 
         self.assertEquals(response_json['picture'], 'da_url')
+
+    def test_post_unknown_profile(self):
+        """
+        Get user profile
+        """
+
+        user = mixer.blend('auth.User')
+        user.set_password('pass1234')
+        user.save()
+
+        url = reverse_lazy('api:me-profiles-image')
+        self.client.force_login(user)
+
+        with BytesIO(b'the-data') as f:
+            payload = {
+                'image': f,
+            }
+            payload = self.client._encode_data(payload, MULTIPART_CONTENT)
+            response = self.client.put(
+                url, payload, content_type=MULTIPART_CONTENT)
+
+        response_json = response.json()
+
+        self.assertEquals(
+            response.status_code,
+            403,
+            'It should return a success response')
+
+        self.assertEquals(response_json['picture'], 'da_url')
