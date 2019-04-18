@@ -337,37 +337,40 @@ class ProfileMeView(APIView):
     def get(self, request):
         try:
             # access to trigger sql query & error
-            getattr(request.user, 'profile')
+            profile = getattr(request.user, 'profile')
         except Profile.DoesNotExist:
             raise PermissionDenied("You dont seem to have a profile")
 
-        try:
-            profile = Profile.objects.get(id=request.user.profile.id)
-        except Profile.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = profile_serializer.ProfileGetSerializer(profile, many=False)
+        serializer = profile_serializer.ProfileGetSerializer(
+            profile, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # No POST request needed
     # as Profiles are created automatically along with User register
 
     def put(self, request):
-        if request.user.profile == None:
+        if request.user.profile is None:
             raise PermissionDenied("You dont seem to have a profile")
 
         try:
-            profile = Profile.objects.get(id=request.user.profile.id)
+            profile = request.user.profile
         except Profile.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                validators.error_object('Not found.'),
+                status=status.HTTP_404_NOT_FOUND)
 
         if "latitude" in request.data:
             request.data["latitude"] = round(request.data["latitude"], 6)
         if "longitude" in request.data:
             request.data["longitude"] = round(request.data["longitude"], 6)
 
-        serializer = profile_serializer.ProfileSerializer(profile, data=request.data, context={"request": request}, partial=True)
-        userSerializer = user_serializer.UserUpdateSerializer(profile.user, data=request.data, partial=True)
+        serializer = profile_serializer.ProfileSerializer(
+            profile, data=request.data,
+            context={"request": request}, partial=True)
+
+        userSerializer = user_serializer.UserUpdateSerializer(
+            profile.user, data=request.data, partial=True)
+
         if serializer.is_valid() and userSerializer.is_valid():
             serializer.save()
             userSerializer.save()
@@ -379,28 +382,29 @@ class ProfileMeView(APIView):
 class ProfileMeImageView(APIView):
 
     def put(self, request):
-        if request.user.profile == None:
+        if request.user.profile is None:
             raise PermissionDenied("You dont seem to have a profile")
 
-        try:
-            profile = Profile.objects.get(id=request.user.profile.id)
-        except Profile.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        profile = request.user.profile
+
+        if 'image' not in request.FILES:
+            return Response(
+                validators.error_object('no image'),
+                status=status.HTTP_400_BAD_REQUEST)
 
         result = cloudinary.uploader.upload(
             request.FILES['image'],
-            public_id = 'profile'+str(request.user.profile.id),
-            crop = 'limit',
-            width = 450,
-            height = 450,
-            eager = [
-                {
+            public_id='profile'+str(profile.id),
+            crop='limit',
+            width=450,
+            height=450,
+            eager=[{
                     'width': 200, 'height': 200,
                     'crop': 'thumb', 'gravity': 'face',
                     'radius': 100
                 },
             ],
-            tags = ['profile_picture']
+            tags=['profile_picture']
         )
 
         profile.picture = result['secure_url']
