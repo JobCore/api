@@ -6,6 +6,7 @@ from rest_framework_jwt.settings import api_settings
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
+
 class LoginTestSuite(TestCase):
     """
     Endpoint tests for login
@@ -83,6 +84,8 @@ class LoginTestSuite(TestCase):
             jwt_decoded['email'],
             'Token should have the same email')
 
+        return response_json
+
     def test_good_user_password(self):
         """
         Login with valid user/password
@@ -111,6 +114,32 @@ class LoginTestSuite(TestCase):
             'username_or_email': 'test_user@testdoma.in',
             'password': '',
         }
+        response = self.client.post(
+            self.LOGIN_URL,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+        response_json = response.json()
+
+        self.assertIn(
+            'password',
+            response_json,
+            'It should return feedback messages')
+
+    def test_non_existing_username(self):
+        """
+        Login non-existing username
+        """
+        payload = {
+            'username_or_email': 'test_userz@testdoma.in',
+            'password': '',
+        }
+
         response = self.client.post(
             self.LOGIN_URL,
             data=json.dumps(payload),
@@ -278,3 +307,41 @@ class LoginTestSuite(TestCase):
         )
 
         self.assertIsNotNone(device, 'Devise should be created')
+
+    def test_login_with_regid_change_Devise(self):
+        """
+        Login with enabled Push Notifications
+        """
+        payload = {
+            'username_or_email': 'test_user',
+            'password': 'pass1234',
+            'registration_id': ':push-notif-id-1:',
+        }
+        self._simple_login_flow(payload)
+
+        FCMDevice = apps.get_model('api.FCMDevice')
+        device1 = (
+            FCMDevice.objects
+            .filter(
+                user=self.test_user,
+                registration_id=payload['registration_id']
+            ).first()
+        )
+
+        self.assertIsNotNone(device1, 'Devise should be created')
+
+        payload['registration_id'] = ':push-z-id-2:'
+
+        self._simple_login_flow(payload)
+
+        device2 = (
+            FCMDevice.objects
+            .filter(
+                user=self.test_user,
+                registration_id=payload['registration_id']
+            ).first()
+        )
+
+        self.assertIsNotNone(device2, 'Devise should be created')
+
+        self.assertNotEquals(device1.registration_id, device2.registration_id)

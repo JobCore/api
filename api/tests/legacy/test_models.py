@@ -3,8 +3,10 @@ from api.models import *
 from api.views import *
 from mixer.backend.django import mixer
 from rest_framework.test import APITestCase, APIRequestFactory
+from unittest import skip
 
 
+@skip
 @pytest.mark.django_db
 class TestModels(APITestCase):
     @classmethod

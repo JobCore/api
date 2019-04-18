@@ -1,4 +1,5 @@
-from unittest import skip, TestCase
+from unittest import TestCase, skip
+
 
 @skip
 class X(TestCase):

@@ -1,10 +1,11 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure
 from mixer.backend.django import mixer
 from django.urls.base import reverse_lazy
 from rest_framework_jwt.settings import api_settings
 from mock import patch
 from django.apps import apps
+from datetime import timedelta
+from django.utils import timezone
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -27,9 +28,10 @@ class RegistrationTestSuite(TestCase):
         self.employer = mixer.blend('api.Employer')
         self.employer.save()
 
-        shift = mixer.blend('api.Shift')
+        dt_2h_future = timezone.now() + timedelta(hours=2)
+        shift = mixer.blend('api.Shift', starting_at=dt_2h_future)
 
-        mixer.blend(
+        self.jc_invite = mixer.blend(
             'api.JobCoreInvite',
             sender=self.test_user.profile,
             email='delta@mail.tld',
@@ -57,7 +59,6 @@ class RegistrationTestSuite(TestCase):
 
         self.assertEquals(response.status_code, 400)
 
-    @expectedFailure
     def test_long_email(self):
         payload = {
             'username': 'test',
@@ -72,7 +73,6 @@ class RegistrationTestSuite(TestCase):
 
         self.assertEquals(response.status_code, 400)
 
-    @expectedFailure
     def test_missing_names(self):
         payload = {
             'username': 'test',
@@ -113,6 +113,7 @@ class RegistrationTestSuite(TestCase):
         Employee = apps.get_model('api.Employee')
         AvailabilityBlock = apps.get_model('api.AvailabilityBlock')
         Profile = apps.get_model('api.Profile')
+        ShiftInvite = apps.get_model('api.ShiftInvite')
 
         employee = Employee.objects.filter(user_id=uid).first()
         self.assertNotEquals(employee, None)
@@ -123,6 +124,14 @@ class RegistrationTestSuite(TestCase):
 
         self.assertEqual(
             Profile.objects.filter(user_id=uid).count(),
+            1)
+
+        self.assertEqual(
+            ShiftInvite.objects.filter(
+                shift=self.jc_invite.shift,
+                employee=employee,
+                sender=self.jc_invite.sender
+                ).count(),
             1)
 
     @patch('api.utils.email.requests')
@@ -157,7 +166,6 @@ class RegistrationTestSuite(TestCase):
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    @expectedFailure
     def test_employer_all_good(self, mocked_requests):
         """
         """
@@ -211,7 +219,6 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employer_no_employer(self, mocked_requests):
@@ -260,16 +267,11 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_repeat_email(self, mocked_requests):
         """
         Repeating email on registration
-
-        @todo:
-            NameError: name 'ValidationError' is not defined
-            "api/serializers/auth_serializer.py", line 93, in validate
         """
 
         payload = {
@@ -290,15 +292,11 @@ class RegistrationTestSuite(TestCase):
             False,
             'It should have called requests.post to send mail')
 
-    @expectedFailure
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_wrong_account_type(self, mocked_requests):
         """
         Wrong account type
-        @todo:
-            NameError: name 'ValidationError' is not defined
-            "api/serializers/auth_serializer.py", line 102, in validate
         """
 
         payload = {

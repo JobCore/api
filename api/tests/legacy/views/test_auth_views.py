@@ -1,6 +1,7 @@
 import pytest
 import json
 import datetime
+from django.utils import timezone
 from api.models import (Position, Badge, Employer, Employee, Profile, AvailabilityBlock, 
     FavoriteList, Venue, Shift, ShiftEmployee, ShiftApplication, ShiftInvite, JobCoreInvite, 
     Rate, FCMDevice, Notification, Clockin, PayrollPeriod, PayrollPeriodPayment, 
@@ -171,7 +172,7 @@ class TestViews(APITestCase, CustomPagination):
         }
         response = UserRegisterView.post(self, request)
         response = UserRegisterView.post(self, request)
-        raise BaseException("Hello")
+        # raise BaseException("Hello")
     # def test_employer_register_existing_email(self):
     #     """
     #     Ensure employer register error if email is already in use

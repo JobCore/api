@@ -1,9 +1,8 @@
 from django.urls import reverse, resolve
-
-# Path for user-auth and oauth2_provider not tested
-# as they are part of django's own libraries or third parties
+from unittest import skip
 
 
+@skip
 class TestUrls:
     def test_get_all_positions_url(self):
         path = reverse('api:get-positions')

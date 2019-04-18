@@ -1,5 +1,5 @@
 from django.test import TestCase, override_settings
-from unittest import expectedFailure
+# from unittest import expectedFailure
 from mixer.backend.django import mixer
 from django.urls.base import reverse_lazy
 from rest_framework_jwt.settings import api_settings
@@ -35,13 +35,10 @@ class UserValidationEmailTestSuite(TestCase):
         test_profile.save()
         return test_user
 
-    @expectedFailure
+    # @expectedFailure
     def test_with_bad_token(self):
         """
         Try to reach the view with a bad token
-
-        @todo: no fufiona si el token es muy invalido.
-        raises: jwt.exceptions.DecodeError
         """
 
         payload = {
@@ -58,15 +55,10 @@ class UserValidationEmailTestSuite(TestCase):
             400,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_reset_kind_of_bad_token(self):
         """
         Try to reach the form with a bad token, good shape, bad data
-
-        @todo: no fufiona, jwt.exceptions.InvalidSignatureError
-            además, nunca se usa el jwt_payload_handler interno
-            cuando se llama a api_settings.JWT_PAYLOAD_HANDLER
-
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)
@@ -110,7 +102,7 @@ class UserValidationEmailTestSuite(TestCase):
             200,
             'It should return an error response')
 
-    @expectedFailure
+    # @expectedFailure
     def test_revalidate(self):
         """
         Try to revalidate user
