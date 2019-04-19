@@ -1,10 +1,10 @@
 from django.test import TestCase
-from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
+from api.tests.mixins import WithMakeUser
 
 
-class EmployersTestSuite(TestCase):
+class EmployersTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
@@ -26,37 +26,6 @@ class EmployersTestSuite(TestCase):
                 is_active=True,
             )
         )
-
-    def _make_user(
-            self, kind, userkwargs={}, employexkwargs={}, profilekwargs={}):
-
-        if kind not in ['employee', 'employer']:
-            raise RuntimeError('Do you know what are you doing?')
-
-        user = mixer.blend('auth.User', **userkwargs)
-        user.set_password('pass1234')
-        user.save()
-
-        emptype = 'api.Employee' if kind == 'employee' else 'api.Employer'
-
-        if kind == 'employee':
-            employexkwargs.update({
-                'user': user
-            })
-
-        emp = mixer.blend(emptype, **employexkwargs)
-        emp.save()
-
-        profilekwargs = profilekwargs.copy()
-        profilekwargs.update({
-            'user': user,
-            kind: emp,
-        })
-
-        profile = mixer.blend('api.Profile', **profilekwargs)
-        profile.save()
-
-        return user, emp, profile
 
     def test_get_all_employers(self):
         """

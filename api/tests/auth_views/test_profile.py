@@ -4,11 +4,10 @@ from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
 from decimal import Decimal
-# from rest_framework_jwt.settings import api_settings
-# jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
+from api.tests.mixins import WithMakeUser
 
 
-class ProfileTestSuite(TestCase):
+class ProfileTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
@@ -26,38 +25,6 @@ class ProfileTestSuite(TestCase):
             )
         )
 
-    def _make_user(
-            self, kind, userkwargs={}, employexkwargs={}, profilekwargs={}):
-
-        if kind not in ['employee', 'employer']:
-            raise RuntimeError('Do you know what are you doing?')
-
-        user = mixer.blend('auth.User', **userkwargs)
-        user.set_password('pass1234')
-        user.save()
-
-        emptype = 'api.Employee' if kind == 'employee' else 'api.Employer'
-
-        if kind == 'employee':
-            employexkwargs.update({
-                'user': user
-            })
-
-        emp = mixer.blend(emptype, **employexkwargs)
-        emp.save()
-
-        profilekwargs = profilekwargs.copy()
-        profilekwargs.update({
-            'user': user,
-            kind: emp,
-        })
-
-        profile = mixer.blend('api.Profile', **profilekwargs)
-        profile.save()
-
-        return user, emp, profile
-
-    # @expectedFailure
     def test_get_profile(self):
         """
         Get user profile

@@ -3,35 +3,25 @@ from mixer.backend.django import mixer
 from django.apps import apps
 import json
 from rest_framework_jwt.settings import api_settings
-
+from api.tests.mixins import WithMakeUser
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
 
-class LoginTestSuite(TestCase):
+class LoginTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
     LOGIN_URL = '/api/login'
 
     def setUp(self):
-        self.test_user = self._make_user_with_profile(
-            username='test_user',
-            email='test_user@testdoma.in',
-            is_active=True,
-        )
-
-    def _make_user_with_profile(self, **kwargs):
-        test_user = mixer.blend(
-            'auth.User',
-            **kwargs
+        self.test_user, *_ = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='test_user',
+                email='test_user@testdoma.in',
+                is_active=True,
             )
-
-        test_user.set_password('pass1234')
-        test_user.save()
-
-        test_profile = mixer.blend('api.Profile', user=test_user)
-        test_profile.save()
-        return test_user
+        )
 
     def _simple_login_flow(self, payload):
         """
@@ -261,11 +251,15 @@ class LoginTestSuite(TestCase):
         """
         Login with an inactive user
         """
-        inactive_user = self._make_user_with_profile(  # NOQA
-            username='test_user2',
-            email='test_user2@testdoma.in',
-            is_active=False,
+        inactive_user, *_ = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='test_user2',
+                email='test_user2@testdoma.in',
+                is_active=False,
+            )
         )
+
         payload = {
             'username_or_email': 'test_user2',
             'password': 'pass1234',
