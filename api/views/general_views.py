@@ -339,7 +339,7 @@ class ProfileMeView(APIView):
             # access to trigger sql query & error
             profile = getattr(request.user, 'profile')
         except Profile.DoesNotExist:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         serializer = profile_serializer.ProfileGetSerializer(
             profile, many=False)
@@ -350,7 +350,7 @@ class ProfileMeView(APIView):
 
     def put(self, request):
         if request.user.profile is None:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         try:
             profile = request.user.profile
@@ -386,7 +386,7 @@ class ProfileMeImageView(APIView):
         try:
             profile = Profile.objects.get(user=self.request.user)
         except Profile.DoesNotExist:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         if 'image' not in request.FILES:
             return Response(
