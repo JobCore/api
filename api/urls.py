@@ -43,13 +43,14 @@ urlpatterns = [
     path('badges',general_views.BadgeView.as_view(), name="get-badges"),
     path('badges/<int:id>',general_views.BadgeView.as_view(), name="id-badges"), #manage the badges
 
+    path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
+    path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
+
     #
     # UNCLASIFIED ENDPOINTS
     # @TODO: Classify endpoint permissions to employer, empoyee, admin, logged_in or public
     #
 
-    path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
-    path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
 
 
     # path('profiles',general_views.ProfileView.as_view(), name="get-profiles"),

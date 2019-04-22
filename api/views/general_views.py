@@ -233,19 +233,10 @@ class EmployeeView(APIView, CustomPagination):
 
             serializer = employee_serializer.EmployeeGetSmallSerializer(employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
     # there shoud be no POST because it is created on signup (registration)
+    # the PUT and DELETE is only permited for admin and you can find it on admin_views.py
 
-    def delete(self, request, id):
-        try:
-            employee = Employee.objects.get(id=id)
-        except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        employee.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
+    
 class EmployeeGetBadgesView(APIView, CustomPagination):
     def get(self, request, employee_id):
         try:
