@@ -184,13 +184,49 @@ class RatingTestSuite(TestCase):
         self.assertEquals(float(self.test_employer.rating), 4)
         self.assertEquals(self.test_employer.total_ratings, 1)
 
-    @patch('api.serializers.rating_serializer.notifier.notify_new_rating')
-    def test_post_rating_employer(self, *a):
+        new_shift, _, __ = self._make_shift(
+            employer=self.test_employer)
+
+        mixer.blend(
+            'api.Clockin',
+            employee=self.test_employee,
+            shift=new_shift,
+            author=self.test_profile_employee,
+            status='APPROVED'
+            )
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 2,
+            'shift': new_shift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response')
+
+        response_json = response.json()
+
+        self.assertIn('comments', response_json)
+        self.assertIn('shift', response_json)
+        self.assertIn('id', response_json)
+        self.assertIn('rating', response_json)
+
+        self.test_employer.refresh_from_db()
+
+        self.assertEquals(float(self.test_employer.rating), 3)
+        self.assertEquals(self.test_employer.total_ratings, 2)
+
+    def test_post_rating_employer(self):
         """
         Gets ratings
         """
-        # maybe ugly hack, but first employee rates
-        self.test_post_rating_employee()
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
@@ -223,8 +259,7 @@ class RatingTestSuite(TestCase):
         self.assertEquals(float(self.test_employee.rating), 4)
         self.assertEquals(self.test_employee.total_ratings, 1)
 
-    @patch('api.serializers.rating_serializer.notifier.notify_new_rating')
-    def test_post_rating_employer_before_employee(self, *a):
+    def test_post_double_rating(self):
         """
         Gets ratings
         """
@@ -244,11 +279,20 @@ class RatingTestSuite(TestCase):
 
         self.assertEquals(
             response.status_code,
-            400,
-            'It should return an error response, '
-            'cannot rate before employee')
+            201,
+            'It should return a success response')
 
-    def test_rate_without_clocking_in(self, *a):
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return a success response')
+
+    def test_rate_without_clocking_in(self):
         """
         Gets ratings
         """
@@ -385,3 +429,88 @@ class RatingTestSuite(TestCase):
         response_json = response.json()
 
         self.assertEquals(len(response_json), 2)
+
+    def test_rate_talentxtalent(self):
+        """
+        Gets ratings
+        """
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employee)
+
+        payload = {
+            'employee': self.test_employee.id,
+            'rating': 4,
+            'shift': self.test_shift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+    def test_rate_employerxemployer(self):
+        """
+        Gets ratings
+        """
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 4,
+            'shift': self.test_shift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+    def test_rate_another_shift(self):
+        """
+        Gets ratings
+        """
+        _, new_employer, __ = self._make_user(
+            'employer',
+            userkwargs=dict(
+                username='employerx1',
+                email='employerx@testdoma.in',
+                is_active=True,
+            ),
+            employexkwargs=dict(
+                rating=0,
+                total_ratings=0,
+            )
+        )
+
+        newshift, _, __ = self._make_shift(
+            employer=new_employer)
+
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 4,
+            'shift': newshift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
