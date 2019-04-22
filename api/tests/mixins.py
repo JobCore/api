@@ -35,14 +35,17 @@ class WithMakeUser:
 
 
 class WithMakeShift:
-    def _make_shift(self, employer):
-        venue = mixer.blend('api.Venue', employer=employer)
-        position = mixer.blend('api.Position')
+    def _make_shift(self, employer,
+                    shiftkwargs={}, venuekwargs={}, poskwargs={}):
+
+        venue = mixer.blend('api.Venue', employer=employer, **venuekwargs)
+        position = mixer.blend('api.Position', **poskwargs)
 
         shift = mixer.blend(
             'api.Shift',
             venue=venue,
             position=position,
-            employer=employer)
+            employer=employer,
+            **shiftkwargs,)
 
         return shift, venue, position

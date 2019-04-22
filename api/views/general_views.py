@@ -240,7 +240,9 @@ class EmployeeView(APIView, CustomPagination):
         try:
             employee = Employee.objects.get(id=id)
         except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                validators.error_object('Not found.'),
+                status=status.HTTP_404_NOT_FOUND)
 
         employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -251,9 +253,12 @@ class EmployeeGetBadgesView(APIView, CustomPagination):
         try:
             employee = Employee.objects.get(id=employee_id)
         except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                validators.error_object('Not found.'),
+                status=status.HTTP_404_NOT_FOUND)
 
-        serializer = other_serializer.BadgeSerializer(employee.badges, many=True)
+        serializer = other_serializer.BadgeSerializer(
+            employee.badges, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
