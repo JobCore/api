@@ -111,7 +111,7 @@ urlpatterns = [
     path('employees/me/ratings/sent',employee_views.EmployeeMeSentRatingsView.as_view(), name="me-employees-ratings"),
     #for a single rating check GET /ratings/<int:id>
     
-    path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
+    path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees-clockins"),
 
     path('employees/me/applications',employee_views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
     path('employees/me/applications/<int:application_id>',employee_views.EmployeeMeApplicationsView.as_view(), name="me-single-application"),

@@ -1,10 +1,10 @@
 from django.test import TestCase
-from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
+from api.tests.mixins import WithMakeUser
 
 
-class EmployersTestSuite(TestCase):
+class EmployersTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
@@ -26,37 +26,6 @@ class EmployersTestSuite(TestCase):
                 is_active=True,
             )
         )
-
-    def _make_user(
-            self, kind, userkwargs={}, employexkwargs={}, profilekwargs={}):
-
-        if kind not in ['employee', 'employer']:
-            raise RuntimeError('Do you know what are you doing?')
-
-        user = mixer.blend('auth.User', **userkwargs)
-        user.set_password('pass1234')
-        user.save()
-
-        emptype = 'api.Employee' if kind == 'employee' else 'api.Employer'
-
-        if kind == 'employee':
-            employexkwargs.update({
-                'user': user
-            })
-
-        emp = mixer.blend(emptype, **employexkwargs)
-        emp.save()
-
-        profilekwargs = profilekwargs.copy()
-        profilekwargs.update({
-            'user': user,
-            kind: emp,
-        })
-
-        profile = mixer.blend('api.Profile', **profilekwargs)
-        profile.save()
-
-        return user, emp, profile
 
     def test_get_all_employers(self):
         """
@@ -149,115 +118,4 @@ class EmployersTestSuite(TestCase):
         self.assertEquals(
             response.status_code,
             401,
-            'It should return an error response')
-
-    def test_update_employer_data(self):
-        """
-        Update employer data
-        """
-
-        url = reverse_lazy('api:id-employers',
-                           kwargs=dict(id=self.test_employer.id))
-
-        self.client.force_login(self.test_user_employer)
-
-        payload = {
-            'title': 'ABC',
-            'bio': 'DEF',
-            'website': 'GEF'
-        }
-
-        response = self.client.put(
-            url, data=json.dumps(payload), content_type="application/json")
-
-        self.assertEquals(
-            response.status_code,
-            200,
-            'It should return a success response')
-
-        response_json = response.json()
-
-        self.assertIsInstance(response_json, dict)
-        self.assertEquals(response_json['id'], self.test_employer.id)
-
-        self.assertNotEquals(
-            response_json['bio'], self.test_employer.bio)
-        self.assertNotEquals(
-            response_json['website'], self.test_employer.website)
-        self.assertNotEquals(
-            response_json['title'], self.test_employer.title)
-
-        self.assertEquals(
-            response_json['title'], 'ABC')
-        self.assertEquals(
-            response_json['bio'], 'DEF')
-        self.assertEquals(
-            response_json['website'], 'GEF')
-
-    def test_update_employer_data_malicious_id(self):
-        """
-        Trying to spoof a custom ID for employer
-        """
-
-        url = reverse_lazy('api:id-employers',
-                           kwargs=dict(id=self.test_employer.id))
-
-        self.client.force_login(self.test_user_employer)
-
-        payload = {
-            'id': 9999,
-            'title': 'ABC',
-            'bio': 'DEF',
-            'website': 'GEF'
-        }
-
-        response = self.client.put(
-            url, data=json.dumps(payload), content_type="application/json")
-
-        self.assertEquals(
-            response.status_code,
-            200,
-            'It should return a success response')
-
-        response_json = response.json()
-
-        self.assertIsInstance(response_json, dict)
-        self.assertEquals(response_json['id'], self.test_employer.id)
-
-        self.assertNotEquals(
-            response_json['bio'], self.test_employer.bio)
-        self.assertNotEquals(
-            response_json['website'], self.test_employer.website)
-        self.assertNotEquals(
-            response_json['title'], self.test_employer.title)
-
-        self.assertEquals(
-            response_json['title'], 'ABC')
-        self.assertEquals(
-            response_json['bio'], 'DEF')
-        self.assertEquals(
-            response_json['website'], 'GEF')
-
-    def test_update_employer_data_employee(self):
-        """
-        Update employer data passing employee
-        """
-
-        url = reverse_lazy('api:id-employers',
-                           kwargs=dict(id=self.test_employer.id))
-
-        self.client.force_login(self.test_user_employee)
-
-        payload = {
-            'title': 'ABC',
-            'bio': 'DEF',
-            'website': 'GEF'
-        }
-
-        response = self.client.put(
-            url, data=json.dumps(payload), content_type="application/json")
-
-        self.assertEquals(
-            response.status_code,
-            403,
             'It should return an error response')

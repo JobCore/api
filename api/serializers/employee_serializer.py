@@ -75,6 +75,7 @@ class EmployeeFavlistSerializer(serializers.ModelSerializer):
         model = Employee
         exclude = ()
 
+
 class EmployeeSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
@@ -83,21 +84,22 @@ class EmployeeSettingsSerializer(serializers.ModelSerializer):
             'id': {'read_only': True},
             'user': {'read_only': True},
             'rating': {'read_only': True},
+            'total_ratings': {'read_only': True},
             'job_count': {'read_only': True},
             'badges': {'read_only': True}
         }
-        
-    def validate(self, data):
-        employee = self.instance
-        if 'minimum_hourly_rate' in data and data['minimum_hourly_rate'] < 8:
-            raise serializers.ValidationError('The minimum hourly rate allowed is 8 dollars')
-            
-        if 'maximum_job_distance_miles' in data:
-            if data['maximum_job_distance_miles'] < 10:
-                raise serializers.ValidationError('The minimum distance allowed is 10 miles')
-            elif data['maximum_job_distance_miles'] > 100:
-                raise serializers.ValidationError('The maximum distance allowed is 100 miles')
-            
-        return data
-        
-    
+
+    def validate_maximum_job_distance_miles(self, value):
+        if value < 10:
+            raise serializers.ValidationError(
+                'The minimum distance allowed is 10 miles')
+        if value > 100:
+            raise serializers.ValidationError(
+                'The maximum distance allowed is 100 miles')
+        return value
+
+    def validate_minimum_hourly_rate(self, value):
+        if value < 8:
+            raise serializers.ValidationError(
+                'The minimum hourly rate allowed is 8 dollars')
+        return value

@@ -1,40 +1,30 @@
 from django.test import TestCase, override_settings
-from mixer.backend.django import mixer
 import json
 from django.urls.base import reverse_lazy
 from mock import patch
 from rest_framework_jwt.settings import api_settings
+from api.tests.mixins import WithMakeUser
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
 @override_settings(STATICFILES_STORAGE=None)
-class PasswordResetTestSuite(TestCase):
+class PasswordResetTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for password reset
     """
     PW_RESET_URL = reverse_lazy('api:password-reset-email')
 
     def setUp(self):
-        self.test_user = self._make_user_with_profile(
-            username='test_user',
-            email='test_user@testdoma.in',
-            is_active=True,
-        )
-
-    def _make_user_with_profile(self, **kwargs):
-        test_user = mixer.blend(
-            'auth.User',
-            **kwargs
+        self.test_user, *_ = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='test_user',
+                email='test_user@testdoma.in',
+                is_active=True,
             )
-
-        test_user.set_password('pass1234')
-        test_user.save()
-
-        test_profile = mixer.blend('api.Profile', user=test_user)
-        test_profile.save()
-        return test_user
+        )
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
@@ -296,18 +286,21 @@ class PasswordResetTestSuite(TestCase):
         """
         Test if email dissapear from database
         """
-
-        another_test_user = self._make_user_with_profile(
-            username='test_user2',
-            email='test_user@testdoma.in',
-            is_active=True,
+        other_user, other_emp, other_pro = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='test_user2',
+                email='test_user2@testdoma.in',
+                is_active=True,
+            )
         )
 
-        jtw_payload = jwt_payload_handler(another_test_user)
+        jtw_payload = jwt_payload_handler(other_user)
 
         token = jwt_encode_handler(jtw_payload)
 
-        another_test_user.delete()
+        for obj in (other_user, other_emp, other_pro):
+            obj.delete()
 
         payload = {
             'token': token,

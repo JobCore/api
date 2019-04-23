@@ -234,16 +234,19 @@ class EmployeeView(APIView, CustomPagination):
             serializer = employee_serializer.EmployeeGetSmallSerializer(employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     # there shoud be no POST because it is created on signup (registration)
-    # the PUT and DELETE is only permited for admin and you can find it on admin_views.py
-    
+
+
 class EmployeeGetBadgesView(APIView, CustomPagination):
     def get(self, request, employee_id):
         try:
             employee = Employee.objects.get(id=employee_id)
         except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                validators.error_object('Not found.'),
+                status=status.HTTP_404_NOT_FOUND)
 
-        serializer = other_serializer.BadgeSerializer(employee.badges, many=True)
+        serializer = other_serializer.BadgeSerializer(
+            employee.badges, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class EmployeeApplicationsView(APIView, CustomPagination):
@@ -317,7 +320,7 @@ class ProfileMeView(APIView):
             # access to trigger sql query & error
             profile = getattr(request.user, 'profile')
         except Profile.DoesNotExist:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         serializer = profile_serializer.ProfileGetSerializer(
             profile, many=False)
@@ -328,7 +331,7 @@ class ProfileMeView(APIView):
 
     def put(self, request):
         if request.user.profile is None:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         try:
             profile = request.user.profile
@@ -364,7 +367,7 @@ class ProfileMeImageView(APIView):
         try:
             profile = Profile.objects.get(user=self.request.user)
         except Profile.DoesNotExist:
-            raise PermissionDenied("You dont seem to have a profile")
+            raise PermissionDenied("You don't seem to have a profile")
 
         if 'image' not in request.FILES:
             return Response(

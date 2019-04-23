@@ -1,13 +1,11 @@
 from django.test import TestCase
 from mixer.backend.django import mixer
 import json
-from mock import patch
 from django.urls import reverse_lazy
-# from unittest import expectedFailure
-# from django.apps import apps
+from api.tests.mixins import WithMakeUser, WithMakeShift
 
 
-class RatingTestSuite(TestCase):
+class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for Rating
     @revisionNeeded
@@ -50,20 +48,6 @@ class RatingTestSuite(TestCase):
         self.test_shift, _, __ = self._make_shift(
             employer=self.test_employer)
 
-        # self.test_employee_rating = mixer.blend(
-        #     'api.Rate',
-        #     sender=self.test_profile_employee,
-        #     shift=self.test_shift,
-        #     employee=self.test_employee,
-        #     )
-
-        # self.test_employer_rating = mixer.blend(
-        #     'api.Rate',
-        #     sender=self.test_profile_employee,
-        #     shift=self.test_shift,
-        #     employer=self.test_employer,
-        #     )
-
         mixer.blend(
             'api.Clockin',
             employee=self.test_employee,
@@ -71,49 +55,6 @@ class RatingTestSuite(TestCase):
             author=self.test_profile_employee,
             status='APPROVED'
             )
-
-    def _make_shift(self, employer):
-        venue = mixer.blend('api.Venue', employer=employer)
-        position = mixer.blend('api.Position')
-
-        shift = mixer.blend(
-            'api.Shift',
-            venue=venue,
-            position=position,
-            employer=employer)
-
-        return shift, venue, position
-
-    def _make_user(self, 
-        kind, userkwargs={}, employexkwargs={}, profilekwargs={}):
-
-        if kind not in ['employee', 'employer']:
-            raise RuntimeError('Do you know what are you doing?')
-
-        user = mixer.blend('auth.User', **userkwargs)
-        user.set_password('pass1234')
-        user.save()
-
-        emptype = 'api.Employee' if kind == 'employee' else 'api.Employer'
-
-        if kind == 'employee':
-            employexkwargs.update({
-                'user': user
-            })
-
-        emp = mixer.blend(emptype, **employexkwargs)
-        emp.save()
-
-        profilekwargs = profilekwargs.copy()
-        profilekwargs.update({
-            'user': user,
-            kind: emp,
-        })
-
-        profile = mixer.blend('api.Profile', **profilekwargs)
-        profile.save()
-
-        return user, emp, profile
 
     def test_get_ratings(self):
         """

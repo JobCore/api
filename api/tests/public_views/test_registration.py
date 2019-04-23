@@ -6,27 +6,28 @@ from mock import patch
 from django.apps import apps
 from datetime import timedelta
 from django.utils import timezone
+from api.tests.mixins import WithMakeUser
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
 @override_settings(STATICFILES_STORAGE=None)
-class RegistrationTestSuite(TestCase):
+class RegistrationTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for password reset
     """
     REGISTRATION_URL = reverse_lazy('api:register')
 
     def setUp(self):
-        self.test_user = self._make_user_with_profile(
-            username='test_user',
-            email='test_user@testdoma.in',
-            is_active=True,
+        self.test_user, self.employer, _ = self._make_user(
+            'employer',
+            userkwargs=dict(
+                username='test_user',
+                email='test_user@testdoma.in',
+                is_active=True,
+            )
         )
-
-        self.employer = mixer.blend('api.Employer')
-        self.employer.save()
 
         dt_2h_future = timezone.now() + timedelta(hours=2)
         shift = mixer.blend('api.Shift', starting_at=dt_2h_future)
@@ -37,19 +38,6 @@ class RegistrationTestSuite(TestCase):
             email='delta@mail.tld',
             shift=shift,
             )
-
-    def _make_user_with_profile(self, **kwargs):
-        test_user = mixer.blend(
-            'auth.User',
-            **kwargs
-            )
-
-        test_user.set_password('pass1234')
-        test_user.save()
-
-        test_profile = mixer.blend('api.Profile', user=test_user)
-        test_profile.save()
-        return test_user
 
     def test_empty_form(self):
         payload = {

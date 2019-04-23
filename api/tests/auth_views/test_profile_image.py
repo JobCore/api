@@ -4,9 +4,10 @@ from django.urls import reverse_lazy
 from mock import patch
 from io import BytesIO
 from django.test.client import MULTIPART_CONTENT
+from api.tests.mixins import WithMakeUser
 
 
-class ProfileTestSuite(TestCase):
+class ProfileTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
@@ -23,37 +24,6 @@ class ProfileTestSuite(TestCase):
                 is_active=True,
             )
         )
-
-    def _make_user(
-            self, kind, userkwargs={}, employexkwargs={}, profilekwargs={}):
-
-        if kind not in ['employee', 'employer']:
-            raise RuntimeError('Do you know what are you doing?')
-
-        user = mixer.blend('auth.User', **userkwargs)
-        user.set_password('pass1234')
-        user.save()
-
-        emptype = 'api.Employee' if kind == 'employee' else 'api.Employer'
-
-        if kind == 'employee':
-            employexkwargs.update({
-                'user': user
-            })
-
-        emp = mixer.blend(emptype, **employexkwargs)
-        emp.save()
-
-        profilekwargs = profilekwargs.copy()
-        profilekwargs.update({
-            'user': user,
-            kind: emp,
-        })
-
-        profile = mixer.blend('api.Profile', **profilekwargs)
-        profile.save()
-
-        return user, emp, profile
 
     @patch('cloudinary.uploader.upload')
     def test_post_profile(self, mocked_uploader):
@@ -105,11 +75,7 @@ class ProfileTestSuite(TestCase):
             response = self.client.put(
                 url, payload, content_type=MULTIPART_CONTENT)
 
-        response_json = response.json()
-
         self.assertEquals(
             response.status_code,
             403,
-            'It should return a success response')
-
-        self.assertEquals(response_json['picture'], 'da_url')
+            'It should return an error response')
