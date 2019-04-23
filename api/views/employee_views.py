@@ -25,7 +25,7 @@ from api.utils.notifier import (
 from api.utils import validators
 from api.utils.utils import get_aware_datetime
 from api.serializers import (
-    user_serializer, profile_serializer,
+    user_serializer, profile_serializer, clockin_serializer,
     shift_serializer, employee_serializer, other_serializer,
     payment_serializer, favlist_serializer, venue_serializer,
     employer_serializer, auth_serializer, notification_serializer,
@@ -53,8 +53,14 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 class EmployeeView(APIView):
     def validate_employee(self, request):
+        try:
+            request.user.profile
+        except Profile.DoesNotExist:
+            raise PermissionDenied("You don't seem to be a talent")
+
         if request.user.profile.employee_id is None:
             raise PermissionDenied("You don't seem to be a talent")
+
         self.employee = self.request.user.profile.employee
 
 
@@ -156,24 +162,20 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
 class EmployeeMeView(EmployeeView, CustomPagination):
     def get(self, request):
         self.validate_employee(request)
+        employee = self.employee
+        serializer = employee_serializer.EmployeeGetSerializer(
+            employee, many=False)
 
-        try:
-            employee = Employee.objects.get(id=self.employee.id)
-        except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = employee_serializer.EmployeeGetSerializer(employee, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
         self.validate_employee(request)
 
-        try:
-            employee = Employee.objects.get(id=self.employee.id)
-        except Employee.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        employee = self.employee
 
-        serializer = employee_serializer.EmployeeSettingsSerializer(employee, data=request.data)
+        serializer = employee_serializer.EmployeeSettingsSerializer(
+            employee, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
