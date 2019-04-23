@@ -48,6 +48,7 @@ class EmployerView(APIView):
             raise PermissionDenied("You don't seem to be an employer")
         self.employer = request.user.profile.employer
         
+#reviewed
 class EmployerMeView(EmployerView):
     def get(self, request):
         self.validate_employer(request)
@@ -56,6 +57,17 @@ class EmployerMeView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
         
+    def put(self, request):
+        if request.user.profile.employer == None:
+            raise PermissionDenied("You don't seem to be an employer")
+
+        serializer = employer_serializer.EmployerSerializer(request.user.profile.employer, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#reviewed       
 class EmployerMeUsersView(EmployerView):
     def get(self, request, id=False):
         self.validate_employer(request)
@@ -72,6 +84,7 @@ class EmployerMeUsersView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+#reviewed  
 class ApplicantsView(EmployerView):
 
     def get(self, request, application_id=False):
@@ -79,7 +92,7 @@ class ApplicantsView(EmployerView):
         
         if(application_id):
             try:
-                application = ShiftApplication.objects.get(id=application_id)
+                application = ShiftApplication.objects.get(id=application_id, shift__employer__id=self.employer.id)
             except ShiftApplication.DoesNotExist:
                 return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 

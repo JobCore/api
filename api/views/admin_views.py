@@ -68,7 +68,6 @@ class FMCView(APIView):
         
         return Response(result, status=status.HTTP_200_OK)
         
-
 class EmployeeBadgesView(APIView, CustomPagination):
     def put(self, request, employee_id = None):
 
@@ -172,4 +171,55 @@ class AdminEmployerView(APIView):
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         employer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class AdminEmployeeView(APIView):
+    def get(self, request, id=False):
+        if (id):
+            try:
+                employee = Employee.objects.get(id=id)
+            except Employee.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employee_serializer.EmployeeGetSerializer(employee, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            employees = Employee.objects.all()
+
+            qName = request.GET.get('full_name')
+            if qName:
+                search_args = []
+                for term in qName.split():
+                    for query in ('profile__user__first_name__istartswith', 'profile__user__last_name__istartswith'):
+                        search_args.append(Q(**{query: term}))
+
+                employees = employees.filter(functools.reduce(operator.or_, search_args))
+            else:
+                qFirst = request.GET.get('first_name')
+                if qFirst:
+                    employees = employees.filter(profile__user__first_name__contains=qFirst)
+                    entities = []
+
+                qLast = request.GET.get('last_name')
+                if qLast:
+                    employees = employees.filter(profile__user__last_name__contains=qLast)
+
+            qPositions = request.GET.getlist('positions')
+            if qPositions:
+                employees = employees.filter(positions__id__in=qPositions)
+
+            qBadges = request.GET.getlist('badges')
+            if qBadges:
+                employees = employees.filter(badges__id__in=qBadges)
+
+            serializer = employee_serializer.EmployeeGetSmallSerializer(employees, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+    def delete(self, request, id):
+        try:
+            employee = Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        employee.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

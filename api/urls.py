@@ -43,14 +43,13 @@ urlpatterns = [
     path('badges',general_views.BadgeView.as_view(), name="get-badges"),
     path('badges/<int:id>',general_views.BadgeView.as_view(), name="id-badges"), #manage the badges
 
+    path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
+    path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
+
     #
     # UNCLASIFIED ENDPOINTS
     # @TODO: Classify endpoint permissions to employer, empoyee, admin, logged_in or public
     #
-
-    path('employees',general_views.EmployeeView.as_view(), name="get-employees"),
-    path('employees/<int:id>',general_views.EmployeeView.as_view(), name="id-employees"),
-
 
     # path('profiles',general_views.ProfileView.as_view(), name="get-profiles"),
     # path('profiles/<int:id>',general_views.ProfileView.as_view(), name="id-profiles"),
@@ -64,19 +63,18 @@ urlpatterns = [
     # FOR THE EMPLOYER
     #
 
-    path('employers/me/periods', employer_views.EmployerPayrollPeriodView.as_view(), name="employer-periods"),
     path('employers/me', employer_views.EmployerMeView.as_view(), name="employer-me"),
     path('employers/me/users',employer_views.EmployerMeUsersView.as_view(), name="get-employer-users"),
-    path('employers/me/periods/<int:period_id>',employer_views.EmployerPayrollPeriodView.as_view(), name="employer-single-periods"),
-    path('employers/me/jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
-    path('employers/me/jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
     path('employers/me/applications',employer_views.ApplicantsView.as_view(), name="get-applicants"),
     path('employers/me/applications/<int:application_id>',employer_views.ApplicantsView.as_view(), name="get-applicants"),
+    
+    path('employers/me/periods', employer_views.EmployerPayrollPeriodView.as_view(), name="employer-periods"),
+    path('employers/me/periods/<int:period_id>',employer_views.EmployerPayrollPeriodView.as_view(), name="employer-single-periods"),
     # path('employees/<int:id>/applications',general_views.EmployeeApplicationsView.as_view(), name="employee-applications"),
     # path('employees/<int:id>/payroll',general_views.PayrollShiftsView.as_view(), name="employee-payroll"),
     # path('clockins/',general_views.ClockinsView.as_view(), name="all-clockins"),
     # path('clockins/<int:clockin_id>',general_views.ClockinsView.as_view(), name="me-employees"),
-
+    
     path('employers/me/shifts/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
     path('employers/me/invites',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
     path('employers/me/shifts/invites/<int:id>',employer_views.EmployerShiftInviteView.as_view(), name="get-jobinvites"),
@@ -89,7 +87,13 @@ urlpatterns = [
     path('employers/me/shifts/<int:id>/employees',employer_views.EmployerShiftEmployeesView.as_view(), name="update-shift-employees"),
     path('employers/me/shifts',employer_views.EmployerShiftView.as_view(), name="get-shifts"),
     path('employers/me/shifts/<int:id>',employer_views.EmployerShiftView.as_view(), name="id-shifts"),
-
+    
+    # aliases from similar methods
+    path('employers/me/jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"), #alias for 
+    path('employers/me/jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
+    path('employers/me/ratings',general_views.RateView.as_view(), name="get-ratings"),
+    path('employers/me/ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
+    
     #
     # FOR THE TALENT
     #
@@ -98,26 +102,31 @@ urlpatterns = [
     #path('clockins/me',general_views.PaymentMeView.as_view(), name="me-employees"),
     path('employees/me/shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     path('employees/me/shifts/invites/<int:id>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
+    path('employees/me/shifts/invites/<int:id>/<str:action>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
     path('employees/me/shifts',employee_views.EmployeeMeShiftView.as_view(), name="me-employees-shift"),
     #path('shifts/<int:id>',general_views.ShiftView.as_view(), name="id-shifts"),
     # path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
+    
     path('employees/me/ratings/sent',employee_views.EmployeeMeSentRatingsView.as_view(), name="me-employees-ratings"),
-    path('employees/me/ratings/received',employee_views.EmployeeMeReceivedRatingsView.as_view(), name="me-employees-ratings"),
-    path('employees/me/devices',employee_views.EmployeeDeviceMeView.as_view(), name="me-all-device"),
-    path('employees/me/devices/<str:device_id>',employee_views.EmployeeDeviceMeView.as_view(), name="me-device"),
+    path('employees/me/ratings/sent',employee_views.EmployeeMeSentRatingsView.as_view(), name="me-employees-ratings"),
+    #for a single rating check GET /ratings/<int:id>
+    
     path('employees/me/clockins',employee_views.ClockinsMeView.as_view(), name="me-employees"),
-    path('employees/me/clockins/<str:clockin_id>',employee_views.ClockinsMeView.as_view(), name="me-employees"),
+
     path('employees/me/applications',employee_views.EmployeeMeApplicationsView.as_view(), name="me-employee-applications"),
     path('employees/me/applications/<int:application_id>',employee_views.EmployeeMeApplicationsView.as_view(), name="me-single-application"),
     path('employees/me/availability',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
     path('employees/me/availability/<int:block_id>',employee_views.EmployeeAvailabilityBlockView.as_view(), name="employee-unavailability"),
-    path('shifts/invites/<int:id>/<str:action>',employee_views.EmployeeShiftInviteView.as_view(), name="get-jobinvites"),
-
-    # This endpoints have to be changed on the all
-    path('applications/<int:application_id>',general_views.SingleApplicantView.as_view(), name="get-single-applicantion"),#this one will be replaced with employees/me/applications/id
-    path('shifts/invites',employee_views.EmployeeShiftInviteView.as_view(), name="old-get-jobinvites"), #this one will be replaced with employees/me/shifts/invites
-    path('shifts/invites/<int:id>',employee_views.EmployeeShiftInviteView.as_view(), name="get-emploje-jobinvites"),
-
+    
+    path('employees/me/devices',employee_views.EmployeeDeviceMeView.as_view(), name="me-all-device"),
+    path('employees/me/devices/<str:device_id>',employee_views.EmployeeDeviceMeView.as_view(), name="me-device"),
+    
+    # aliases from similar endpoints
+    path('employees/me/jobcore-invites',general_views.JobCoreInviteView.as_view(), name="get-jcinvites"),
+    path('employees/me/jobcore-invites/<int:id>',general_views.JobCoreInviteView.as_view(), name="id-jcinvites"),
+    path('employees/me/ratings',general_views.RateView.as_view(), name="get-ratings"),
+    path('employees/me/ratings/<int:id>',general_views.RateView.as_view(), name="single-ratings"),
+    
     #
     # ADMIN USE ONLY
     #
@@ -129,7 +138,6 @@ urlpatterns = [
     path('periods/<int:period_id>', admin_views.PayrollPeriodView.as_view(), name="get-periods"),
     path('email/<str:slug>', admin_views.EmailView.as_view()), # test email
     path('fmc', admin_views.FMCView.as_view()), # test mobile notification
-
 
     #
     # HOOKS

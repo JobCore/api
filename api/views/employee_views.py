@@ -202,17 +202,21 @@ class EmployeeShiftInviteView(EmployeeView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, id, action):
+    def put(self, request, id, action=None):
         self.validate_employee(request)
+        
+        if request.user is None:
+            return Response(validators.error_object('You need to specify an action=APPLY or REJECT'), status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             invite = ShiftInvite.objects.get(id=id, employee__id=self.employee.id)
         except ShiftInvite.DoesNotExist:
             return Response(validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'), status=status.HTTP_404_NOT_FOUND)
 
         data = {}
-        if action == 'apply':
+        if action.lower() == 'apply':
             data["status"] = 'APPLIED'
-        elif action == 'reject':
+        elif action.lower() == 'reject':
             data["status"] = 'REJECTED'
         else:
             return Response(validators.error_object("You can either apply or reject an invite"), status=status.HTTP_400_BAD_REQUEST)
@@ -272,7 +276,7 @@ class ShiftMeInviteView(EmployeeView):
 
 
 class ClockinsMeView(EmployeeView):
-    def get(self, request, id=False):
+    def get(self, request):
         self.validate_employee(request)
 
         clockins = Clockin.objects.filter(employee_id=self.employee.id)
@@ -318,7 +322,7 @@ class ClockinsMeView(EmployeeView):
 
 class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
 
-    def get(self, request, employee_id=False):
+    def get(self, request):
         self.validate_employee(request)
 
         unavailability_blocks = AvailabilityBlock.objects.all().filter(employee__id=self.employee.id)
@@ -326,7 +330,7 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         serializer = other_serializer.AvailabilityBlockSerializer(unavailability_blocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request, employee_id=None):
+    def post(self, request):
         self.validate_employee(request)
 
         request.data['employee'] = self.employee.id

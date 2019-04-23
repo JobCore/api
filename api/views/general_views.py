@@ -233,19 +233,7 @@ class EmployeeView(APIView, CustomPagination):
 
             serializer = employee_serializer.EmployeeGetSmallSerializer(employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
     # there shoud be no POST because it is created on signup (registration)
-
-    def delete(self, request, id):
-        try:
-            employee = Employee.objects.get(id=id)
-        except Employee.DoesNotExist:
-            return Response(
-                validators.error_object('Not found.'),
-                status=status.HTTP_404_NOT_FOUND)
-
-        employee.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmployeeGetBadgesView(APIView, CustomPagination):
@@ -260,7 +248,6 @@ class EmployeeGetBadgesView(APIView, CustomPagination):
         serializer = other_serializer.BadgeSerializer(
             employee.badges, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class EmployeeApplicationsView(APIView, CustomPagination):
     def get(self, request, id=False):
@@ -290,17 +277,6 @@ class EmployerView(APIView):
             serializer = employer_serializer.EmployerGetSerializer(employers, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, id):
-        if request.user.profile.employer == None:
-            raise PermissionDenied("You don't seem to be an employer")
-
-        serializer = employer_serializer.EmployerSerializer(request.user.profile.employer, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ProfileView(APIView):
     def get(self, request, id=False):
@@ -842,15 +818,3 @@ class ShiftView(APIView, CustomPagination):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class SingleApplicantView(APIView):
-    def get(self, request, application_id):
-        try:
-            application = ShiftApplication.objects.get(id=application_id)
-        except ShiftApplication.DoesNotExist:
-            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = shift_serializer.ApplicantGetSmallSerializer(application, many=False)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -58,19 +58,3 @@ class EmployeesTestSuite(TestCase, WithMakeUser):
         url = reverse_lazy('api:id-employees', kwargs=dict(id=9999))
         response = self.client.get(url)
         self.assertEquals(response.status_code, 404)
-
-    def test_delete_employee(self):
-        """
-        """
-        _, emp, __ = self.employee_stack[0]
-        url = reverse_lazy('api:id-employees', kwargs=dict(id=emp.id))
-        response = self.client.delete(url)
-        self.assertEquals(response.status_code, 403)
-
-    def test_delete_myself(self):
-        """
-        """
-        url = reverse_lazy(
-            'api:id-employees', kwargs=dict(id=self.test_employee.id))
-        response = self.client.delete(url)
-        self.assertEquals(response.status_code, 403)
