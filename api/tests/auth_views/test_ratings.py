@@ -10,6 +10,7 @@ class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
     Endpoint tests for Rating
     @revisionNeeded
     """
+
     def setUp(self):
         (
             self.test_user_employee,
@@ -54,7 +55,7 @@ class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             shift=self.test_shift,
             author=self.test_profile_employee,
             status='APPROVED'
-            )
+        )
 
     def test_get_ratings(self):
         """
@@ -66,14 +67,14 @@ class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             sender=self.test_profile_employee,
             shift=self.test_shift,
             employer=self.test_employer,
-            )
+        )
 
         mixer.blend(
             'api.Rate',
             sender=self.test_profile_employer,
             shift=self.test_shift,
             employee=self.test_employee,
-            )
+        )
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
@@ -134,7 +135,7 @@ class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             shift=new_shift,
             author=self.test_profile_employee,
             status='APPROVED'
-            )
+        )
 
         payload = {
             'employer': self.test_employer.id,
@@ -325,20 +326,20 @@ class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             sender=self.test_profile_employee,
             shift=self.test_shift,
             employer=self.test_employer,
-            )
+        )
         mixer.blend(
             'api.Rate',
             sender=self.test_profile_employee,
             shift=new_shift,
             employer=self.test_employer,
-            )
+        )
 
         mixer.blend(
             'api.Rate',
             sender=self.test_profile_employer,
             shift=self.test_shift,
             employee=self.test_employee,
-            )
+        )
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)

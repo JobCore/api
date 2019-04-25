@@ -214,7 +214,7 @@ class PasswordResetTestSuite(TestCase, WithMakeUser):
         token = jwt_encode_handler(jtw_payload)
 
         payload = {
-            'token': token+'A=!',
+            'token': token + 'A=!',
             'new_password': 'password123456',
             'repeat_password': 'password789012',
         }

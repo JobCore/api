@@ -69,7 +69,7 @@ class RatingSerializer(serializers.ModelSerializer):
                 Clockin.objects.get(
                     shift=data["shift"],
                     employee=current_user.profile.employee
-                    )
+                )
             except Clockin.DoesNotExist:
                 raise serializers.ValidationError(
                     "You have not worked in this shift yet, "
@@ -82,7 +82,7 @@ class RatingSerializer(serializers.ModelSerializer):
                     shift_id=data["shift"].id,
                     employer_id=data["employer"].id,
                     sender_id=current_user.profile.id
-                    )
+                )
                 raise serializers.ValidationError(
                     "You have already rated this employer for this shift")
             except Rate.DoesNotExist:

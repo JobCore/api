@@ -3,15 +3,20 @@ import datetime
 from calendar import timegm
 from rest_framework_jwt.settings import api_settings
 
+
 def jwt_response_payload_handler(token, user=None, request=None):
     return {
         'token': token,
-        'user': user_serializer.UserSerializer(user, context={'request': request}).data
-    }
-    
+        'user': user_serializer.UserSerializer(
+            user,
+            context={
+                'request': request}).data}
+
+
 def jwt_payload_handler(payload, exp=None):
 
-    payload['exp'] = datetime.datetime.utcnow() + datetime.timedelta(seconds= (60 * 15))
+    payload['exp'] = datetime.datetime.utcnow(
+    ) + datetime.timedelta(seconds=(60 * 15))
     if hasattr(payload, 'user_id'):
         payload['user_id'] = user.email
     if hasattr(payload, 'email'):
@@ -31,4 +36,3 @@ def jwt_payload_handler(payload, exp=None):
         payload['iss'] = api_settings.JWT_ISSUER
 
     return payload
-    

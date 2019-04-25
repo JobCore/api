@@ -12,6 +12,7 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for login
     """
+
     def setUp(self):
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',
@@ -194,7 +195,7 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         url = reverse_lazy(
             'api:id-jcinvites',
             kwargs=dict(id=self.test_invite.id)
-            )
+        )
 
         self.client.force_login(self.test_user_employer)
 
@@ -220,7 +221,7 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         url = reverse_lazy(
             'api:id-jcinvites',
             kwargs=dict(id=9999)
-            )
+        )
 
         self.client.force_login(self.test_user_employer)
 

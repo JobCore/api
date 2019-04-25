@@ -1,22 +1,26 @@
 from api.models import User, JobCoreInvite, Profile
 from rest_framework import serializers
 
+
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture','id', 'bio', 'status', 'employer', 'employee')
+        fields = ('picture', 'id', 'bio', 'status', 'employer', 'employee')
+
 
 class UserGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name','last_name', 'email')
+        fields = ('first_name', 'last_name', 'email')
+
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(many=False)
-    
+
     class Meta:
         model = User
-        fields = ('first_name','last_name', 'email', 'profile')
+        fields = ('first_name', 'last_name', 'email', 'profile')
+
 
 class UserGetSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,8 +28,9 @@ class UserGetSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'first_name',
                   'last_name', 'email')
 
+
 class UserUpdateSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = User
         exclude = ('id',)
@@ -36,6 +41,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'profile': {'read_only': True},
         }
 
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(required=False, write_only=True)
     username = serializers.CharField(required=False)
@@ -44,7 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id','username', 'first_name', 'is_active',
+        fields = ('id', 'username', 'first_name', 'is_active',
                   'last_name', 'email', 'password', 'profile')
 
     def validate(self, data):

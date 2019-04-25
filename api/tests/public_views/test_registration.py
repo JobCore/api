@@ -37,7 +37,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             sender=self.test_user.profile,
             email='delta@mail.tld',
             shift=shift,
-            )
+        )
 
     def test_empty_form(self):
         payload = {
@@ -119,7 +119,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
                 shift=self.jc_invite.shift,
                 employee=employee,
                 sender=self.jc_invite.sender
-                ).count(),
+            ).count(),
             1)
 
     @patch('api.utils.email.requests')
@@ -181,7 +181,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         self.assertEquals(
             Profile.objects.filter(user_id=jsonresp['id']).count(),
             1
-            )
+        )
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)

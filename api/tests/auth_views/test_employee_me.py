@@ -8,6 +8,7 @@ class EmployeeMeTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
+
     def setUp(self):
         (
             self.test_user_employee,
@@ -105,31 +106,31 @@ class EmployeeMeTestSuite(TestCase, WithMakeUser):
         self.assertEquals(
             response_json['maximum_job_distance_miles'],
             payload['maximum_job_distance_miles']
-            )
+        )
         self.assertEquals(
             response_json['positions'],
             payload['positions']
-            )
+        )
         self.assertNotEquals(
             response_json['job_count'],
             payload['job_count'],
             "job count shouldn't change here"
-            )
+        )
         self.assertNotEquals(
             response_json['badges'],
             payload['badges'],
             "badges shouldn't change here"
-            )
+        )
         self.assertNotEquals(
             response_json['created_at'],
             payload['created_at'],
             "timestamps shouldn't change"
-            )
+        )
         self.assertNotEquals(
             response_json['created_at'],
             payload['created_at'],
             "timestamps shouldn't change"
-            )
+        )
 
     def test_update_bad_positions(self):
         payload = {

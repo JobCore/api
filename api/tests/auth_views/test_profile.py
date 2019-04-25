@@ -11,6 +11,7 @@ class ProfileTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
+
     def setUp(self):
         (
             self.test_user_employee,

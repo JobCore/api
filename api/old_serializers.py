@@ -11,9 +11,12 @@ from api.models import *
 from api.actions import employee_actions
 
 # Format Serializers
+
+
 class ToTimestampField(serializers.Field):
     def to_representation(self, value):
         return value.timestamp() * 1000
+
 
 class DatetimeFormatField(serializers.Field):
     def to_internal_value(self, value):
