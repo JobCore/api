@@ -271,9 +271,10 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
 
         current_user = self.context['request'].user
         employees = ShiftEmployee.objects.filter(
-            shift__id=self.instance.shift.id,
-            employee__id=current_user.profile.employee.id)
-        if(len(employees) > 0):
+            shift_id=self.instance.shift.id,
+            employee_id=current_user.profile.employee.id).count()
+
+        if employees > 0:
             raise serializers.ValidationError(
                 'This talent is already working on this shift')
 

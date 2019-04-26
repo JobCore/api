@@ -8,17 +8,18 @@ from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly)
 from api.pagination import CustomPagination
 from django.db.models import Q
-
+from django.db.transaction import atomic
 from api.utils.email import send_fcm
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 from api.models import *
+from api.models import SHIFT_INVITE_STATUS_CHOICES
 from api.utils.notifier import (
     notify_password_reset_code, notify_shift_candidate_update
 )
@@ -187,111 +188,133 @@ class EmployeeMeView(EmployeeView, CustomPagination):
 
 
 class EmployeeShiftInviteView(EmployeeView):
+
+    def get_queryset(self):
+        return ShiftInvite.objects.filter(employee_id=self.employee.id)
+
+    def fetch_one(self, request, id):
+        return self.get_queryset().filter(id=id)
+
+    def fetch_list(self, request):
+        if 'status' not in self.request.GET:
+            return self.get_queryset()
+
+        status = request.GET.get('status')
+        available_statuses = dict(SHIFT_INVITE_STATUS_CHOICES)
+
+        if status not in available_statuses:
+            valid_choices = '", "'.join(available_statuses.keys())
+
+            raise ValidationError({
+                'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
+                })
+
+        return self.get_queryset().filter(status=status)
+
     def get(self, request, id=False):
         self.validate_employee(request)
 
-        if (id):
+        data = None
+        single = bool(id)
+        many = not(single)
+
+        if single:
             try:
-                invite = ShiftInvite.objects.get(
-                    id=id, employee__id=self.employee.id)
+                data = self.fetch_one(request, id).get()
             except ShiftInvite.DoesNotExist:
                 return Response(
-                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
-
-            serializer = shift_serializer.ShiftInviteGetSerializer(
-                invite, many=False)
         else:
-            invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
+            data = self.fetch_list(request)
 
-            qStatus = request.GET.get('status')
-            if qStatus:
-                invites = invites.filter(status=qStatus)
-
-            serializer = shift_serializer.ShiftInviteGetSerializer(
-                invites, many=True)
+        serializer = shift_serializer.ShiftInviteGetSerializer(
+            data, many=many)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @atomic
     def put(self, request, id, action=None):
         self.validate_employee(request)
 
-        if request.user is None:
+        if action is None or action not in ['APPLY', 'REJECT']:
             return Response(
-                validators.error_object('You need to specify an action=APPLY or REJECT'),
+                validators.error_object('You need to specify an action=APPLY or REJECT'),  # NOQA
                 status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            invite = ShiftInvite.objects.get(
-                id=id, employee__id=self.employee.id)
+            invite = self.fetch_one(request, id).get()
         except ShiftInvite.DoesNotExist:
             return Response(
-                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
                 status=status.HTTP_404_NOT_FOUND)
 
-        data = {}
-        if action.lower() == 'apply':
-            data["status"] = 'APPLIED'
-        elif action.lower() == 'reject':
-            data["status"] = 'REJECTED'
-        else:
-            return Response(
-                validators.error_object("You can either apply or reject an invite"),
-                status=status.HTTP_400_BAD_REQUEST)
+        new_statuses = {
+            'APPLY': 'APPLIED',
+            'REJECT': 'REJECTED',
+        }
+        data = {
+            "status": new_statuses[action]
+        }
 
         # if the talent is on a preferred_talent list, automatically approve
         # him
-        preferred_talent = FavoriteList.objects.filter(
-            employer__id=invite.shift.employer.id,
+        is_preferred_talent = FavoriteList.objects.filter(
+            employer_id=invite.shift.employer.id,
             auto_accept_employees_on_this_list=True,
-            employees__in=[
-                self.employee])
-        if(len(preferred_talent) > 0):
-            shiftSerializer = shift_serializer.ShiftInviteSerializer(
-                invite, data={
-                    "status": "APPLIED"}, many=False, context={
-                    "request": request})
-            if shiftSerializer.is_valid():
-                shiftSerializer.save()
-                ShiftEmployee.objects.create(
-                    employee=self.employee, shift=invite.shift)
-                notify_shift_candidate_update(
-                    user=self.employee.user,
-                    shift=invite.shift,
-                    talents_to_notify={
-                        "accepted": [
-                            self.employee],
-                        "rejected": []})
-                return Response(
-                    {
-                        "details": "Your application was automatically approved because you are one of the vendors preferred talents."},
+            employees__in=[self.employee]).exists()
+
+        if is_preferred_talent:
+            data["status"] = 'APPLIED'
+
+        shiftSerializer = shift_serializer.ShiftInviteSerializer(
+                invite,
+                data=data,
+                many=False,
+                context={"request": request}
+            )
+
+        if not shiftSerializer.is_valid():
+            return Response(shiftSerializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        shiftSerializer.save()
+
+        if is_preferred_talent:
+            ShiftEmployee.objects.create(
+                employee=self.employee,
+                shift=invite.shift
+            )
+
+            notify_shift_candidate_update(
+                user=self.employee.user,
+                shift=invite.shift,
+                talents_to_notify=dict(
+                    accepted=[self.employee],
+                    rejected=[]
+                )
+            )
+
+            return Response({
+                        "details": "Your application was automatically approved because you are one of the vendors preferred talents.",  # NOQA
+                    },
                     status=status.HTTP_200_OK)
-            else:
-                return Response(shiftSerializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
 
-        else:
-            # else, create the application
-            shiftSerializer = shift_serializer.ShiftInviteSerializer(
-                invite, data=data, many=False, context={"request": request})
-            appSerializer = shift_serializer.ShiftApplicationSerializer(data={
-                "shift": invite.shift.id,
-                "invite": invite.id,
-                "employee": invite.employee.id
-            }, many=False)
-            if shiftSerializer.is_valid():
-                if appSerializer.is_valid():
-                    shiftSerializer.save()
-                    appSerializer.save()
+        appSerializer = shift_serializer.ShiftApplicationSerializer(
+            data={
+            "shift": invite.shift.id,
+            "invite": invite.id,
+            "employee": invite.employee.id
+        }, many=False)
 
-                    return Response(appSerializer.data,
-                                    status=status.HTTP_200_OK)
-                else:
-                    return Response(appSerializer.errors,
-                                    status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response(shiftSerializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
+        if not appSerializer.is_valid():
+            return Response(
+                appSerializer.errors,
+                status=status.HTTP_400_BAD_REQUEST)
+
+        appSerializer.save()
+        return Response(appSerializer.data,
+                        status=status.HTTP_200_OK)
+
 
 # @TODO: DELETE ShiftMeInviteView
 #

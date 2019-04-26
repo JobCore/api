@@ -1,5 +1,4 @@
 from django.test import TestCase
-import json
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser
 
