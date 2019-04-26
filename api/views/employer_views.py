@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from api.pagination import CustomPagination
 from django.db.models import Q
@@ -138,37 +138,56 @@ class ApplicantsView(EmployerView):
 
 
 class EmployerShiftInviteView(EmployerView):
+    def get_queryset(self):
+        return ShiftInvite.objects.filter(sender__employer_id=self.employer.id)
+
+    def fetch_one(self, request, id):
+        return self.get_queryset().filter(id=id)
+
+    def fetch_list(self, request):
+        lookup = {}
+
+        if 'status' in self.request.GET:
+            status = request.GET.get('status')
+            available_statuses = dict(SHIFT_INVITE_STATUS_CHOICES)
+
+            if status not in available_statuses:
+                valid_choices = '", "'.join(available_statuses.keys())
+
+                raise ValidationError({
+                    'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
+                    })
+            lookup['status'] = status
+
+        if 'employee' in self.request.GET:
+            employee = self.request.GET.get('employee')
+            lookup['employee_id'] = employee
+
+        if 'shift' in self.request.GET:
+            shift = self.request.GET.get('shift')
+            lookup['shift_id'] = shift
+
+        return self.get_queryset().filter(**lookup)
+
     def get(self, request, id=False):
         self.validate_employer(request)
-        if (id):
+
+        data = None
+        single = bool(id)
+        many = not(single)
+
+        if single:
             try:
-                invite = ShiftInvite.objects.get(
-                    id=id, employer__id=self.employer.id)
+                data = self.fetch_one(request, id).get()
             except ShiftInvite.DoesNotExist:
                 return Response(
-                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
-
-            serializer = shift_serializer.ShiftInviteGetSerializer(
-                invite, many=False)
         else:
-            invites = ShiftInvite.objects.filter(
-                sender__employer__id=self.employer.id)
+            data = self.fetch_list(request)
 
-            qEmployee_id = request.GET.get('employee')
-            if qEmployee_id:
-                invites = invites.filter(employer__id=qEmployee_id)
-
-            qShift_id = request.GET.get('shift')
-            if qShift_id:
-                invites = invites.filter(shift__id=qShift_id)
-
-            qStatus = request.GET.get('status')
-            if qStatus:
-                invites = invites.filter(status=qStatus)
-
-            serializer = shift_serializer.ShiftInviteGetSerializer(
-                invites, many=True)
+        serializer = shift_serializer.ShiftInviteGetSerializer(
+            data, many=many)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

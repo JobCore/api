@@ -47,6 +47,10 @@ from api.utils.email import get_template_content
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
+from api.views.general_views import RateView
+
+
 logger = logging.getLogger(__name__)
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -65,11 +69,14 @@ class EmployeeView(APIView):
         self.employee = self.request.user.profile.employee
 
 
-class EmployeeMeReceivedRatingsView(EmployeeView):
+class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
+    def get_queryset():
+        return Rate.objects.filter(employee__id=self.employee.id)
+
     def get(self, request):
         self.validate_employee(request)
 
-        ratings = Rate.objects.filter(employee__id=self.employee.id)
+        ratings = self.get_queryset()
 
         qShift = request.GET.get('shift')
         if qShift is not None:
@@ -83,22 +90,9 @@ class EmployeeMeReceivedRatingsView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployeeMeSentRatingsView(EmployeeView):
-    def get(self, request):
-        self.validate_employee(request)
-
-        ratings = Rate.objects.filter(sender__user__id=self.employee.user.id)
-
-        qShift = request.GET.get('shift')
-        if qShift is not None:
-            ratings = ratings.filter(shift__id=qShift)
-
-        qEmployer = request.GET.get('employer')
-        if qEmployer is not None:
-            ratings = ratings.filter(shift__employer=qEmployer)
-
-        serializer = other_serializer.RatingGetSerializer(ratings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
+    def get_queryset(self):
+        return Rate.objects.filter(sender__user__id=self.employee.id)
 
 
 class EmployeeMeApplicationsView(EmployeeView, CustomPagination):

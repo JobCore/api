@@ -61,7 +61,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites')
+        url = reverse_lazy('api:me-employees-get-jobinvites')
         self.client.force_login(self.test_user_employee)
 
         response = self.client.get(url, content_type="application/json")
@@ -79,7 +79,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites')
+        url = reverse_lazy('api:me-employees-get-jobinvites')
         self.client.force_login(self.test_user_employee)
 
         querystring = {
@@ -104,7 +104,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites')
+        url = reverse_lazy('api:me-employees-get-jobinvites')
         self.client.force_login(self.test_user_employee)
 
         querystring = {
@@ -125,7 +125,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(id=999999))
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(id=999999))
         self.client.force_login(self.test_user_employee)
 
         response = self.client.get(
@@ -141,7 +141,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id)
         )
         self.client.force_login(self.test_user_employee)
@@ -159,7 +159,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action=":evil")
         )
@@ -178,7 +178,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=999999,
             action="APPLY")
         )
@@ -197,7 +197,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY")
         )
@@ -223,7 +223,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             employees=[self.test_employee]
         )
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -249,7 +249,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             auto_accept_employees_on_this_list=True,
             employees=[self.test_employee]
         )
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -278,7 +278,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     def test_put_double_apply_regular(self):
         """
         """
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -308,7 +308,7 @@ class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY")
         )
