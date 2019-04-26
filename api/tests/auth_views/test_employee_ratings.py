@@ -77,6 +77,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
 
         url = reverse_lazy('api:get-ratings')
+
         self.client.force_login(self.test_user_employer)
 
         response = self.client.get(url, content_type="application/json")
