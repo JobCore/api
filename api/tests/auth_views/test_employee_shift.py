@@ -12,6 +12,7 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for login
     """
+
     def setUp(self):
         (
             self.test_user_employee,
@@ -55,14 +56,14 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
             'api.ShiftEmployee',
             employee=self.test_employee,
             shift=self.test_shift,
-            )
+        )
 
         mixer.blend(
             'api.Clockin',
             employee=self.test_employee,
             shift=self.test_shift,
             author=self.test_profile_employee,
-            )
+        )
 
         self.client.force_login(self.test_user_employee)
 
@@ -139,12 +140,12 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
             dict(
                 starting_at=timezone.now() + timedelta(days=1),
                 ending_at=timezone.now() + timedelta(days=2)
-                ),
+            ),
             dict(
                 starting_at=timezone.now() - timedelta(days=2),
                 ending_at=timezone.now() - timedelta(days=1)
-                ),
-            ]
+            ),
+        ]
 
         for shiftkwargs in shifts_to_do:
             shift, _, __ = self._make_shift(

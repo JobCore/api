@@ -6,32 +6,39 @@ from api.models import Employee, Profile, User, FavoriteList
 # NESTED
 #
 
+
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('picture', 'bio')
 
+
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(many=False)
-    
+
     class Meta:
         model = User
-        fields = ('first_name','last_name', 'email', 'profile')
+        fields = ('first_name', 'last_name', 'email', 'profile')
 
 #
 # MAIN
 #
+
+
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         exclude = ()
-        
+
+
 class EmployeeGetSmallSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(many=False)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
+
     class Meta:
         model = Employee
         exclude = ()
+
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     positions = other_serializer.PositionSerializer(many=True)
@@ -42,9 +49,10 @@ class EmployeeGetSerializer(serializers.ModelSerializer):
         model = Employee
         exclude = ()
 
+
 class EmployeeSerializer(serializers.ModelSerializer):
     #favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
-    
+
     class Meta:
         model = Employee
         exclude = ()
@@ -55,22 +63,28 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'job_count': {'read_only': True},
             'badges': {'read_only': True}
         }
-        
+
     def validate(self, data):
         employee = self.instance
         if employee.minimum_hourly_rate < 8:
-            raise serializers.ValidationError('The minimum hourly rate allowed is 8 dollars')
+            raise serializers.ValidationError(
+                'The minimum hourly rate allowed is 8 dollars')
         if employee.maximum_job_distance_miles < 10:
-            raise serializers.ValidationError('The minimum distance allowed is 10 miles')
+            raise serializers.ValidationError(
+                'The minimum distance allowed is 10 miles')
         elif employee.maximum_job_distance_miles > 100:
-            raise serializers.ValidationError('The maximum distance allowed is 100 miles')
-            
+            raise serializers.ValidationError(
+                'The maximum distance allowed is 100 miles')
+
         return data
 
-#to update the employee favorite lists
+# to update the employee favorite lists
+
+
 class EmployeeFavlistSerializer(serializers.ModelSerializer):
-    favoritelist_set = serializers.PrimaryKeyRelatedField(many=True, queryset=FavoriteList.objects.all())
-    
+    favoritelist_set = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=FavoriteList.objects.all())
+
     class Meta:
         model = Employee
         exclude = ()

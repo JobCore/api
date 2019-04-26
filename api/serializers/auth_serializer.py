@@ -98,7 +98,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if user.exists():
             raise serializers.ValidationError("This email already exist.")
 
-        print("user email: "+data["email"])
+        print("user email: " + data["email"])
         if len(data["email"]) > 150:
             raise serializers.ValidationError(
                 "You email cannot contain more than 150 characters")
@@ -120,7 +120,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         account_type = validated_data['account_type']
         validated_data.pop('account_type', None)
-        
+
         employer = None
         if 'employer' in validated_data:
             employer = validated_data['employer']
@@ -134,12 +134,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         if account_type == 'employer':
-            
+
             Profile.objects.create(user=user, picture='', employer=employer)
             # user.profile.save()
 
         elif account_type == 'employee':
-            
+
             emp = Employee.objects.create(user=user)
             user.employee.save()
 

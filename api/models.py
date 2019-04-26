@@ -25,6 +25,7 @@ class Badge(models.Model):
     def __str__(self):
         return self.title
 
+
 DAYS = 'DAYS'
 MONTHS = 'MONTHS'
 PAYROLL_LENGTH_TYPE = (
@@ -96,6 +97,7 @@ class Employee(models.Model):
     def __str__(self):
         return self.user.email
 
+
 ACTIVE = 'ACTIVE'
 PAUSED = 'PAUSED'
 PENDING = 'PENDING_EMAIL_VALIDATION'
@@ -142,6 +144,7 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
 
 WEEKLY = 'WEEKLY'
 MONTHLY = 'MONTHLY'
@@ -197,6 +200,7 @@ class Venue(models.Model):
 
     def __str__(self):
         return self.title
+
 
 OPEN = 'OPEN'
 FILLED = 'FILLED'
@@ -300,6 +304,7 @@ class ShiftApplication(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+
 PENDING = 'PENDING'
 APPLIED = 'APPLIED'
 REJECTED = 'REJECTED'
@@ -324,6 +329,7 @@ class ShiftInvite(models.Model):
         blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
@@ -433,6 +439,7 @@ class Clockin(models.Model):
         choices=CLOCKIN_STATUS,
         default=PENDING)
 
+
 FINALIZED = 'FINALIZED'
 OPEN = 'OPEN'
 PERIOD_STATUS = (
@@ -460,6 +467,7 @@ class PayrollPeriod(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
 
 PENDING = 'PENDING'
 PAID = 'PAID'

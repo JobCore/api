@@ -43,7 +43,7 @@ def notify_password_reset_code(user):
     })
     token = jwt_encode_handler(payload)
     send_email_message("password_reset_link", user.email, {
-        "link": API_URL+'/api/user/password/reset?token='+token
+        "link": API_URL + '/api/user/password/reset?token=' + token
     })
 
 
@@ -55,7 +55,7 @@ def notify_email_validation(user):
     token = jwt_encode_handler(payload)
     send_email_message("registration", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
-        "LINK": API_URL+'/api/user/email/validate?token='+token,
+        "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
     })
 
@@ -66,7 +66,7 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None):
     talents_to_notify = get_talents_to_notify(shift)
 
     if status == 'being_updated':
-        print("Talents to notify: "+str(len(talents_to_notify)))
+        print("Talents to notify: " + str(len(talents_to_notify)))
 
         for talent in talents_to_notify:
             payload = api.utils.jwt.jwt_payload_handler({
@@ -183,7 +183,7 @@ def notify_jobcore_invite(invite):
             invite.sender.user.first_name, invite.sender.user.last_name),
         "EMAIL": invite.email,
         "COMPANY": invite.sender.user.profile.employer.title,
-        "LINK": EMPLOYER_URL+"/invite?token="+token,
+        "LINK": EMPLOYER_URL + "/invite?token=" + token,
         "DATA": {"type": "invite", "id": invite.id}
     })
 
@@ -212,7 +212,7 @@ def notify_single_shift_invite(invite):
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
         "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL+'/invite?token='+token,
+        "LINK": EMPLOYEE_URL + '/invite?token=' + token,
         "DATA": {"type": "invite", "id": invite.id}
     })
 
@@ -222,7 +222,7 @@ def notify_single_shift_invite(invite):
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
         "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL+'/invite?token='+token,
+        "LINK": EMPLOYEE_URL + '/invite?token=' + token,
         "DATA": {"type": "invite", "id": invite.id}
     })
 
@@ -233,7 +233,7 @@ def notify_new_rating(rating):
             "SENDER": rating.sender.employer.title,
             "VENUE": rating.shift.venue.title,
             "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
-            "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+            "LINK": EMPLOYEE_URL + '/rating/' + str(rating.id),
             "DATA": {"type": "rating", "id": rating.id}
         })
         # WATCH OUT HERE.
@@ -256,6 +256,6 @@ def notify_new_rating(rating):
                     rating.sender.user.last_name),
                 "VENUE": rating.shift.venue.title,
                 "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
-                "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+                "LINK": EMPLOYEE_URL + '/rating/' + str(rating.id),
                 "DATA": {"type": "rating", "id": rating.id}
             })

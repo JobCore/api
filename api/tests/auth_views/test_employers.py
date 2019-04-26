@@ -1,5 +1,4 @@
 from django.test import TestCase
-import json
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser
 
@@ -8,6 +7,7 @@ class EmployersTestSuite(TestCase, WithMakeUser):
     """
     Endpoint tests for login
     """
+
     def setUp(self):
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',

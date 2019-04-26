@@ -4,7 +4,8 @@ def in_choices(choice, CHOICES):
         if description == choice:
             is_present = True
     return is_present
-    
+
+
 def error_object(msg, data=None):
     return {
         "details": msg
