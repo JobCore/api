@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
 
 
-class RatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
+class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for Rating
     @revisionNeeded
