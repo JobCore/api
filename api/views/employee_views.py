@@ -347,56 +347,41 @@ class ClockinsMeView(EmployeeView):
 
     def post(self, request):
         self.validate_employee(request)
-        request.data['employee'] = self.employee.id
-        # checkin
-        if 'started_at' in request.data:
-            request.data['latitude_in'] = round(
-                decimal.Decimal(
-                    request.data['latitude_in']),
-                11) if request.data['latitude_in'] else None
-            request.data['longitude_in'] = round(
-                decimal.Decimal(
-                    request.data['longitude_in']),
-                11) if request.data['longitude_in'] else None
-            serializer = clockin_serializer.ClockinSerializer(
-                data=request.data, context={"request": request})
+        request_data = request.data.dict()
+        request_data['employee'] = self.employee.id
 
-        # checkout
-        elif 'ended_at' in request.data:
-            request.data['latitude_out'] = round(
-                decimal.Decimal(
-                    request.data['latitude_out']),
-                11) if request.data['latitude_out'] else None
-            request.data['longitude_out'] = round(
-                decimal.Decimal(
-                    request.data['longitude_out']),
-                11) if request.data['longitude_out'] else None
+        if 'started_at' not in request_data and 'ended_at' not in request_data:
+            return Response(
+                validators.error_object("You need to specify started_at or ended_at"),  # NOQA
+                status=status.HTTP_400_BAD_REQUEST)
+
+        instance = None
+
+        if 'ended_at' in request_data:
             try:
-                clockin = Clockin.objects.get(
-                    shift=request.data["shift"],
-                    employee=request.data["employee"],
+                instance = Clockin.objects.get(
+                    shift=request_data["shift"],
+                    employee=request_data["employee"],
                     ended_at=None)
-                serializer = clockin_serializer.ClockinSerializer(
-                    clockin, data=request.data, context={"request": request})
             except Clockin.DoesNotExist:
                 return Response(
-                    validators.error_object("There is no previous clockin for this shift"),
+                    validators.error_object(
+                        "There is no previous clockin for this shift"),
                     status=status.HTTP_400_BAD_REQUEST)
             except Clockin.MultipleObjectsReturned:
                 return Response(
-                    validators.error_object("It seems there is more than one clockin without clockout for this shif"),
+                    validators.error_object(
+                        "It seems there is more than one clockin without clockout for this shift"),  # NOQA
                     status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(
-                validators.error_object("You need to specify started_at or ended_at"),
-                status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            serializer.save()
-        else:
+        serializer = clockin_serializer.ClockinSerializer(
+            instance, data=request_data, context={"request": request})
+
+        if not serializer.is_valid():
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
