@@ -47,6 +47,10 @@ from api.utils.email import get_template_content
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
+from api.views.general_views import RateView
+
+
 logger = logging.getLogger(__name__)
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -65,11 +69,14 @@ class EmployeeView(APIView):
         self.employee = self.request.user.profile.employee
 
 
-class EmployeeMeReceivedRatingsView(EmployeeView):
+class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
+    def get_queryset():
+        return Rate.objects.filter(employee__id=self.employee.id)
+
     def get(self, request):
         self.validate_employee(request)
 
-        ratings = Rate.objects.filter(employee__id=self.employee.id)
+        ratings = self.get_queryset()
 
         qShift = request.GET.get('shift')
         if qShift is not None:
@@ -83,22 +90,9 @@ class EmployeeMeReceivedRatingsView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployeeMeSentRatingsView(EmployeeView):
-    def get(self, request):
-        self.validate_employee(request)
-
-        ratings = Rate.objects.filter(sender__user__id=self.employee.user.id)
-
-        qShift = request.GET.get('shift')
-        if qShift is not None:
-            ratings = ratings.filter(shift__id=qShift)
-
-        qEmployer = request.GET.get('employer')
-        if qEmployer is not None:
-            ratings = ratings.filter(shift__employer=qEmployer)
-
-        serializer = other_serializer.RatingGetSerializer(ratings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
+    def get_queryset(self):
+        return Rate.objects.filter(sender__user__id=self.employee.id)
 
 
 class EmployeeMeApplicationsView(EmployeeView, CustomPagination):
@@ -353,56 +347,41 @@ class ClockinsMeView(EmployeeView):
 
     def post(self, request):
         self.validate_employee(request)
-        request.data['employee'] = self.employee.id
-        # checkin
-        if 'started_at' in request.data:
-            request.data['latitude_in'] = round(
-                decimal.Decimal(
-                    request.data['latitude_in']),
-                11) if request.data['latitude_in'] else None
-            request.data['longitude_in'] = round(
-                decimal.Decimal(
-                    request.data['longitude_in']),
-                11) if request.data['longitude_in'] else None
-            serializer = clockin_serializer.ClockinSerializer(
-                data=request.data, context={"request": request})
+        request_data = request.data.dict()
+        request_data['employee'] = self.employee.id
 
-        # checkout
-        elif 'ended_at' in request.data:
-            request.data['latitude_out'] = round(
-                decimal.Decimal(
-                    request.data['latitude_out']),
-                11) if request.data['latitude_out'] else None
-            request.data['longitude_out'] = round(
-                decimal.Decimal(
-                    request.data['longitude_out']),
-                11) if request.data['longitude_out'] else None
+        if 'started_at' not in request_data and 'ended_at' not in request_data:
+            return Response(
+                validators.error_object("You need to specify started_at or ended_at"),  # NOQA
+                status=status.HTTP_400_BAD_REQUEST)
+
+        instance = None
+
+        if 'ended_at' in request_data:
             try:
-                clockin = Clockin.objects.get(
-                    shift=request.data["shift"],
-                    employee=request.data["employee"],
+                instance = Clockin.objects.get(
+                    shift=request_data["shift"],
+                    employee=request_data["employee"],
                     ended_at=None)
-                serializer = clockin_serializer.ClockinSerializer(
-                    clockin, data=request.data, context={"request": request})
             except Clockin.DoesNotExist:
                 return Response(
-                    validators.error_object("There is no previous clockin for this shift"),
+                    validators.error_object(
+                        "There is no previous clockin for this shift"),
                     status=status.HTTP_400_BAD_REQUEST)
             except Clockin.MultipleObjectsReturned:
                 return Response(
-                    validators.error_object("It seems there is more than one clockin without clockout for this shif"),
+                    validators.error_object(
+                        "It seems there is more than one clockin without clockout for this shift"),  # NOQA
                     status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(
-                validators.error_object("You need to specify started_at or ended_at"),
-                status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            serializer.save()
-        else:
+        serializer = clockin_serializer.ClockinSerializer(
+            instance, data=request_data, context={"request": request})
+
+        if not serializer.is_valid():
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

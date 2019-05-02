@@ -69,7 +69,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure eveyone gets notification
         """
-        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': self.shift.id})
         request = self.factory.get(path)
         response = ShiftView.get(self, request, id=self.shift.id)
         assert response.status_code == 200

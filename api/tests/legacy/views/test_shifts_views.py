@@ -70,7 +70,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure single shift data is returned via GET
         """
-        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': self.shift.id})
         request = self.factory.get(path)
         response = ShiftView.get(self, request, id=self.shift.id)
         assert response.status_code == 200
@@ -79,7 +79,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure error code when invalid data is provided
         """
-        path = reverse('api:id-shifts', kwargs={'id': 9999})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': 9999})
         request = self.factory.get(path)
         response = ShiftView.get(self, request, id=9999)
         assert response.status_code == 404
@@ -132,7 +132,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure shift data is updated via PUT
         """
-        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': self.shift.id})
         request = self.factory.put(path)
         force_authenticate(request, user=self.user_employer)
         request.user = self.user_employer
@@ -168,7 +168,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure error code when invalid data is provided
         """
-        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': self.shift.id})
         request = self.factory.put(path)
         force_authenticate(request, user=self.user_employer)
         request.user = self.user_employer
@@ -182,7 +182,7 @@ class TestViews(APITestCase, CustomPagination):
         """
         Ensure error code when invalid data is provided
         """
-        path = reverse('api:id-shifts', kwargs={'id': 9999})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': 9999})
         request = self.factory.put(path)
         request.data = {
             'status': 'OPEN'
@@ -196,7 +196,7 @@ class TestViews(APITestCase, CustomPagination):
         Ensure shift data is deleted via DELETE
         """
         
-        path = reverse('api:id-shifts', kwargs={'id': self.shift.id})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': self.shift.id})
         request = self.factory.delete(path)
         response = ShiftView.delete(self, request, id=self.shift.id)
         assert response.status_code == 204
@@ -208,7 +208,7 @@ class TestViews(APITestCase, CustomPagination):
         Ensure error code when invalid data is provided
         """
         
-        path = reverse('api:id-shifts', kwargs={'id': 9999})
+        path = reverse('api:me-employer-id-shifts', kwargs={'id': 9999})
         request = self.factory.delete(path)
         response = ShiftView.delete(self, request, id=9999)
         assert response.status_code == 404

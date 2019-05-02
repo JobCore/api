@@ -538,10 +538,14 @@ class BadgeView(APIView):
 
 
 class RateView(APIView):
+
+    def get_queryset(self):
+        return Rate.objects.all()
+
     def get(self, request, id=False):
         if (id):
             try:
-                rate = Rate.objects.get(id=id)
+                rate = self.get_queryset().objects.get(id=id)
             except Rate.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
@@ -557,17 +561,17 @@ class RateView(APIView):
             # employee OR employer, but not both at the same time
 
             if qs_employee:
-                lookup = {'employee__id': qs_employee}
+                lookup = {'employee_id': qs_employee}
 
             if qs_employer:
-                lookup = {'employer__id': qs_employer}
+                lookup = {'employer_id': qs_employer}
 
             qs_shift = request.GET.get('shift')
 
             if qs_shift:
-                lookup['shift__id'] = qs_shift
+                lookup['shift_id'] = qs_shift
 
-            rates = Rate.objects.filter(**lookup)
+            rates = self.get_queryset().filter(**lookup)
 
             serializer = rating_serializer.RatingGetSerializer(
                 rates, many=True)

@@ -373,6 +373,20 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.assertEquals(len(response_json), 2)
 
+        response = self.client.get(
+            url,
+            data=dict(shift=new_shift.id),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+
+        response_json = response.json()
+
+        self.assertEquals(len(response_json), 1)
+
     def test_rate_talentxtalent(self):
         """
         Gets ratings
