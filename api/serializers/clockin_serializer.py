@@ -61,12 +61,15 @@ class ClockinSerializer(serializers.ModelSerializer):
             data['started_at'], shift.starting_at, threshold=delta
             )
         # previous clockin opened
-        clockins = Clockin.objects.filter(
-            ended_at=None, employee=data["employee"]
-            ).count()
-
-        if clockins > 0:
-            raise serializers.ValidationError("You need to clock out first from all your previous shifts before attempting to clockin again")  # NOQA
+        try:
+            old_clockin = Clockin.objects.get(
+                ended_at=None, employee=data["employee"]
+                )
+            delta = datetime.timedelta(seconds=1)
+            old_clockin.ended_at = data['started_at'] - delta
+            old_clockin.save()
+        except Clockin.DoesNotExist:
+            pass
 
     def _validate_clockout(self, data):
         if 'latitude_out' not in data or 'longitude_out' not in data:

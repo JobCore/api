@@ -2,10 +2,12 @@ from django.test import TestCase
 from django.urls.base import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
 from mixer.backend.django import mixer
-from api.models import SHIFT_STATUS_CHOICES, COMPLETED
+from api.models import SHIFT_STATUS_CHOICES
 from django.utils import timezone
 from datetime import timedelta
-from urllib.parse import urlencode
+from django.apps import apps
+
+Clockin = apps.get_model('api', 'Clockin')
 
 
 class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
@@ -96,6 +98,7 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Try to reach without credentials
         """
+
         mixer.blend(
             'api.Clockin',
             employee=self.test_employee,
@@ -115,16 +118,26 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 200)
         response_json = response.json()
 
-        self.assertEquals(len(response_json), 2)
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            ).count()
+
+        self.assertEquals(len(response_json), count)
 
         payload = {
             'shift': self.test_shift.id
         }
+
         response = self.client.get(url, data=payload)
         self.assertEquals(response.status_code, 200)
         response_json = response.json()
 
-        self.assertEquals(len(response_json), 1)
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+
+        self.assertEquals(len(response_json), count)
 
         payload = {
             'shift': self.test_shift2.id
@@ -133,7 +146,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 200)
         response_json = response.json()
 
-        self.assertEquals(len(response_json), 1)
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift2.id,
+            ).count()
+
+        self.assertEquals(len(response_json), count)
 
     def test_clocking_in_out_good(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -152,10 +170,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 201)
         response_json = response.json()
 
-        self.assertEquals(
-            response_json['started_at'],
-            started_at.strftime('%FT%R:%S.%fZ')
-            )
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+
+        self.assertEquals(count, 1)
 
         ended_at = self.test_shift.ending_at - timedelta(seconds=60*15)
 
@@ -171,10 +191,19 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 201)
         response_json = response.json()
 
-        self.assertEquals(
-            response_json['ended_at'],
-            ended_at.strftime('%FT%R:%S.%fZ')
+        qs_clockin = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
             )
+
+        self.assertEquals(qs_clockin.count(), 1)
+
+        clockin = qs_clockin.get()
+
+        self.assertEquals(clockin.id, response_json['id'])
+
+        self.assertEquals(clockin.started_at, started_at)
+        self.assertEquals(clockin.ended_at, ended_at)
 
     def test_clocking_out_first(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -192,37 +221,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
 
-    def test_clocking_in_before_shift_time(self):
-        url = reverse_lazy('api:me-employees-clockins')
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
 
-        started_at = self.test_shift.starting_at - timedelta(hours=1)
-
-        payload = {
-            'shift': self.test_shift.id,
-            'author': self.test_profile_employee.id,
-            'started_at': started_at,
-            'latitude_in': -64,
-            'longitude_in': 10,
-        }
-
-        response = self.client.post(url, data=payload)
-        self.assertEquals(response.status_code, 400)
-
-    def test_clocking_in_after_shift_time(self):
-        url = reverse_lazy('api:me-employees-clockins')
-
-        started_at = self.test_shift.ending_at + timedelta(hours=1)
-
-        payload = {
-            'shift': self.test_shift.id,
-            'author': self.test_profile_employee.id,
-            'started_at': started_at,
-            'latitude_in': -64,
-            'longitude_in': 10,
-        }
-
-        response = self.client.post(url, data=payload)
-        self.assertEquals(response.status_code, 400)
+        self.assertEquals(count, 0)
 
     def test_clocking_in_without_clocking_out(self):
         mixer.blend(
@@ -251,7 +255,22 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         }
 
         response = self.client.post(url, data=payload)
-        self.assertEquals(response.status_code, 400)
+        self.assertEquals(response.status_code, 201)
+
+        clockin_qs = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            )
+
+        self.assertEquals(clockin_qs.count(), 2)  # one old, and the new
+
+        curr_clockin, old_clockin = clockin_qs.order_by('-started_at')
+
+        self.assertEquals(curr_clockin.started_at, started_at)
+
+        end_time = started_at-timedelta(seconds=1)
+
+        self.assertEquals(old_clockin.ended_at, end_time)
 
     def test_clocking_in_far_away(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -269,6 +288,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
 
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
+
     def test_clocking_in_lacking_data(self):
         url = reverse_lazy('api:me-employees-clockins')
 
@@ -282,6 +307,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
 
     def test_clocking_out_lacking_data(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -299,6 +330,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 201)
 
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
+
         ended_at = timezone.now() + timedelta(hours=2)
 
         payload = {
@@ -309,6 +346,13 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+        db_clockin = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).get()
+
+        self.assertEquals(db_clockin.ended_at, None)
 
     def test_clocking_out_twice(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -326,6 +370,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 201)
         response_json = response.json()
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
 
         self.assertEquals(
             response_json['started_at'],
@@ -346,14 +396,22 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 201)
         response_json = response.json()
 
+        db_clockin = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).get()
+
         self.assertEquals(
             response_json['ended_at'],
             ended_at.strftime('%FT%R:%S.%fZ')
             )
 
+        payload['ended_at'] = payload['ended_at'] - timedelta(minutes=1)
+
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
-        response_json = response.json()
+
+        self.assertEquals(db_clockin.ended_at, ended_at)
 
     def test_clocking_post_empty(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -363,6 +421,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
 
     def test_clocking_in_to_evil_shift(self):
         url = reverse_lazy('api:me-employees-clockins')
@@ -380,6 +444,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
 
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
+
     def test_clocking_in_to_wrong_shift(self):
         url = reverse_lazy('api:me-employees-clockins')
 
@@ -395,6 +465,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
 
     def test_clocking_in_to_non_belonging_shift(self):
 
@@ -448,7 +524,13 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
-    
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
+
     def test_clocking_out_to_non_belonging_shift(self):
 
         (
@@ -503,6 +585,12 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(response.status_code, 201)
         response_json = response.json()
 
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
+
         self.assertEquals(
             response_json['started_at'],
             started_at.strftime('%FT%R:%S.%fZ')
@@ -520,3 +608,139 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+        db_clockin = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).get()
+
+        self.assertEquals(db_clockin.ended_at, None)
+
+    def test_clocking_in_before_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at - timedelta(seconds=60*16)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
+
+    def test_clocking_in_just_before_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at - timedelta(seconds=60*15)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+        response_json = response.json()
+
+        self.assertEquals(
+            response_json['started_at'],
+            started_at.strftime('%FT%R:%S.%fZ')
+            )
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
+
+    def test_clocking_in_within_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+        response_json = response.json()
+
+        self.assertEquals(
+            response_json['started_at'],
+            started_at.strftime('%FT%R:%S.%fZ')
+            )
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
+
+    def test_clocking_in_just_after_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*15)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+        response_json = response.json()
+
+        self.assertEquals(
+            response_json['started_at'],
+            started_at.strftime('%FT%R:%S.%fZ')
+            )
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 1)
+
+    def test_clocking_in_after_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*16)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+            ).count()
+        self.assertEquals(count, 0)
