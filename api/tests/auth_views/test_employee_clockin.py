@@ -363,3 +363,160 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response = self.client.post(url, data=payload)
         self.assertEquals(response.status_code, 400)
+
+    def test_clocking_in_to_evil_shift(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*15)
+
+        payload = {
+            'shift': ':9999:',
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+
+    def test_clocking_in_to_wrong_shift(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*15)
+
+        payload = {
+            'shift': 9999,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+
+    def test_clocking_in_to_non_belonging_shift(self):
+
+        (
+            new_user_employee,
+            new_employee,
+            new_profile_employe2
+        ) = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='employee2',
+                email='employee2@testdoma.in',
+                is_active=True,
+            ),
+            employexkwargs=dict(
+                ratings=0,
+                total_ratings=0,
+            )
+        )
+        new_shift, _, __ = self._make_shift(
+            venuekwargs={
+                'latitude': -64,
+                'longitude': 10
+            },
+            shiftkwargs={
+                'status': SHIFT_STATUS_CHOICES[0][0],
+                'maximum_clockin_delta_minutes': 15,
+                'maximum_clockout_delay_minutes': 15,
+                'starting_at': timezone.now(),
+                'ending_at': timezone.now() + timedelta(hours=8)
+            },
+            employer=self.test_employer)
+
+        mixer.blend(
+            'api.ShiftEmployee',
+            employee=new_employee,
+            shift=new_shift,
+        )
+
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*15)
+
+        payload = {
+            'shift': new_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+    
+    def test_clocking_out_to_non_belonging_shift(self):
+
+        (
+            new_user_employee,
+            new_employee,
+            new_profile_employe2
+        ) = self._make_user(
+            'employee',
+            userkwargs=dict(
+                username='employee2',
+                email='employee2@testdoma.in',
+                is_active=True,
+            ),
+            employexkwargs=dict(
+                ratings=0,
+                total_ratings=0,
+            )
+        )
+        new_shift, _, __ = self._make_shift(
+            venuekwargs={
+                'latitude': -64,
+                'longitude': 10
+            },
+            shiftkwargs={
+                'status': SHIFT_STATUS_CHOICES[0][0],
+                'maximum_clockin_delta_minutes': 15,
+                'maximum_clockout_delay_minutes': 15,
+                'starting_at': timezone.now(),
+                'ending_at': timezone.now() + timedelta(hours=8)
+            },
+            employer=self.test_employer)
+
+        mixer.blend(
+            'api.ShiftEmployee',
+            employee=new_employee,
+            shift=new_shift,
+        )
+
+        url = reverse_lazy('api:me-employees-clockins')
+
+        started_at = self.test_shift.starting_at + timedelta(seconds=60*15)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+        response_json = response.json()
+
+        self.assertEquals(
+            response_json['started_at'],
+            started_at.strftime('%FT%R:%S.%fZ')
+            )
+
+        ended_at = self.test_shift.ending_at - timedelta(seconds=60*15)
+
+        payload = {
+            'shift': new_shift.id,
+            'author': self.test_profile_employee.id,
+            'ended_at': ended_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)

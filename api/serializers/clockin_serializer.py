@@ -88,16 +88,22 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The system has already clock you out of this Shift")  # NOQA
 
     def validate(self, data):
-        # @todo: you need to be part of the shift to be able to
-        # clockin or clockout
 
         if 'started_at' in data and 'ended_at' in data:
             raise serializers.ValidationError(
-                "You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")
+                "You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")  # NOQA
 
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
+
+        shift = data['shift']
+        profile = data['author']
+        employee_id = profile.employee_id
+
+        if not shift.employees.filter(id=employee_id).exists():
+            raise serializers.ValidationError(
+                "You cannot clock in/out to a shift that you haven't applied.")
 
         if 'started_at' in data:
             self._validate_clockin(data)
