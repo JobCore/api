@@ -445,7 +445,7 @@ class EmployeeDeviceMeView(WithProfileView):
         serializer = notification_serializer.FCMDeviceSerializer(
             device, data=request.data)
 
-        if serializer.is_valid():
+        if not serializer.is_valid():
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 

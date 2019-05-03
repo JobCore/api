@@ -3,6 +3,7 @@ from django.urls.base import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
 from mixer.backend.django import mixer
 from django.apps import apps
+from django.test.client import MULTIPART_CONTENT
 
 FCMDevice = apps.get_model('api', 'FCMDevice')
 
@@ -197,3 +198,43 @@ class EmployeeDevicesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         count = FCMDevice.objects.all().count()
 
         self.assertEquals(count, 2)
+
+    def test_update_device(self):
+        self.client.force_login(self.test_user_employee)
+
+        url = reverse_lazy('api:me-employees-device', kwargs={
+            'device_id': self.employee_device.registration_id
+        })
+
+        payload = {
+            'registration_id': 'new-regid'
+        }
+
+        payload_enc = self.client._encode_data(payload, MULTIPART_CONTENT)
+        response = self.client.put(
+            url, data=payload_enc, content_type=MULTIPART_CONTENT)
+        self.assertEquals(response.status_code, 200)
+
+        response_json = response.json()
+
+        self.assertNotEquals(
+            self.employer_device.registration_id,
+            response_json['registration_id']
+            )
+
+    def test_update_device_not_mine(self):
+        self.client.force_login(self.test_user_employee)
+
+        url = reverse_lazy('api:me-employees-device', kwargs={
+            'device_id': self.employer_device.registration_id
+        })
+
+        payload = {
+            'registration_id': 'new-regid'
+        }
+
+        payload_enc = self.client._encode_data(payload, MULTIPART_CONTENT)
+        response = self.client.put(
+            url, data=payload_enc, content_type=MULTIPART_CONTENT)
+
+        self.assertEquals(response.status_code, 404)
