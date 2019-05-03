@@ -56,12 +56,19 @@ jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
-class EmployeeView(APIView):
-    def validate_employee(self, request):
+class HaveProfileMixin:
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
         try:
             request.user.profile
         except Profile.DoesNotExist:
             raise PermissionDenied("You don't seem to be a talent")
+
+
+class IsEmployeeMixin:
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
 
         if request.user.profile.employee_id is None:
             raise PermissionDenied("You don't seem to be a talent")
@@ -69,13 +76,19 @@ class EmployeeView(APIView):
         self.employee = self.request.user.profile.employee
 
 
+class WithProfileView(HaveProfileMixin, APIView):
+    pass
+
+
+class EmployeeView(IsEmployeeMixin, WithProfileView):
+    pass
+
+
 class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
     def get_queryset():
         return Rate.objects.filter(employee__id=self.employee.id)
 
     def get(self, request):
-        self.validate_employee(request)
-
         ratings = self.get_queryset()
 
         qShift = request.GET.get('shift')
@@ -95,10 +108,9 @@ class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
         return Rate.objects.filter(sender__user__id=self.employee.id)
 
 
-class EmployeeMeApplicationsView(EmployeeView, CustomPagination):
+class EmployeeMeApplicationsView(
+        EmployeeView, CustomPagination):
     def get(self, request, application_id=False):
-        self.validate_employee(request)
-
         if(application_id):
             try:
                 application = ShiftApplication.objects.get(id=application_id)
@@ -118,8 +130,6 @@ class EmployeeMeApplicationsView(EmployeeView, CustomPagination):
 
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request):
-        self.validate_employee(request)
-
         NOW = datetime.datetime.now(tz=timezone.utc)
 
         shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
@@ -160,7 +170,6 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
 
 class EmployeeMeView(EmployeeView, CustomPagination):
     def get(self, request):
-        self.validate_employee(request)
         employee = self.employee
         serializer = employee_serializer.EmployeeGetSerializer(
             employee, many=False)
@@ -168,8 +177,6 @@ class EmployeeMeView(EmployeeView, CustomPagination):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
-        self.validate_employee(request)
-
         employee = self.employee
 
         serializer = employee_serializer.EmployeeSettingsSerializer(
@@ -206,8 +213,6 @@ class EmployeeShiftInviteView(EmployeeView):
         return self.get_queryset().filter(status=status)
 
     def get(self, request, id=False):
-        self.validate_employee(request)
-
         data = None
         single = bool(id)
         many = not(single)
@@ -229,8 +234,6 @@ class EmployeeShiftInviteView(EmployeeView):
 
     @atomic
     def put(self, request, id, action=None):
-        self.validate_employee(request)
-
         if action is None or action not in ['APPLY', 'REJECT']:
             return Response(
                 validators.error_object('You need to specify an action=APPLY or REJECT'),  # NOQA
@@ -310,30 +313,8 @@ class EmployeeShiftInviteView(EmployeeView):
                         status=status.HTTP_200_OK)
 
 
-# @TODO: DELETE ShiftMeInviteView
-#
-
-
-class ShiftMeInviteView(EmployeeView):
-    #     def get(self, request, id=False):
-    #         self.validate_employee(request)
-
-    #         invites = ShiftInvite.objects.filter(employee__id=self.employee.id)
-
-    #         qStatus = request.GET.get('status')
-    #         if qStatus:
-    #             invites = invites.filter(status=qStatus)
-
-    #         serializer = shift_serializer.ShiftInviteGetSerializer(invites, many=True)
-
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    pass
-
-
 class ClockinsMeView(EmployeeView):
     def get(self, request):
-        self.validate_employee(request)
-
         clockins = Clockin.objects.filter(employee_id=self.employee.id)
 
         qShift = request.GET.get('shift')
@@ -346,7 +327,6 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        self.validate_employee(request)
         request_data = request.data.dict()
         request_data['employee'] = self.employee.id
 
@@ -385,11 +365,10 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
+class EmployeeAvailabilityBlockView(
+        EmployeeView, CustomPagination):
 
     def get(self, request):
-        self.validate_employee(request)
-
         unavailability_blocks = AvailabilityBlock.objects.all().filter(
             employee__id=self.employee.id)
 
@@ -398,8 +377,6 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        self.validate_employee(request)
-
         request.data['employee'] = self.employee.id
         serializer = other_serializer.AvailabilityBlockSerializer(
             data=request.data, context={"request": request})
@@ -409,8 +386,6 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, block_id=None):
-        self.validate_employee(request)
-
         try:
             block = AvailabilityBlock.objects.get(
                 id=block_id, employee=self.employee)
@@ -426,8 +401,6 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, unavailability_id):
-        self.validate_employee(request)
-
         try:
             unavailability_block = EmployeeWeekUnvailability.objects.get(
                 id=unavailability_id)
@@ -439,65 +412,56 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EmployeeDeviceMeView(EmployeeView):
+class EmployeeDeviceMeView(WithProfileView):
+    def get_queryset(self):
+        return FCMDevice.objects.filter(user=self.request.user.id)
+
     def get(self, request, device_id=None):
+        qs = self.get_queryset()
+        many = True
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'You have to be loged in'), status=status.HTTP_400_BAD_REQUEST)
+        if device_id:
+            many = False
 
-        if device_id is not None:
             try:
-                device = FCMDevice.objects.get(
-                    registration_id=device_id, user=request.user.id)
-                serializer = notification_serializer.FCMDeviceSerializer(
-                    device, many=False)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                qs = qs.get(registration_id=device_id)
             except FCMDevice.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
-        else:
-            devices = FCMDevice.objects.filter(user=request.user.id)
-            serializer = notification_serializer.FCMDeviceSerializer(
-                devices, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        serializer = notification_serializer.FCMDeviceSerializer(
+            qs, many=many)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, device_id):
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'No user was identified'), status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            device = FCMDevice.objects.get(
-                registration_id=device_id, user=request.user.id)
-            serializer = notification_serializer.FCMDeviceSerializer(
-                device, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+            device = self.get_queryset().filter(
+                registration_id=device_id).get()
+        except FCMDevice.DoesNotExist:
+            return Response(validators.error_object(
+                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = notification_serializer.FCMDeviceSerializer(
+            device, data=request.data)
+
+        if not serializer.is_valid():
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-        except FCMDevice.DoesNotExist:
-            return Response(validators.error_object(
-                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, device_id=None):
+        qs = self.get_queryset()
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'No user was identified'), status=status.HTTP_400_BAD_REQUEST)
+        if device_id:
+            try:
+                qs = qs.get(registration_id=device_id)
+            except FCMDevice.DoesNotExist:
+                return Response(validators.error_object(
+                    'Device not found'), status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            if device_id is None:
-                devices = FCMDevice.objects.filter(user=request.user.id)
-                devices.delete()
-            else:
-                device = FCMDevice.objects.get(
-                    registration_id=device_id, user=request.user.id)
-                device.delete()
+        qs.delete()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except FCMDevice.DoesNotExist:
-            return Response(validators.error_object(
-                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
