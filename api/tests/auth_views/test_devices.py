@@ -181,3 +181,19 @@ class EmployeeDevicesTestSuite(TestCase, WithMakeUser, WithMakeShift):
             id=self.employer_device.id).exists()
 
         self.assertEquals(exists, False)
+
+    def test_delete_device_not_mine(self):
+        """
+        Try to reach without credentials
+        """
+        self.client.force_login(self.test_user_employee)
+        url = reverse_lazy('api:me-employees-device', kwargs={
+            'device_id': self.employer_device.registration_id
+        })
+
+        response = self.client.delete(url)
+        self.assertEquals(response.status_code, 404)
+
+        count = FCMDevice.objects.all().count()
+
+        self.assertEquals(count, 2)
