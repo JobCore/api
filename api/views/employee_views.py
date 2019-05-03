@@ -440,64 +440,66 @@ class EmployeeAvailabilityBlockView(EmployeeView, CustomPagination):
 
 
 class EmployeeDeviceMeView(EmployeeView):
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
+        try:
+            request.user.profile
+        except Profile.DoesNotExist:
+            raise PermissionDenied("You don't seem to be a talent")
+        except AttributeError:  # cuando entras anonimo
+            raise PermissionDenied("You don't seem to be a talent")
+
+    def get_queryset(self):
+        return FCMDevice.objects.filter(user=self.request.user.id)
+
     def get(self, request, device_id=None):
+        qs = self.get_queryset()
+        many = True
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'You have to be loged in'), status=status.HTTP_400_BAD_REQUEST)
+        if device_id:
+            many = False
 
-        if device_id is not None:
             try:
-                device = FCMDevice.objects.get(
-                    registration_id=device_id, user=request.user.id)
-                serializer = notification_serializer.FCMDeviceSerializer(
-                    device, many=False)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                qs = qs.get(registration_id=device_id)
             except FCMDevice.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
-        else:
-            devices = FCMDevice.objects.filter(user=request.user.id)
-            serializer = notification_serializer.FCMDeviceSerializer(
-                devices, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        serializer = notification_serializer.FCMDeviceSerializer(
+            qs, many=many)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, device_id):
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'No user was identified'), status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            device = FCMDevice.objects.get(
-                registration_id=device_id, user=request.user.id)
-            serializer = notification_serializer.FCMDeviceSerializer(
-                device, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+            device = self.get_queryset().filter(
+                registration_id=device_id).get()
+        except FCMDevice.DoesNotExist:
+            return Response(validators.error_object(
+                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = notification_serializer.FCMDeviceSerializer(
+            device, data=request.data)
+
+        if serializer.is_valid():
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-        except FCMDevice.DoesNotExist:
-            return Response(validators.error_object(
-                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, device_id=None):
+        qs = self.get_queryset()
 
-        if request.user is None:
-            return Response(validators.error_object(
-                'No user was identified'), status=status.HTTP_400_BAD_REQUEST)
+        if device_id:
+            try:
+                qs = qs.get(registration_id=device_id)
+            except FCMDevice.DoesNotExist:
+                return Response(validators.error_object(
+                    'Device not found'), status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            if device_id is None:
-                devices = FCMDevice.objects.filter(user=request.user.id)
-                devices.delete()
-            else:
-                device = FCMDevice.objects.get(
-                    registration_id=device_id, user=request.user.id)
-                device.delete()
+        qs.delete()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except FCMDevice.DoesNotExist:
-            return Response(validators.error_object(
-                'Device not found'), status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
