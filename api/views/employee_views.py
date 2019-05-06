@@ -1,87 +1,62 @@
-import json
-import os
-import functools
-import decimal
-import operator
-from django.utils.dateparse import parse_datetime
-from django.http import HttpResponse
+# import json
+# import os
+# import functools
+# import decimal
+# import operator
+# from django.utils.dateparse import parse_datetime
+# from django.http import HttpResponse
 from rest_framework import status
-from rest_framework.views import APIView
+# from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.permissions import (
-    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly)
+# from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError
+# from rest_framework.permissions import (
+#     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly)
 from api.pagination import CustomPagination
 from django.db.models import Q
 from django.db.transaction import atomic
-from api.utils.email import send_fcm
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.contrib.auth.models import User
-from oauth2_provider.models import AccessToken
+# from api.utils.email import send_fcm
+# from django.contrib.auth.tokens import PasswordResetTokenGenerator
+# from django.contrib.auth.models import User
+# from oauth2_provider.models import AccessToken
 from api.models import *
 from api.models import SHIFT_INVITE_STATUS_CHOICES
 from api.utils.notifier import (
-    notify_password_reset_code, notify_shift_candidate_update
+    # notify_password_reset_code,
+    notify_shift_candidate_update
 )
 from api.utils import validators
-from api.utils.utils import get_aware_datetime
+# from api.utils.utils import get_aware_datetime
 from api.serializers import (
-    user_serializer, profile_serializer, clockin_serializer,
+    clockin_serializer,  # user_serializer, profile_serializer,
     shift_serializer, employee_serializer, other_serializer,
-    payment_serializer, favlist_serializer, venue_serializer,
-    employer_serializer, auth_serializer, notification_serializer,
-    rating_serializer)
+    # payment_serializer, favlist_serializer, venue_serializer,
+    notification_serializer,  # employer_serializer, auth_serializer,
+    # rating_serializer
+)
 
 from rest_framework_jwt.settings import api_settings
 from django.db.models import Count
 
-import api.utils.jwt
+# import api.utils.jwt
 
 from django.utils import timezone
 import datetime
 
 # from .utils import GeneralException
 import logging
-from api.utils.email import get_template_content
+# from api.utils.email import get_template_content
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+# import cloudinary
+# import cloudinary.uploader
+# import cloudinary.api
 
 from api.views.general_views import RateView
-
+from api.mixins import EmployeeView, WithProfileView
 
 logger = logging.getLogger(__name__)
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-
-class HaveProfileMixin:
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-
-        try:
-            request.user.profile
-        except Profile.DoesNotExist:
-            raise PermissionDenied("You don't seem to be a talent")
-
-
-class IsEmployeeMixin:
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-
-        if request.user.profile.employee_id is None:
-            raise PermissionDenied("You don't seem to be a talent")
-
-        self.employee = self.request.user.profile.employee
-
-
-class WithProfileView(HaveProfileMixin, APIView):
-    pass
-
-
-class EmployeeView(IsEmployeeMixin, WithProfileView):
-    pass
 
 
 class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
@@ -307,10 +282,10 @@ class EmployeeShiftInviteView(EmployeeView):
 
         appSerializer = shift_serializer.ShiftApplicationSerializer(
             data={
-            "shift": invite.shift.id,
-            "invite": invite.id,
-            "employee": invite.employee.id
-        }, many=False)
+                "shift": invite.shift.id,
+                "invite": invite.id,
+                "employee": invite.employee.id
+            }, many=False)
 
         if not appSerializer.is_valid():
             return Response(
@@ -323,8 +298,11 @@ class EmployeeShiftInviteView(EmployeeView):
 
 
 class ClockinsMeView(EmployeeView):
+    def get_queryset(self):
+        return Clockin.objects.filter(employee_id=self.employee.id)
+
     def get(self, request):
-        clockins = Clockin.objects.filter(employee_id=self.employee.id)
+        clockins = self.get_queryset()
 
         qShift = request.GET.get('shift')
         if qShift:
@@ -336,7 +314,10 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request_data = request.data.dict()
+        try:
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
         request_data['employee'] = self.employee.id
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
@@ -377,48 +358,67 @@ class ClockinsMeView(EmployeeView):
 class EmployeeAvailabilityBlockView(
         EmployeeView, CustomPagination):
 
+    def get_queryset(self):
+        return AvailabilityBlock.objects.filter(employee_id=self.employee.id)
+
     def get(self, request):
-        unavailability_blocks = AvailabilityBlock.objects.all().filter(
-            employee__id=self.employee.id)
+        unavailability_blocks = self.get_queryset()
 
         serializer = other_serializer.AvailabilityBlockSerializer(
             unavailability_blocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request.data['employee'] = self.employee.id
+        try:
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
+
+        request_data['employee'] = self.employee.id
         serializer = other_serializer.AvailabilityBlockSerializer(
-            data=request.data, context={"request": request})
+            data=request_data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, block_id=None):
+    def put(self, request, block_id):
         try:
-            block = AvailabilityBlock.objects.get(
-                id=block_id, employee=self.employee)
+            block = self.get_queryset().get(
+                id=block_id, employee_id=self.employee.id)
         except AvailabilityBlock.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = other_serializer.AvailabilityBlockSerializer(
-            block, data=request.data, context={"request": request}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, unavailability_id):
         try:
-            unavailability_block = EmployeeWeekUnvailability.objects.get(
-                id=unavailability_id)
-        except EmployeeWeekUnvailability.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
+        request_data['employee'] = self.employee.id
 
-        unavailability_block.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = other_serializer.AvailabilityBlockSerializer(
+            block, data=request_data, context={"request": request},
+            partial=True)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # model `EmployeeWeekUnvailability` no existe, lo comentaré
+    #
+    # def delete(self, request, unavailability_id):
+    #     try:
+    #         unavailability_block = EmployeeWeekUnvailability.objects.get(
+    #             id=unavailability_id)
+    #     except EmployeeWeekUnvailability.DoesNotExist:
+    #         return Response(validators.error_object(
+    #             'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+    #     unavailability_block.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmployeeDeviceMeView(WithProfileView):

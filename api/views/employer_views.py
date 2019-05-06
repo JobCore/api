@@ -49,8 +49,6 @@ class EmployerView(APIView):
             raise PermissionDenied("You don't seem to be an employer")
         self.employer = request.user.profile.employer
 
-# reviewed
-
 
 class EmployerMeView(EmployerView):
     def get(self, request):
