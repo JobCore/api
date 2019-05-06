@@ -85,7 +85,7 @@ class EmployeeView(IsEmployeeMixin, WithProfileView):
 
 
 class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
-    def get_queryset():
+    def get_queryset(self):
         return Rate.objects.filter(employee__id=self.employee.id)
 
     def get(self, request):
@@ -110,21 +110,30 @@ class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
 
 class EmployeeMeApplicationsView(
         EmployeeView, CustomPagination):
+
+    def get_queryset(self):
+        return ShiftApplication.objects.filter(
+            employee_id=self.employee.id).order_by('shift__starting_at')
+
+    def get_serializer_class(self, many=True):
+        if many:
+            return shift_serializer.ApplicantGetSmallSerializer
+        return shift_serializer.ApplicantGetSerializer
+
     def get(self, request, application_id=False):
-        if(application_id):
+        qs = self.get_queryset()
+        many = True
+        if application_id:
             try:
-                application = ShiftApplication.objects.get(id=application_id)
+                qs = qs.get(id=application_id)
+                many = False
             except ShiftApplication.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
-            serializer = shift_serializer.ApplicantGetSmallSerializer(
-                application, many=False)
-        else:
-            applications = ShiftApplication.objects.all().filter(
-                employee__id=self.employee.id).order_by('shift__starting_at')
-            serializer = shift_serializer.ApplicantGetSerializer(
-                applications, many=True)
 
+        serializer_cls = self.get_serializer_class(many=many)
+
+        serializer = serializer_cls(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
