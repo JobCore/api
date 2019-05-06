@@ -323,8 +323,11 @@ class EmployeeShiftInviteView(EmployeeView):
 
 
 class ClockinsMeView(EmployeeView):
+    def get_queryset(self):
+        return Clockin.objects.filter(employee_id=self.employee.id)
+
     def get(self, request):
-        clockins = Clockin.objects.filter(employee_id=self.employee.id)
+        clockins = self.get_queryset()
 
         qShift = request.GET.get('shift')
         if qShift:
@@ -336,7 +339,10 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request_data = request.data.dict()
+        try:
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
         request_data['employee'] = self.employee.id
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
@@ -377,48 +383,67 @@ class ClockinsMeView(EmployeeView):
 class EmployeeAvailabilityBlockView(
         EmployeeView, CustomPagination):
 
+    def get_queryset(self):
+        return AvailabilityBlock.objects.filter(employee_id=self.employee.id)
+
     def get(self, request):
-        unavailability_blocks = AvailabilityBlock.objects.all().filter(
-            employee__id=self.employee.id)
+        unavailability_blocks = self.get_queryset()
 
         serializer = other_serializer.AvailabilityBlockSerializer(
             unavailability_blocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request.data['employee'] = self.employee.id
+        try:
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
+
+        request_data['employee'] = self.employee.id
         serializer = other_serializer.AvailabilityBlockSerializer(
-            data=request.data, context={"request": request})
+            data=request_data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, block_id=None):
+    def put(self, request, block_id):
         try:
-            block = AvailabilityBlock.objects.get(
-                id=block_id, employee=self.employee)
+            block = self.get_queryset().get(
+                id=block_id, employee_id=self.employee.id)
         except AvailabilityBlock.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = other_serializer.AvailabilityBlockSerializer(
-            block, data=request.data, context={"request": request}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, unavailability_id):
         try:
-            unavailability_block = EmployeeWeekUnvailability.objects.get(
-                id=unavailability_id)
-        except EmployeeWeekUnvailability.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+            request_data = request.data.dict()
+        except AttributeError:
+            request_data = {}
+        request_data['employee'] = self.employee.id
 
-        unavailability_block.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = other_serializer.AvailabilityBlockSerializer(
+            block, data=request_data, context={"request": request},
+            partial=True)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # model `EmployeeWeekUnvailability` no existe, lo comentaré
+    #
+    # def delete(self, request, unavailability_id):
+    #     try:
+    #         unavailability_block = EmployeeWeekUnvailability.objects.get(
+    #             id=unavailability_id)
+    #     except EmployeeWeekUnvailability.DoesNotExist:
+    #         return Response(validators.error_object(
+    #             'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+    #     unavailability_block.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class EmployeeDeviceMeView(WithProfileView):
