@@ -146,3 +146,44 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvailabilityBlock
         exclude = ()
+
+    def force_recurrency(self, data):
+        if not data.get('recurrency_type'):
+            raise serializers.ValidationError('Missing recurrency type')
+
+    def validate(self, data):
+        start = data['starting_at']
+        end = data['ending_at']
+
+        if start > end:
+            raise serializers.ValidationError('Invalid availability range')
+
+        if (end-start).days > 0:
+            raise serializers.ValidationError('Invalid availability rarge')
+
+        if 'recurrent' in data and data['recurrent']:
+            self.force_recurrency(data)
+
+        # Resulta que datetime.isoweekday() retorna el dia de la semana
+        # siendo lunes = 1 y domingo = 7
+        #
+        # pero el lookup de django __week_day interpreta la semana como
+        # domingo = 1 y sabado = 7
+        # con un poquito de juego matematico, resolvemos el problema
+
+        django_week_day = (start.isoweekday() % 7) + 1
+
+        previous_ablock_in_week = AvailabilityBlock.objects.filter(
+            starting_at__week_day=django_week_day, recurrency_type='WEEKLY'
+            )
+
+        if self.instance:
+            previous_ablock_in_week = previous_ablock_in_week.exclude(
+                id=self.instance.id)
+
+        previous_ablock_in_week = previous_ablock_in_week.count()
+
+        if previous_ablock_in_week > 0:
+            raise serializers.ValidationError('There is a block covering this day of the week already')  # NOQA
+
+        return data

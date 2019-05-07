@@ -258,11 +258,11 @@ urlpatterns = [
     path(
         'employees/me/availability',
         employee_views.EmployeeAvailabilityBlockView.as_view(),
-        name="me-employees-unavailability"),
+        name="me-employees-availability"),
     path(
         'employees/me/availability/<int:block_id>',
         employee_views.EmployeeAvailabilityBlockView.as_view(),
-        name="me-employees-unavailability"),
+        name="me-employees-availability"),
 
     path(
         'employees/me/devices',
