@@ -33,4 +33,6 @@ class EmployerGetSerializer(serializers.ModelSerializer):
 class EmployerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employer
-        exclude = ()
+        exclude = (
+            'rating', 'total_ratings'
+            )

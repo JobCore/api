@@ -5,20 +5,29 @@
 # import operator
 # from django.utils.dateparse import parse_datetime
 # from django.http import HttpResponse
-from rest_framework import status
 # from rest_framework.views import APIView
-from rest_framework.response import Response
 # from rest_framework.exceptions import PermissionDenied
-from rest_framework.exceptions import ValidationError
 # from rest_framework.permissions import (
 #     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly)
-from api.pagination import CustomPagination
-from django.db.models import Q
-from django.db.transaction import atomic
 # from api.utils.email import send_fcm
 # from django.contrib.auth.tokens import PasswordResetTokenGenerator
 # from django.contrib.auth.models import User
 # from oauth2_provider.models import AccessToken
+# from api.utils.utils import get_aware_datetime
+# from rest_framework_jwt.settings import api_settings
+# import api.utils.jwt
+# from .utils import GeneralException
+# from api.utils.email import get_template_content
+# import cloudinary
+# import cloudinary.uploader
+# import cloudinary.api
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from api.pagination import CustomPagination
+from django.db.models import Q
+from django.db.transaction import atomic
 from api.models import *
 from api.models import SHIFT_INVITE_STATUS_CHOICES
 from api.utils.notifier import (
@@ -26,7 +35,6 @@ from api.utils.notifier import (
     notify_shift_candidate_update
 )
 from api.utils import validators
-# from api.utils.utils import get_aware_datetime
 from api.serializers import (
     clockin_serializer,  # user_serializer, profile_serializer,
     shift_serializer, employee_serializer, other_serializer,
@@ -35,52 +43,40 @@ from api.serializers import (
     # rating_serializer
 )
 
-from rest_framework_jwt.settings import api_settings
 from django.db.models import Count
 
-# import api.utils.jwt
 
 from django.utils import timezone
 import datetime
 
-# from .utils import GeneralException
-import logging
-# from api.utils.email import get_template_content
 
-# import cloudinary
-# import cloudinary.uploader
-# import cloudinary.api
+import logging
 
 from api.views.general_views import RateView
 from api.mixins import EmployeeView, WithProfileView
 
 logger = logging.getLogger(__name__)
-jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+# jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
+# jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
 class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
+    def build_lookup(self, request):
+        lookup = super().build_lookup(request)
+        if 'employee_id' in lookup:
+            lookup.pop('employee_id')
+        return lookup
+
     def get_queryset(self):
-        return Rate.objects.filter(employee__id=self.employee.id)
+        return Rate.objects.filter(employee_id=self.employee.id)
 
-    def get(self, request):
-        ratings = self.get_queryset()
-
-        qShift = request.GET.get('shift')
-        if qShift is not None:
-            ratings = ratings.filter(shift__id=qShift)
-
-        qEmployer = request.GET.get('employer')
-        if qEmployer is not None:
-            ratings = ratings.filter(shift__employer=qEmployer)
-
-        serializer = other_serializer.RatingGetSerializer(ratings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request)
 
 
 class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
     def get_queryset(self):
-        return Rate.objects.filter(sender__user__id=self.employee.id)
+        return Rate.objects.filter(sender__user_id=self.employee.id)
 
 
 class EmployeeMeApplicationsView(

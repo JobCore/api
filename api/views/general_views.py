@@ -542,6 +542,27 @@ class RateView(APIView):
     def get_queryset(self):
         return Rate.objects.all()
 
+    def build_lookup(self, request):
+        lookup = {}
+
+        # intentionally rewrite lookup to consider
+        # employee OR employer, but not both at the same time
+
+        qs_employer = request.GET.get('employer')
+        qs_employee = request.GET.get('employee')
+
+        if qs_employee:
+            lookup = {'employee_id': qs_employee}
+
+        if qs_employer:
+            lookup = {'employer_id': qs_employer}
+
+        qs_shift = request.GET.get('shift')
+
+        if qs_shift:
+            lookup['shift_id'] = qs_shift
+        return lookup
+
     def get(self, request, id=False):
         if (id):
             try:
@@ -553,24 +574,7 @@ class RateView(APIView):
             serializer = rating_serializer.RatingGetSerializer(
                 rate, many=False)
         else:
-            qs_employer = request.GET.get('employer')
-            qs_employee = request.GET.get('employee')
-            lookup = {}
-
-            # intentionally rewrite lookup to consider
-            # employee OR employer, but not both at the same time
-
-            if qs_employee:
-                lookup = {'employee_id': qs_employee}
-
-            if qs_employer:
-                lookup = {'employer_id': qs_employer}
-
-            qs_shift = request.GET.get('shift')
-
-            if qs_shift:
-                lookup['shift_id'] = qs_shift
-
+            lookup = self.build_lookup(request)
             rates = self.get_queryset().filter(**lookup)
 
             serializer = rating_serializer.RatingGetSerializer(

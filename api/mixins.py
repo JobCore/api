@@ -23,9 +23,23 @@ class IsEmployeeMixin:
         self.employee = self.request.user.profile.employee
 
 
+class IsEmployerMixin:
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+
+        if request.user.profile.employer_id is None:
+            raise PermissionDenied("You don't seem to be an employer")
+
+        self.employer = self.request.user.profile.employer
+
+
 class WithProfileView(HaveProfileMixin, APIView):
     pass
 
 
 class EmployeeView(IsEmployeeMixin, WithProfileView):
+    pass
+
+
+class EmployerView(IsEmployerMixin, WithProfileView):
     pass
