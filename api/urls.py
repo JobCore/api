@@ -233,7 +233,7 @@ urlpatterns = [
         'employees/me/shifts',
         employee_views.EmployeeMeShiftView.as_view(),
         name="me-employees-shift"),
-    #path('shifts/<int:id>',general_views.ShiftView.as_view(), name="id-shifts"),
+    path('employees/me/shifts/<int:id>',employee_views.EmployeeMeShiftView.as_view(), name="me-employees-get-shift"),
     # path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
 
     path(

@@ -109,42 +109,54 @@ class EmployeeMeApplicationsView(
 
 
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
-    def get(self, request):
-        NOW = datetime.datetime.now(tz=timezone.utc)
-
-        shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
-        shifts = shifts.filter(
-            employees__in=(self.employee.id,)).order_by('starting_at')
-
-        qStatus = request.GET.get('status')
-        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            return Response(
-                validators.error_object("Invalid status"),
-                status=status.HTTP_400_BAD_REQUEST)
-        elif qStatus:
-            shifts = shifts.filter(status__in=qStatus.split(","))
-
-        qStatus = request.GET.get('not_status')
-        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            return Response(
-                validators.error_object("Invalid Status"),
-                status=status.HTTP_400_BAD_REQUEST)
-        elif qStatus:
-            shifts = shifts.filter(~Q(status=qStatus))
-
-        qUpcoming = request.GET.get('upcoming')
-        if qUpcoming == 'true':
-            shifts = shifts.filter(starting_at__gte=NOW)
-
-        qExpired = request.GET.get('expired')
-        if qExpired == 'true':
-            shifts = shifts.filter(ending_at__lte=NOW)
-
-        qFailed = request.GET.get('failed')
-        if qFailed == 'true':
-            shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
-
-        serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+    def get(self, request, id=None):
+        many = True
+        if id != None:
+            many = False
+            shifts = Shift.objects.filter(id=id, employees__in=(self.employee.id,)).first()
+            if shifts is None:
+                return Response(
+                    validators.error_object('The shift was not found'),  # NOQA
+                    status=status.HTTP_404_NOT_FOUND)
+            
+        else:
+            many = True
+            NOW = datetime.datetime.now(tz=timezone.utc)
+    
+            shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
+            shifts = shifts.filter(
+                employees__in=(self.employee.id,)).order_by('starting_at')
+    
+            qStatus = request.GET.get('status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(
+                    validators.error_object("Invalid status"),
+                    status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(status__in=qStatus.split(","))
+    
+            qStatus = request.GET.get('not_status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(
+                    validators.error_object("Invalid Status"),
+                    status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(~Q(status=qStatus))
+    
+            qUpcoming = request.GET.get('upcoming')
+            if qUpcoming == 'true':
+                shifts = shifts.filter(starting_at__gte=NOW)
+    
+            qExpired = request.GET.get('expired')
+            if qExpired == 'true':
+                shifts = shifts.filter(ending_at__lte=NOW)
+    
+            qFailed = request.GET.get('failed')
+            if qFailed == 'true':
+                shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
+    
+        
+        serializer = shift_serializer.ShiftSerializer(shifts, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

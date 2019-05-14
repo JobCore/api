@@ -83,6 +83,10 @@ class ApplicantsView(EmployerView):
         return ShiftApplication.objects.filter(
             shift__employer_id=self.employer.id).select_related(
                 'employee', 'shift')
+                
+    def fetch_list(self, request):
+        lookup = {}
+        return self.get_queryset().filter(**lookup)
 
     def get(self, request, application_id=False):
         qs = self.get_queryset()
@@ -91,9 +95,11 @@ class ApplicantsView(EmployerView):
             try:
                 application = qs.get(id=application_id)
                 many = False
-            except ShiftApplication.DoesNotExist:
+            except ShiftApplication.DoesNotEåxist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        else:
+            application = self.fetch_list(request)
 
         serializer = shift_serializer.ApplicantGetSmallSerializer(
             application, many=many)
