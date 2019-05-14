@@ -1,24 +1,6 @@
-# import json
-# import os
-# import functools
-# import operator
-# from django.utils.dateparse import parse_datetime
-# from django.http import HttpResponse
-# from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly  # NOQA
-# from api.utils.email import send_fcm
-# from django.contrib.auth.tokens import PasswordResetTokenGenerator
-# from oauth2_provider.models import AccessToken
-# from api.utils.notifier import notify_password_reset_code
-# from api.utils.utils import get_aware_datetime
-# from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, payment_serializer  # NOQA
-# from api.serializers import favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer, clockin_serializer  # NOQA
-# from api.serializers import rating_serializer
-# from .utils import GeneralException
-# from rest_framework.views import APIView
-
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 from api.pagination import CustomPagination
 from django.db.models import Q
 
@@ -89,26 +71,26 @@ class ApplicantsView(EmployerView):
         many = True
         if application_id:
             try:
-                application = qs.get(id=application_id)
+                qs = qs.get(id=application_id)
                 many = False
             except ShiftApplication.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = shift_serializer.ApplicantGetSmallSerializer(
-            application, many=many)
+            qs, many=many)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, application_id):
         qs = self.get_queryset()
         try:
-            application = qs.get(id=application_id)
+            qs = qs.get(id=application_id)
         except ShiftApplication.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        application.delete()
+        qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -124,7 +106,7 @@ class EmployerShiftInviteView(EmployerView):
         lookup = {}
 
         if 'status' in self.request.GET:
-            status = request.GET.get('status')
+            status = request.GET.get('status').upper()
             available_statuses = dict(SHIFT_INVITE_STATUS_CHOICES)
 
             if status not in available_statuses:
@@ -166,39 +148,36 @@ class EmployerShiftInviteView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
+    def post(self, request, **kwargs):
         invites = []
 
-        # masive creation of shift invites
-        if isinstance(request.data['shifts'], list):
-            for s in request.data['shifts']:
-                serializer = shift_serializer.ShiftCreateInviteSerializer(
-                    data={
-                        "employee": request.data['employee'],
-                        "sender": request.user.profile.id,
-                        "shift": s},
-                    context={
-                        "request": request})
-                if serializer.is_valid():
-                    serializer.save()
-                    invites.append(serializer.data)
-                else:
-                    return Response(serializer.errors,
-                                    status=status.HTTP_400_BAD_REQUEST)
-        else:
-            # add new invite to the shift
-            serializer = shift_serializer.ShiftCreateInviteSerializer(data={
-                "employee": request.data['employee'],
-                "sender": request.user.profile.id,
-                "shift": request.data['shifts']
-            }, context={"request": request})
-            if serializer.is_valid():
-                serializer.save()
-                invites.append(serializer.data)
-            else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
+        shifts = request.data['shifts']
+        employee = request.data['employee']
 
+        if not isinstance(shifts, list):
+            shifts = [shifts]
+
+        for shift in shifts:
+            data = {
+                "employee": employee,
+                "sender": request.user.profile.id,
+                "shift": shift,
+            }
+
+            serializer = shift_serializer.ShiftCreateInviteSerializer(
+                data=data,
+                context={
+                    "request": request
+                })
+
+            if not serializer.is_valid():
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            serializer.save()
+            invites.append(serializer.data)
         return Response(invites, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
@@ -207,80 +186,65 @@ class EmployerShiftInviteView(EmployerView):
             invite = self.fetch_one(request, id).get()
         except ShiftInvite.DoesNotExist:
             return Response(
-                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
                 status=status.HTTP_404_NOT_FOUND)
 
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EmployerPayrollPeriodView(EmployerView):
-    def get(self, request, period_id=None):
-
-        if period_id:
-            try:
-                period = PayrollPeriod.objects.get(id=period_id)
-            except PayrollPeriod.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = payment_serializer.PayrollPeriodGetSerializer(period)
-        else:
-
-            qStatus = request.GET.get('status')
-            periods = PayrollPeriod.objects.filter(
-                employer__id=self.employer.id,
-                status=qStatus if qStatus else 'OPEN')
-
-            serializer = payment_serializer.PayrollPeriodGetSerializer(
-                periods, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class EmployerVenueView(EmployerView):
+    def get_queryset(self):
+        return Venue.objects.filter(employer_id=self.employer.id)
+
     def get(self, request, id=False):
-        if (id):
+        qs = self.get_queryset()
+        many = True
+        if id:
             try:
-                venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+                qs = qs.get(id=id)
+                many = False
             except Venue.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-            serializer = venue_serializer.VenueSerializer(venue, many=False)
-        else:
-            venues = Venue.objects.filter(employer__id=self.employer.id)
-            serializer = venue_serializer.VenueSerializer(venues, many=True)
-
+        serializer = venue_serializer.VenueSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        request_data = dict(request.data)
 
-        request.data['employer'] = self.employer.id
-        serializer = venue_serializer.VenueSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        request_data['employer'] = self.employer.id
+        serializer = venue_serializer.VenueSerializer(data=request_data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def put(self, request, id):
 
         try:
-            venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+            venue = self.get_queryset().get(id=id)
         except Venue.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = venue_serializer.VenueSerializer(venue, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, id):
 
         try:
-            venue = Venue.objects.get(id=id, employer__id=self.employer.id)
+            venue = self.get_queryset().get(id=id)
         except Venue.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)

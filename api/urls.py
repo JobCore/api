@@ -24,7 +24,8 @@ from api.views.employee_views import (
 
 from api.views.employer_views import (
     EmployerMeView, EmployerMeUsersView, ApplicantsView,
-    EmployerPayrollPeriodView, EmployerShiftInviteView, EmployerVenueView,
+    # EmployerPayrollPeriodView,
+    EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView,
 )
@@ -154,16 +155,16 @@ urlpatterns = [
         ApplicantsView.as_view(),
         name="me-employer-get-applicants"),
     path('employers/me/applications/<int:application_id>',
-         ApplicantsView.as_view(), name="get-applicants"),
+         ApplicantsView.as_view(), name="me-employer-get-applicants"),
 
-    path(
-        'employers/me/periods',
-        EmployerPayrollPeriodView.as_view(),
-        name="me-employer-periods"),
-    path(
-        'employers/me/periods/<int:period_id>',
-        EmployerPayrollPeriodView.as_view(),
-        name="me-employer-single-periods"),
+    # path(
+    #     'employers/me/periods',
+    #     EmployerPayrollPeriodView.as_view(),
+    #     name="me-employer-periods"),
+    # path(
+    #     'employers/me/periods/<int:period_id>',
+    #     EmployerPayrollPeriodView.as_view(),
+    #     name="me-employer-single-periods"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -182,11 +183,11 @@ urlpatterns = [
     #      name="me-employees"),
 
     path(
-        'employers/me/shifts/invites',
+        'employers/me/invites',
         EmployerShiftInviteView.as_view(),
         name="me-employer-get-jobinvites"),
     path(
-        'employers/me/invites',
+        'employers/me/shifts/invites',
         EmployerShiftInviteView.as_view(),
         name="me-employer-get-jobinvites"),
     path(

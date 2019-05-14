@@ -32,6 +32,7 @@ from api.models import *
 from api.utils.notifier import notify_password_reset_code
 from api.utils import validators
 from api.utils.utils import get_aware_datetime
+
 from api.serializers import (
     user_serializer, profile_serializer, shift_serializer,
     employee_serializer, other_serializer, payment_serializer
@@ -91,8 +92,9 @@ class PasswordView(APIView):
         try:
             user = User.objects.get(id=data['user_id'])
         except User.DoesNotExist:
-            return Response(
-                {'error': 'Email not found on the database'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'error': 'Email not found on the database'
+            }, status=status.HTTP_404_NOT_FOUND)
 
         payload = api.utils.jwt.jwt_payload_handler({
             "user_id": user.id
@@ -188,8 +190,9 @@ class UserView(APIView):
                 # Check old password
                 if not user.check_password(
                         serializer.data.get("old_password")):
-                    return Response(
-                        {"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        "old_password": ["Wrong password."]
+                        }, status=status.HTTP_400_BAD_REQUEST)
                 # Hash and save the password
                 user.set_password(serializer.data.get("new_password"))
             user.save()
@@ -239,7 +242,6 @@ class EmployeeView(APIView, CustomPagination):
                 if qFirst:
                     employees = employees.filter(
                         profile__user__first_name__contains=qFirst)
-                    entities = []
 
                 qLast = request.GET.get('last_name')
                 if qLast:
@@ -564,22 +566,20 @@ class RateView(APIView):
         return lookup
 
     def get(self, request, id=False):
+        many = True
+        qs = self.get_queryset()
         if (id):
             try:
-                rate = self.get_queryset().objects.get(id=id)
+                qs = qs.get(id=id)
+                many = False
             except Rate.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = rating_serializer.RatingGetSerializer(
-                rate, many=False)
         else:
             lookup = self.build_lookup(request)
-            rates = self.get_queryset().filter(**lookup)
+            qs = qs.filter(**lookup)
 
-            serializer = rating_serializer.RatingGetSerializer(
-                rates, many=True)
-
+        serializer = rating_serializer.RatingGetSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -733,7 +733,7 @@ class PayrollShiftsView(APIView, CustomPagination):
                 payrolDic[str(clockin.employee.id)]["clockins"].append(
                     clockinSerialized.data)
             else:
-                employeeSerialized = employee_serializer.EmployeeGetSmallSerializer(
+                employeeSerialized = employee_serializer.EmployeeGetSmallSerializer(  # NOQA
                     clockin.employee)
                 payrolDic[str(clockin.employee.id)] = {
                     "clockins": [clockinSerialized.data],
@@ -748,13 +748,13 @@ class PayrollShiftsView(APIView, CustomPagination):
 
     def put(self, request, id):
 
-        if (request.user.profile.employer is None):
+        if request.user.profile.employer is None:
             return Response(
                 validators.error_object("You don't seem to be an employer"),
                 status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            emp = Employee.objects.get(id=id)
+            Employee.objects.get(id=id)
         except Employee.DoesNotExist:
             return Response({"detail": "The employee was not found"},
                             status=status.HTTP_404_NOT_FOUND)
@@ -930,10 +930,9 @@ class ShiftView(APIView, CustomPagination):
         try:
             shift = Shift.objects.get(id=id)
         except Shift.DoesNotExist:
-            return Response(
-                {
-                    "detail": "This shift was not found, talk to the employer for any more details about what happened."},
-                status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "detail": "This shift was not found, talk to the employer for any more details about what happened."  # NOQA
+                }, status=status.HTTP_404_NOT_FOUND)
         serializer = shift_serializer.ShiftSerializer(
             shift, data=request.data, context={"request": request})
         if serializer.is_valid():

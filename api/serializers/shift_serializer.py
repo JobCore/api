@@ -5,7 +5,7 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, SHIFT_INVITE_STATUS_CHOICES
 
 
 #
@@ -287,6 +287,16 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         model = ShiftInvite
         exclude = ()
 
+    def validate_status(self, value):
+        value = value.upper()
+        available_statuses = dict(SHIFT_INVITE_STATUS_CHOICES)
+        if value not in available_statuses:
+            valid_choices = ', '.join(available_statuses.keys())
+            raise serializers.ValidationError(
+                'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
+            )
+        return value
+
     def validate(self, data):
 
         data = super(ShiftCreateInviteSerializer, self).validate(data)
@@ -297,39 +307,29 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Only talents can invite talents')
 
-        employees = ShiftEmployee.objects.filter(
-            shift__id=data['shift'].id,
-            employee__id=data['employee'].id)
-        if(len(employees) > 0):
+        already_working = ShiftEmployee.objects.filter(
+            shift_id=data['shift'].id,
+            employee_id=data['employee'].id).count()
+
+        if already_working > 0:
             raise serializers.ValidationError(
                 'This talent is already working on this shift')
+
+        already_invited = ShiftInvite.objects.filter(
+                sender=data['sender'],
+                shift=data['shift'],
+                employee=data['employee']).count()
+
+        if already_invited > 0:
+            raise serializers.ValidationError(
+                'This talent is already invited to this shift')
 
         return data
 
     def create(self, validated_data):
-
-        try:
-            # if there is already an invite, i just update it
-            invite = ShiftInvite.objects.get(
-                sender=validated_data['sender'],
-                shift=validated_data['shift'],
-                employee=validated_data['employee'])
-            invite.status = 'PENDING'
-            invite.save()
-            print('Invite updated')
-        except ShiftInvite.DoesNotExist:
-            # or i create a new one
-            invite = ShiftInvite(
-                sender=validated_data['sender'],
-                shift=validated_data['shift'],
-                employee=validated_data['employee'])
-            invite.save()
-            print('Invite created')
-
-        # TODO: send email message not working
-        notifier.notify_single_shift_invite(invite)
-
-        return invite
+        instance = super().create(validated_data)
+        notifier.notify_single_shift_invite(instance)
+        return instance
 
 
 class ShiftInviteGetSerializer(serializers.ModelSerializer):
