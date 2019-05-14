@@ -7,7 +7,7 @@ from datetime import timedelta
 
 
 @override_settings(STATICFILES_STORAGE=None)
-class ShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
+class EmployerShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for login
     """
