@@ -58,7 +58,7 @@ class EmployeeGetSerializer(serializers.ModelSerializer):
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
-        fields = ('title', 'id', 'latitude', 'longitude')
+        fields = ('title', 'id', 'latitude', 'longitude', 'street_address', 'zip_code')
 
 
 #
