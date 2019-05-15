@@ -254,24 +254,23 @@ class EmployerVenueView(EmployerView):
 
 
 class FavListView(EmployerView):
+    def get_queryset(self):
+        return FavoriteList.objects.filter(employer_id=self.employer.id)
+
     def get(self, request, id=False):
+        qs = self.get_queryset()
+        many = True
 
         if (id):
             try:
-                favList = FavoriteList.objects.get(
-                    id=id, employer__id=self.employer.id)
+                qs = qs.get(id=id)
+                many = False
             except FavoriteList.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-            serializer = favlist_serializer.FavoriteListGetSerializer(
-                favList, many=False)
-        else:
-
-            favLists = FavoriteList.objects.all()
-            favLists = favLists.filter(employer__id=self.employer.id)
-            serializer = favlist_serializer.FavoriteListGetSerializer(
-                favLists, many=True)
+        serializer = favlist_serializer.FavoriteListGetSerializer(
+            qs, many=many)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -280,36 +279,38 @@ class FavListView(EmployerView):
         request.data['employer'] = self.employer.id
         serializer = favlist_serializer.FavoriteListSerializer(
             data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def put(self, request, id):
 
         try:
-            favList = FavoriteList.objects.get(
-                id=id, employer__id=self.employer.id)
+            favList = self.get_queryset().get(id=id)
         except FavoriteList.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = favlist_serializer.FavoriteListSerializer(
             favList, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            serializedFavlist = favlist_serializer.FavoriteListGetSerializer(
-                favList)
-            return Response(serializedFavlist.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+
+        serializedFavlist = favlist_serializer.FavoriteListGetSerializer(
+            favList)
+        return Response(serializedFavlist.data, status=status.HTTP_200_OK)
 
     def delete(self, request, id):
 
         try:
-            favList = favlist_serializer.FavoriteList.objects.get(
-                id=id, employer__id=self.employer.id)
+            favList = self.get_queryset().get(id=id)
         except FavoriteList.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)

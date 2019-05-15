@@ -20,6 +20,8 @@ class FavoriteListGetSerializer(serializers.ModelSerializer):
 
 
 class FavoriteListSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=100, required=True)
+
     class Meta:
         model = FavoriteList
         exclude = ()
