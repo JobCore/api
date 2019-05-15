@@ -316,6 +316,10 @@ class ClockinsMeView(EmployeeView):
         if qShift:
             clockins = clockins.filter(shift__id=qShift)
 
+        qOpen = request.GET.get('open')
+        if qOpen:
+            clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
+
         serializer = clockin_serializer.ClockinGetSerializer(
             clockins, many=True)
 
