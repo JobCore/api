@@ -110,7 +110,7 @@ class EmployeeMeApplicationsView(
 
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request, id=None):
-        many = True
+
         if id != None:
             many = False
             shifts = Shift.objects.filter(id=id, employees__in=(self.employee.id,)).first()
@@ -119,8 +119,10 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
                     validators.error_object('The shift was not found'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
             
+            serializer = shift_serializer.ShiftDetailSerializer(shifts, many=False)
+            
         else:
-            many = True
+
             NOW = datetime.datetime.now(tz=timezone.utc)
     
             shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
@@ -154,9 +156,9 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             qFailed = request.GET.get('failed')
             if qFailed == 'true':
                 shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
-    
         
-        serializer = shift_serializer.ShiftSerializer(shifts, many=many)
+            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
