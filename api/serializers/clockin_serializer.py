@@ -100,6 +100,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
 
+        shift = data['shift']
         employee = data['employee']
         
         print(data)
