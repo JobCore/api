@@ -55,7 +55,7 @@ import logging
 from api.views.general_views import RateView
 from api.mixins import EmployeeView, WithProfileView
 
-logger = logging.getLogger(__name__)
+logger = logging
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
