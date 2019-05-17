@@ -261,38 +261,6 @@ class EmployeeView(APIView, CustomPagination):
             return Response(serializer.data, status=status.HTTP_200_OK)
     # there shoud be no POST because it is created on signup (registration)
 
-
-class EmployeeGetBadgesView(APIView, CustomPagination):
-    def get(self, request, employee_id):
-        try:
-            employee = Employee.objects.get(id=employee_id)
-        except Employee.DoesNotExist:
-            return Response(
-                validators.error_object('Not found.'),
-                status=status.HTTP_404_NOT_FOUND)
-
-        serializer = other_serializer.BadgeSerializer(
-            employee.badges, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class EmployeeApplicationsView(APIView, CustomPagination):
-    def get(self, request, id=False):
-        if (id):
-            try:
-                employee = Employee.objects.get(id=id)
-            except Employee.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            applications = ShiftApplication.objects.all().filter(
-                employer__id=employee.id).order_by('shift__starting_at')
-
-            serializer = shift_serializer.ShiftApplicationSerializer(
-                applications, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class EmployerView(APIView):
     def get(self, request, id=False):
         if (id):
@@ -310,48 +278,6 @@ class EmployerView(APIView):
                 employers, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ProfileView(APIView):
-    def get(self, request, id=False):
-        if (id):
-            try:
-                profile = Profile.objects.get(id=id)
-            except Profile.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = profile_serializer.ProfileGetSerializer(
-                profile, many=False)
-        else:
-            employers = Profile.objects.all().exclude(
-                employer__isnull=True, employee__isnull=True
-            )
-            serializer = profile_serializer.ProfileGetSerializer(
-                employers, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # No POST request needed
-    # as Profiles are created automatically along with User register
-
-    def put(self, request, id):
-        try:
-            profile = Profile.objects.get(id=id)
-        except Profile.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        serializer = profile_serializer.ProfileSerializer(
-            profile, data=request.data, partial=True)
-        userSerializer = user_serializer.UserUpdateSerializer(
-            profile.user, data=request.data, partial=True)
-        if serializer.is_valid() and userSerializer.is_valid():
-            serializer.save()
-            userSerializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfileMeView(APIView):
@@ -656,54 +582,6 @@ class CatalogView(APIView):
 
         return Response("no catalog", status=status.HTTP_200_OK)
 
-
-class ClockinsView(APIView):
-    def get(self, request, id=False):
-        if (id):
-            try:
-                rate = Clockin.objects.get(id=user_id)
-            except Clockin.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = clockin_serializer.ClockinSerializer(rate, many=False)
-        else:
-            clockins = Clockin.objects.all()
-
-            qEmployee = request.GET.get('employee')
-            qShift = request.GET.get('shift')
-            if qEmployee:
-                clockins = clockins.filter(employee__id=qEmployee)
-            elif qShift:
-                clockins = clockins.filter(shift__id=qShift)
-
-            serializer = clockin_serializer.ClockinSerializer(
-                clockins, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-
-        serializer = clockins_serializer.ClockinSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, clockin_id):
-        try:
-            clockin = Clockin.objects.get(id=clockin_id)
-        except Clockin.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        clockin.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class PayrollShiftsView(APIView, CustomPagination):
     def get(self, request):
 
@@ -876,66 +754,3 @@ class JobCoreInviteView(APIView):
 
         invite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class ShiftView(APIView, CustomPagination):
-    def get(self, request, id=False):
-        if (id):
-            try:
-                shift = Shift.objects.get(id=id)
-            except Shift.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-            serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            shifts = Shift.objects.filter(
-                employer__id=self.employer.id).order_by('starting_at')
-
-            qStatus = request.GET.get('status')
-            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-                return Response(validators.error_object(
-                    "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
-            elif qStatus:
-                shifts = shifts.filter(status__in=qStatus.split(","))
-
-            qStatus = request.GET.get('not_status')
-            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-                return Response(validators.error_object(
-                    "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
-            elif qStatus:
-                shifts = shifts.filter(~Q(status=qStatus))
-
-            qUpcoming = request.GET.get('upcoming')
-            if qUpcoming == 'true':
-                shifts = shifts.filter(starting_at__gte=TODAY)
-
-            qUnrated = request.GET.get('unrated')
-            if qUnrated == 'true':
-                shifts = shifts.filter(rate_set=None)
-
-            if request.user.profile.employer is None:
-                shifts = shifts.filter(
-                    employees__in=(
-                        request.user.profile.id,))
-            else:
-                shifts = shifts.filter(
-                    employer=request.user.profile.employer.id)
-
-            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, id):
-        try:
-            shift = Shift.objects.get(id=id)
-        except Shift.DoesNotExist:
-            return Response({
-                "detail": "This shift was not found, talk to the employer for any more details about what happened."  # NOQA
-                }, status=status.HTTP_404_NOT_FOUND)
-        serializer = shift_serializer.ShiftSerializer(
-            shift, data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

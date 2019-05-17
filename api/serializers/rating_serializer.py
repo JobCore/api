@@ -1,17 +1,12 @@
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Position, Rate, Shift, Clockin, Venue
+from api.models import Rate, Shift, Clockin, Venue
 from django.db.models import Avg, Count
+from api.serializers.position_serializers import PositionSmallSerializer
 
 #
 # NESTED
 #
-
-
-class PositionSmallSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Position
-        fields = ('title', 'id')
 
 
 class VenueGetSmallSerializer(serializers.ModelSerializer):

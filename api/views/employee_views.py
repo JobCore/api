@@ -282,10 +282,7 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        try:
-            request_data = request.data.dict()
-        except AttributeError:
-            request_data = {}
+        request_data = request.data.copy()
         request_data['employee'] = self.employee.id
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
@@ -337,10 +334,7 @@ class EmployeeAvailabilityBlockView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        try:
-            request_data = request.data.dict()
-        except AttributeError:
-            request_data = {}
+        request_data = request.data.copy()
 
         request_data['employee'] = self.employee.id
         serializer = other_serializer.AvailabilityBlockSerializer(
@@ -358,10 +352,7 @@ class EmployeeAvailabilityBlockView(
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            request_data = request.data.dict()
-        except AttributeError:
-            request_data = {}
+        request_data = request.data.copy()
         request_data['employee'] = self.employee.id
 
         serializer = other_serializer.AvailabilityBlockSerializer(

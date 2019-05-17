@@ -1,7 +1,7 @@
-from api.serializers import other_serializer, favlist_serializer
+from api.serializers import favlist_serializer
 from rest_framework import serializers
 from api.models import Employee, Profile, User, FavoriteList
-
+from api.serializers.position_serializers import PositionSerializer
 #
 # NESTED
 #
@@ -41,7 +41,7 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
 
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
-    positions = other_serializer.PositionSerializer(many=True)
+    positions = PositionSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     user = UserGetSmallSerializer(many=False)
 
