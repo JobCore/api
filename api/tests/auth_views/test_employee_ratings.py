@@ -3,6 +3,9 @@ from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
+from django.apps import apps
+
+Rate = apps.get_model('api', 'Rate')
 
 
 class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
@@ -79,7 +82,6 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         url = reverse_lazy('api:me-employees-ratings')
 
         self.client.force_login(self.test_user_employee)
-
         response = self.client.get(url, content_type="application/json")
 
         self.assertEquals(
@@ -89,13 +91,15 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response_json = response.json()
 
-        self.assertEquals(len(response_json), 1)
+        count = Rate.objects.filter(
+            sender__user=self.test_user_employee).count()
+
+        self.assertEquals(len(response_json), count)
 
     def test_get_rating_tryforce_different_employer(self):
         """
         Gets ratings
         """
-
         url = reverse_lazy('api:me-employees-ratings')
 
         self.client.force_login(self.test_user_employee)
@@ -116,7 +120,10 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         response_json = response.json()
 
-        self.assertEquals(len(response_json), 1)
+        count = Rate.objects.filter(
+            sender__user=self.test_user_employee).count()
+
+        self.assertEquals(len(response_json), count)
 
     def test_post_rating_employee(self):
         """

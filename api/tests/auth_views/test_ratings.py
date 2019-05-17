@@ -57,7 +57,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             status='APPROVED'
         )
 
-    def test_get_ratings(self):
+    def test_all_get_ratings(self):
         """
         Gets ratings
         """
