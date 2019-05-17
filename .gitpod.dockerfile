@@ -2,5 +2,5 @@ FROM gitpod/workspace-postgres
 
 USER root
 
-RUN apt-get remove --purge postgresql-10 \
-  && sudo apt-get install postgresql-10
+RUN apt-get -y remove --purge postgresql-10 \
+  && apt-get -y install postgresql-10
