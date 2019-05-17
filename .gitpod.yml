@@ -1,3 +1,4 @@
-image: gitpod/workspace-postgres
+image:
+  file: .gitpod.dockerfile
 ports:
     - port: 8080

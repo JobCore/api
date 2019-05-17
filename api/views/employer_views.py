@@ -65,7 +65,7 @@ class ApplicantsView(EmployerView):
         return ShiftApplication.objects.filter(
             shift__employer_id=self.employer.id).select_related(
                 'employee', 'shift')
-                
+
     def fetch_list(self, request):
         lookup = {}
         return self.get_queryset().filter(**lookup)
@@ -463,3 +463,21 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClockinsMeView(EmployerView):
+    def get_queryset(self):
+        return Clockin.objects.all()
+
+    def get(self, request, id):
+        clockins = self.get_queryset()
+        clockins = clockins.filter(shift__id = id)
+
+        qEmployee = request.GET.get('employee')
+        if qEmployee:
+            clockins = clockins.filter(employee__id=qEmployee)
+
+        serializer = clockin_serializer.ClockinGetSerializer(
+            clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
