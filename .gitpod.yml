@@ -2,3 +2,5 @@ image:
   file: .gitpod.dockerfile
 ports:
     - port: 8080
+tasks:
+    - init: npm i -g heroku
