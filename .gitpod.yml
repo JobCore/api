@@ -6,7 +6,10 @@ tasks:
     - name: Instalation
       init: >
         npm i -g heroku;
-        cp jobcore/.env.example ../.env;
+        cp jobcore/.env.example jobcore/.env;
+        virtualenv venv;
+        source venv/bin/activate;
+        pip3 install -r requirements.txt;
     - name: Terminal
       command: >
         virtualenv venv &&
