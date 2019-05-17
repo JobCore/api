@@ -1,1 +1,1 @@
-FROM heroku/heroku:18
+FROM gitpod/workspace-postgres
