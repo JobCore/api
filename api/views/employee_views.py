@@ -55,7 +55,7 @@ import logging
 from api.views.general_views import RateView
 from api.mixins import EmployeeView, WithProfileView
 
-logger = logging
+logger = logging.getLogger(__name__)
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -329,6 +329,9 @@ class ClockinsMeView(EmployeeView):
 
     def post(self, request):
         logger.debug(f'ClockinsMeView:post: {request.data}')
+        logger.warning(f'ClockinsMeView:post: {request.data}')
+        logger.error(f'ClockinsMeView:post: {request.data}')
+        logger.info(f'ClockinsMeView:post: {request.data}')
         try:
             request_data = request.data.copy()
         except AttributeError as e:

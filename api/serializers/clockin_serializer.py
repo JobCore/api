@@ -104,6 +104,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         profile = data['author']
         employee_id = data['employee']
         
+        print(data)
         # TODO: hacer un endpoint para supervisor, para que pueda hacerle clockin a un empleado
 
         if not shift.employees.filter(id=employee_id).exists():
