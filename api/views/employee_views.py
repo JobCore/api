@@ -119,7 +119,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
                     validators.error_object('The shift was not found'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
             
-            serializer = shift_serializer.ShiftDetailSerializer(shifts, many=False)
+            serializer = shift_serializer.ShiftGetBigSerializer(shifts, many=False)
             
         else:
 
@@ -333,6 +333,8 @@ class ClockinsMeView(EmployeeView):
         except AttributeError:
             request_data = {}
         request_data['employee'] = self.employee.id
+        
+        print(request_data)
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
             return Response(

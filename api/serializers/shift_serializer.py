@@ -265,8 +265,8 @@ class ShiftGetSerializer(serializers.ModelSerializer):
         exclude = ()
         
         
-class ShiftDetailSerializer(ShiftGetSerializer):
-    clockin_set = ClockinGetSmallSerializer(read_only=True)
+class ShiftGetBigSerializer(ShiftGetSerializer):
+    clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
 
 
 
