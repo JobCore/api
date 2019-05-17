@@ -100,14 +100,12 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
 
-        shift = data['shift']
-        profile = data['author']
-        employee_id = data['employee']
+        employee = data['employee']
         
         print(data)
         # TODO: hacer un endpoint para supervisor, para que pueda hacerle clockin a un empleado
 
-        if not shift.employees.filter(id=employee_id).exists():
+        if not shift.employees.filter(id=employee.id).exists():
             raise serializers.ValidationError(
                 "You cannot clock in/out to a shift that you haven't applied.")
 
