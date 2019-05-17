@@ -2,6 +2,7 @@ image:
   file: .gitpod.dockerfile
 ports:
     - port: 8080
+    - port: 5432
 tasks:
     - name: Instalation
       init: >
