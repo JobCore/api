@@ -81,42 +81,56 @@ class EmployeeMeApplicationsView(
 
 
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
-    def get(self, request):
-        NOW = datetime.datetime.now(tz=timezone.utc)
+    def get(self, request, id=None):
 
-        shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
-        shifts = shifts.filter(
-            employees__in=(self.employee.id,)).order_by('starting_at')
+        if id != None:
+            many = False
+            shifts = Shift.objects.filter(id=id, employees__in=(self.employee.id,)).first()
+            if shifts is None:
+                return Response(
+                    validators.error_object('The shift was not found'),  # NOQA
+                    status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = shift_serializer.ShiftGetBigSerializer(shifts, many=False)
+            
+        else:
 
-        qStatus = request.GET.get('status')
-        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            return Response(
-                validators.error_object("Invalid status"),
-                status=status.HTTP_400_BAD_REQUEST)
-        elif qStatus:
-            shifts = shifts.filter(status__in=qStatus.split(","))
-
-        qStatus = request.GET.get('not_status')
-        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
-            return Response(
-                validators.error_object("Invalid Status"),
-                status=status.HTTP_400_BAD_REQUEST)
-        elif qStatus:
-            shifts = shifts.filter(~Q(status=qStatus))
-
-        qUpcoming = request.GET.get('upcoming')
-        if qUpcoming == 'true':
-            shifts = shifts.filter(starting_at__gte=NOW)
-
-        qExpired = request.GET.get('expired')
-        if qExpired == 'true':
-            shifts = shifts.filter(ending_at__lte=NOW)
-
-        qFailed = request.GET.get('failed')
-        if qFailed == 'true':
-            shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
-
-        serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            NOW = datetime.datetime.now(tz=timezone.utc)
+    
+            shifts = Shift.objects.all().annotate(clockins=Count('clockin'))
+            shifts = shifts.filter(
+                employees__in=(self.employee.id,)).order_by('starting_at')
+    
+            qStatus = request.GET.get('status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(
+                    validators.error_object("Invalid status"),
+                    status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(status__in=qStatus.split(","))
+    
+            qStatus = request.GET.get('not_status')
+            if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+                return Response(
+                    validators.error_object("Invalid Status"),
+                    status=status.HTTP_400_BAD_REQUEST)
+            elif qStatus:
+                shifts = shifts.filter(~Q(status=qStatus))
+    
+            qUpcoming = request.GET.get('approved')
+            if qUpcoming == 'true':
+                shifts = shifts.filter(ending_at__gte=NOW)
+    
+            qExpired = request.GET.get('completed')
+            if qExpired == 'true':
+                shifts = shifts.filter(ending_at__lte=NOW)
+    
+            qFailed = request.GET.get('failed')
+            if qFailed == 'true':
+                shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
+        
+            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -276,14 +290,31 @@ class ClockinsMeView(EmployeeView):
         if qShift:
             clockins = clockins.filter(shift__id=qShift)
 
+        qOpen = request.GET.get('open')
+        if qOpen:
+            clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
+
         serializer = clockin_serializer.ClockinGetSerializer(
             clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request_data = request.data.copy()
+        logger.debug(f'ClockinsMeView:post: {request.data}')
+        logger.warning(f'ClockinsMeView:post: {request.data}')
+        logger.error(f'ClockinsMeView:post: {request.data}')
+        logger.info(f'ClockinsMeView:post: {request.data}')
+
+        try:
+            request_data = request.data.copy()
+        except AttributeError as e:
+            logger.error(f'ClockinsMeView:post: {e}')
+            request_data = {}
+
         request_data['employee'] = self.employee.id
+        request_data['author'] = self.employee.id
+        
+        logger.debug(f'ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
             return Response(

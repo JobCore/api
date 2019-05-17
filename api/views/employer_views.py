@@ -66,6 +66,10 @@ class ApplicantsView(EmployerView):
             shift__employer_id=self.employer.id).select_related(
                 'employee', 'shift')
 
+    def fetch_list(self, request):
+        lookup = {}
+        return self.get_queryset().filter(**lookup)
+
     def get(self, request, application_id=False):
         qs = self.get_queryset()
         many = True
@@ -73,9 +77,11 @@ class ApplicantsView(EmployerView):
             try:
                 qs = qs.get(id=application_id)
                 many = False
-            except ShiftApplication.DoesNotExist:
+            except ShiftApplication.DoesNotEåxist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        else:
+            application = self.fetch_list(request)
 
         serializer = shift_serializer.ApplicantGetSmallSerializer(
             qs, many=many)
@@ -457,3 +463,21 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClockinsMeView(EmployerView):
+    def get_queryset(self):
+        return Clockin.objects.all()
+
+    def get(self, request, id):
+        clockins = self.get_queryset()
+        clockins = clockins.filter(shift__id = id)
+
+        qEmployee = request.GET.get('employee')
+        if qEmployee:
+            clockins = clockins.filter(employee__id=qEmployee)
+
+        serializer = clockin_serializer.ClockinGetSerializer(
+            clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

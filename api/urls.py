@@ -249,6 +249,10 @@ urlpatterns = [
         'employers/me/ratings/<int:id>',
         RateView.as_view(),
         name="me-employer-single-ratings"),
+    path(
+        'employers/me/clockins/<int:id>',
+        RateView.as_view(),
+        name="me-employer-single-ratings"),
 
     #
     # FOR THE TALENT
@@ -275,12 +279,11 @@ urlpatterns = [
         'employees/me/shifts',
         EmployeeMeShiftView.as_view(),
         name="me-employees-shift"),
-    # path('shifts/<int:id>',ShiftView.as_view(), name="id-shifts"),
-    # path(
-    #      'employees/<int:id>/shifts',
-    #      ShiftView.as_view(),
-    #      name="employees-shifts"
-    # ),
+    path(
+        'employees/me/shifts/<int:id>',
+        EmployeeMeShiftView.as_view(),
+        name="me-employees-get-shift"),
+    # path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
 
     path(
         'employees/me/ratings/sent',

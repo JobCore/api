@@ -5,7 +5,7 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, SHIFT_INVITE_STATUS_CHOICES
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES
 
 
 #
@@ -15,6 +15,12 @@ class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('picture',)
+        
+class ClockinGetSmallSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Clockin
+        exclude = ()
 
 
 class UserGetSerializer(serializers.ModelSerializer):
@@ -257,6 +263,11 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = ()
+        
+        
+class ShiftGetBigSerializer(ShiftGetSerializer):
+    clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
+
 
 
 class ShiftInviteSerializer(serializers.ModelSerializer):
