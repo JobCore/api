@@ -3,8 +3,11 @@ image:
 ports:
     - port: 8080
 tasks:
-    - init: npm i -g heroku;
+    - name: Instalation
+      init: >
+      npm i -g heroku;
       cp jobcore/.env.example ../.env;
-
-    - command: virtualenv venv;
-      source venv/bin/activate;
+    - name: Terminal
+      command: >
+      virtualenv venv &&
+      source venv/bin/activate
