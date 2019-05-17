@@ -3,6 +3,9 @@ from api.models import Venue
 
 
 class VenueSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=100, required=True)
+    street_address = serializers.CharField(max_length=250, required=True)
+
     class Meta:
         model = Venue
         exclude = ()

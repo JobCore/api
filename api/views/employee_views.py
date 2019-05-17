@@ -1,27 +1,3 @@
-# import json
-# import os
-# import functools
-# import decimal
-# import operator
-# from django.utils.dateparse import parse_datetime
-# from django.http import HttpResponse
-# from rest_framework.views import APIView
-# from rest_framework.exceptions import PermissionDenied
-# from rest_framework.permissions import (
-#     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly)
-# from api.utils.email import send_fcm
-# from django.contrib.auth.tokens import PasswordResetTokenGenerator
-# from django.contrib.auth.models import User
-# from oauth2_provider.models import AccessToken
-# from api.utils.utils import get_aware_datetime
-# from rest_framework_jwt.settings import api_settings
-# import api.utils.jwt
-# from .utils import GeneralException
-# from api.utils.email import get_template_content
-# import cloudinary
-# import cloudinary.uploader
-# import cloudinary.api
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -31,16 +7,12 @@ from django.db.transaction import atomic
 from api.models import *
 from api.models import SHIFT_INVITE_STATUS_CHOICES
 from api.utils.notifier import (
-    # notify_password_reset_code,
     notify_shift_candidate_update
 )
 from api.utils import validators
 from api.serializers import (
-    clockin_serializer,  # user_serializer, profile_serializer,
+    clockin_serializer, notification_serializer,
     shift_serializer, employee_serializer, other_serializer,
-    # payment_serializer, favlist_serializer, venue_serializer,
-    notification_serializer,  # employer_serializer, auth_serializer,
-    # rating_serializer
 )
 
 from django.db.models import Count
@@ -76,7 +48,7 @@ class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
 
 class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
     def get_queryset(self):
-        return Rate.objects.filter(sender__user_id=self.employee.id)
+        return Rate.objects.filter(sender__user_id=self.request.user)
 
 
 class EmployeeMeApplicationsView(
