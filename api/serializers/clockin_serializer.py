@@ -102,7 +102,7 @@ class ClockinSerializer(serializers.ModelSerializer):
 
         shift = data['shift']
         profile = data['author']
-        employee_id = profile.employee_id
+        employee_id = data['employee']
 
         if not shift.employees.filter(id=employee_id).exists():
             raise serializers.ValidationError(
