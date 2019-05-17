@@ -1,8 +1,5 @@
-FROM gitpod/workspace-postgres
+FROM FROM heroku/heroku:18
 
 USER root
 
-# install heroku
-RUN apt-get update \ 
- && apt-get -y install snapd \
- && sudo snap install --classic heroku
+
