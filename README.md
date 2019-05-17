@@ -5,87 +5,48 @@
 
 1. Python 3
 2. PIP package manager
+3. Postgree
 
-## Quick commands
+## Installation
 
-1. Run mysql:
+- Install `virtualenv` on your machine
 
-    ```bash
-    $ mysql-ctl start
-    ```
+```bash
+$ pip3 install virtualenv
+```
+* CD into the cloned repository and run:
+```bash
+$ virtualenv venv
+```
 
-2. Create a virtual environment
+- Activate environment on Windows and install packages
+Activete venv on windows: `$ venv\Scripts\activate.bat`
+Activate venv Linux/MacOS `$ source venv/bin/activate`
+To deactivate use `deactivate`
 
-    * Install `virtualenv` on your machine
+- Install required packages
+```bash
+$ pip3 install -r requirements.txt
+```
 
-    ```bash
-    $ pip install virtualenv
-    ```
+- Copy and rename `jobcore/.env.example` to `jobcore/.env` and set environment variables
+- Generate a new Secret Key `$ python3 keygen_django.py` or `$ openssl rand -base64 32`
 
-    * CD into the cloned repository and run:
+Run migrations: `$ python manage.py migrate`
 
-    ```bash
-    $ virtualenv venv
-    ```
+Run django: `$ python manage.py runserver $IP:$PORT`
 
-    - Activate environment on Windows and install packages
-
-    ```bash
-    $ venv\Scripts\activate.bat
-    ```
-
-    - Activate environment on Linux/MacOS and install packages
-
-    ```bash
-    $ source venv/bin/activate
-    ```
-
-    - To deactivate use `deactivate`
-
-3. Install required packages
-
-    ```bash
-    $ pip install -r requirements.txt
-    ```
-
-4. Copy and rename **jobcore/.env.example** to **jobcore/.env** and set environment variables
-
-    * Generate a new Secret Key
-
-    ```bash
-    $ python keygen_django.py
-    ```
-
-    or
-
-    ```
-    $ openssl rand -base64 32
-    ```
-
-5. Run migrations
-
-    ```bash
-    $ python manage.py migrate
-    ```
-
-6. Run django:
-
-    ```bash
-    $ python manage.py runserver $IP:$PORT
-    ```
-    
-    
 ### Lod fixtures (if needed)
 ```python
 python manage.py loaddata api/fixtures/*.yaml
 ```
-    
+
 ### Run tests
 ```
 python manage.py test api
 ```
 
-Note: If you are running the old tests:  
+Note: If you are running the old tests:
 
 - For a particular test: `pytest api/tests/test_invites.py`
 - For all tests: `pytest`
@@ -97,23 +58,27 @@ Find static files:
 python manage.py findstatic --verbosity 2 social-media/facebook.png
 ```
 
-### Adding public keys to heroku
-heroku keys:add ~/.ssh/path/to/public/key
-
-## Heroku config vars
-heroku config:set GITHUB_USERNAME=joesmith
-
-## Start python shell
-heroku run python manage.py shell
-
-## Deploy
-git push heroku master
-
-
-
 ### Packages i don;t know if I should install
 ```
 distribute==0.6.27
 poster==0.8.1
 wsgiref==0.1.2
 ```
+
+
+## Heroku
+
+### Adding public keys to heroku
+heroku keys:add ~/.ssh/path/to/public/key
+
+### Heroku config vars
+heroku config:set GITHUB_USERNAME=joesmith
+
+### Start python shell
+heroku run python manage.py shell
+
+### Deploy
+git push heroku master
+
+## add remote
+heroku git:remote -a
