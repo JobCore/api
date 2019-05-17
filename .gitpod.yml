@@ -5,9 +5,9 @@ ports:
 tasks:
     - name: Instalation
       init: >
-      npm i -g heroku;
-      cp jobcore/.env.example ../.env;
+        npm i -g heroku;
+        cp jobcore/.env.example ../.env;
     - name: Terminal
       command: >
-      virtualenv venv &&
-      source venv/bin/activate
+        virtualenv venv &&
+        source venv/bin/activate
