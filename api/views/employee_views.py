@@ -335,6 +335,7 @@ class ClockinsMeView(EmployeeView):
             logger.error(f'ClockinsMeView:post: {e}')
             request_data = {}
         request_data['employee'] = self.employee.id
+        request_data['author'] = self.employee.id
         
         logger.debug(f'ClockinsMeView:post: {request_data}')
 
