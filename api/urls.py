@@ -347,7 +347,7 @@ urlpatterns = [
     path(
         'employees/<int:employee_id>/badges',
         EmployeeBadgesView.as_view(),
-        name="admin-id-employees"),
+        name="admin-id-employees-badges"),
     # update the talent badges
     path(
         'positions',

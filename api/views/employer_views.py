@@ -218,7 +218,7 @@ class EmployerVenueView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        request_data = dict(request.data)
+        request_data = request.data.copy()
 
         request_data['employer'] = self.employer.id
         serializer = venue_serializer.VenueSerializer(data=request_data)

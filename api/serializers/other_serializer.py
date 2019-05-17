@@ -1,13 +1,12 @@
 from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
-from api.models import Badge, Position, JobCoreInvite, Rate, AvailabilityBlock, Employer, Shift, Employee, Clockin, User
+from api.models import (
+    Badge, JobCoreInvite, Rate, Employer,
+    Shift, Employee, User, AvailabilityBlock,
+    )
 
-
-class PositionSmallSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Position
-        fields = ('title', 'id')
+from api.serializers.position_serializers import PositionSmallSerializer
 
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
@@ -39,10 +38,7 @@ class RatingGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
-class PositionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Position
-        exclude = ()
+
 
 
 class BadgeSerializer(serializers.ModelSerializer):
@@ -54,42 +50,24 @@ class BadgeSerializer(serializers.ModelSerializer):
 
 
 class EmployeeBadgeSerializer(serializers.Serializer):
-    badges = serializers.ListField(child=serializers.IntegerField())
-    employee = serializers.IntegerField()
+    badges = serializers.PrimaryKeyRelatedField(
+        queryset=Badge.objects.all(),
+        many=True,
+        required=True)
+    employee = serializers.PrimaryKeyRelatedField(
+        queryset=Employee.objects.all(),
+        required=True
+        )
 
-    def validate(self, data):
-
-        if 'badges' not in data:
+    def validate_badges(self, value):
+        if len(value) == 0:
             raise serializers.ValidationError('You need to specify the badges')
-
-        if 'employee' not in data:
-            raise serializers.ValidationError(
-                'You need to specify the employee')
-
-        try:
-            employee = Employee.objects.get(id=data['employee'])
-        except Employee.DoesNotExist:
-            return Response(validators.error_object(
-                'Employee not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        for badge in data['badges']:
-            try:
-                badge = Badge.objects.get(id=badge)
-            except Badge.DoesNotExist:
-                raise serializers.ValidationError('Badge not found')
-
-        return data
+        return value
 
     def create(self, validated_data):
-
-        Employee.badges.through.objects.filter(
-            employee_id=validated_data['employee']).delete()
-
-        employee = Employee.objects.get(id=validated_data['employee'])
-        for badge_id in validated_data['badges']:
-            badge = Badge.objects.get(id=badge_id)
-            employee.badges.add(badge)
-
+        employee = validated_data['employee']
+        employee.badges.all().delete()
+        employee.badges.add(*validated_data['badges'])
         return validated_data
 
 
