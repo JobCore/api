@@ -328,15 +328,15 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        logger.debug(f"ClockinsMeView:post: {request.data}")
+        logger.debug(f'ClockinsMeView:post: {request.data}')
         try:
-            request_data = request.data.dict()
+            request_data = request.data.copy()
         except AttributeError as e:
-            logger.error(f"ClockinsMeView:post: {e}")
+            logger.error(f'ClockinsMeView:post: {e}')
             request_data = {}
         request_data['employee'] = self.employee.id
         
-        logger.debug(f"ClockinsMeView:post: {request_data}")
+        logger.debug(f'ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
             return Response(
