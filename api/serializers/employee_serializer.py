@@ -1,7 +1,7 @@
 from api.serializers import favlist_serializer
 from rest_framework import serializers
 from api.models import Employee, Profile, User, FavoriteList
-from api.serializers.position_serializers import PositionSerializer
+from api.serializers.position_serializer import PositionSerializer
 #
 # NESTED
 #

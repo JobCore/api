@@ -6,7 +6,7 @@ from api.models import (
     Shift, Employee, User, AvailabilityBlock,
     )
 
-from api.serializers.position_serializers import PositionSmallSerializer
+from api.serializers.position_serializer import PositionSmallSerializer
 
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
