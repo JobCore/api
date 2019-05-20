@@ -38,7 +38,8 @@ from api.serializers import (
     employee_serializer, other_serializer, payment_serializer
 )
 from api.serializers import (
-    employer_serializer, auth_serializer, clockin_serializer
+    employer_serializer, auth_serializer, clockin_serializer,
+    position_serializer
 )
 from api.serializers import rating_serializer
 from api.utils.email import get_template_content
@@ -371,17 +372,17 @@ class PositionView(APIView):
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-            serializer = other_serializer.PositionSerializer(
+            serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
             positions = Position.objects.all()
-            serializer = other_serializer.PositionSerializer(
+            serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = other_serializer.PositionSerializer(data=request.data)
+        serializer = position_serializer.PositionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -394,7 +395,7 @@ class PositionView(APIView):
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = other_serializer.PositionSerializer(
+        serializer = position_serializer.PositionSerializer(
             position, data=request.data)
         if serializer.is_valid():
             serializer.save()
