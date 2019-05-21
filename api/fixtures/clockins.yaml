@@ -8,5 +8,34 @@
     started_at: "2018-09-13T19:45:00Z"
     latitude_in: 25.744526
     longitude_in: -80.260033
+    ended_at: null
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
+    
+# open clocking (no clockout yet because there is not latitude_out)
+- model: api.clockin
+  pk: 2
+  fields:
+    status: "PENDING"
+    employee: 2
+    shift: 1
+    started_at: "2018-09-13T15:45:00Z"
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    ended_at: null
+    created_at: "2018-10-13T15:45:00Z"
+    updated_at: "2018-10-13T19:45:00Z"
+    
+# open clocking (no clockout yet because there is not latitude_out)
+- model: api.clockin
+  pk: 3
+  fields:
+    status: "PENDING"
+    employee: 2
+    shift: 2
+    started_at: "2019-09-10T19:45:00Z"
+    latitude_in: 25.744526
+    longitude_in: -80.260033
+    ended_at: null
+    created_at: "2018-10-13T15:45:00Z"
+    updated_at: "2018-10-13T19:45:00Z"

@@ -268,15 +268,14 @@ class Shift(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    # if this option is None, the talent will be able to checkout anytime
-    # he wants. By default, he can only checkout within 15 min of the starting
+    # if this option is None, the talent will be able to clockin anytime
+    # he wants. By default, he can only clockin within 15 min of the starting
     # time (before or after)
     maximum_clockin_delta_minutes = models.IntegerField(
         blank=True, default=15, null=True)
 
-    # if this option is None, the talent will be able to checkout anytome,
-    # by default the application will auto checkout after 15 min
-
+    # if this option is None, the talent will be able to clockout anytome,
+    # by default the application will auto clockout after 15 min
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=15, null=True)  # in minutes
 
@@ -432,6 +431,7 @@ class Clockin(models.Model):
         max_digits=14, decimal_places=11, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
+    #auto_closed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(
