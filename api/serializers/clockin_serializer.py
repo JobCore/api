@@ -31,7 +31,9 @@ class ClockinSerializer(serializers.ModelSerializer):
                 )
 
     def _ensure_time_threshold(self, currentTime, start, threshold=0):
-
+        '''
+        @deprecated
+        '''
         delta = datetime.timedelta(minutes=threshold)
 
         minTime, maxTime = start - delta, start + delta
@@ -43,52 +45,36 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('You cannot clock in/out after shift starting time')  # NOQA
 
     def _validate_clockin(self, data):
-        if 'latitude_in' not in data or 'longitude_in' not in data:
-            raise serializers.ValidationError(
-                "You need to specify latitude_in, longitude_in")
-
-        currentPos = (data['latitude_in'], data['longitude_in'])
-
         shift = data['shift']
-        delta = shift.employer.maximum_clockin_delta_minutes
 
-        self._ensure_distance_threshold(currentPos, shift)
-
+        # if trying to clock in after the Shift ended
         if data['started_at'] > shift.ending_at:
             raise serializers.ValidationError("You can't Clock in after the Shift ending time")  # NOQA
 
-        self._ensure_time_threshold(
-            data['started_at'], shift.starting_at, threshold=delta
-            )
-        # previous clockin opened
-        try:
-            old_clockin = Clockin.objects.get(
-                ended_at=None, employee=data["employee"]
-                )
-            delta = datetime.timedelta(seconds=1)
-            old_clockin.ended_at = data['started_at'] - delta
-            old_clockin.save()
-        except Clockin.DoesNotExist:
-            pass
+        last_clockin_for_shift = Clockin.objects.filter(shift__id=shift.id).last()
+
+        # The employee first clockin for this Shift
+        if last_clockin_for_shift is None:
+            delta = datetime.timedelta(minutes=shift.employer.maximum_clockin_delta_minutes)
+            if data['started_at'] > shift.starting_at + delta:
+                raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
+
+        if last_clockin_for_shift.ended_at is None:
+            raise serializers.ValidationError("You can't Clock in with a pending Clock out")
 
     def _validate_clockout(self, data):
-        if 'latitude_out' not in data or 'longitude_out' not in data:
-            raise serializers.ValidationError(
-                "You need to specify latitude_out,longitude_out")
-
-        currentPos = (data['latitude_out'], data['longitude_out'])
-
-        shift = self.instance.shift
-        delta_minutes = shift.employer.maximum_clockout_delay_minutes
-
-        self._ensure_distance_threshold(currentPos, shift)
-
+        shift = data['shift']
+        delta = datetime.timedelta(minutes=shift.employer.maximum_clockout_delay_minutes)
         now = timezone.now()
 
-        delta = datetime.timedelta(minutes=delta_minutes)
-
+        # the Shift already ended
         if now > shift.ending_at + delta:
-            raise serializers.ValidationError("The system has already clock you out of this Shift")  # NOQA
+            raise serializers.ValidationError("You can't Clock out after the Shift has ended. The System clock you out automatically")
+
+        some_lockin_for_shift = Clockin.objects.filter(shift__id=shift.id, ended_at=None).first()
+        # There is no Clock in record with out a Clock out
+        if some_lockin_for_shift is None:
+            raise serializers.ValidationError("You can't Clock out if you haven't Clocked in")
 
     def validate(self, data):
 
@@ -100,9 +86,16 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
 
+        if 'latitude_in' not in data or 'longitude_in' not in data:
+            raise serializers.ValidationError(
+                "You need to specify latitude_in, longitude_in")
+
         shift = data['shift']
         employee = data['employee']
-        
+
+        currentPos = (data['latitude_in'], data['longitude_in'])
+        self._ensure_distance_threshold(currentPos, shift)
+
         # TODO: hacer un endpoint para supervisor, para que pueda hacerle clockin a un empleado
 
         if not shift.employees.filter(id=employee.id).exists():
