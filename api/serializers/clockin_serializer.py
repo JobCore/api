@@ -47,6 +47,13 @@ class ClockinSerializer(serializers.ModelSerializer):
     def _validate_clockin(self, data):
         shift = data['shift']
 
+        if 'latitude_in' not in data or 'longitude_in' not in data:
+            raise serializers.ValidationError(
+                "You need to specify latitude_in, longitude_in")
+
+        currentPos = (data['latitude_in'], data['longitude_in'])
+        self._ensure_distance_threshold(currentPos, shift)
+
         # if trying to clock in after the Shift ended
         if data['started_at'] > shift.ending_at:
             raise serializers.ValidationError("You can't Clock in after the Shift ending time")  # NOQA
@@ -67,6 +74,13 @@ class ClockinSerializer(serializers.ModelSerializer):
         delta = datetime.timedelta(minutes=shift.employer.maximum_clockout_delay_minutes)
         now = timezone.now()
 
+        if 'latitude_out' not in data or 'longitude_out' not in data:
+            raise serializers.ValidationError(
+                "You need to specify latitude_out, longitude_out")
+
+        currentPos = (data['latitude_out'], data['longitude_out'])
+        self._ensure_distance_threshold(currentPos, shift)
+
         # the Shift already ended
         if now > shift.ending_at + delta:
             raise serializers.ValidationError("You can't Clock out after the Shift has ended. The System clock you out automatically")
@@ -86,15 +100,8 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
 
-        if 'latitude_in' not in data or 'longitude_in' not in data:
-            raise serializers.ValidationError(
-                "You need to specify latitude_in, longitude_in")
-
         shift = data['shift']
         employee = data['employee']
-
-        currentPos = (data['latitude_in'], data['longitude_in'])
-        self._ensure_distance_threshold(currentPos, shift)
 
         # TODO: hacer un endpoint para supervisor, para que pueda hacerle clockin a un empleado
 
