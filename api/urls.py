@@ -104,10 +104,8 @@ urlpatterns = [
         name="single-ratings"),
 
     path('badges', BadgeView.as_view(), name="get-badges"),
-    path(
-        'badges/<int:id>',
-        BadgeView.as_view(),
-        name="id-badges"),
+    path('badges/<int:id>',BadgeView.as_view(), name="id-badges"),
+
     # manage the badges
 
     path(

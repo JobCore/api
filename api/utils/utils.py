@@ -14,7 +14,7 @@ def custom_index(array, compare_function):
 def in_choices(choice, CHOICES):
     is_present = False
     for status, description in CHOICES:
-        if status == qStatus:
+        if status == choice:
             is_present = True
     return is_present
 

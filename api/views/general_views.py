@@ -580,6 +580,13 @@ class CatalogView(APIView):
                     'title',
                     'id'))
             return Response(badges, status=status.HTTP_200_OK)
+        elif catalog_type == 'narrow-preferences':
+            return Response({
+                'minimum_job_distance_miles': 20,
+                'maximum_hourly_rate': 12,
+                'minimum_availability_hours': 20,
+                'minimum_job_positions': 1
+            }, status=status.HTTP_200_OK)
 
         return Response("no catalog", status=status.HTTP_200_OK)
 

@@ -20,29 +20,11 @@
     employer_id: 1
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-- model: api.position
-  pk: 1
-  fields:
-    title: "Server"
-    created_at: "2018-09-13T19:45:00Z"
-    updated_at: "2018-09-13T19:45:00Z"
-- model: api.position
-  pk: 2
-  fields:
-    title: "Kitchen Assistant"
-    created_at: "2018-09-13T19:45:00Z"
-    updated_at: "2018-09-13T19:45:00Z"
-- model: api.position
-  pk: 3
-  fields:
-    title: "Floor Manager"
-    created_at: "2018-09-13T19:45:00Z"
-    updated_at: "2018-09-13T19:45:00Z"
-    
-#  
+
+#
 # Shifts
 #
-    
+
 - model: api.Shift
   pk: 1
   fields:
@@ -54,11 +36,11 @@
     minimum_hourly_rate: 11
     starting_at: "2019-09-13T19:45:00Z"
     ending_at: "2019-09-13T23:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
-    
+
+
 - model: api.Shift
   pk: 2
   fields:
@@ -70,10 +52,10 @@
     minimum_hourly_rate: 18
     starting_at: "2019-09-10T19:45:00Z"
     ending_at: "2019-09-10T23:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.Shift
   pk: 3
   fields:
@@ -85,10 +67,10 @@
     minimum_hourly_rate: 15
     starting_at: "2019-09-05T19:45:00Z"
     ending_at: "2019-09-05T23:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.Shift
   pk: 4
   fields:
@@ -100,10 +82,10 @@
     minimum_hourly_rate: 15
     starting_at: "2019-09-09T19:45:00Z"
     ending_at: "2019-09-10T02:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.Shift
   pk: 5
   fields:
@@ -115,10 +97,10 @@
     minimum_hourly_rate: 15
     starting_at: "2019-09-09T19:45:00Z"
     ending_at: "2019-09-10T02:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.Shift
   pk: 6
   fields:
@@ -130,14 +112,14 @@
     minimum_hourly_rate: 15
     starting_at: "2019-09-09T19:45:00Z"
     ending_at: "2019-09-10T02:45:00Z"
-    
+
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
-#  
+
+#
 # Shift Employee
 #
-    
+
 - model: api.ShiftEmployee
   pk: 1
   fields:
@@ -145,7 +127,7 @@
     employee: 2
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.ShiftEmployee
   pk: 2
   fields:
@@ -153,7 +135,7 @@
     employee: 3
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.ShiftEmployee
   pk: 3
   fields:
@@ -161,7 +143,7 @@
     employee: 3
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.ShiftEmployee
   pk: 4
   fields:
@@ -169,9 +151,9 @@
     employee: 2
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
-    
-#  
+
+
+#
 # Applications
 #
 
@@ -182,7 +164,7 @@
     employee: 2
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.ShiftApplication
   pk: 4
   fields:
@@ -190,7 +172,7 @@
     employee: 3
     created_at: "2018-08-13T19:45:00Z"
     updated_at: "2018-08-13T19:45:00Z"
-    
+
 - model: api.ShiftApplication
   pk: 5
   fields:
