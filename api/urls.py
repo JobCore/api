@@ -3,7 +3,7 @@ from django.urls import include, path
 from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
-from api.views.hooks import (DeleteAllShifts, DefaultAvailabilityHook)
+from api.views.hooks import (DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts)
 
 from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
@@ -370,6 +370,7 @@ urlpatterns = [
     # HOOKS
     #
     path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
+    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),
     path('hook/create_default_availablity_blocks',
          DefaultAvailabilityHook.as_view()),
 
