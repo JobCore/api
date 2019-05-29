@@ -785,3 +785,33 @@ class JobCoreInviteView(APIView):
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OnboardingView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, view_slug=None):
+
+        views = {
+            "dashboard": [
+                {
+                    "heading": "Dashboard Tutorial",
+                    "message": "Click on the dolar icon to review your upcoming and cleared payments",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
+            "shift": [
+                {
+                    "heading": "Dashboard Tutorial",
+                    "message": "Click on the dolar icon to review your upcoming and cleared payments",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ]
+        }
+
+        if views is None:
+            return Response(views, status=status.HTTP_200_OK)
+        else:
+            return Response(views[view_slug], status=status.HTTP_200_OK)
+

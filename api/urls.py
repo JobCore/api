@@ -9,7 +9,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView,
+    PositionView, OnboardingView
 )
 
 from api.views.admin_views import (
@@ -124,7 +124,8 @@ urlpatterns = [
     #
 
     # path('profiles',ProfileView.as_view(), name="get-profiles"),
-    # path('profiles/<int:id>',ProfileView.as_view(), name="id-profiles"),
+    path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
+    path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
     path(
         'payroll',
         PayrollShiftsView.as_view(),
