@@ -66,7 +66,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             if data['started_at'] > shift.starting_at + delta:
                 raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
 
-        if last_clockin_for_shift.ended_at is None:
+        elif last_clockin_for_shift.ended_at is None:
             raise serializers.ValidationError("You can't Clock in with a pending Clock out")
 
     def _validate_clockout(self, data):
