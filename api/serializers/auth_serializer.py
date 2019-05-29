@@ -51,7 +51,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             raise serializers.ValidationError(msg)
 
         if not user_obj.is_active:
-            msg = _('User account is disabled.')
+            msg = _('User account is disabled. Have you confirmed your email?')
             raise serializers.ValidationError(msg)
 
         credentials = {
@@ -168,6 +168,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
             auth_actions.create_shift_invites_from_jobcore_invites(
                 jobcore_invites, user.profile.employee)
+
+            jobcore_invites.update(status='ACCEPTED')
 
         notifier.notify_email_validation(user)
 

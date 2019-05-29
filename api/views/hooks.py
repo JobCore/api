@@ -8,7 +8,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 
 from django.db.models import F, Func
 
-from api.models import Employee, Shift, ShiftInvite, ShiftApplication, Clockin
+from api.models import Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite, Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile
+from django.contrib.auth.models import User
 from api.actions import employee_actions
 from api.serializers import clockin_serializer
 
@@ -35,6 +36,64 @@ class DeleteAllShifts(APIView):
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
+
+class DeleteAllData(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        log = []
+
+        log.insert(0, "Deleting ShiftInvites...")
+        ShiftInvite.objects.all().delete()
+
+        log.insert(0, "Deleting ShiftApplication...")
+        ShiftApplication.objects.all().delete()
+
+        log.insert(0, "Deleting Shifts...")
+        Shift.objects.all().delete()
+
+        log.insert(0, "Deleting Employees...")
+        Employee.objects.all().delete()
+
+        log.insert(0, "Deleting Employers...")
+        Employer.objects.all().delete()
+        log.insert(0, "Deleting Profiles and Users...")
+        Profile.objects.all().delete()
+        User.objects.all().delete()
+
+        log.insert(0, "Deleting Clockins...")
+        Clockin.objects.all().delete()
+
+        log.insert(0, "Deleting AvailabilityBlocks...")
+        AvailabilityBlock.objects.all().delete()
+
+        log.insert(0, "Deleting FavoriteLists...")
+        FavoriteList.objects.all().delete()
+
+        log.insert(0, "Deleting Venues...")
+        Venue.objects.all().delete()
+
+        log.insert(0, "Deleting JobCoreInvites...")
+        JobCoreInvite.objects.all().delete()
+
+        log.insert(0, "Deleting Ratings...")
+        Rate.objects.all().delete()
+
+        log.insert(0, "Deleting FCM Devices...")
+        FCMDevice.objects.all().delete()
+
+        log.insert(0, "Deleting Notification...")
+        Notification.objects.all().delete()
+
+        log.insert(0, "Deleting PayrollPeriods...")
+        PayrollPeriod.objects.all().delete()
+
+        log.insert(0, "Deleting PayrollPeriodPayments...")
+        PayrollPeriodPayment.objects.all().delete()
+
+        return Response({"status": "ok", "log": log }, status=status.HTTP_200_OK)
+
 class ClockOutExpiredShifts(APIView):
     permission_classes = [AllowAny]
 
@@ -48,7 +107,7 @@ class ClockOutExpiredShifts(APIView):
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()
-            
+
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

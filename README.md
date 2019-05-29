@@ -32,13 +32,13 @@ $ pip3 install -r requirements.txt
 - Copy and rename `jobcore/.env.example` to `jobcore/.env` and set environment variables
 - Generate a new Secret Key `$ python3 keygen_django.py` or `$ openssl rand -base64 32`
 
-Run migrations: `$ python manage.py migrate`
+Run migrations: `$ python3 manage.py migrate`
 
-Run django: `$ python manage.py runserver $IP:$PORT`
+Run django: `$ python3 manage.py runserver $IP:$PORT`
 
 ### Lod fixtures (if needed)
 ```python
-python manage.py loaddata api/fixtures/*.yaml
+python3 manage.py loaddata api/fixtures/development/*.yaml
 ```
 
 ### Run tests

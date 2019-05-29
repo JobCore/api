@@ -96,6 +96,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
             sender = self.context['request'].user.profile.id
             JobCoreInvite.objects.get(
                 sender=sender,
+                status='ACCEPTED',
                 email=data["email"]
             )
 
@@ -110,6 +111,15 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         # TODO: send email message not working
         invite = JobCoreInvite(**validated_data)
         invite.save()
+
+        notifier.notify_jobcore_invite(invite)
+
+        return invite
+
+    def update(self, invite, validated_data):
+
+        print(invite)
+        invite = super(JobCoreInvitePostSerializer, self).update(invite, validated_data)
 
         notifier.notify_jobcore_invite(invite)
 

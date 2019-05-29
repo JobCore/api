@@ -1,10 +1,10 @@
 - model: auth.User
   pk: 1
   fields:
-    first_name: Ramon
-    last_name: Peralta
-    email: aalejo+peralta@gmail.com
-    username: aalejo+peralta@gmail.com
+    first_name: Alejo
+    last_name: Sanchez
+    email: a+employer@jobcore.co
+    username: a+employer@jobcore.co
     password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
 - model: api.employer
   pk: 1
@@ -28,8 +28,8 @@
   fields:
     first_name: John
     last_name: Lennon
-    email: aalejo+lennon@gmail.com
-    username: aalejo+lennon@gmail.com
+    email: a+employee2@jobcore.co
+    username: a+employee2@jobcore.co
     password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
 - model: api.employee
   pk: 2
@@ -53,8 +53,8 @@
   fields:
     first_name: Paul
     last_name: McCartney
-    email: aalejo+mccartney@gmail.com
-    username: aalejo+mccartney@gmail.com
+    email: a+employee3@jobcore.co
+    username: a+employee3@jobcore.co
     password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
 - model: api.employee
   pk: 3
@@ -70,14 +70,14 @@
     employee: 3
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-    
+
 - model: auth.User
   pk: 4
   fields:
     first_name: Frank
     last_name: Sinatra
-    email: aalejo+sinatra@gmail.com
-    username: aalejo+sinatra@gmail.com
+    email: a+employee4@jobcore.co
+    username: a+employee4@jobcore.co
     password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
 - model: api.employee
   pk: 4

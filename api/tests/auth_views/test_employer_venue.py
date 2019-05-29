@@ -353,7 +353,7 @@ class EmployerVenueTestSuite(TestCase, WithMakeUser, WithMakeShift):
             'title': 'a new venue',
             'street_address': 'My great address',
             'country': 'A country',
-            'state': 'State?',
+            'state': 'Florida',
             'zip_code': 3123,
         }
 
