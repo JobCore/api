@@ -13,5 +13,6 @@ tasks:
         pip3 install -r requirements.txt;
     - name: Terminal
       command: >
-        virtualenv venv &&
-        source venv/bin/activate
+        npm i -g heroku;
+        virtualenv venv;
+        source venv/bin/activate;

@@ -481,3 +481,15 @@ class ClockinsMeView(EmployerView):
             clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class EmployerPayrollPeriodsView(EmployerView):
+    def get_queryset(self):
+        return PayrollPeriod.objects.filter(employer_id=self.employer.id)
+
+    def get(self, request):
+        periods = self.get_queryset()
+
+        serializer = payment_serializer.PayrollPeriodGetSerializer(
+            periods, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -5,7 +5,6 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User
-NOW = timezone.now()
 
 #
 # NESTED
@@ -166,7 +165,9 @@ def get_projected_payments(
     return result
 
 
-def generate_period_periods(employer):
+def generate_periods_and_payments(employer):
+
+    NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
         raise serializers.ValidationError(
@@ -175,18 +176,20 @@ def generate_period_periods(employer):
     h_hour = employer.payroll_period_starting_time.hour
     m_hour = employer.payroll_period_starting_time.minute
     s_hour = employer.payroll_period_starting_time.second
-    payments = PayrollPeriod.objects.filter(
-        employer__id=employer.id).order_by('-starting_at')
+    payment = PayrollPeriod.objects.filter(
+        employer__id=employer.id).order_by('-starting_at').last()
 
     # if there is a previous period we generate from there, if not we generate
     # since the company joined jobcore
-    last_period_ending_date = payments[0].ending_at if len(payments) > 0 else (
+    last_period_ending_date = payment.ending_at if payment is not None else (
         employer.created_at.replace(
             hour=h_hour,
             minute=m_hour,
             second=s_hour) -
         datetime.timedelta(
             seconds=1))
+
+    # the ending date will be X days later, X = employer.payroll_period_length
     end_date = last_period_ending_date + \
         datetime.timedelta(days=employer.payroll_period_length)
 
@@ -208,6 +211,7 @@ def generate_period_periods(employer):
         end_date = end_date + \
             datetime.timedelta(days=employer.payroll_period_length)
 
+        # no lets start calculating the payaments
         try:
             all_clockins = Clockin.objects.filter(
                 (Q(started_at__gte=period.starting_at) & Q(started_at__lte=period.ending_at)) | (

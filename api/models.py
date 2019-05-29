@@ -56,6 +56,7 @@ class Employer(models.Model):
         choices=PAYROLL_LENGTH_TYPE,
         default=DAYS,
         blank=True)
+    last_payment_period = models.DateTimeField(default=None)
 
     # if this option is None, the talent will be able to checkout anytime
     # he wants By default, he can only checkout within 15 min of the starting
