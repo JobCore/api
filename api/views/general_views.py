@@ -797,14 +797,70 @@ class OnboardingView(APIView):
             "dashboard": [
                 {
                     "heading": "Dashboard Tutorial",
-                    "message": "Click on the dolar icon to review your upcoming and cleared payments",
+                    "message": "Click on the dolar icon to review your pending and cleared payments",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Dashboard Tutorial",
+                    "message": "Click on the envelope to review and apply to job invitations",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Dashboard Tutorial",
+                    "message": "Click on the suitcase to review your upcoming jobs",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Dashboard Tutorial",
+                    "message": "Click on the start and see how employers have rated you",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
                 }
             ],
-            "shift": [
+            "invitations": [
                 {
-                    "heading": "Dashboard Tutorial",
-                    "message": "Click on the dolar icon to review your upcoming and cleared payments",
+                    "heading": "Invitations Tutorial",
+                    "message": "Swipe left to accept or right to reject the job invites",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Invitations Tutorial",
+                    "message": "Click on an invite to view details",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
+            "job_preferences": [
+                {
+                    "heading": "Job Preferences Tutorial",
+                    "message": "Setup your minimum job requirements and you will start receiving invites accordingly.",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
+            "my_jobs": [
+                {
+                    "heading": "Jobs Tutorial",
+                    "message": "Click on pending and review your the jobs that you have applied but have received no answer yet",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Jobs Tutorial",
+                    "message": "Click on approved for upcoming approved jobs",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Jobs Tutorial",
+                    "message": "Click on completed for historical data about previous jobs you have completed",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                },
+                {
+                    "heading": "Jobs Tutorial",
+                    "message": "Click on failed to review jobs that you commited but not attended",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
+            "profile": [
+                {
+                    "heading": "My Profile Tutorial",
+                    "message": "More detailed profiles tend to get the most job invitations, take some time to fill your information",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
                 }
             ]
