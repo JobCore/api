@@ -5,7 +5,7 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
 
 
 #
@@ -15,7 +15,7 @@ class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('picture',)
-        
+
 class ClockinGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -105,11 +105,11 @@ class ShiftSerializer(serializers.ModelSerializer):
         if ('status' in validated_data):
             if validated_data['status'] != 'DRAFT' and validated_data['status'] != 'CANCELLED' and shift.status != 'DRAFT':
                 raise serializers.ValidationError(
-                    'Only draft shifts can be edited')
+                    'Only draft shifts can be edited, consider making your shift a draft first')
         else:
             if shift.status != 'DRAFT':
                 raise serializers.ValidationError(
-                    'Only draft shifts can be edited')
+                    'Only draft shifts can be edited, consider making your shift a draft first')
 
         # Sync employees
         if 'allowed_from_list' in validated_data:
@@ -154,7 +154,8 @@ class ShiftSerializer(serializers.ModelSerializer):
                 user=self.context['request'].user,
                 shift=shift,
                 status='being_updated',
-                old_data=old_shift)
+                old_data=old_shift,
+                pending_invites= [talent['value'] for talent in self.context['request'].data['pending_invites']])
             # delete all accepeted employees
             if validated_data['status'] in [
                     'DRAFT', 'CANCELLED'] or shift.status in [
@@ -215,17 +216,23 @@ class ShiftPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         shift = super(ShiftPostSerializer, self).create(validated_data)
-        shift.status = "OPEN"
-        shift.save()
+        if self.context['request'].data['pending_invites'] == 'OPEN':
+            shift.status = "OPEN"
+            shift.save()
 
-        talents = notifier.get_talents_to_notify(shift)
-        for talent in talents:
-            invite = ShiftInvite(
-                employee=talent,
-                sender=self.context['request'].user.profile,
-                shift=shift)
-            invite.save()
-            notifier.notify_single_shift_invite(invite)
+            talents = []
+            if shift.application_restriction == 'SPECIFIC_PEOPLE':
+                talents = Employee.objects.filter(id__in=[talent['value'] for talent in self.context['request'].data['pending_invites']])
+            else:
+                talents = notifier.get_talents_to_notify(shift)
+
+            for talent in talents:
+                invite = ShiftInvite(
+                    employee=talent,
+                    sender=self.context['request'].user.profile,
+                    shift=shift)
+                invite.save()
+                notifier.notify_single_shift_invite(invite)
 
         return shift
 
@@ -263,8 +270,8 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = ()
-        
-        
+
+
 class ShiftGetBigSerializer(ShiftGetSerializer):
     clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
 

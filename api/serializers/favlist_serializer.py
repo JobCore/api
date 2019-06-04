@@ -20,12 +20,18 @@ class FavoriteListGetSerializer(serializers.ModelSerializer):
 
 
 class FavoriteListSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(max_length=100, required=True)
-
     class Meta:
         model = FavoriteList
         exclude = ()
 
+    def validate(self, data):
+
+        if self.instance and self.instance.title == '' and ( 'title' not in data or data['title'] == ''):
+            raise serializers.ValidationError('The favorite list needs a title')
+        elif self.instance is None and ('title' not in data or data['title'] == ''):
+            raise serializers.ValidationError('The favorite list needs a title')
+
+        return data
 
 class FavoriteListSmallSerializer(serializers.ModelSerializer):
     class Meta:

@@ -380,8 +380,9 @@ urlpatterns = [
     # TODO: delete accepted invites from 30 days ago, we should also delete invites from people that already registered
     # path('hook/delete_old_invites', DeleteOldInvites.as_view()),
 
-    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),
-    path('hook/expire_old_invites', ExpireOldInvites.as_view()),
+
+    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()), # every 5 min
+    path('hook/expire_old_invites', ExpireOldInvites.as_view()), # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
     path( 'employer/<int:employer_id>/generate_periods', GeneratePeriodsView.as_view(), name="cronjobs-employer-payment"),
     # every hour, will generate payment periods

@@ -14,7 +14,7 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 def get_talents_to_notify(shift):
 
     talents_to_notify = []
-    if shift.status == 'OPEN':
+    if shift.status == 'OPEN' and shift.application_restriction != 'SPECIFIC_PEOPLE':
         rating = shift.minimum_allowed_rating
         favorite_lists = shift.allowed_from_list.all()
         talents_to_notify = Employee.objects.filter(
@@ -60,10 +60,15 @@ def notify_email_validation(user):
     })
 
 
-def notify_shift_update(user, shift, status='being_updated', old_data=None):
+def notify_shift_update(user, shift, status='being_updated', old_data=None, pending_invites=[]):
     # automatic notification
     shift = Shift.objects.get(id=shift.id)  # IMPORTANT: override the shift
-    talents_to_notify = get_talents_to_notify(shift)
+
+    talents_to_notify = []
+    if shift.application_restriction == 'SPECIFIC_PEOPLE':
+        talents_to_notify = Employee.objects.filter(id__in=pending_invites)
+    else:
+        talents_to_notify = get_talents_to_notify(shift)
 
     if status == 'being_updated':
         print("Talents to notify: " + str(len(talents_to_notify)))
