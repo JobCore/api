@@ -3,7 +3,10 @@ from django.urls import include, path
 from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
-from api.views.hooks import (DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData)
+from api.views.hooks import (
+    DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
+    ExpireOldInvites
+)
 
 from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
@@ -381,6 +384,7 @@ urlpatterns = [
     # path('hook/delete_old_invites', DeleteOldInvites.as_view()),
 
     path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),
+    path('hook/expire_old_invites', ExpireOldInvites.as_view()),
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
     path( 'employer/<int:employer_id>/generate_periods', GeneratePeriodsView.as_view(), name="cronjobs-employer-payment"),
     # every hour, will generate payment periods

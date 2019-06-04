@@ -13,6 +13,13 @@ from django.contrib.auth.models import User
 from api.actions import employee_actions
 from api.serializers import clockin_serializer
 
+from rest_framework import serializers
+
+class ShiftInviteGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShiftInvite
+        exclude = ()
+
 
 class DefaultAvailabilityHook(APIView):
     permission_classes = [IsAuthenticated]
@@ -101,13 +108,27 @@ class ClockOutExpiredShifts(APIView):
 
         NOW = utc.localize(datetime.now())
         # if now > shift.ending_at + delta:
-        #clockins = Clockin.objects.all()
-        #clockins = Clockin.objects.filter(ended_at__isnull=True)
         clockins = Clockin.objects.filter(ended_at__isnull=True, shift__ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()
 
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Expire invitations that its shifts have already started.
+class ExpireOldInvites(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        NOW = utc.localize(datetime.now())
+        invites = ShiftInvite.objects.filter(shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
+        for invite in invites:
+            invite.status = 'EXPIRED'
+            invite.save()
+
+        serializer = ShiftInviteGetSmallSerializer(invites, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

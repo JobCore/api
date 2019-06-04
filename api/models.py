@@ -308,10 +308,12 @@ class ShiftApplication(models.Model):
 PENDING = 'PENDING'
 APPLIED = 'APPLIED'
 REJECTED = 'REJECTED'
+EXPIRED = 'EXPIRED'
 SHIFT_INVITE_STATUS_CHOICES = (
     (PENDING, 'Pending'),
     (APPLIED, 'Applied'),
     (REJECTED, 'Rejected'),
+    (EXPIRED, 'Expired'),
 )
 
 
