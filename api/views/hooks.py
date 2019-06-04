@@ -124,7 +124,7 @@ class ExpireOldInvites(APIView):
     def get(self, request):
 
         NOW = utc.localize(datetime.now())
-        invites = ShiftInvite.objects.filter(shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
+        invites = ShiftInvite.objects.filter(status= 'PENDING', shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
         for invite in invites:
             invite.status = 'EXPIRED'
             invite.save()

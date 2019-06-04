@@ -81,4 +81,4 @@ heroku run python manage.py shell
 git push heroku master
 
 ## add remote
-heroku git:remote -a
+heroku git:remote -a jobcore

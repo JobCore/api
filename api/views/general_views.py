@@ -465,7 +465,6 @@ class BadgeView(APIView):
         badge.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class RateView(APIView):
 
     def get_queryset(self):
@@ -508,19 +507,6 @@ class RateView(APIView):
 
         serializer = rating_serializer.RatingGetSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class CatalogView(APIView):
     def get(self, request, catalog_type):
@@ -861,6 +847,13 @@ class OnboardingView(APIView):
                 {
                     "heading": "My Profile Tutorial",
                     "message": "More detailed profiles tend to get the most job invitations, take some time to fill your information",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
+            "my_payments": [
+                {
+                    "heading": "My Payments Tutorial",
+                    "message": "Click on any pending or cleared payment to get information about the shift you worked on",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
                 }
             ]

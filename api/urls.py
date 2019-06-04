@@ -101,10 +101,7 @@ urlpatterns = [
         name="get-catalog"),
 
     path('ratings', RateView.as_view(), name="get-ratings"),
-    path(
-        'ratings/<int:id>',
-        RateView.as_view(),
-        name="single-ratings"),
+    path('ratings/<int:id>', RateView.as_view(), name="single-ratings"),
 
     path('badges', BadgeView.as_view(), name="get-badges"),
     path('badges/<int:id>',BadgeView.as_view(), name="id-badges"),

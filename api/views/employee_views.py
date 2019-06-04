@@ -464,3 +464,50 @@ class EmployeeDeviceMeView(WithProfileView):
         qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeMeRateView(EmployeeView):
+
+    def get_queryset(self):
+        return Rate.objects.filter(employee_id=self.employee.id)
+
+    def build_lookup(self, request):
+        lookup = {}
+
+        qs_employer = request.GET.get('employer')
+        if qs_employer:
+            lookup = {'employer_id': qs_employer}
+
+        qs_shift = request.GET.get('shift')
+        if qs_shift:
+            lookup['shift_id'] = qs_shift
+
+        return lookup
+
+    def get(self, request, id=False):
+        many = True
+        qs = self.get_queryset()
+        if (id):
+            try:
+                qs = qs.get(id=id)
+                many = False
+            except Rate.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        else:
+            lookup = self.build_lookup(request)
+            qs = qs.filter(**lookup)
+
+        serializer = rating_serializer.RatingGetSerializer(qs, many=many)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+
+        serializer = rating_serializer.RatingSerializer(
+            data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

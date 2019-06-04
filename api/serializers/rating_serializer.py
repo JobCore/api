@@ -42,7 +42,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
     def validate_rating(self, rating):
         if not 0 <= float(rating) <= 5:
-            raise serializers.ValidationError('Invalid rating number')
+            raise serializers.ValidationError('Rating has to be between 0 and 5')
 
         return rating
 
