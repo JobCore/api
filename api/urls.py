@@ -20,7 +20,7 @@ from api.views.admin_views import (
     GeneratePeriodsView,
 )
 from api.views.employee_views import (
-    EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView,
+    EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
     EmployeeAvailabilityBlockView, EmployeeDeviceMeView,
 )
@@ -288,10 +288,9 @@ urlpatterns = [
         name="me-employees-get-shift"),
     # path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
 
-    path(
-        'employees/me/ratings/sent',
-        EmployeeMeSentRatingsView.as_view(),
-        name="me-employees-ratings"),
+    path('employees/me/ratings/sent',EmployeeMeSentRatingsView.as_view(),name="me-employees-ratings-sent"),
+    path('employees/me/ratings/received',EmployeeMeRateView.as_view(),name="me-employees-get-ratings"),
+    path('employees/me/ratings/<int:id>',EmployeeMeRateView.as_view(),name="me-employees-single-ratings"),
     # for a single rating check GET /ratings/<int:id>
 
     path(
@@ -334,14 +333,7 @@ urlpatterns = [
         'employees/me/jobcore-invites/<int:id>',
         JobCoreInviteView.as_view(),
         name="me-employees-id-jcinvites"),
-    path(
-        'employees/me/ratings',
-        RateView.as_view(),
-        name="me-employees-get-ratings"),
-    path(
-        'employees/me/ratings/<int:id>',
-        RateView.as_view(),
-        name="me-employees-single-ratings"),
+
 
     #
     # ADMIN USE ONLY

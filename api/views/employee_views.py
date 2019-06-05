@@ -31,24 +31,42 @@ logger = logging.getLogger(__name__)
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
-
-class EmployeeMeReceivedRatingsView(RateView, EmployeeView):
-    def build_lookup(self, request):
-        lookup = super().build_lookup(request)
-        if 'employee_id' in lookup:
-            lookup.pop('employee_id')
-        return lookup
+class EmployeeMeRateView(EmployeeView, RateView):
 
     def get_queryset(self):
-        return Rate.objects.filter(employee_id=self.employee.id)
+        return Rate.objects.filter(Q(employee_id=self.employee.id) | Q(sender__user_id=self.request.user))
+
+    def build_lookup(self, request):
+        lookup = {}
+
+        qs_employer = request.GET.get('employer')
+        if qs_employer:
+            lookup = {'employer_id': qs_employer}
+
+        qs_shift = request.GET.get('shift')
+        if qs_shift:
+            lookup['shift_id'] = qs_shift
+
+        return lookup
+
+    def post(self, request):
+
+        serializer = rating_serializer.RatingSerializer(
+            data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class EmployeeMeSentRatingsView(EmployeeMeRateView):
+    def get_queryset(self):
+        return Rate.objects.filter(sender__user_id=self.request.user)
 
     def post(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request)
-
-
-class EmployeeMeSentRatingsView(EmployeeMeReceivedRatingsView):
-    def get_queryset(self):
-        return Rate.objects.filter(sender__user_id=self.request.user)
 
 
 class EmployeeMeApplicationsView(
@@ -464,50 +482,3 @@ class EmployeeDeviceMeView(WithProfileView):
         qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-class EmployeeMeRateView(EmployeeView):
-
-    def get_queryset(self):
-        return Rate.objects.filter(employee_id=self.employee.id)
-
-    def build_lookup(self, request):
-        lookup = {}
-
-        qs_employer = request.GET.get('employer')
-        if qs_employer:
-            lookup = {'employer_id': qs_employer}
-
-        qs_shift = request.GET.get('shift')
-        if qs_shift:
-            lookup['shift_id'] = qs_shift
-
-        return lookup
-
-    def get(self, request, id=False):
-        many = True
-        qs = self.get_queryset()
-        if (id):
-            try:
-                qs = qs.get(id=id)
-                many = False
-            except Rate.DoesNotExist:
-                return Response(validators.error_object(
-                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
-        else:
-            lookup = self.build_lookup(request)
-            qs = qs.filter(**lookup)
-
-        serializer = rating_serializer.RatingGetSerializer(qs, many=many)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
-
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
