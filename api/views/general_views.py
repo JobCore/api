@@ -859,7 +859,7 @@ class OnboardingView(APIView):
             ]
         }
 
-        if views is None:
+        if view_slug is None:
             return Response(views, status=status.HTTP_200_OK)
         else:
             return Response(views[view_slug], status=status.HTTP_200_OK)
