@@ -11,9 +11,12 @@ from django.db.models import F, Func
 from api.models import Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite, Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile
 from django.contrib.auth.models import User
 from api.actions import employee_actions
-from api.serializers import clockin_serializer
+from api.serializers import clockin_serializer, payment_serializer
 
 from rest_framework import serializers
+
+import logging
+logger = logging.getLogger(__name__)
 
 class ShiftInviteGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -130,5 +133,32 @@ class ExpireOldInvites(APIView):
             invite.save()
 
         serializer = ShiftInviteGetSmallSerializer(invites, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class GeneratePeriodsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, employer_id=None):
+
+        logger.debug('GeneratePeriodsView:get: init....')
+        if employer_id:
+            try:
+                employer = Employer.objects.get(id=employer_id)
+            except Employer.DoesNotExist:
+                return Response(validators.error_object(
+                    'Employer found.'), status=status.HTTP_404_NOT_FOUND)
+            periods = payment_serializer.generate_period_periods(employer)
+
+        else:
+            logger.debug('GeneratePeriodsView:get: Looking for all employers periods')
+            employers = Employer.objects.all()
+            periods = []
+            for employer in employers:
+                periods = periods + \
+                    payment_serializer.generate_periods_and_payments(employer)
+
+        serializer = payment_serializer.PayrollPeriodGetSerializer(
+            periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -784,22 +784,22 @@ class OnboardingView(APIView):
                 {
                     "heading": "Dashboard Tutorial",
                     "message": "Click on the dolar icon to review your pending and cleared payments",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard1.png"
                 },
                 {
                     "heading": "Dashboard Tutorial",
                     "message": "Click on the envelope to review and apply to job invitations",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard2.png"
                 },
                 {
                     "heading": "Dashboard Tutorial",
                     "message": "Click on the suitcase to review your upcoming jobs",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard3.png"
                 },
                 {
                     "heading": "Dashboard Tutorial",
                     "message": "Click on the start and see how employers have rated you",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard4.png"
                 }
             ],
             "invitations": [

@@ -78,6 +78,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
 
 class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
     employee = EmployeeGetTinySerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
     shift = ShiftGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -124,7 +125,7 @@ def get_projected_payments(
 
     if period_type != 'DAYS':
         raise serializers.ValidationError(
-            'The only supported period type is DAYS for now')
+            'The only supported period type is DAYS')
 
     end_date = start_date + timezone.timedelta(days=period_length)
     normal_clockins = Clockin.objects.filter(
@@ -165,7 +166,7 @@ def get_projected_payments(
     return result
 
 
-def generate_periods_and_payments(employer):
+def generate_periods_and_payments(employer, generate_since=None):
 
     NOW = timezone.now()
 

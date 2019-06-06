@@ -5,13 +5,13 @@ from api.pagination import CustomPagination
 from django.db.models import Q
 from django.db.transaction import atomic
 from api.models import *
-from api.models import SHIFT_INVITE_STATUS_CHOICES
+from api.models import SHIFT_INVITE_STATUS_CHOICES, PAYMENT_STATUS
 from api.utils.notifier import (
     notify_shift_candidate_update
 )
 from api.utils import validators
 from api.serializers import (
-    clockin_serializer, notification_serializer,
+    clockin_serializer, notification_serializer, payment_serializer,
     shift_serializer, employee_serializer, other_serializer,
 )
 
@@ -415,18 +415,47 @@ class EmployeeAvailabilityBlockView(
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # model `EmployeeWeekUnvailability` no existe, lo comentaré
-    #
-    # def delete(self, request, unavailability_id):
-    #     try:
-    #         unavailability_block = EmployeeWeekUnvailability.objects.get(
-    #             id=unavailability_id)
-    #     except EmployeeWeekUnvailability.DoesNotExist:
-    #         return Response(validators.error_object(
-    #             'Not found.'), status=status.HTTP_404_NOT_FOUND)
+class EmployeeMePayrollPaymentsView(EmployeeView, CustomPagination):
 
-    #     unavailability_block.delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
+    def get_queryset(self):
+        return PayrollPeriodPayment.objects.filter(employee_id=self.employee.id)
+
+    def fetch_one(self, request, id):
+        return self.get_queryset().filter(id=id)
+
+    def fetch_list(self, request):
+        if 'status' not in self.request.GET:
+            return self.get_queryset()
+
+        status = request.GET.get('status')
+        available_statuses = dict(PAYMENT_STATUS)
+
+        if status not in available_statuses:
+            valid_choices = '", "'.join(available_statuses.keys())
+
+            raise ValidationError({
+                'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
+                })
+
+        return self.get_queryset().filter(status=status)
+
+    def get(self, request, id=None):
+        serializer = None
+        if id is not None:
+            try:
+                data = self.fetch_one(request, id).get()
+                serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(data, many=False)
+
+            except PayrollPeriodPayment.DoesNotExist:
+                return Response(
+                    validators.error_object('The payment was not found'),  # NOQA
+                    status=status.HTTP_404_NOT_FOUND)
+
+        else:
+            data = self.fetch_list(request)
+            serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EmployeeDeviceMeView(WithProfileView):

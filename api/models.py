@@ -471,6 +471,9 @@ class PayrollPeriod(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+    def __str__(self):
+        return "From " + str(self.starting_at) + " to " + str(self.ending_at)
+
 
 PENDING = 'PENDING'
 PAID = 'PAID'
@@ -481,11 +484,13 @@ PAYMENT_STATUS = (
 
 
 class PayrollPeriodPayment(models.Model):
-    paryroll_period = models.ForeignKey(
+    payroll_period = models.ForeignKey(
         PayrollPeriod, related_name='payments', on_delete=models.CASCADE,
         blank=True)
     employee = models.ForeignKey(
         Employee, on_delete=models.CASCADE, blank=True)
+    employer = models.ForeignKey(
+        Employer, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(
         Shift, on_delete=models.CASCADE, blank=True)
     splited_payment = models.BooleanField(default=True)

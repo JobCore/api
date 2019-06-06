@@ -5,7 +5,7 @@ from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
     DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
-    ExpireOldInvites
+    ExpireOldInvites, GeneratePeriodsView
 )
 
 from api.views.general_views import (
@@ -16,13 +16,12 @@ from api.views.general_views import (
 )
 
 from api.views.admin_views import (
-    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView,
-    GeneratePeriodsView,
+    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView,
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView
 )
 
 from api.views.employer_views import (
@@ -334,6 +333,8 @@ urlpatterns = [
         JobCoreInviteView.as_view(),
         name="me-employees-id-jcinvites"),
 
+    path('employees/me/payroll-payments',EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
+
 
     #
     # ADMIN USE ONLY
@@ -376,6 +377,7 @@ urlpatterns = [
     path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()), # every 5 min
     path('hook/expire_old_invites', ExpireOldInvites.as_view()), # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
-    path( 'employer/<int:employer_id>/generate_periods', GeneratePeriodsView.as_view(), name="cronjobs-employer-payment"),
+    path('hook/generate_periods', GeneratePeriodsView.as_view()),
+    # path( 'employer/<int:employer_id>/generate_periods', GenerateEmployerPeriodsView.as_view(), name="cronjobs-employer-payment"),
     # every hour, will generate payment periods
 ]

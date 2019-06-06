@@ -13,7 +13,7 @@
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-    
+
 - model: api.Clockin
   pk: 2
   fields:
@@ -44,10 +44,10 @@
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-    
-    
-    
-    
+
+
+
+
 - model: api.Clockin
   pk: 4
   fields:
@@ -63,7 +63,7 @@
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-    
+
 - model: api.Clockin
   pk: 5
   fields:
@@ -94,7 +94,7 @@
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
-    
+
 - model: api.Clockin
   pk: 7
   fields:
@@ -107,6 +107,70 @@
     status: "PENDING"
     started_at: "2018-09-09T20:10:00Z"
     ended_at: "2018-09-10T00:47:00Z"
+
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.PayrollPeriod
+  pk: 1
+  fields:
+    employer: 1
+    length: 7
+    length_type: "DAYS"
+    status: "OPEN"
+
+    starting_at: "2018-09-09T00:00:00Z"
+    ending_at: "2018-09-15T23:59:59Z"
+
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.PayrollPeriod
+  pk: 2
+  fields:
+    employer: 1
+    length: 7
+    length_type: "DAYS"
+    status: "OPEN"
+
+    starting_at: "2018-09-16T00:00:00Z"
+    ending_at: "2018-09-22T23:59:59Z"
+
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.PayrollPeriodPayment
+  pk: 1
+  fields:
+    payroll_period: 1
+    employee: 2
+    employer: 1
+    shift: 1
+    splited_payment: false
+    status: "PENDING"
+
+    # regular_hours: "3.00"
+    # over_time: "2.00"
+    # hourly_rate: "30.00"
+    # total_amount: "150.00"
+
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.PayrollPeriodPayment
+  pk: 2
+  fields:
+    payroll_period: 2
+    employee: 2
+    employer: 1
+    shift: 2
+    splited_payment: false
+    status: "PENDING"
+
+    # regular_hours: "3.00"
+    # over_time: "2.00"
+    # hourly_rate: "30.00"
+    # total_amount: "150.00"
 
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"

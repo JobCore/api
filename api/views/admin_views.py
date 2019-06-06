@@ -111,26 +111,3 @@ class PayrollPeriodView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class GeneratePeriodsView(APIView):
-    def get(self, request, employer_id=None):
-
-        if employer_id:
-            try:
-                employer = Employer.objects.get(id=employer_id)
-            except Employer.DoesNotExist:
-                return Response(validators.error_object(
-                    'Employer found.'), status=status.HTTP_404_NOT_FOUND)
-            periods = payment_serializer.generate_period_periods(employer)
-
-        else:
-            employers = Employer.objects.all()
-            periods = []
-            for employer in employers:
-                periods = periods + \
-                    payment_serializer.generate_periods_and_payments(employer)
-
-        serializer = payment_serializer.PayrollPeriodGetSerializer(
-            periods, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
