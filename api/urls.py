@@ -12,11 +12,11 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView
+    PositionView, OnboardingView, ValidateSendEmailView
 )
 
 from api.views.admin_views import (
-    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView
+    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
@@ -51,6 +51,7 @@ urlpatterns = [
         'user/email/validate',
         ValidateEmailView.as_view(),
         name="validate-email"),
+    path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
     path(
         'user/register',
@@ -339,7 +340,7 @@ urlpatterns = [
     #
     # ADMIN USE ONLY
     #
-
+    path('admin/clockins', AdminClockinsview.as_view(), name="admin-get-clockins"),
     path(
         'employees/<int:employee_id>/badges',
         EmployeeBadgesView.as_view(),

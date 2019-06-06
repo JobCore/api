@@ -5,11 +5,10 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User
-
+from api.utils.loggers import log_debug
 #
 # NESTED
 #
-
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -168,6 +167,7 @@ def get_projected_payments(
 
 def generate_periods_and_payments(employer, generate_since=None):
 
+    log_debug('hooks','generate_periods_and_payments:Employer: '+employer.title)
     NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
@@ -177,18 +177,19 @@ def generate_periods_and_payments(employer, generate_since=None):
     h_hour = employer.payroll_period_starting_time.hour
     m_hour = employer.payroll_period_starting_time.minute
     s_hour = employer.payroll_period_starting_time.second
-    payment = PayrollPeriod.objects.filter(
-        employer__id=employer.id).order_by('-starting_at').last()
+    last_processed_period = PayrollPeriod.objects.filter(
+        employer__id=employer.id).order_by('starting_at').last()
 
     # if there is a previous period we generate from there, if not we generate
     # since the company joined jobcore
-    last_period_ending_date = payment.ending_at if payment is not None else (
-        employer.created_at.replace(
-            hour=h_hour,
-            minute=m_hour,
-            second=s_hour) -
-        datetime.timedelta(
-            seconds=1))
+    #
+    last_period_ending_date = None
+    if last_processed_period is not None:
+        last_period_ending_date = last_processed_period.ending_at
+    else:
+        last_period_ending_date = (employer.created_at.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
+    
+    log_debug('hooks','generate_periods_and_payments:Employer:'+employer.title+' from '+str(last_period_ending_date))
 
     # the ending date will be X days later, X = employer.payroll_period_length
     end_date = last_period_ending_date + \
@@ -215,10 +216,10 @@ def generate_periods_and_payments(employer, generate_since=None):
         # no lets start calculating the payaments
         try:
             all_clockins = Clockin.objects.filter(
-                (Q(started_at__gte=period.starting_at) & Q(started_at__lte=period.ending_at)) | (
-                    Q(ended_at__gte=period.starting_at) & Q(ended_at__gte=period.ending_at)),
+                Q(started_at__gte=period.starting_at) & Q(started_at__lte=period.ending_at),
                 shift__employer__id=employer.id
             )
+            log_debug('hooks','Creating a new period for '+employer.title+' from '+str(period.starting_at)+' to '+str(period.ending_at)+ " -> "+str(len(all_clockins))+' clockins')
             for clockin in all_clockins:
                 # the payment needs to be inside the payment period
                 starting_time = clockin.started_at if clockin.started_at > period.starting_at else period.starting_at
@@ -233,8 +234,9 @@ def generate_periods_and_payments(employer, generate_since=None):
                     projected_ending_time - projected_starting_time).total_seconds() / 3600
 
                 payment = PayrollPeriodPayment(
-                    paryroll_period=period,
+                    payroll_period=period,
                     employee=clockin.employee,
+                    employer=employer,
                     shift=clockin.shift,
                     regular_hours=total_hours,
                     over_time=(
@@ -248,13 +250,10 @@ def generate_periods_and_payments(employer, generate_since=None):
                 )
                 payment.save()
 
-            if len(all_clockins) == 0:
-                period.delete()
-            else:
-                generated_periods.append(period)
+            generated_periods.append(period)
 
         except Exception as e:
-            PayrollPeriodPayment.filter(paryroll_period__id=period.id).delete()
+            PayrollPeriodPayment.objects.filter(payroll_period__id=period.id).delete()
             generated_periods = []
             period.delete()
             raise e
@@ -280,10 +279,10 @@ def get_employee_payments(
 
     end_date = start_date + timezone.timedelta(days=period_length)
     payments = PayrollPeriodPayment.objects.filter(
-        employee=talent_id, paryroll_period__started_at__gte=start_date)
+        employee=talent_id, payroll_period__started_at__gte=start_date)
 
     if employer_id is not None:
-        payments = payments.filter(paryroll_period__employer__id=employer_id)
+        payments = payments.filter(payroll_period__employer__id=employer_id)
     elif qShift:
         payments = payments.filter(shift__id=qShift)
 

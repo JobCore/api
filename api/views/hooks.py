@@ -16,7 +16,7 @@ from api.serializers import clockin_serializer, payment_serializer
 from rest_framework import serializers
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('jobcore')
 
 class ShiftInviteGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
