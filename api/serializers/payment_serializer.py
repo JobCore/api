@@ -228,10 +228,14 @@ def generate_periods_and_payments(employer, generate_since=None):
                     ending_time - starting_time).total_seconds() / 3600
 
                 # the projected payment varies depending on the payment period
-                projected_starting_time = clockin.shift.starting_at if clockin.shift.starting_at > period.starting_at else period.starting_at
-                projected_ending_time = clockin.shift.ending_at if clockin.shift.ending_at < period.ending_at else period.ending_at
-                projected_hours = (
-                    projected_ending_time - projected_starting_time).total_seconds() / 3600
+                projected_starting_time = clockin.shift.starting_at
+                projected_ending_time = clockin.shift.ending_at
+                projected_hours = (projected_ending_time - projected_starting_time).total_seconds() / 3600
+
+                log_debug('hooks','Projected hours '+str(projected_hours))
+                overtime = 0
+                if(total_hours > projected_hours):
+                    overtime = total_hours - projected_hours
 
                 payment = PayrollPeriodPayment(
                     payroll_period=period,
@@ -239,10 +243,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employer=employer,
                     shift=clockin.shift,
                     regular_hours=total_hours,
-                    over_time=(
-                        total_hours -
-                        projected_hours) if (
-                        total_hours > projected_hours) else 0,
+                    over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
                     total_amount=clockin.shift.minimum_hourly_rate *
                     decimal.Decimal(total_hours),
