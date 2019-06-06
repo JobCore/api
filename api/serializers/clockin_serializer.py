@@ -1,12 +1,14 @@
-import decimal
+import logging
 from api.serializers import shift_serializer, employee_serializer
 from rest_framework import serializers
-from django.db.models import Q
 from api.models import Clockin
 from api.utils.utils import haversine
 from django.utils import timezone
 import datetime
+
 NOW = timezone.now()
+
+logger = logging.getLogger('jobcore:clockin_serializer:')
 
 
 class ClockinSerializer(serializers.ModelSerializer):
@@ -22,13 +24,13 @@ class ClockinSerializer(serializers.ModelSerializer):
         distance = haversine(
             talent_lat, talent_lon,
             shift_lat, shift_lon
-            )
+        )
 
         if distance > threshold:
             raise serializers.ValidationError(
                 "You need to be {} miles near {} to clock in/out. Right now you"
                 "are at {} miles".format(threshold, venue.title, distance)
-                )
+            )
 
     def _ensure_time_threshold(self, currentTime, start, threshold=0):
         '''
@@ -63,8 +65,15 @@ class ClockinSerializer(serializers.ModelSerializer):
         # The employee first clockin for this Shift
         if last_clockin_for_shift is None:
             delta = datetime.timedelta(minutes=shift.employer.maximum_clockin_delta_minutes)
+            logger.debug('started at: %s' % data["started_at"])
+            logger.debug('shift.starting_at: %s' % shift.starting_at)
+            logger.debug('delta: %s' % delta)
+
             if data['started_at'] > shift.starting_at + delta:
                 raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
+
+            if data['started_at'] < shift.starting_at - delta:
+                raise serializers.ValidationError("You can't Clock %s minutes before the Shift has started" % delta)
 
         elif last_clockin_for_shift.ended_at is None:
             raise serializers.ValidationError("You can't Clock in with a pending Clock out")
@@ -83,7 +92,8 @@ class ClockinSerializer(serializers.ModelSerializer):
 
         # the Shift already ended
         if now > shift.ending_at + delta:
-            raise serializers.ValidationError("You can't Clock out after the Shift has ended. The System clock you out automatically")
+            raise serializers.ValidationError(
+                "You can't Clock out after the Shift has ended. The System clock you out automatically")
 
         some_lockin_for_shift = Clockin.objects.filter(shift__id=shift.id, ended_at=None).first()
         # There is no Clock in record with out a Clock out
@@ -132,7 +142,6 @@ class ClockinPayrollSerializer(serializers.ModelSerializer):
         exclude = ()
 
     def validate(self, data):
-
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError(
                 "You need to specify the started or ended time")
@@ -146,7 +155,6 @@ def validate_clock_in(
         ended_at,
         maximum_clockin_delta_minutes=None,
         is_first_clockin=True):
-
     if now > ended_at:
         raise ValueError("You can't Clock In after the Shift ending time")
 
@@ -170,5 +178,3 @@ def validate_clock_in(
                 "You can only clock in " +
                 str(maximum_clockin_delta_minutes) +
                 " min after the Shift starting time")
-
-

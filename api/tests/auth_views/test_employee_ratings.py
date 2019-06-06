@@ -79,7 +79,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         Gets ratings
         """
 
-        url = reverse_lazy('api:me-employees-ratings')
+        url = reverse_lazy('api:me-employees-ratings-sent')
 
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type="application/json")
@@ -100,7 +100,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
-        url = reverse_lazy('api:me-employees-ratings')
+        url = reverse_lazy('api:me-employees-ratings-sent')
 
         self.client.force_login(self.test_user_employee)
 
@@ -129,7 +129,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
-        url = reverse_lazy('api:me-employees-ratings')
+        url = reverse_lazy('api:me-employees-ratings-sent')
         self.client.force_login(self.test_user_employee)
 
         payload = {
