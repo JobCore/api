@@ -129,3 +129,6 @@ pip-selfcheck.json
 
 ### VisualStudioCode ###
 .vscode
+
+.idea/
+db.sqlite
