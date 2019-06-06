@@ -78,6 +78,22 @@ class ValidateEmailView(APIView):
         template = get_template_content('email_validated')
         return HttpResponse(template['html'])
 
+class ValidateSendEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, email=None):
+
+        if email is None:
+            raise ValidationError('Envalid email to validate')
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(validators.error_object(
+                'The user was not found'), status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({ "details": "The email was sent" }, status=status.HTTP_200_OK)
+
 
 class PasswordView(APIView):
     permission_classes = (AllowAny,)

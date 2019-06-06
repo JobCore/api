@@ -500,13 +500,13 @@ class PayrollPeriodPayment(models.Model):
         default=PENDING)
 
     regular_hours = models.DecimalField(
-        max_digits=3, decimal_places=1, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True)
     over_time = models.DecimalField(
-        max_digits=3, decimal_places=1, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True)
     hourly_rate = models.DecimalField(
-        max_digits=3, decimal_places=1, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True)
     total_amount = models.DecimalField(
-        max_digits=3, decimal_places=1, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)

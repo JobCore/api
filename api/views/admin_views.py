@@ -111,3 +111,24 @@ class PayrollPeriodView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class AdminClockinsview(APIView):
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Clockin.objects.all()
+
+    def get(self, request):
+        clockins = self.get_queryset()
+
+        qShift = request.GET.get('shift')
+        if qShift:
+            clockins = clockins.filter(shift__id=qShift)
+
+        qOpen = request.GET.get('open')
+        if qOpen:
+            clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
+
+        serializer = clockin_serializer.ClockinGetSerializer(
+            clockins, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

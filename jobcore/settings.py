@@ -181,7 +181,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            #'level': 'DEBUG',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
         },
@@ -190,10 +190,16 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['file'],
+        'jobcore:general': {
+            'handlers': ['console'],
             #'handlers': ['file', 'console'],
-            #'level': 'DEBUG',
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'jobcore:hooks': {
+            'handlers': ['console'],
+            #'handlers': ['file', 'console'],
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
