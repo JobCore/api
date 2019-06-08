@@ -330,7 +330,7 @@ class ClockinsMeView(EmployeeView):
             request_data = {}
 
         request_data['employee'] = self.employee.id
-        request_data['author'] = self.employee.id
+        request_data['author'] = self.employee.user.profile.id
 
         logger.debug(f'ClockinsMeView:post: {request_data}')
 
