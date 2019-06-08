@@ -65,23 +65,23 @@ class ClockinSerializer(serializers.ModelSerializer):
 
         # The employee first clockin for this Shift
         if last_clockin_for_shift is None:
-            delta = datetime.timedelta(minutes=shift.employer.maximum_clockin_delta_minutes)
-            logger.debug('started at: %s' % data["started_at"])
-            logger.debug('shift.starting_at: %s' % shift.starting_at)
-            logger.debug('delta: %s' % delta)
+            if shift.employer.maximum_clockin_delta_minutes is not None:
+                delta = datetime.timedelta(minutes=shift.employer.maximum_clockin_delta_minutes)
+                logger.debug('started at: %s' % data["started_at"])
+                logger.debug('shift.starting_at: %s' % shift.starting_at)
+                logger.debug('delta: %s' % delta)
 
-            if data['started_at'] > shift.starting_at + delta:
-                raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
+                if data['started_at'] > shift.starting_at + delta:
+                    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
 
-            if data['started_at'] < shift.starting_at - delta:
-                raise serializers.ValidationError("You can't Clock %s minutes before the Shift has started" % delta)
+                if data['started_at'] < shift.starting_at - delta:
+                    raise serializers.ValidationError("You can't Clock %s minutes before the Shift has started" % delta)
 
         elif last_clockin_for_shift.ended_at is None:
             raise serializers.ValidationError("You can't Clock in with a pending Clock out")
 
     def _validate_clockout(self, data):
         shift = data['shift']
-        delta = datetime.timedelta(minutes=shift.employer.maximum_clockout_delay_minutes)
         now = timezone.now()
 
         if 'latitude_out' not in data or 'longitude_out' not in data:
@@ -91,10 +91,13 @@ class ClockinSerializer(serializers.ModelSerializer):
         currentPos = (data['latitude_out'], data['longitude_out'])
         self._ensure_distance_threshold(currentPos, shift)
 
-        # the Shift already ended
-        if now > shift.ending_at + delta:
-            raise serializers.ValidationError(
-                "You can't Clock out after the Shift has ended. The System clock you out automatically")
+        # only if the employer has a clockout_dely limit
+        if shift.employer.maximum_clockout_delay_minutes is not None:
+            delta = datetime.timedelta(minutes=shift.employer.maximum_clockout_delay_minutes)
+            # the Shift already ended
+            if now > shift.ending_at + delta:
+                raise serializers.ValidationError(
+                    "You can't Clock out after the Shift has ended. The System clock you out automatically")
 
         some_lockin_for_shift = Clockin.objects.filter(shift__id=shift.id, ended_at=None).first()
         # There is no Clock in record with out a Clock out
