@@ -1,10 +1,8 @@
 from django.contrib import admin
-from django.contrib.auth import User
 from .models import *
 
 # Register your models here.
 admin.site.register(Employer)
-admin.site.register(User)
 admin.site.register(Employee)
 admin.site.register(Shift)
 admin.site.register(Profile)
