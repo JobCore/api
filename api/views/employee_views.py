@@ -27,7 +27,7 @@ import logging
 from api.views.general_views import RateView
 from api.mixins import EmployeeView, WithProfileView
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('jobcore:general')
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -332,7 +332,7 @@ class ClockinsMeView(EmployeeView):
         request_data['employee'] = self.employee.id
         request_data['author'] = self.employee.id
 
-        # logger.debug(f'ClockinsMeView:post: {request_data}')
+        logger.debug(f'ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
             return Response(
