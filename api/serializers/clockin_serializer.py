@@ -47,6 +47,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('You cannot clock in/out after shift starting time')  # NOQA
 
     def _validate_clockin(self, data):
+        logger.info('ClockinSerializer:_validate_clockin:')
         shift = data['shift']
 
         if 'latitude_in' not in data or 'longitude_in' not in data:
@@ -101,7 +102,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can't Clock out if you haven't Clocked in")
 
     def validate(self, data):
-
+        logger.info('ClockinSerializer:validate:')
         if 'started_at' in data and 'ended_at' in data:
             raise serializers.ValidationError(
                 "You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")  # NOQA
