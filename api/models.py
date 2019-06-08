@@ -87,6 +87,7 @@ class Employee(models.Model):
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=None, blank=True, null=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
+    total_pending_payments = models.IntegerField(blank=True, default=0)
     maximum_job_distance_miles = models.IntegerField(default=50)
     positions = models.ManyToManyField(
         Position, blank=True)

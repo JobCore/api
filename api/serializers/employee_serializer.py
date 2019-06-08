@@ -99,6 +99,7 @@ class EmployeeSettingsSerializer(serializers.ModelSerializer):
             'user': {'read_only': True},
             'rating': {'read_only': True},
             'total_ratings': {'read_only': True},
+            'total_pending_payments': {'read_only': True},
             'job_count': {'read_only': True},
             'badges': {'read_only': True}
         }
