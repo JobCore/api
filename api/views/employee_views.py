@@ -328,6 +328,7 @@ class ClockinsMeView(EmployeeView):
             logger.error('ClockinsMeView:post: %s' % str(e))
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        logger.info('ClockinsMeView:post: %s' % request_data)
         request_data['employee'] = self.employee.id
         request_data['author'] = self.employee.id
 
@@ -341,6 +342,7 @@ class ClockinsMeView(EmployeeView):
         instance = None
 
         if 'ended_at' in request_data:
+            logger.info('ClockinsMeView:post: Is a Clock out Request')
             try:
                 instance = Clockin.objects.get(
                     shift=request_data["shift"],
@@ -357,6 +359,7 @@ class ClockinsMeView(EmployeeView):
                         "It seems there is more than one clockin without clockout for this shift"),  # NOQA
                     status=status.HTTP_400_BAD_REQUEST)
 
+        logger.info('ClockinsMeView:post:serializer')
         serializer = clockin_serializer.ClockinSerializer(
             instance, data=request_data, context={"request": request})
 
