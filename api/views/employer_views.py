@@ -64,7 +64,7 @@ class ApplicantsView(EmployerView):
     def get_queryset(self):
         return ShiftApplication.objects.filter(
             shift__employer_id=self.employer.id).select_related(
-                'employee', 'shift')
+            'employee', 'shift')
 
     def fetch_list(self, request):
         lookup = {}
@@ -77,7 +77,7 @@ class ApplicantsView(EmployerView):
             try:
                 qs = qs.get(id=application_id)
                 many = False
-            except ShiftApplication.DoesNotEåxist:
+            except ShiftApplication.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
         else:
@@ -120,7 +120,7 @@ class EmployerShiftInviteView(EmployerView):
 
                 raise ValidationError({
                     'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
-                    })
+                })
             lookup['status'] = status
 
         if 'employee' in self.request.GET:
@@ -137,14 +137,16 @@ class EmployerShiftInviteView(EmployerView):
 
         data = None
         single = bool(id)
-        many = not(single)
+        many = not (single)
 
         if single:
             try:
                 data = self.fetch_one(request, id).get()
             except ShiftInvite.DoesNotExist:
                 return Response(
-                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
+                    validators.error_object(
+                        'The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                    # NOQA
                     status=status.HTTP_404_NOT_FOUND)
         else:
             data = self.fetch_list(request)
@@ -180,7 +182,7 @@ class EmployerShiftInviteView(EmployerView):
                 return Response(
                     serializer.errors,
                     status=status.HTTP_400_BAD_REQUEST
-                    )
+                )
 
             serializer.save()
             invites.append(serializer.data)
@@ -192,7 +194,9 @@ class EmployerShiftInviteView(EmployerView):
             invite = self.fetch_one(request, id).get()
         except ShiftInvite.DoesNotExist:
             return Response(
-                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
+                validators.error_object(
+                    'The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                # NOQA
                 status=status.HTTP_404_NOT_FOUND)
 
         invite.delete()
@@ -471,7 +475,7 @@ class ClockinsMeView(EmployerView):
 
     def get(self, request, id):
         clockins = self.get_queryset()
-        clockins = clockins.filter(shift__id = id)
+        clockins = clockins.filter(shift__id=id)
 
         qEmployee = request.GET.get('employee')
         if qEmployee:
@@ -481,6 +485,7 @@ class ClockinsMeView(EmployerView):
             clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class EmployerPayrollPeriodsView(EmployerView):
     def get_queryset(self):
@@ -493,6 +498,7 @@ class EmployerPayrollPeriodsView(EmployerView):
             periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class EmployeerRateView(EmployerView):
 

@@ -14,11 +14,11 @@ import os
 import datetime
 import dotenv
 import dj_database_url
+
 dotenv.read_dotenv()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -32,7 +32,6 @@ DEBUG = (os.environ.get('DEBUG') == 'TRUE')
 ALLOWED_HOSTS = [
     '*'
 ]
-
 
 # Application definition
 
@@ -93,7 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'jobcore.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
@@ -129,7 +127,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True 
+USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -144,15 +142,14 @@ STATICFILES_FINDERS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # else:
-    # STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
-    
-    
-    
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+
 JWT_AUTH = {
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=9999), #original: 900
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=9999),  # original: 900
     'JWT_ALLOW_REFRESH': True,
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=30),
-    'JWT_RESPONSE_PAYLOAD_HANDLER':'api.utils.jwt.jwt_response_payload_handler',
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'api.utils.jwt.jwt_response_payload_handler',
 }
 
 REST_FRAMEWORK = {
@@ -192,13 +189,19 @@ LOGGING = {
     'loggers': {
         'jobcore:general': {
             'handlers': ['console'],
-            #'handlers': ['file', 'console'],
+            # 'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:hooks': {
             'handlers': ['console'],
-            #'handlers': ['file', 'console'],
+            # 'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'jobcore:employee_views:': {
+            'handlers': ['console'],
+            # 'handlers': ['file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },

@@ -17,10 +17,8 @@ from api.serializers import (
 
 from django.db.models import Count
 
-
 from django.utils import timezone
 import datetime
-
 
 import logging
 
@@ -30,6 +28,7 @@ from api.mixins import EmployeeView, WithProfileView
 logger = logging.getLogger('jobcore:general')
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
 
 class EmployeeMeRateView(EmployeeView, RateView):
 
@@ -61,6 +60,7 @@ class EmployeeMeRateView(EmployeeView, RateView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class EmployeeMeSentRatingsView(EmployeeMeRateView):
     def get_queryset(self):
         return Rate.objects.filter(sender__user_id=self.request.user)
@@ -70,7 +70,7 @@ class EmployeeMeSentRatingsView(EmployeeMeRateView):
 
 
 class EmployeeMeApplicationsView(
-        EmployeeView, CustomPagination):
+    EmployeeView, CustomPagination):
 
     def get_queryset(self):
         return ShiftApplication.objects.filter(
@@ -192,21 +192,23 @@ class EmployeeShiftInviteView(EmployeeView):
 
             raise ValidationError({
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
-                })
+            })
 
         return self.get_queryset().filter(status=status)
 
     def get(self, request, id=False):
         data = None
         single = bool(id)
-        many = not(single)
+        many = not (single)
 
         if single:
             try:
                 data = self.fetch_one(request, id).get()
             except ShiftInvite.DoesNotExist:
                 return Response(
-                    validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
+                    validators.error_object(
+                        'The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                    # NOQA
                     status=status.HTTP_404_NOT_FOUND)
         else:
             data = self.fetch_list(request)
@@ -227,7 +229,9 @@ class EmployeeShiftInviteView(EmployeeView):
             invite = self.fetch_one(request, id).get()
         except ShiftInvite.DoesNotExist:
             return Response(
-                validators.error_object('The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),  # NOQA
+                validators.error_object(
+                    'The invite was not found, maybe the shift does not exist anymore. Talk to the employer for any more details about this error.'),
+                # NOQA
                 status=status.HTTP_404_NOT_FOUND)
 
         new_statuses = {
@@ -249,11 +253,11 @@ class EmployeeShiftInviteView(EmployeeView):
             data["status"] = 'APPLIED'
 
         shiftSerializer = shift_serializer.ShiftInviteSerializer(
-                invite,
-                data=data,
-                many=False,
-                context={"request": request}
-            )
+            invite,
+            data=data,
+            many=False,
+            context={"request": request}
+        )
 
         if not shiftSerializer.is_valid():
             return Response(shiftSerializer.errors,
@@ -276,9 +280,10 @@ class EmployeeShiftInviteView(EmployeeView):
             )
 
             return Response({
-                        "details": "Your application was automatically approved because you are one of the vendors preferred talents.",  # NOQA
-                    },
-                    status=status.HTTP_200_OK)
+                "details": "Your application was automatically approved because you are one of the vendors preferred talents.",
+                # NOQA
+            },
+                status=status.HTTP_200_OK)
 
         appSerializer = shift_serializer.ShiftApplicationSerializer(
             data={
@@ -318,17 +323,14 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        # logger.debug(f'ClockinsMeView:post: {request.data}')
-        # logger.warning(f'ClockinsMeView:post: {request.data}')
-        # logger.error(f'ClockinsMeView:post: {request.data}')
-        # logger.info(f'ClockinsMeView:post: {request.data}')
 
         try:
             request_data = request.data.copy()
         except AttributeError as e:
-            # logger.error(f'ClockinsMeView:post: {e}')
-            request_data = {}
+            logger.error('ClockinsMeView:post: %s' % str(e))
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        logger.info('ClockinsMeView:post: %s' % request_data)
         request_data['employee'] = self.employee.id
         request_data['author'] = self.employee.user.profile.id
 
@@ -342,6 +344,7 @@ class ClockinsMeView(EmployeeView):
         instance = None
 
         if 'ended_at' in request_data:
+            logger.info('ClockinsMeView:post: Is a Clock out Request')
             try:
                 instance = Clockin.objects.get(
                     shift=request_data["shift"],
@@ -358,6 +361,7 @@ class ClockinsMeView(EmployeeView):
                         "It seems there is more than one clockin without clockout for this shift"),  # NOQA
                     status=status.HTTP_400_BAD_REQUEST)
 
+        logger.info('ClockinsMeView:post:serializer')
         serializer = clockin_serializer.ClockinSerializer(
             instance, data=request_data, context={"request": request})
 
@@ -370,7 +374,7 @@ class ClockinsMeView(EmployeeView):
 
 
 class EmployeeAvailabilityBlockView(
-        EmployeeView, CustomPagination):
+    EmployeeView, CustomPagination):
 
     def get_queryset(self):
         return AvailabilityBlock.objects.filter(employee_id=self.employee.id)
@@ -415,6 +419,7 @@ class EmployeeAvailabilityBlockView(
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class EmployeeMePayrollPaymentsView(EmployeeView, CustomPagination):
 
     def get_queryset(self):
@@ -435,7 +440,7 @@ class EmployeeMePayrollPaymentsView(EmployeeView, CustomPagination):
 
             raise ValidationError({
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
-                })
+            })
 
         return self.get_queryset().filter(status=status)
 
