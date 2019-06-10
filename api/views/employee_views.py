@@ -48,17 +48,6 @@ class EmployeeMeRateView(EmployeeView, RateView):
 
         return lookup
 
-    def post(self, request):
-
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class EmployeeMeSentRatingsView(EmployeeMeRateView):
