@@ -98,7 +98,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if user.exists():
             raise serializers.ValidationError("This email already exist.")
 
-        print("user email: " + data["email"])
         if len(data["email"]) > 150:
             raise serializers.ValidationError(
                 "You email cannot contain more than 150 characters")
@@ -154,7 +153,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
             Profile.objects.create(
                 user=user, picture='', employee=emp, status='ACTIVE')
-            # user.profile.save()
 
             # Si te estas registrando como un empleado, debemos ver quien te
             # invito a la plataforma (JobCoreInvite),

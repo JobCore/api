@@ -36,6 +36,7 @@ PAYROLL_LENGTH_TYPE = (
 
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
+    picture = models.URLField(blank=True)
     website = models.CharField(max_length=30, blank=True)
     bio = models.TextField(max_length=250, blank=True)
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
@@ -341,6 +342,15 @@ JOBCORE_INVITE_STATUS_CHOICES = (
     (ACCEPTED, 'Accepted'),
 )
 
+class UserToken(models.Model):
+    token = models.TextField(max_length=255, blank=True)
+    email = models.TextField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return self.email + " " + self.token
 
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(
@@ -356,7 +366,6 @@ class JobCoreInvite(models.Model):
         default=PENDING,
         blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
-    token = models.TextField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

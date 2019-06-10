@@ -26,7 +26,7 @@ from api.views.employee_views import (
 
 from api.views.employer_views import (
     EmployerMeView, EmployerMeUsersView, ApplicantsView,
-    EmployerPayrollPeriodsView,
+    EmployerPayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView,
@@ -145,6 +145,10 @@ urlpatterns = [
         'employers/me',
         EmployerMeView.as_view(),
         name="me-employer"),
+    path(
+        'employers/me/image',
+        EmployerMeImageView.as_view(),
+        name="me-employers-image"),
     path(
         'employers/me/users',
         EmployerMeUsersView.as_view(),

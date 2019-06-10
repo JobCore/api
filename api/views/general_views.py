@@ -29,7 +29,7 @@ import api.utils.jwt
 from api.pagination import CustomPagination
 
 from api.models import *
-from api.utils.notifier import notify_password_reset_code
+from api.utils.notifier import notify_password_reset_code, notify_email_validation
 from api.utils import validators
 from api.utils.utils import get_aware_datetime
 
@@ -43,8 +43,6 @@ from api.serializers import (
 )
 from api.serializers import rating_serializer
 from api.utils.email import get_template_content
-
-from api.models import ACTIVE as USER_ACTIVE_STATUS
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -66,32 +64,47 @@ class ValidateEmailView(APIView):
 
         try:
             user = User.objects.get(id=payload["user_id"])
-            if user.profile.status == USER_ACTIVE_STATUS:
-                raise ValidationError('This link has expired')
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                raise ValidationError('Your email has been already activated')
 
-            user.profile.status = ACTIVE  # email validation completed
-            user.profile.save()
+            try:
+                db_token = UserToken.objects.get(token=token, email=user.email)
+                db_token.delete()
+                
+                user.profile.status = 'ACTIVE'  # email validation completed
+                user.profile.save()
+                
+                template = get_template_content('email_validated')
+                return HttpResponse(template['html'])
+            
+            except UserToken.DoesNotExist:
+                return Response(validators.error_object(
+                    'Invalid validation token'), status=status.HTTP_404_NOT_FOUND)
+
         except User.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        template = get_template_content('email_validated')
-        return HttpResponse(template['html'])
 
 class ValidateSendEmailView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, email=None):
+    def post(self, request, email=None):
 
         if email is None:
-            raise ValidationError('Envalid email to validate')
+            raise ValidationError('Invalid email to validate')
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(validators.error_object(
                 'The user was not found'), status=status.HTTP_400_BAD_REQUEST)
-        
+
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                return Response(validators.error_object('This user is already validated'), status=status.HTTP_400_BAD_REQUEST)
+
+        notify_email_validation(user)
+
         return Response({ "details": "The email was sent" }, status=status.HTTP_200_OK)
 
 
@@ -113,11 +126,9 @@ class PasswordView(APIView):
                 'error': 'Email not found on the database'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        payload = api.utils.jwt.jwt_payload_handler({
-            "user_id": user.id
+        token = api.utils.jwt.internal_payload_encode({
+            "user_email": user.email
         })
-        token = jwt_encode_handler(payload)
-
         template = get_template_content(
             'reset_password_form', {
                 "email": user.email, "token": token})

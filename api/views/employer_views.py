@@ -4,6 +4,10 @@ from rest_framework.exceptions import ValidationError
 from api.pagination import CustomPagination
 from django.db.models import Q
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 from django.contrib.auth.models import User
 from api.models import *
 from api.utils import validators
@@ -38,6 +42,37 @@ class EmployerMeView(EmployerView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmployerMeImageView(EmployerView):
+
+    def put(self, request):
+
+        print(request.FILES)
+        if 'image' not in request.FILES:
+            return Response(
+                validators.error_object('No image to update'),
+                status=status.HTTP_400_BAD_REQUEST)
+
+        result = cloudinary.uploader.upload(
+            request.FILES['image'],
+            public_id='employer' + str(self.employer.id),
+            crop='limit',
+            width=450,
+            height=450,
+            eager=[{
+                'width': 200, 'height': 200,
+                'crop': 'thumb', 'gravity': 'face',
+                'radius': 100
+            },
+            ],
+            tags=['employer_profile_picture']
+        )
+
+        self.employer.picture = result['secure_url']
+        self.employer.save()
+        serializer = employer_serializer.EmployerGetSerializer(self.employer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EmployerMeUsersView(EmployerView):
@@ -160,32 +195,37 @@ class EmployerShiftInviteView(EmployerView):
         invites = []
 
         shifts = request.data['shifts']
-        employee = request.data['employee']
+        employees = request.data['employees']
 
         if not isinstance(shifts, list):
             shifts = [shifts]
 
+        if not isinstance(employees, list):
+            employees = [employees]
+
         for shift in shifts:
-            data = {
-                "employee": employee,
-                "sender": request.user.profile.id,
-                "shift": shift,
-            }
+            for employee in employees:
+                data = {
+                    "employee": employee,
+                    "sender": request.user.profile.id,
+                    "shift": shift,
+                }
 
-            serializer = shift_serializer.ShiftCreateInviteSerializer(
-                data=data,
-                context={
-                    "request": request
-                })
+                serializer = shift_serializer.ShiftCreateInviteSerializer(
+                    data=data,
+                    context={
+                        "request": request
+                    })
 
-            if not serializer.is_valid():
-                return Response(
-                    serializer.errors,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                if not serializer.is_valid():
+                    return Response(
+                        serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-            serializer.save()
-            invites.append(serializer.data)
+                serializer.save()
+                invites.append(serializer.data)
+
         return Response(invites, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):

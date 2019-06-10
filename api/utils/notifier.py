@@ -38,10 +38,9 @@ def get_talents_to_notify(shift):
 
 def notify_password_reset_code(user):
     # password reset
-    payload = api.utils.jwt.jwt_payload_handler({
+    token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-    token = jwt_encode_handler(payload)
     send_email_message("password_reset_link", user.email, {
         "link": API_URL + '/api/user/password/reset?token=' + token
     })
@@ -49,10 +48,9 @@ def notify_password_reset_code(user):
 
 def notify_email_validation(user):
     # user registration
-    payload = api.utils.jwt.jwt_payload_handler({
+    token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-    token = jwt_encode_handler(payload)
     send_email_message("registration", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
@@ -74,11 +72,6 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
         print("Talents to notify: " + str(len(talents_to_notify)))
 
         for talent in talents_to_notify:
-            payload = api.utils.jwt.jwt_payload_handler({
-                "user_id": talent.user.id,
-                "shift_id": shift.id
-            })
-            token = jwt_encode_handler(payload)
 
             ShiftInvite.objects.create(
                 sender=user.profile,
@@ -89,7 +82,6 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
             send_email_message('new_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
-                "TOKEN": token,
                 "DATE": shift.starting_at,
                 "DATA": {"type": "shift", "id": shift.id}
             })
@@ -106,16 +98,9 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
     if status == 'being_cancelled':
         for talent in talents_to_notify:
 
-            payload = api.utils.jwt.jwt_payload_handler({
-                "user_id": talent.user.id,
-                "shift_id": shift.id
-            })
-            token = jwt_encode_handler(payload)
-
             send_email_message('cancelled_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
-                "TOKEN": token,
                 "DATE": shift.starting_at,
                 "DATA": {"type": "shift", "id": shift.id}
             })
@@ -133,59 +118,44 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
 def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
 
     for talent in talents_to_notify['accepted']:
-        payload = api.utils.jwt.jwt_payload_handler({
-            "user_id": talent.user.id,
-            "shift_id": shift.id
-        })
         send_email_message('applicant_accepted', talent.user.email, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
-            "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
             "DATA": {"type": "shift", "id": shift.id}
         })
         send_fcm_notification('applicant_accepted', talent.user.id, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
-            "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
             "DATA": {"type": "shift", "id": shift.id}
         })
 
     for talent in talents_to_notify['rejected']:
-        payload = api.utils.jwt.jwt_payload_handler({
-            "user_id": talent.user.id,
-            "shift_id": shift.id
-        })
         send_email_message('applicant_rejected', talent.user.email, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
-            "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
-            "DATA": {"type": "invite", "id": invite.id}
+            "DATA": {"type": "shift", "id": shift.id}
         })
         send_fcm_notification('applicant_rejected', talent.user.id, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
-            "TOKEN": jwt_encode_handler(payload),
             "DATE": shift.starting_at,
-            "DATA": {"type": "invite", "id": invite.id}
+            "DATA": {"type": "shift", "id": shift.id}
         })
 
 
 def notify_jobcore_invite(invite):
     # manual invite
 
-    payload = api.utils.jwt.jwt_payload_handler({
+    token = api.utils.jwt.internal_payload_encode({
         "sender_id": invite.sender.id,
         "invite_id": invite.id
     })
 
-    token = jwt_encode_handler(payload)
-
     send_email_message("invite_to_jobcore", invite.email, {
-        "SENDER": '{} {}'.format(
-            invite.sender.user.first_name, invite.sender.user.last_name),
+        "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
         "EMAIL": invite.email,
         "COMPANY": invite.sender.user.profile.employer.title,
         "LINK": EMPLOYER_URL + "/invite?token=" + token,
@@ -203,12 +173,6 @@ def notify_invite_accepted(invite):
 
 
 def notify_single_shift_invite(invite):
-    # manual invite
-    payload = api.utils.jwt.jwt_payload_handler({
-        "sender_id": invite.sender.id,
-        "invite_id": invite.id
-    })
-    token = jwt_encode_handler(payload)
 
     # invite.employee.user.email
     send_email_message("invite_to_shift", invite.sender.user.email, {
@@ -217,7 +181,7 @@ def notify_single_shift_invite(invite):
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
         "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL + '/invite?token=' + token,
+        "LINK": EMPLOYEE_URL + '/shift/'+str(invite.shift.id),
         "DATA": {"type": "invite", "id": invite.id}
     })
 
@@ -227,7 +191,7 @@ def notify_single_shift_invite(invite):
         "COMPANY": invite.sender.user.profile.employer.title,
         "POSITION": invite.shift.position.title,
         "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL + '/invite?token=' + token,
+        "LINK": EMPLOYEE_URL + '/shift/'+str(invite.shift.id),
         "DATA": {"type": "invite", "id": invite.id}
     })
 

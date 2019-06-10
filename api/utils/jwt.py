@@ -2,7 +2,9 @@ from api.serializers import user_serializer
 import datetime
 from calendar import timegm
 from rest_framework_jwt.settings import api_settings
-
+from api.models import UserToken
+from django.contrib.auth.models import User
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 def jwt_response_payload_handler(token, user=None, request=None):
     return {
@@ -13,14 +15,9 @@ def jwt_response_payload_handler(token, user=None, request=None):
                 'request': request}).data}
 
 
-def jwt_payload_handler(payload, exp=None):
+def internal_payload_encode(payload, exp_min=15):
 
-    payload['exp'] = datetime.datetime.utcnow(
-    ) + datetime.timedelta(seconds=(60 * 15))
-    if hasattr(payload, 'user_id'):
-        payload['user_id'] = user.email
-    if hasattr(payload, 'email'):
-        payload['email'] = user.email
+    payload['exp'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=(60 * exp_min)) # 15 min
 
     # Include original issued at time for a brand new token,
     # to allow token refresh
@@ -35,4 +32,16 @@ def jwt_payload_handler(payload, exp=None):
     if api_settings.JWT_ISSUER is not None:
         payload['iss'] = api_settings.JWT_ISSUER
 
-    return payload
+    #get user email to generate token
+    email = None
+    if 'user_email' in payload:
+        email = payload['user_email']
+    elif 'user_id' in payload:
+        user = User.objects.get(id=payload['user_id'])
+        email = user.email
+
+    token = jwt_encode_handler(payload)
+    user_token = UserToken(token=token, email=email, expires_at=datetime.datetime.fromtimestamp(payload['exp'] / 1e3))
+    user_token.save()
+
+    return token
