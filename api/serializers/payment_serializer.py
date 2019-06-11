@@ -82,6 +82,12 @@ class ClockinGetSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ()
 
+class ClockinGetSmallSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Clockin
+        exclude = ('shift', 'employee')
+
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
     position = PositionGetSmallSerializer(read_only=True)
@@ -99,6 +105,7 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
     employee = EmployeeGetSerializer(read_only=True)
     employer = EmployerGetSmallSerializer(read_only=True)
     shift = ShiftGetSmallSerializer(read_only=True)
+    clockin = ClockinGetSmallSerializer(read_only=True)
 
     class Meta:
         model = PayrollPeriodPayment
@@ -262,6 +269,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employee=clockin.employee,
                     employer=employer,
                     shift=clockin.shift,
+                    clockin=clockin,
                     regular_hours=total_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,

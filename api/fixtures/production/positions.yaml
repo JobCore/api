@@ -34,3 +34,15 @@
     title: "Warehouse Utility"
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
+- model: api.position
+  pk: 7
+  fields:
+    title: "Office Manager"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+- model: api.position
+  pk: 8
+  fields:
+    title: "Excecutive Assistant"
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"

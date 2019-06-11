@@ -505,6 +505,8 @@ class PayrollPeriodPayment(models.Model):
         Employer, on_delete=models.CASCADE, blank=True)
     shift = models.ForeignKey(
         Shift, on_delete=models.CASCADE, blank=True)
+    clockin = models.ForeignKey(
+        Clockin, on_delete=models.CASCADE, blank=True)
     splited_payment = models.BooleanField(default=True)
     status = models.CharField(
         max_length=9,
