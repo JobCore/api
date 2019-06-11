@@ -152,7 +152,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             #         something like that.ç
 
             Profile.objects.create(
-                user=user, picture='', employee=emp, status='ACTIVE')
+                user=user, picture='', employee=emp, status='PENDING_EMAIL_VALIDATION')
 
             # Si te estas registrando como un empleado, debemos ver quien te
             # invito a la plataforma (JobCoreInvite),

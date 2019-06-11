@@ -26,7 +26,7 @@ from api.views.employee_views import (
 
 from api.views.employer_views import (
     EmployerMeView, EmployerMeUsersView, ApplicantsView,
-    EmployerPayrollPeriodsView, EmployerMeImageView,
+    EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView,
@@ -164,10 +164,8 @@ urlpatterns = [
     #     'employers/me/periods',
     #     EmployerPayrollPeriodView.as_view(),
     #     name="me-employer-periods"),
-    # path(
-    #     'employers/me/periods/<int:period_id>',
-    #     EmployerPayrollPeriodView.as_view(),
-    #     name="me-employer-single-periods"),
+    path('employers/me/payroll-periods',EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-payments"),
+    path('employers/me/payroll-periods/<int:period_id>',EmployerMePayrollPeriodsView.as_view(), name="me-get-single-payroll-payments"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -256,10 +254,6 @@ urlpatterns = [
         'employers/me/clockins/<int:id>',
         RateView.as_view(),
         name="me-employer-single-ratings"),
-    path(
-        'employers/me/payroll-periods',
-        EmployerPayrollPeriodsView.as_view(),
-        name="me-employer-periods"),
 
     #
     # FOR THE TALENT

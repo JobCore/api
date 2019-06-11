@@ -47,7 +47,6 @@ class EmployerMeImageView(EmployerView):
 
     def put(self, request):
 
-        print(request.FILES)
         if 'image' not in request.FILES:
             return Response(
                 validators.error_object('No image to update'),
@@ -527,15 +526,25 @@ class ClockinsMeView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployerPayrollPeriodsView(EmployerView):
+class EmployerMePayrollPeriodsView(EmployerView):
     def get_queryset(self):
         return PayrollPeriod.objects.filter(employer_id=self.employer.id)
 
-    def get(self, request):
-        periods = self.get_queryset()
+    def fetch_one(self, id):
+        return self.get_queryset().filter(id=id).first()
 
-        serializer = payment_serializer.PayrollPeriodGetSerializer(
-            periods, many=True)
+    def get(self, request, period_id=None):
+
+        if period_id is not None:
+            period = self.fetch_one(period_id)
+            if period is None:
+                return Response(
+                    validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
+
+            serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+        else:
+            periods = self.get_queryset()
+            serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

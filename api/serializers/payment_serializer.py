@@ -4,16 +4,23 @@ import decimal
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User
+from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile
 from api.utils.loggers import log_debug
 #
 # NESTED
 #
 
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('picture',)
+
 class UserGetSmallSerializer(serializers.ModelSerializer):
+    profile = ProfileGetSmallSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ('first_name', 'last_name')
+        fields = ('first_name', 'last_name', 'profile')
 
 
 class PositionGetSmallSerializer(serializers.ModelSerializer):
@@ -44,6 +51,10 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+class BadgeGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ('title', 'id')
 
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
@@ -51,6 +62,15 @@ class EmployeeGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('user', 'id')
+
+class EmployeeGetSerializer(serializers.ModelSerializer):
+    user = UserGetSmallSerializer(read_only=True)
+    badges = BadgeGetSmallSerializer(read_only=True, many=True)
+
+
+    class Meta:
+        model = Employee
+        fields = ('user', 'id', 'badges')
 
 
 class ClockinGetSerializer(serializers.ModelSerializer):
@@ -68,7 +88,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = ('id', 'position')
+        fields = ('id', 'position', 'starting_at', 'ending_at')
 
 #
 # MAIN
@@ -76,7 +96,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
 
 
 class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
-    employee = EmployeeGetTinySerializer(read_only=True)
+    employee = EmployeeGetSerializer(read_only=True)
     employer = EmployerGetSmallSerializer(read_only=True)
     shift = ShiftGetSmallSerializer(read_only=True)
 
@@ -188,7 +208,7 @@ def generate_periods_and_payments(employer, generate_since=None):
         last_period_ending_date = last_processed_period.ending_at
     else:
         last_period_ending_date = (employer.created_at.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
-    
+
     log_debug('hooks','generate_periods_and_payments:Employer:'+employer.title+' from '+str(last_period_ending_date))
 
     # the ending date will be X days later, X = employer.payroll_period_length

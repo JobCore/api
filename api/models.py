@@ -487,8 +487,10 @@ class PayrollPeriod(models.Model):
 
 PENDING = 'PENDING'
 PAID = 'PAID'
+APPROVED = 'APPROVED'
 PAYMENT_STATUS = (
     (PENDING, 'Pending'),
+    (APPROVED, 'Approved'),
     (PAID, 'Paid')
 )
 
