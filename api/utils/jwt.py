@@ -3,6 +3,7 @@ import datetime
 from calendar import timegm
 from rest_framework_jwt.settings import api_settings
 from api.models import UserToken
+from rest_framework.exceptions import APIException
 from django.contrib.auth.models import User
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -39,6 +40,8 @@ def internal_payload_encode(payload, exp_min=15):
     elif 'user_id' in payload:
         user = User.objects.get(id=payload['user_id'])
         email = user.email
+    else:
+        raise APIException("User email or id has to be specified on the token payload")
 
     token = jwt_encode_handler(payload)
     user_token = UserToken(token=token, email=email, expires_at=datetime.datetime.fromtimestamp(payload['exp'] / 1e3))
