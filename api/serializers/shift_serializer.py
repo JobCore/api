@@ -135,12 +135,12 @@ class ShiftSerializer(serializers.ModelSerializer):
 
         # before updating the shift I have to let the employees know that the
         # shift is no longer available
-        if self.has_sensitive_updates(
-                validated_data, old_data) and shift.status == 'DRAFT':
+        if self.has_sensitive_updates(validated_data, old_data) and shift.status == 'DRAFT':
             notifier.notify_shift_update(
                 user=self.context['request'].user,
                 shift=shift,
                 status='being_cancelled',
+                pending_invites=[talent['value'] for talent in self.context['request'].data['pending_invites']],
                 old_data=old_shift)
 
         # now i can finally update the shift
@@ -216,23 +216,23 @@ class ShiftPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         shift = super(ShiftPostSerializer, self).create(validated_data)
-        if self.context['request'].data['pending_invites'] == 'OPEN':
+        if self.context['request'].data['status'] == 'DRAFT':
             shift.status = "OPEN"
             shift.save()
 
-            talents = []
-            if shift.application_restriction == 'SPECIFIC_PEOPLE':
-                talents = Employee.objects.filter(id__in=[talent['value'] for talent in self.context['request'].data['pending_invites']])
-            else:
-                talents = notifier.get_talents_to_notify(shift)
+        talents = []
+        if shift.application_restriction == 'SPECIFIC_PEOPLE':
+            talents = Employee.objects.filter(id__in=[talent['value'] for talent in self.context['request'].data['pending_invites']])
+        else:
+            talents = notifier.get_talents_to_notify(shift)
 
-            for talent in talents:
-                invite = ShiftInvite(
-                    employee=talent,
-                    sender=self.context['request'].user.profile,
-                    shift=shift)
-                invite.save()
-                notifier.notify_single_shift_invite(invite)
+        for talent in talents:
+            invite = ShiftInvite(
+                employee=talent,
+                sender=self.context['request'].user.profile,
+                shift=shift)
+            invite.save()
+            notifier.notify_single_shift_invite(invite)
 
         return shift
 
