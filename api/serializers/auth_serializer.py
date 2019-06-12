@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.db.models import Q
+from random import randint
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 
@@ -156,7 +157,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                     status = 'ACTIVE'
 
             Profile.objects.create(
-                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile1.png', employee=emp, status=status)
+                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile'+str(randint(1, 3))+'.png', employee=emp, status=status)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(
                 email=user.email)
