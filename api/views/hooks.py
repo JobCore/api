@@ -132,9 +132,9 @@ class ExpireOldInvites(APIView):
             invite.status = 'EXPIRED'
             invite.save()
 
-        serializer = ShiftInviteGetSmallSerializer(invites, many=True)
+        JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
 
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]

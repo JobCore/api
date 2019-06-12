@@ -33,7 +33,7 @@ def internal_payload_encode(payload, exp_min=15):
     if api_settings.JWT_ISSUER is not None:
         payload['iss'] = api_settings.JWT_ISSUER
 
-    #get user email to generate token
+    # get user email to generate token
     email = None
     if 'user_email' in payload:
         email = payload['user_email']

@@ -140,6 +140,12 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Missing recurrency type')
 
     def validate(self, data):
+
+        if 'starting_at' not in data:
+            raise serializers.ValidationError('No initial date/time specified on the availability block')
+        if 'ending_at' not in data:
+            raise serializers.ValidationError('No final date/time specified on the availability block')
+
         start = data['starting_at']
         end = data['ending_at']
 

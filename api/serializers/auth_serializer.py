@@ -145,21 +145,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             # availably all week by default
             employee_actions.create_default_availablity(emp)
 
-            # @TODO: if the user is comming from an invite it gets
-            #         status=ACTIVE, it not it gets the default
-            #         PENDING_EMAIL_VALIDATION
-            # we would have to receive the invitation token here or
-            #         something like that.ç
+            status = 'PENDING_EMAIL_VALIDATION'
+
+            # if the user is coming from an email link
+            token = self.context.get("token")
+            if token:
+                # example data: {'sender_id': 1, 'invite_id': 7, 'user_email': 'a+employee5@jobcore.co', 'exp': 1560364249, 'orig_iat': 1560363349}
+                data = jwt_decode_handler(token)
+                if data['user_email'] == user.email:
+                    status = 'ACTIVE'
 
             Profile.objects.create(
-                user=user, picture='', employee=emp, status='PENDING_EMAIL_VALIDATION')
-
-            # Si te estas registrando como un empleado, debemos ver quien te
-            # invito a la plataforma (JobCoreInvite),
-
-            # si la(s) invitacion que te enviaron tienen shift asociados
-            # debemos invitarte a esos shifts de una vez te registremos
-            # (ShiftInvite).
+                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile1.png', employee=emp, status=status)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(
                 email=user.email)

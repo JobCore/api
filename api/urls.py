@@ -37,7 +37,7 @@ app_name = "api"
 urlpatterns = [
 
     #
-    # AUTHENTICATION
+    # PUBLIC ENDPOINTS
     #
 
     path('login', ObtainJSONWebToken.as_view(
@@ -53,15 +53,10 @@ urlpatterns = [
         name="validate-email"),
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
-    path(
-        'user/register',
-        UserRegisterView.as_view(),
-        name="register"),
-    # path(
-    #      'user/<int:user_id>/employees',
-    #      EmployeeView.as_view(),
-    #      name="create-employees"
-    # ),
+    path('user/register', UserRegisterView.as_view(), name="register"),
+
+    path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
+    path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
 
     #
     # FOR EVERYONE LOGGED IN
@@ -124,8 +119,7 @@ urlpatterns = [
     #
 
     # path('profiles',ProfileView.as_view(), name="get-profiles"),
-    path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
-    path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
+
     path(
         'payroll',
         PayrollShiftsView.as_view(),
@@ -368,10 +362,6 @@ urlpatterns = [
     #
     path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
     path('hook/delete_all_data', DeleteAllData.as_view()),
-
-    # TODO: delete accepted invites from 30 days ago, we should also delete invites from people that already registered
-    # path('hook/delete_old_invites', DeleteOldInvites.as_view()),
-
 
     path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()), # every 5 min
     path('hook/expire_old_invites', ExpireOldInvites.as_view()), # every 5 min
