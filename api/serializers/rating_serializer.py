@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Rate, Shift, Clockin, Venue
+from api.models import Rate, Shift, Clockin, Venue, Employer
 from django.db.models import Avg, Count
 from api.serializers.position_serializer import PositionSmallSerializer
 
@@ -15,12 +15,19 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
         fields = ('title', 'id')
 
 
+class EmployerGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employer
+        fields = ('title', 'id', 'picture', 'rating', 'total_ratings')
+
+
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
     position = PositionSmallSerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
-        fields = ('id', 'position', 'venue')
+        fields = ('id', 'position', 'venue', 'employer')
 
 #
 # MAIN
