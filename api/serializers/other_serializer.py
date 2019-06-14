@@ -4,7 +4,7 @@ from api.utils import notifier
 from api.models import (
     Badge, JobCoreInvite, Rate, Employer,
     Shift, Employee, User, AvailabilityBlock,
-    )
+)
 
 from api.serializers.position_serializer import PositionSmallSerializer
 
@@ -38,13 +38,11 @@ class RatingGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
-
-
-
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
         exclude = ()
+
 
 # reset the employee badges
 
@@ -57,7 +55,7 @@ class EmployeeBadgeSerializer(serializers.Serializer):
     employee = serializers.PrimaryKeyRelatedField(
         queryset=Employee.objects.all(),
         required=True
-        )
+    )
 
     def validate_badges(self, value):
         if len(value) == 0:
@@ -141,6 +139,9 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
 
+        if 'allday' in data:
+            return data
+
         if 'starting_at' not in data:
             raise serializers.ValidationError('No initial date/time specified on the availability block')
         if 'ending_at' not in data:
@@ -152,7 +153,7 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         if start > end:
             raise serializers.ValidationError('Invalid availability range')
 
-        if (end-start).days > 0:
+        if (end - start).days > 0:
             raise serializers.ValidationError('Invalid availability rarge')
 
         if 'recurrent' in data and data['recurrent']:
@@ -169,7 +170,7 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
 
         previous_ablock_in_week = AvailabilityBlock.objects.filter(
             starting_at__week_day=django_week_day, recurrency_type='WEEKLY'
-            )
+        )
 
         if self.instance:
             previous_ablock_in_week = previous_ablock_in_week.exclude(
