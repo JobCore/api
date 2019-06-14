@@ -294,7 +294,9 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
 
         if employees > 0:
             raise serializers.ValidationError(
-                'This talent is already working on this shift')
+                'The talent is already working on this shift')
+
+        # @TODO we have to validate the employee availability
 
         return data
 

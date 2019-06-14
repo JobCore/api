@@ -893,6 +893,13 @@ class OnboardingView(APIView):
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
                 }
             ],
+            "availablility": [
+                {
+                    "heading": "Availability Tutorial",
+                    "message": "You will not receive invites for the dates and times that you are not available",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                }
+            ],
             "my_payments": [
                 {
                     "heading": "My Payments Tutorial",
@@ -905,5 +912,8 @@ class OnboardingView(APIView):
         if view_slug is None:
             return Response(views, status=status.HTTP_200_OK)
         else:
-            return Response(views[view_slug], status=status.HTTP_200_OK)
+            if view_slug in views:
+                return Response(views[view_slug], status=status.HTTP_200_OK)
+            else:
+                return Response([], status=status.HTTP_200_OK)
 
