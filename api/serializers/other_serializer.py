@@ -165,6 +165,16 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         # domingo = 1 y sabado = 7
         # con un poquito de juego matematico, resolvemos el problema
 
+        days = {
+            "1": "Sunday",
+            "2": "Monday",
+            "3": "Tuesday",
+            "4": "Wednesday",
+            "5": "Thursday",
+            "6": "Friday",
+            "7": "Saturday"
+        }
+
         django_week_day = (start.isoweekday() % 7) + 1
 
         previous_ablock_in_week = AvailabilityBlock.objects.filter(
@@ -178,6 +188,6 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         previous_ablock_in_week = previous_ablock_in_week.count()
 
         if previous_ablock_in_week > 0:
-            raise serializers.ValidationError('There is a block covering this day of the week already')  # NOQA
+            raise serializers.ValidationError('There is '+str(previous_ablock_in_week)+' a blocks for '+days[str(django_week_day)]+' already')  # NOQA
 
         return data
