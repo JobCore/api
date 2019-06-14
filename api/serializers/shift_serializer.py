@@ -5,6 +5,7 @@ from api.serializers import other_serializer, venue_serializer, employer_seriali
 from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
+from django.utils import timezone
 from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
 
 
@@ -295,6 +296,11 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         if employees > 0:
             raise serializers.ValidationError(
                 'The talent is already working on this shift')
+
+        # validate shift has not ended
+        NOW = timezone.now()
+        if self.instance.shift.ending_at <= NOW:
+                raise serializers.ValidationError("This shift has already ended")
 
         # @TODO we have to validate the employee availability
 
