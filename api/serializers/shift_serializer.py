@@ -328,7 +328,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         data = super(ShiftCreateInviteSerializer, self).validate(data)
 
         current_user = self.context['request'].user
-        # if it is a talent rating an employer
+        # if it is a talent inviting an employer
         if current_user.profile.employer is None:
             raise serializers.ValidationError(
                 'Only talents can invite talents')
@@ -349,6 +349,11 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         if already_invited > 0:
             raise serializers.ValidationError(
                 'This talent is already invited to this shift')
+
+        # validate shift has not ended
+        NOW = timezone.now()
+        if data['shift'].ending_at <= NOW:
+                raise serializers.ValidationError("This shift has already ended")
 
         return data
 
