@@ -99,7 +99,7 @@ urlpatterns = [
     path('ratings/<int:id>', RateView.as_view(), name="single-ratings"),
 
     path('badges', BadgeView.as_view(), name="get-badges"),
-    path('badges/<int:id>',BadgeView.as_view(), name="id-badges"),
+    path('badges/<int:id>', BadgeView.as_view(), name="id-badges"),
 
     # manage the badges
 
@@ -130,7 +130,6 @@ urlpatterns = [
 
     # path('image/<str:image_name>',ImageView.as_view())
 
-
     #
     # FOR THE EMPLOYER
     #
@@ -158,8 +157,9 @@ urlpatterns = [
     #     'employers/me/periods',
     #     EmployerPayrollPeriodView.as_view(),
     #     name="me-employer-periods"),
-    path('employers/me/payroll-periods',EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-payments"),
-    path('employers/me/payroll-periods/<int:period_id>',EmployerMePayrollPeriodsView.as_view(), name="me-get-single-payroll-payments"),
+    path('employers/me/payroll-periods', EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-payments"),
+    path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(),
+         name="me-get-single-payroll-payments"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -280,9 +280,9 @@ urlpatterns = [
         name="me-employees-get-shift"),
     # path('employees/<int:id>/shifts',general_views.ShiftView.as_view(), name="employees-shifts"),
 
-    path('employees/me/ratings/sent',EmployeeMeSentRatingsView.as_view(),name="me-employees-ratings-sent"),
-    path('employees/me/ratings/received',EmployeeMeRateView.as_view(),name="me-employees-get-ratings"),
-    path('employees/me/ratings/<int:id>',EmployeeMeRateView.as_view(),name="me-employees-single-ratings"),
+    path('employees/me/ratings/sent', EmployeeMeSentRatingsView.as_view(), name="me-employees-ratings-sent"),
+    path('employees/me/ratings/received', EmployeeMeRateView.as_view(), name="me-employees-get-ratings"),
+    path('employees/me/ratings/<int:id>', EmployeeMeRateView.as_view(), name="me-employees-single-ratings"),
     # for a single rating check GET /ratings/<int:id>
 
     path(
@@ -326,8 +326,7 @@ urlpatterns = [
         JobCoreInviteView.as_view(),
         name="me-employees-id-jcinvites"),
 
-    path('employees/me/payroll-payments',EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
-
+    path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
 
     #
     # ADMIN USE ONLY
@@ -363,8 +362,8 @@ urlpatterns = [
     path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
     path('hook/delete_all_data', DeleteAllData.as_view()),
 
-    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()), # every 5 min
-    path('hook/expire_old_invites', ExpireOldInvites.as_view()), # every 5 min
+    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
+    path('hook/expire_old_invites', ExpireOldInvites.as_view()),  # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
     # path( 'employer/<int:employer_id>/generate_periods', GenerateEmployerPeriodsView.as_view(), name="cronjobs-employer-payment"),
