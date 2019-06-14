@@ -397,7 +397,7 @@ class EmployeeAvailabilityBlockView(
         request_data = request.data.copy()
         request_data['employee'] = self.employee.id
 
-        serializer = other_serializer.AvailabilityBlockSerializer(
+        serializer = other_serializer.AvailabilityPutBlockSerializer(
             block, data=request_data, context={"request": request},
             partial=True)
 

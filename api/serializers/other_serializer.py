@@ -165,29 +165,60 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         # domingo = 1 y sabado = 7
         # con un poquito de juego matematico, resolvemos el problema
 
-        days = {
-            "1": "Sunday",
-            "2": "Monday",
-            "3": "Tuesday",
-            "4": "Wednesday",
-            "5": "Thursday",
-            "6": "Friday",
-            "7": "Saturday"
-        }
+        if data['recurrency_type'] == 'WEEKLY' and data['allday'] == True:
+            days = {
+                "1": "Sunday",
+                "2": "Monday",
+                "3": "Tuesday",
+                "4": "Wednesday",
+                "5": "Thursday",
+                "6": "Friday",
+                "7": "Saturday"
+            }
 
-        django_week_day = (start.isoweekday() % 7) + 1
+            django_week_day = (start.isoweekday() % 7) + 1
 
-        previous_ablock_in_week = AvailabilityBlock.objects.filter(
-            starting_at__week_day=django_week_day, recurrency_type='WEEKLY'
+            previous_ablock_in_week = AvailabilityBlock.objects.filter(
+                starting_at__week_day=django_week_day, recurrency_type='WEEKLY', employee_id=self.context['request'].user.profile.id
             )
 
-        if self.instance:
-            previous_ablock_in_week = previous_ablock_in_week.exclude(
-                id=self.instance.id)
+            if self.instance:
+                previous_ablock_in_week = previous_ablock_in_week.exclude(
+                    id=self.instance.id)
 
-        previous_ablock_in_week = previous_ablock_in_week.count()
+            previous_ablock_in_week = previous_ablock_in_week.count()
 
-        if previous_ablock_in_week > 0:
-            raise serializers.ValidationError('There is '+str(previous_ablock_in_week)+' a blocks for '+days[str(django_week_day)]+' already')  # NOQA
+            if previous_ablock_in_week > 0:
+                raise serializers.ValidationError('This employee has '+str(previous_ablock_in_week)+' all day blocks for '+days[str(django_week_day)]+' already')  # NOQA
+
+        return data
+
+class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AvailabilityBlock
+        exclude = ()
+
+    def force_recurrency(self, data):
+        if not data.get('recurrency_type'):
+            raise serializers.ValidationError('Missing recurrency type')
+
+    def validate(self, data):
+
+        if 'starting_at' not in data:
+            raise serializers.ValidationError('No initial date/time specified on the availability block')
+        if 'ending_at' not in data:
+            raise serializers.ValidationError('No final date/time specified on the availability block')
+
+        start = data['starting_at']
+        end = data['ending_at']
+
+        if start > end:
+            raise serializers.ValidationError('Invalid availability range')
+
+        if (end-start).days > 0:
+            raise serializers.ValidationError('Invalid availability rarge')
+
+        if 'recurrent' in data and data['recurrent']:
+            self.force_recurrency(data)
 
         return data
