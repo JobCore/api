@@ -165,7 +165,7 @@ class EmployerShiftInviteView(EmployerView):
             shift = self.request.GET.get('shift')
             lookup['shift_id'] = shift
 
-        return self.get_queryset().filter(**lookup)
+        return self.get_queryset().filter(**lookup).order_by('-starting_at')
 
     def get(self, request, id=False):
 
@@ -244,7 +244,7 @@ class EmployerShiftInviteView(EmployerView):
 
 class EmployerVenueView(EmployerView):
     def get_queryset(self):
-        return Venue.objects.filter(employer_id=self.employer.id)
+        return Venue.objects.filter(employer_id=self.employer.id).order_by('title')
 
     def get(self, request, id=False):
         qs = self.get_queryset()
@@ -400,7 +400,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
         else:
 
             shifts = Shift.objects.filter(
-                employer__id=self.employer.id).order_by('starting_at')
+                employer__id=self.employer.id)
 
             qStatus = request.GET.get('status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -436,7 +436,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
                 shifts = shifts.filter(
                     employer=request.user.profile.employer.id)
 
-            serializer = shift_serializer.ShiftGetSerializer(shifts, many=True)
+            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):

@@ -63,7 +63,7 @@ class EmployeeMeApplicationsView(
 
     def get_queryset(self):
         return ShiftApplication.objects.filter(
-            employee_id=self.employee.id).order_by('shift__starting_at')
+            employee_id=self.employee.id).order_by('-shift__starting_at')
 
     def get_serializer_class(self, many=True):
         if many:
@@ -136,7 +136,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             if qFailed == 'true':
                 shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
 
-            serializer = shift_serializer.ShiftSerializer(shifts, many=True)
+            serializer = shift_serializer.ShiftSerializer(shifts.order_by('-shift__starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -183,7 +183,7 @@ class EmployeeShiftInviteView(EmployeeView):
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
             })
 
-        return self.get_queryset().filter(status=status)
+        return self.get_queryset().filter(status=status).order_by('-shift__starting_at')
 
     def get(self, request, id=False):
         data = None
@@ -431,7 +431,7 @@ class EmployeeMePayrollPaymentsView(EmployeeView, CustomPagination):
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
             })
 
-        return self.get_queryset().filter(status=status)
+        return self.get_queryset().filter(status=status).order_by('-updated_at')
 
     def get(self, request, id=None):
         serializer = None
