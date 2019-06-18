@@ -31,7 +31,7 @@ class PositionGetSmallSerializer(serializers.ModelSerializer):
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Position
+        model = Employer
         fields = ('title', 'id', 'picture', 'rating', 'total_ratings')
 
 
