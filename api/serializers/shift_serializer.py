@@ -275,7 +275,7 @@ class ShiftGetSerializer(serializers.ModelSerializer):
 
 class ShiftGetBigSerializer(ShiftGetSerializer):
     clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
-
+    employer = EmployerGetSmallSerializer(many=False, read_only=True)
 
 
 class ShiftInviteSerializer(serializers.ModelSerializer):

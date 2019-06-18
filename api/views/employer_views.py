@@ -429,6 +429,10 @@ class EmployerShiftView(EmployerView, CustomPagination):
                     employees__in=(
                         request.user.profile.id,))
             else:
+                qEmployeeNot = request.GET.get('employee_not')
+                if qEmployeeNot is not None:
+                    shifts = shifts.exclude(employees__in=(int(qEmployeeNot),))
+
                 shifts = shifts.filter(
                     employer=request.user.profile.employer.id)
 
