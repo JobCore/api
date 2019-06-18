@@ -132,7 +132,7 @@ class ExpireOldInvites(APIView):
             invite.status = 'EXPIRED'
             invite.save()
 
-        JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
+        #JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
 
         return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
 
