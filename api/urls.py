@@ -5,7 +5,7 @@ from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
     DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
-    ExpireOldInvites, GeneratePeriodsView
+    ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications
 )
 
 from api.views.general_views import (
@@ -364,6 +364,7 @@ urlpatterns = [
 
     path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
     path('hook/expire_old_invites', ExpireOldInvites.as_view()),  # every 5 min
+    path('hook/delete_old_applications', ExpireOldApplications.as_view()),  # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
     # path( 'employer/<int:employer_id>/generate_periods', GenerateEmployerPeriodsView.as_view(), name="cronjobs-employer-payment"),

@@ -136,6 +136,17 @@ class ExpireOldInvites(APIView):
 
         return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
 
+# Expire applications that were never approved
+class ExpireOldApplications(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        NOW = utc.localize(datetime.now())
+        ShiftApplication.objects.filter(shift__ending_at__lte= NOW + (timedelta(minutes=1))).delete()
+
+        return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
+
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]
 
