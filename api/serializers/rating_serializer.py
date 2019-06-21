@@ -128,6 +128,10 @@ class RatingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "You have already rated this talent for this shift")
 
+            if 'comments' not in data or data['comments'] == '' or len(data['comments']) < 80:
+                raise serializers.ValidationError(
+                    "The rating must have a comment of a least 80 characters")
+
         return data
 
     def create(self, validated_data):
