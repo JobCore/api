@@ -612,7 +612,7 @@ class CatalogView(APIView):
         elif catalog_type == 'narrow-preferences':
             return Response({
                 'minimum_job_distance_miles': 20,
-                'maximum_hourly_rate': 12,
+                'maximum_hourly_rate': 20,
                 'minimum_availability_hours': 20,
                 'minimum_job_positions': 1
             }, status=status.HTTP_200_OK)
