@@ -61,6 +61,10 @@ class RatingSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'You need to speficy the shift related to this rating')
 
+        if 'rating' not in data:
+            raise serializers.ValidationError(
+                'You need to speficy a rating score')
+
         # if it is a talent rating an employer
         if current_user.profile.employee_id is not None:
             if 'employee' in data:
@@ -147,18 +151,6 @@ class RatingSerializer(serializers.ModelSerializer):
             obj = rate.employee
         else:
             raise AssertionError('Unbound rate!')
-
-        new_ratings = (
-            obj.__class__.objects  # hack: necesitamos acceder al manager
-            .aggregate(
-                new_avg=Avg('rate__rating'),
-                new_total=Count('rate__id')
-            )
-        )
-
-        obj.total_ratings = new_ratings['new_total']
-        obj.rating = new_ratings['new_avg']
-        obj.save()
 
         notifier.notify_new_rating(rate)
 

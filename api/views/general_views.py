@@ -848,63 +848,78 @@ class OnboardingView(APIView):
             "invitations": [
                 {
                     "heading": "Invitations Tutorial",
-                    "message": "Swipe left to accept or right to reject the job invites",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "message": "Receive automated job invitations based on your job preferences",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/invitations1.png"
                 },
                 {
                     "heading": "Invitations Tutorial",
-                    "message": "Click on an invite to view details",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "message": "Click on the invite and apply to the job",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/invitations2.png"
                 }
             ],
             "job_preferences": [
                 {
                     "heading": "Job Preferences Tutorial",
-                    "message": "Setup your minimum job requirements and you will start receiving invites accordingly.",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "message": "Pick what types of jobs are you interested in working for.",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences1.gif"
+                },
+                {
+                    "heading": "Job Preferences Tutorial",
+                    "message": "The minimum rate (per hour) that you are willing to earn",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences2.png"
+                },
+                {
+                    "heading": "Job Preferences Tutorial",
+                    "message": "Setup your location to receive localized job offers",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences3.gif"
+                },
+                {
+                    "heading": "Job Preferences Tutorial",
+                    "message": "How far away are you willing to go work to?",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences4.png"
                 }
             ],
             "my_jobs": [
                 {
                     "heading": "Jobs Tutorial",
                     "message": "Click on pending and review your the jobs that you have applied but have received no answer yet",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs1.png"
                 },
                 {
                     "heading": "Jobs Tutorial",
                     "message": "Click on approved for upcoming approved jobs",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs2.png"
                 },
                 {
                     "heading": "Jobs Tutorial",
                     "message": "Click on completed for historical data about previous jobs you have completed",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs3.png"
                 },
                 {
                     "heading": "Jobs Tutorial",
                     "message": "Click on failed to review jobs that you commited but not attended",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs4.png"
                 }
             ],
             "profile": [
                 {
                     "heading": "My Profile Tutorial",
-                    "message": "More detailed profiles tend to get the most job invitations, take some time to fill your information",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "message": "A more detailed profile tends to get more job invitations, take some time to fill out your information",
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/profile1.png"
                 }
             ],
             "availablility": [
                 {
                     "heading": "Availability Tutorial",
                     "message": "You will not receive invites for the dates and times that you are not available",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/availability1.gif"
                 }
             ],
             "my_payments": [
                 {
                     "heading": "My Payments Tutorial",
                     "message": "Click on any pending or cleared payment to get information about the shift you worked on",
-                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/Screen_Shot_2019-05-29_at_5.21.39_PM.png"
+                    "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_payments1.gif"
                 }
             ]
         }

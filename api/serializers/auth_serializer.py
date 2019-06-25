@@ -184,6 +184,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid token")
 
         try:
+            print(payload)
             User.objects.get(id=payload["user_id"])
         except User.DoesNotExist:
             raise serializers.ValidationError("User does not exist.")

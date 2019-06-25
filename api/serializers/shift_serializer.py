@@ -263,6 +263,7 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     candidates = employee_serializer.EmployeeGetSerializer(
         many=True, read_only=True)
     employees = EmployeeGetSerializer(many=True, read_only=True)
+    employer = EmployerGetSmallSerializer(many=False, read_only=True)
     required_badges = other_serializer.BadgeSerializer(
         many=True, read_only=True)
     allowed_from_list = favlist_serializer.FavoriteListGetSerializer(

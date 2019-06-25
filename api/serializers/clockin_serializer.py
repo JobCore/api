@@ -71,8 +71,8 @@ class ClockinSerializer(serializers.ModelSerializer):
                 logger.debug('shift.starting_at: %s' % shift.starting_at)
                 logger.debug('delta: %s' % delta)
 
-                if data['started_at'] > shift.starting_at + delta:
-                    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
+                #if data['started_at'] > shift.starting_at + delta:
+                #    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
 
                 if data['started_at'] < shift.starting_at - delta:
                     raise serializers.ValidationError("You can't Clock %s minutes before the Shift has started" % delta)

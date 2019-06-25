@@ -1,6 +1,8 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Avg, Count
+from api.utils.loggers import log_debug
 
 NOW = timezone.now()
 MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
@@ -384,6 +386,30 @@ class Rate(models.Model):
         max_digits=2, decimal_places=1, default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def save(self, *args, **kwargs):
+        log_debug('general','save_rate')
+
+        super().save(*args, **kwargs)  # Call the "real" save() method.
+
+        # Calculate avg and sumatory
+        obj = None
+        if self.employee is not None:
+            obj = self.employee
+            new_ratings = (
+                Employee.objects.aggregate(new_avg=Avg('rate__rating'),new_total=Count('rate__id'))
+            )
+        elif self.employer is not None:
+            obj = self.employer
+            new_ratings = (
+                Employer.objects.aggregate(new_avg=Avg('rate__rating'),new_total=Count('rate__id'))
+            )
+
+        if obj is not None:
+            obj.total_ratings = new_ratings['new_total']
+            obj.rating = new_ratings['new_avg']
+            obj.save()
+
 
 
 class FCMDevice(models.Model):
