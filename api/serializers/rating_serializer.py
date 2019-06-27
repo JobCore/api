@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Rate, Shift, Clockin, Venue, Employer
+from api.models import Rate, Shift, Clockin, Venue, Employer, Profile, User
 from django.db.models import Avg, Count
 from api.serializers.position_serializer import PositionSmallSerializer
 
@@ -8,6 +8,10 @@ from api.serializers.position_serializer import PositionSmallSerializer
 # NESTED
 #
 
+class UserGetTinySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name')
 
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,6 +33,13 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
         model = Shift
         fields = ('id', 'position', 'venue', 'employer')
 
+class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    user = UserGetTinySerializer(read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ('picture','user')
+
 #
 # MAIN
 #
@@ -36,6 +47,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
 
 class RatingGetSerializer(serializers.ModelSerializer):
     shift = ShiftGetSmallSerializer(read_only=True)
+    sender = ProfileGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Rate

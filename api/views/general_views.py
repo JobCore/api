@@ -523,20 +523,20 @@ class RateView(APIView):
         return lookup
 
     def get(self, request, id=False):
-        many = True
         qs = self.get_queryset()
         if (id):
             try:
                 qs = qs.get(id=id)
                 many = False
+                serializer = rating_serializer.RatingGetSerializer(qs, many=False)
             except Rate.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
         else:
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
+            serializer = rating_serializer.RatingGetSerializer(qs, many=True)
 
-        serializer = rating_serializer.RatingGetSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -825,92 +825,92 @@ class OnboardingView(APIView):
         views = {
             "dashboard": [
                 {
-                    "heading": "Dashboard Tutorial",
+                    "heading": "Dashboard",
                     "message": "Click on the dolar icon to review your pending and cleared payments",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard1.png"
                 },
                 {
-                    "heading": "Dashboard Tutorial",
+                    "heading": "Dashboard",
                     "message": "Click on the envelope to review and apply to job invitations",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard2.png"
                 },
                 {
-                    "heading": "Dashboard Tutorial",
+                    "heading": "Dashboard",
                     "message": "Click on the suitcase to review your upcoming jobs",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard3.png"
                 },
                 {
-                    "heading": "Dashboard Tutorial",
+                    "heading": "Dashboard",
                     "message": "Click on the start and see how employers have rated you",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559831505/static/onboarding/dashboard4.png"
                 }
             ],
             "invitations": [
                 {
-                    "heading": "Invitations Tutorial",
+                    "heading": "Invitations",
                     "message": "Receive automated job invitations based on your job preferences",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/invitations1.png"
                 },
                 {
-                    "heading": "Invitations Tutorial",
+                    "heading": "Invitations",
                     "message": "Click on the invite and apply to the job",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/invitations2.png"
                 }
             ],
             "job_preferences": [
                 {
-                    "heading": "Job Preferences Tutorial",
+                    "heading": "Job Preferences",
                     "message": "Pick what types of jobs are you interested in working for.",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences1.gif"
                 },
                 {
-                    "heading": "Job Preferences Tutorial",
+                    "heading": "Job Preferences",
                     "message": "The minimum rate (per hour) that you are willing to earn",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences2.png"
                 },
                 {
-                    "heading": "Job Preferences Tutorial",
+                    "heading": "Job Preferences",
                     "message": "Setup your location to receive localized job offers",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences3.gif"
                 },
                 {
-                    "heading": "Job Preferences Tutorial",
+                    "heading": "Job Preferences",
                     "message": "How far away are you willing to go work to?",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/job_preferences4.png"
                 }
             ],
             "my_jobs": [
                 {
-                    "heading": "Jobs Tutorial",
+                    "heading": "My Jobs",
                     "message": "Click on pending and review your the jobs that you have applied but have received no answer yet",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs1.png"
                 },
                 {
-                    "heading": "Jobs Tutorial",
+                    "heading": "My Jobs",
                     "message": "Click on approved for upcoming approved jobs",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs2.png"
                 },
                 {
-                    "heading": "Jobs Tutorial",
+                    "heading": "My Jobs",
                     "message": "Click on completed for historical data about previous jobs you have completed",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs3.png"
                 },
                 {
-                    "heading": "Jobs Tutorial",
+                    "heading": "My Jobs",
                     "message": "Click on failed to review jobs that you commited but not attended",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/my_jobs4.png"
                 }
             ],
             "profile": [
                 {
-                    "heading": "My Profile Tutorial",
+                    "heading": "My Profile",
                     "message": "A more detailed profile tends to get more job invitations, take some time to fill out your information",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/profile1.png"
                 }
             ],
             "availablility": [
                 {
-                    "heading": "Availability Tutorial",
+                    "heading": "Availability",
                     "message": "You will not receive invites for the dates and times that you are not available",
                     "img_url": "https://res.cloudinary.com/hq02xjols/image/upload/v1559164967/static/onboarding/availability1.gif"
                 }

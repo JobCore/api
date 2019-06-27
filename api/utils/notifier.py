@@ -206,15 +206,15 @@ def notify_new_rating(rating):
             "LINK": EMPLOYEE_URL + '/rating/' + str(rating.id),
             "DATA": {"type": "rating", "id": rating.id}
         })
-        # WATCH OUT HERE.
-        #
-        # send_fcm_notification("new_rating", to.profile.user.id, {
-        #     "SENDER": rating.sender.employer.title,
-        #     "VENUE": rating.shift.venue.title,
-        #     "DATE": rating.shift.starting_at.strftime('%m/%d/%Y'),
-        #     "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
-        #     "DATA": {"type": "rating", "id": rating.id}
-        # })
+
+        send_fcm_notification("new_rating", rating.employee.user.id, {
+            "SENDER": rating.sender.employer.title,
+            "VENUE": rating.shift.venue.title,
+            "RATING": rating.rating,
+            "DATE": rating.shift.ending_at.strftime('%m/%d/%Y'),
+            "LINK": EMPLOYEE_URL+'/rating/'+str(rating.id),
+            "DATA": {"type": "rating", "id": rating.id}
+        })
 
     elif rating.employer is not None:
         employer_users = Profile.objects.filter(
