@@ -514,15 +514,22 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
 
 class ClockinsMeView(EmployerView):
     def get_queryset(self):
-        return Clockin.objects.all()
+        return Clockin.objects.filter(shift__employer__id=self.employee.id)
 
-    def get(self, request, id):
+    def get(self, request):
         clockins = self.get_queryset()
-        clockins = clockins.filter(shift__id=id)
+
+        qShift = request.GET.get('shift')
+        if qShift:
+            clockins = clockins.filter(shift__id=qShift)
 
         qEmployee = request.GET.get('employee')
         if qEmployee:
             clockins = clockins.filter(employee__id=qEmployee)
+
+        qOpen = request.GET.get('open')
+        if qOpen:
+            clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
 
         serializer = clockin_serializer.ClockinGetSerializer(
             clockins, many=True)

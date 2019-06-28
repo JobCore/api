@@ -144,9 +144,9 @@ class RatingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "You have already rated this talent for this shift")
 
-            if 'comments' not in data or data['comments'] == '' or len(data['comments']) < 80:
+            if 'comments' not in data or data['comments'] == '' or len(data['comments']) < 50:
                 raise serializers.ValidationError(
-                    "The rating must have a comment of a least 80 characters")
+                    "The rating must have a comment of a least 50 characters")
 
         return data
 
