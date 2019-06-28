@@ -79,7 +79,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
         # if it is a talent rating an employer
         if current_user.profile.employee_id is not None:
-            if 'employee' in data:
+            if 'employee' in data and data['employee'] is not None:
                 raise serializers.ValidationError(
                     'Only employers can rate talents')
 
@@ -111,7 +111,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
         # if it is an employer rating a talent
         elif current_user.profile.employer_id is not None:
-            if 'employer' in data:
+            if 'employer' in data and data['employer' is not None]:
                 raise serializers.ValidationError(
                     'Only talents can rate employers')
 
