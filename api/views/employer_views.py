@@ -26,7 +26,7 @@ from api.mixins import EmployerView
 
 
 logger = logging.getLogger(__name__)
-DATE_FORMAT = '%m/%d/%Y'
+DATE_FORMAT = '%Y-%m-%d'
 
 
 class EmployerMeView(EmployerView):
