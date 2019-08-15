@@ -10,7 +10,7 @@ class HaveProfileMixin:
         try:
             request.user.profile
         except Profile.DoesNotExist:
-            raise PermissionDenied("You don't seem to be a talent")
+            raise PermissionDenied("You don't have a profile")
 
 
 class IsEmployeeMixin:

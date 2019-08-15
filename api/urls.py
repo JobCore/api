@@ -244,10 +244,9 @@ urlpatterns = [
         'employers/me/ratings/<int:id>',
         RateView.as_view(),
         name="me-employer-single-ratings"),
-    path(
-        'employers/me/clockins/<int:id>',
-        RateView.as_view(),
-        name="me-employer-single-clockins"),
+
+    path('employers/me/clockins', ClockinsMeView.as_view(), name="me-employer-single-clockins"),
+    path('employers/me/clockins/<int:id>', ClockinsMeView.as_view(), name="me-employer-clockins"),
 
     #
     # FOR THE TALENT

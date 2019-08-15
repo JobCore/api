@@ -15,7 +15,7 @@ from api.utils import validators
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
-    employee_serializer,
+    employee_serializer, clockin_serializer
 )
 
 from django.utils import timezone
@@ -24,8 +24,9 @@ import logging
 
 from api.mixins import EmployerView
 
-TODAY = datetime.datetime.now(tz=timezone.utc)
+
 logger = logging.getLogger(__name__)
+DATE_FORMAT = '%m/%d/%Y'
 
 
 class EmployerMeView(EmployerView):
@@ -398,6 +399,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
             serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
+            TODAY = datetime.datetime.now(tz=timezone.utc)
 
             shifts = Shift.objects.filter(
                 employer__id=self.employer.id)
@@ -420,21 +422,23 @@ class EmployerShiftView(EmployerView, CustomPagination):
             if qUpcoming == 'true':
                 shifts = shifts.filter(starting_at__gte=TODAY)
 
+            qStart = request.GET.get('start')
+            if qStart is not None and qStart != '':
+                start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+                shifts = shifts.filter(starting_at__gte=start)
+
+            qEnd = request.GET.get('end')
+            if qEnd is not None and qEnd != '':
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                shifts = shifts.filter(ending_at__lte=end)
+
             qUnrated = request.GET.get('unrated')
             if qUnrated == 'true':
                 shifts = shifts.filter(rate_set=None)
 
-            if request.user.profile.employer is None:
-                shifts = shifts.filter(
-                    employees__in=(
-                        request.user.profile.id,))
-            else:
-                qEmployeeNot = request.GET.get('employee_not')
-                if qEmployeeNot is not None:
-                    shifts = shifts.exclude(employees__in=(int(qEmployeeNot),))
-
-                shifts = shifts.filter(
-                    employer=request.user.profile.employer.id)
+            qEmployeeNot = request.GET.get('employee_not')
+            if qEmployeeNot is not None:
+                shifts = shifts.exclude(employees__in=(int(qEmployeeNot),))
 
             serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -516,23 +520,35 @@ class ClockinsMeView(EmployerView):
     def get_queryset(self):
         return Clockin.objects.filter(shift__employer__id=self.employee.id)
 
-    def get(self, request):
-        clockins = self.get_queryset()
+    def fetch_one(self, id):
+        return self.get_queryset().filter(id=id).first()
 
-        qShift = request.GET.get('shift')
-        if qShift:
-            clockins = clockins.filter(shift__id=qShift)
+    def get(self, request, id=None):
 
-        qEmployee = request.GET.get('employee')
-        if qEmployee:
-            clockins = clockins.filter(employee__id=qEmployee)
+        if id is not None:
+            clockin = self.fetch_one(id)
+            if clockin is None:
+                return Response(
+                    validators.error_object('The clockin was not found'),status=status.HTTP_404_NOT_FOUND)
 
-        qOpen = request.GET.get('open')
-        if qOpen:
-            clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
+            serializer = clockin_serializer.ClockinGetSerializer(clockin, many=False)
+        else:
+            clockins = self.get_queryset()
 
-        serializer = clockin_serializer.ClockinGetSerializer(
-            clockins, many=True)
+            qShift = request.GET.get('shift')
+            if qShift:
+                clockins = clockins.filter(shift__id=qShift)
+
+            qEmployee = request.GET.get('employee')
+            if qEmployee:
+                clockins = clockins.filter(employee__id=qEmployee)
+
+            qOpen = request.GET.get('open')
+            if qOpen:
+                clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
+
+            serializer = clockin_serializer.ClockinGetSerializer(
+                clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

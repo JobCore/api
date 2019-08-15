@@ -1,7 +1,7 @@
 image:
   file: .gitpod.dockerfile
 ports:
-    - port: 8000
+    - port: 8080
     - port: 5432
 tasks:
     - name: Instalation
@@ -16,3 +16,4 @@ tasks:
         npm i -g heroku;
         virtualenv venv;
         source venv/bin/activate;
+        python3 manage.py runserver 8080;
