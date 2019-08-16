@@ -409,7 +409,8 @@ class EmployerShiftView(EmployerView, CustomPagination):
                 return Response(validators.error_object(
                     "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
             elif qStatus:
-                shifts = shifts.filter(status__in=qStatus.split(","))
+                status_list = qStatus.split(",")
+                shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):

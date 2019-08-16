@@ -102,9 +102,9 @@ class ShiftSerializer(serializers.ModelSerializer):
 
     # @TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
-
         if ('status' in validated_data):
-            if validated_data['status'] != 'DRAFT' and validated_data['status'] != 'CANCELLED' and shift.status != 'DRAFT':
+            status = validated_data['status'].upper()
+            if status != 'DRAFT' and status != 'CANCELLED' and shift.status != 'DRAFT':
                 raise serializers.ValidationError(
                     'Only draft shifts can be edited, consider making your shift a draft first')
         else:
@@ -134,6 +134,11 @@ class ShiftSerializer(serializers.ModelSerializer):
             "venue": old_shift.venue.title
         }
 
+        # if some pending invites are coming from the front end I will have to send them
+        pending_invites = []
+        if 'pending_invites' in validated_data:
+            pending_invites = [talent['value'] for talent in validated_data['pending_invites']]
+
         # before updating the shift I have to let the employees know that the
         # shift is no longer available
         if self.has_sensitive_updates(validated_data, old_data) and shift.status == 'DRAFT':
@@ -141,7 +146,7 @@ class ShiftSerializer(serializers.ModelSerializer):
                 user=self.context['request'].user,
                 shift=shift,
                 status='being_cancelled',
-                pending_invites=[talent['value'] for talent in self.context['request'].data['pending_invites']],
+                pending_invites=pending_invites,
                 old_data=old_shift)
 
         # now i can finally update the shift
@@ -156,10 +161,10 @@ class ShiftSerializer(serializers.ModelSerializer):
                 shift=shift,
                 status='being_updated',
                 old_data=old_shift,
-                pending_invites= [talent['value'] for talent in self.context['request'].data['pending_invites']])
+                pending_invites=pending_invites)
             # delete all accepeted employees
-            if validated_data['status'] in [
-                    'DRAFT', 'CANCELLED'] or shift.status in [
+            if ('statis' in validated_data and validated_data['status'] in [
+                    'DRAFT', 'CANCELLED']) or shift.status in [
                     'DRAFT', 'CANCELLED']:
                 ShiftInvite.objects.filter(shift=shift).delete()
                 ShiftApplication.objects.filter(shift=shift).delete()
