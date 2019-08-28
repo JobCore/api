@@ -29,7 +29,7 @@ from api.views.employer_views import (
     EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
-    EmployerShiftEmployeesView, EmployerShiftView,
+    EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions
 )
 
 app_name = "api"
@@ -247,6 +247,8 @@ urlpatterns = [
 
     path('employers/me/clockins', ClockinsMeView.as_view(), name="me-employer-single-clockins"),
     path('employers/me/clockins/<int:id>', ClockinsMeView.as_view(), name="me-employer-clockins"),
+
+    path('employers/me/batch', EmployerBatchActions.as_view(), name="me-batch-actions"),
 
     #
     # FOR THE TALENT

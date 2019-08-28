@@ -3,19 +3,27 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from api.pagination import CustomPagination
 from django.db.models import Q
+from django.http import HttpRequest
 
+import requests
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
-from api.models import *
+from api.models import (
+    Shift, ShiftApplication, Employee,
+    ShiftInvite, Venue, FavoriteList,
+    PayrollPeriod, Rate, Clockin,
+    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
+)
+
 from api.utils import validators
 
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
-    employee_serializer, clockin_serializer
+    employee_serializer, clockin_serializer, rating_serializer
 )
 
 from django.utils import timezone
@@ -411,6 +419,8 @@ class EmployerShiftView(EmployerView, CustomPagination):
             elif qStatus:
                 status_list = qStatus.split(",")
                 shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+            else:
+                shifts = shifts.exclude(status='CANCELLED')
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -462,12 +472,15 @@ class EmployerShiftView(EmployerView, CustomPagination):
         try:
             shift = Shift.objects.get(id=id, employer__id=self.employer.id)
         except Shift.DoesNotExist:
-            return Response({"detail": "This shift was not found"},
+            return Response({ "detail": "This shift was not found" },
                             status=status.HTTP_404_NOT_FOUND)
-        serializer = shift_serializer.ShiftSerializer(
+        serializer = shift_serializer.ShiftUpdateSerializer(
             shift, data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save()
+            # if posponed=true it will not  save, just validate
+            posponed = request.GET.get('posponed')
+            if posponed == 'true':
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -626,3 +639,19 @@ class EmployeerRateView(EmployerView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class EmployerBatchActions(EmployerView):
+
+    def post(self, request):
+
+        log = []
+        changes = request.data['changes']
+        for entity in changes:
+            for key in changes[entity]:
+                shift = Shift.objects.get(id=key)
+                serializer = shift_serializer.ShiftUpdateSerializer(shift, data=changes[entity][key], context={"request": changes[entity][key]})
+                if serializer.is_valid():
+                    serializer.save()
+                    log.append("Updating "+entity+" ")
+
+        return Response(log, status=status.HTTP_200_OK)

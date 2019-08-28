@@ -72,7 +72,7 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
 # MAIN
 #
 
-class ShiftSerializer(serializers.ModelSerializer):
+class ShiftUpdateSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
     # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
@@ -100,17 +100,23 @@ class ShiftSerializer(serializers.ModelSerializer):
 
         return False
 
+    def validate(self, data):
+
+        data = super(ShiftUpdateSerializer, self).validate(data)
+        # if ('status' in data):
+        #     status = data['status'].upper()
+        #     if status != 'DRAFT' and status != 'CANCELLED' and self.instance.status != 'DRAFT':
+        #         raise serializers.ValidationError(
+        #             'Only draft shifts can be edited, consider making your shift a draft first')
+        # else:
+        #     if self.instance.status != 'DRAFT':
+        #         raise serializers.ValidationError(
+        #             'Only draft shifts can be edited, consider making your shift a draft first')
+
+        return data
+
     # @TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
-        if ('status' in validated_data):
-            status = validated_data['status'].upper()
-            if status != 'DRAFT' and status != 'CANCELLED' and shift.status != 'DRAFT':
-                raise serializers.ValidationError(
-                    'Only draft shifts can be edited, consider making your shift a draft first')
-        else:
-            if shift.status != 'DRAFT':
-                raise serializers.ValidationError(
-                    'Only draft shifts can be edited, consider making your shift a draft first')
 
         # Sync employees
         if 'allowed_from_list' in validated_data:
