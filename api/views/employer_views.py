@@ -474,12 +474,14 @@ class EmployerShiftView(EmployerView, CustomPagination):
         except Shift.DoesNotExist:
             return Response({ "detail": "This shift was not found" },
                             status=status.HTTP_404_NOT_FOUND)
+
         serializer = shift_serializer.ShiftUpdateSerializer(
-            shift, data=request.data, context={"request": request})
+            shift, data=request.data, context={ "request": request })
+
+        posponed = request.GET.get('posponed')
         if serializer.is_valid():
             # if posponed=true it will not  save, just validate
-            posponed = request.GET.get('posponed')
-            if posponed == 'true':
+            if posponed != 'true':
                 serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -649,7 +651,7 @@ class EmployerBatchActions(EmployerView):
         for entity in changes:
             for key in changes[entity]:
                 shift = Shift.objects.get(id=key)
-                serializer = shift_serializer.ShiftUpdateSerializer(shift, data=changes[entity][key], context={"request": changes[entity][key]})
+                serializer = shift_serializer.ShiftUpdateSerializer(shift, data=changes[entity][key], context={"request": request })
                 if serializer.is_valid():
                     serializer.save()
                     log.append("Updating "+entity+" ")
