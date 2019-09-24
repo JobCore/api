@@ -4,7 +4,7 @@ import decimal
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile
+from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue
 from api.utils.loggers import log_debug
 #
 # NESTED
@@ -28,6 +28,11 @@ class PositionGetSmallSerializer(serializers.ModelSerializer):
         model = Position
         fields = ('title', 'id')
 
+class VenueGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
+        fields = ('title', 'id')
+
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,6 +42,7 @@ class EmployerGetSmallSerializer(serializers.ModelSerializer):
 
 class ShiftGetSmallSerializer(serializers.ModelSerializer):
     position = PositionGetSmallSerializer(read_only=True)
+    venue = VenueGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
@@ -87,14 +93,6 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clockin
         exclude = ('shift', 'employee')
-
-
-class ShiftGetSmallSerializer(serializers.ModelSerializer):
-    position = PositionGetSmallSerializer(read_only=True)
-
-    class Meta:
-        model = Shift
-        fields = ('id', 'position', 'starting_at', 'ending_at')
 
 #
 # MAIN

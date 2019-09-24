@@ -29,7 +29,8 @@ from api.views.employer_views import (
     EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
-    EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions
+    EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
+    EmployerMePayrollPeriodPaymentView
 )
 
 app_name = "api"
@@ -157,9 +158,9 @@ urlpatterns = [
     #     'employers/me/periods',
     #     EmployerPayrollPeriodView.as_view(),
     #     name="me-employer-periods"),
-    path('employers/me/payroll-periods', EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-payments"),
-    path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(),
-         name="me-get-single-payroll-payments"),
+    path('employers/me/payroll-periods', EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-period"),
+    path('employers/me/payment', EmployerMePayrollPeriodPaymentView.as_view(), name="me-get-payroll-payments"),
+    path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(), name="me-get-single-payroll-period"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -367,7 +368,8 @@ urlpatterns = [
     path('hook/expire_old_invites', ExpireOldInvites.as_view()),  # every 5 min
     path('hook/delete_old_applications', ExpireOldApplications.as_view()),  # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
+
+    # every hour, will generate payment periods, params:
+    #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
-    # path( 'employer/<int:employer_id>/generate_periods', GenerateEmployerPeriodsView.as_view(), name="cronjobs-employer-payment"),
-    # every hour, will generate payment periods
 ]

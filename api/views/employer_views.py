@@ -592,6 +592,42 @@ class EmployerMePayrollPeriodsView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class EmployerMePayrollPeriodPaymentView(EmployerView):
+    def get_queryset(self):
+        return PayrollPeriodPayment.objects.filter(employer_id=self.employer.id)
+
+    def fetch_one(self, id):
+        return self.get_queryset().filter(id=id).first()
+
+    def get(self, request, payment_id=None):
+
+        if payment_id is not None:
+            payment = self.fetch_one(payment_id)
+            if payment is None:
+                return Response(
+                    validators.error_object('The payroll payment was not found'),status=status.HTTP_404_NOT_FOUND)
+
+            serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(payment, many=False)
+        else:
+            return Response(validators.error_object('You need to speficy a payment to review'), status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, payment_id=None):
+
+        payment = self.fetch_one(payment_id)
+        if payment is None:
+            return Response(
+                validators.error_object('The payroll payment was not found'),status=status.HTTP_404_NOT_FOUND)
+
+        serializer = payment_serializer.PayrollPeriodPaymentSerializer(
+            payment, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class EmployeerRateView(EmployerView):
 
     def get_queryset(self):

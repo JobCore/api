@@ -150,16 +150,18 @@ class ExpireOldApplications(APIView):
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, employer_id=None):
+    def get(self, request):
+
+        qEmployer = request.GET.get('employer')
 
         logger.debug('GeneratePeriodsView:get: init....')
-        if employer_id:
+        if qEmployer:
             try:
-                employer = Employer.objects.get(id=employer_id)
+                employer = Employer.objects.get(id=qEmployer)
             except Employer.DoesNotExist:
                 return Response(validators.error_object(
                     'Employer found.'), status=status.HTTP_404_NOT_FOUND)
-            periods = payment_serializer.generate_period_periods(employer)
+            periods = payment_serializer.generate_periods_and_payments(employer)
 
         else:
             logger.debug('GeneratePeriodsView:get: Looking for all employers periods')
