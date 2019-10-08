@@ -146,6 +146,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             # availably all week by default
             employee_actions.create_default_availablity(emp)
 
+            # add the talent to all positions by default
+            employee_actions.add_default_positions()
+
             status = 'PENDING_EMAIL_VALIDATION'
 
             # if the user is coming from an email link

@@ -1,6 +1,6 @@
 from api.serializers import favlist_serializer
 from rest_framework import serializers
-from api.models import Employee, Profile, User, FavoriteList
+from api.models import Employee, Profile, User, FavoriteList, Badge
 from api.serializers.position_serializer import PositionSerializer
 #
 # NESTED
@@ -19,6 +19,11 @@ class UserGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'profile')
+
+class BadgeGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ('title', 'id')
 
 #
 # MAIN
@@ -42,6 +47,7 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     positions = PositionSerializer(many=True)
+    badges = BadgeGetSmallSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     user = UserGetSmallSerializer(many=False)
 

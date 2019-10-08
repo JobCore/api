@@ -6,9 +6,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
-from django.db.models import F, Func
+from django.db.models import F, Func, Count
 
-from api.models import Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite, Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile
+from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite,
+                        Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position)
 from django.contrib.auth.models import User
 from api.actions import employee_actions
 from api.serializers import clockin_serializer, payment_serializer
@@ -175,3 +176,16 @@ class GeneratePeriodsView(APIView):
             periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AddTallentsToAllPositions(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        employees = Employee.objects.all().annotate(num_positions=Count('positions')).filter(num_positions=0)
+        count = 0
+        for emp in employees:
+            employee_actions.add_default_positions(emp)
+            count = count + 1
+
+        return Response({ "ok" : str(count) + " talents affected" }, status=status.HTTP_200_OK)

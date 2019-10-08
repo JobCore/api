@@ -1,6 +1,6 @@
 import pytz
 from datetime import datetime, timedelta
-from api.models import AvailabilityBlock
+from api.models import AvailabilityBlock, Position
 
 
 def next_weekday(d, weekday):
@@ -44,3 +44,11 @@ def create_default_availablity(employee):
         employee=employee, starting_at=next_weekday(
             today, 6), ending_at=next_weekday(
             today, 6), allday=True, recurrent=True, recurrency_type='WEEKLY')
+
+
+def add_default_positions(employee, positions=None):
+    if positions is None:
+        positions = Position.objects.all()
+        #positions = list(map(lambda x: x.id, positions))
+
+    employee.positions.add(*positions)

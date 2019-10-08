@@ -627,7 +627,6 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class EmployeerRateView(EmployerView):
 
     def get_queryset(self):
