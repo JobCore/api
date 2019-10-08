@@ -92,7 +92,6 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
 
         if id != None:
             many = False
-            shifts = Shift.objects.filter(id=id, employees__in=(self.employee.id,)).first()
             if shifts is None:
                 return Response(
                     validators.error_object('The shift was not found'),  # NOQA
@@ -136,7 +135,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             if qFailed == 'true':
                 shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
 
-            serializer = shift_serializer.ShiftSerializer(shifts.order_by('-starting_at'), many=True)
+            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

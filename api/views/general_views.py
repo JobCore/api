@@ -263,9 +263,9 @@ class EmployeeView(APIView, CustomPagination):
             if qName:
                 search_args = []
                 for term in qName.split():
-                    for query in ('profile__user__first_name__istartswith',
-                                  'profile__user__last_name__istartswith'):
-                        search_args.append(Q(**{query: term}))
+                    for query in ('profile__user__first_name__icontains',
+                                  'profile__user__last_name__icontains'):
+                        search_args.append(Q(**{query: term.lower()}))
 
                 employees = employees.filter(
                     functools.reduce(operator.or_, search_args))
@@ -273,12 +273,12 @@ class EmployeeView(APIView, CustomPagination):
                 qFirst = request.GET.get('first_name')
                 if qFirst:
                     employees = employees.filter(
-                        profile__user__first_name__contains=qFirst)
+                        profile__user__first_name__icontains=qFirst)
 
                 qLast = request.GET.get('last_name')
                 if qLast:
                     employees = employees.filter(
-                        profile__user__last_name__contains=qLast)
+                        profile__user__last_name__icontains=qLast)
 
             qPositions = request.GET.getlist('positions')
             if qPositions:
