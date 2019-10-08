@@ -88,16 +88,23 @@ class EmployeeMeApplicationsView(
 
 
 class EmployeeMeShiftView(EmployeeView, CustomPagination):
+    def get_queryset(self):
+        return Shift.objects.filter(employees__in=(self.employee.id,))
+
+    def fetch_one(self, id):
+        return self.get_queryset().filter(id=id).first()
+
     def get(self, request, id=None):
 
         if id != None:
             many = False
-            if shifts is None:
+            shift = self.fetch_one(id)
+            if shift is None:
                 return Response(
                     validators.error_object('The shift was not found'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
 
-            serializer = shift_serializer.ShiftGetBigSerializer(shifts, many=False)
+            serializer = shift_serializer.ShiftGetBigSerializer(shift, many=False)
 
         else:
 
