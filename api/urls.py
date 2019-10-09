@@ -6,7 +6,7 @@ from api.serializers.auth_serializer import CustomJWTSerializer
 from api.views.hooks import (
     DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
     ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications,
-    AddTallentsToAllPositions
+    AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
 )
 
 from api.views.general_views import (
@@ -365,6 +365,7 @@ urlpatterns = [
     #
     path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
     path('hook/delete_all_data', DeleteAllData.as_view()),
+    path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
     path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
 
     path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min

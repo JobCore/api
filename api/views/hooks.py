@@ -8,9 +8,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticate
 
 from django.db.models import F, Func, Count
 
+from django.contrib.auth.models import User
 from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite,
                         Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position)
-from django.contrib.auth.models import User
+
 from api.actions import employee_actions
 from api.serializers import clockin_serializer, payment_serializer
 
@@ -189,3 +190,13 @@ class AddTallentsToAllPositions(APIView):
             count = count + 1
 
         return Response({ "ok" : str(count) + " talents affected" }, status=status.HTTP_200_OK)
+
+class RemoveEmployeesWithoutProfile(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = User.objects.filter(profile__isnull=True)
+        total = query.count()
+        query.delete()
+
+        return Response({ "ok" : str(total)+" employees deleted" }, status=status.HTTP_200_OK)
