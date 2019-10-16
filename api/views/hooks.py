@@ -118,6 +118,9 @@ class ClockOutExpiredShifts(APIView):
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()
 
+        #also expire the shift if its still open or filled
+        Shift.objects.filter(ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
+
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
