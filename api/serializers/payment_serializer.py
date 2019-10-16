@@ -192,7 +192,7 @@ def get_projected_payments(
 
 def generate_periods_and_payments(employer, generate_since=None):
 
-    log_debug('hooks','generate_periods_and_payments:Employer: '+employer.title)
+    log_debug('hooks','generate_periods:Employer: '+employer.title)
     NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
@@ -214,7 +214,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     else:
         last_period_ending_date = (employer.created_at.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
 
-    log_debug('hooks','generate_periods_and_payments:Employer:'+employer.title+' from '+str(last_period_ending_date))
+    log_debug('hooks','generate_periods:Employer:'+employer.title+' from '+str(last_period_ending_date))
 
     # the ending date will be X days later, X = employer.payroll_period_length
     end_date = last_period_ending_date + \

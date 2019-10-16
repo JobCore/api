@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from api.models import (
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
-    PayrollPeriod, Rate, Clockin,
+    PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
 
@@ -586,7 +586,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
         else:
-            periods = self.get_queryset()
+            periods = self.get_queryset().order_by('-starting_at')
             serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

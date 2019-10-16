@@ -116,8 +116,8 @@ class PasswordView(APIView):
         token = request.GET.get('token')
         try:
             data = jwt_decode_handler(token)
-        except DecodeError:
-            raise ValidationError('Invalid Token')
+        except DecodeError as e:
+            raise ValidationError('Invalid Token: '+str(e))
 
         try:
             user = User.objects.get(id=data['user_id'])
@@ -127,7 +127,8 @@ class PasswordView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         token = api.utils.jwt.internal_payload_encode({
-            "user_email": user.email
+            "user_email": user.email,
+            "user_id": user.id
         })
         template = get_template_content(
             'reset_password_form', {
@@ -149,7 +150,7 @@ class PasswordView(APIView):
                 validators.error_object('Email not found on the database'),
                 status=status.HTTP_404_NOT_FOUND)
 
-        notify_password_reset_code(user)
+        #tokenDic = { "token": notify_password_reset_code(user) }
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):

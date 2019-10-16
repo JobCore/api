@@ -7,6 +7,7 @@ from rest_framework_jwt.settings import api_settings
 API_URL = os.environ.get('API_URL')
 EMPLOYER_URL = os.environ.get('EMPLOYER_URL')
 EMPLOYEE_URL = os.environ.get('EMPLOYEE_URL')
+BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
 
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -41,9 +42,12 @@ def notify_password_reset_code(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
+
     send_email_message("password_reset_link", user.email, {
         "link": API_URL + '/api/user/password/reset?token=' + token
     })
+
+    return token
 
 
 def notify_email_validation(user):
@@ -69,8 +73,6 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
         talents_to_notify = get_talents_to_notify(shift)
 
     if status == 'being_updated':
-        print("Talents to notify: " + str(len(talents_to_notify)))
-
         for talent in talents_to_notify:
 
             ShiftInvite.objects.create(
@@ -79,12 +81,13 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
                 employee=talent
             )
 
-            send_email_message('new_shift', talent.user.email, {
-                "COMPANY": shift.employer.title,
-                "POSITION": shift.position.title,
-                "DATE": shift.starting_at,
-                "DATA": {"type": "shift", "id": shift.id}
-            })
+            if BROADCAST_NOTIFICATIONS_BY_EMAIL == 'TRUE' or shift.application_restriction == 'SPECIFIC_PEOPLE':
+                send_email_message('new_shift', talent.user.email, {
+                    "COMPANY": shift.employer.title,
+                    "POSITION": shift.position.title,
+                    "DATE": shift.starting_at,
+                    "DATA": {"type": "shift", "id": shift.id}
+                })
 
             send_fcm_notification("new_shift", talent.user.id, {
                 "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
@@ -118,6 +121,7 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
 def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
 
     for talent in talents_to_notify['accepted']:
+
         send_email_message('applicant_accepted', talent.user.email, {
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
