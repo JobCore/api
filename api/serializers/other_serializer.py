@@ -116,9 +116,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
 
     def update(self, invite, validated_data):
 
-        print(invite)
         invite = super(JobCoreInvitePostSerializer, self).update(invite, validated_data)
-
         notifier.notify_jobcore_invite(invite)
 
         return invite
