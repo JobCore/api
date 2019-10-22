@@ -174,7 +174,7 @@ class EmployerShiftInviteView(EmployerView):
             shift = self.request.GET.get('shift')
             lookup['shift_id'] = shift
 
-        return self.get_queryset().filter(**lookup).order_by('-starting_at')
+        return self.get_queryset().filter(**lookup).order_by('-created_at')
 
     def get(self, request, id=False):
 

@@ -7,6 +7,7 @@ from pyfcm import FCMNotification
 from api.models import FCMDevice
 from django.conf import settings
 import requests
+from twilio.rest import Client
 
 FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
 push_service = FCMNotification(api_key=FIREBASE_KEY)
@@ -31,6 +32,21 @@ def send_email_message(slug, to, data={}):
     else:
         # print('Email not sent because notifications are not enabled')
         return True
+
+def send_sms():
+
+    # Your Account Sid and Auth Token from twilio.com/console
+    # DANGER! This is insecure. See http://twil.io/secure
+    TWILLIO_SID = os.environ.get('TWILLIO_SID')
+    TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+    client = Client(TWILLIO_SID, TWILLIO_SECRET)
+
+    message = client.messages \
+                    .create(
+                        body="Join Earth's mightiest heroes. Like Kevin Bacon.",
+                        from_='+15017122661',
+                        to='+15558675310'
+                    )
 
 
 def send_fcm(slug, registration_ids, data={}):
