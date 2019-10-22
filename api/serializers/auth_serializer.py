@@ -96,7 +96,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = User.objects.filter(email=data["email"])
-        if user.exists():
+        if user.exists() and (user.employer is not None or user.employee is not None):
             raise serializers.ValidationError("This email already exist.")
 
         if len(data["email"]) > 150:
@@ -128,8 +128,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
+        user = User.objects.filter(email=validated_data["email"]).first()
+        if not user:
+            user = super(UserRegisterSerializer, self).create(validated_data)
 
-        user = super(UserRegisterSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
         user.save()
 
