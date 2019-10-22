@@ -103,15 +103,11 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
 
         data = super(ShiftUpdateSerializer, self).validate(data)
-        # if ('status' in data):
-        #     status = data['status'].upper()
-        #     if status != 'DRAFT' and status != 'CANCELLED' and self.instance.status != 'DRAFT':
-        #         raise serializers.ValidationError(
-        #             'Only draft shifts can be edited, consider making your shift a draft first')
-        # else:
-        #     if self.instance.status != 'DRAFT':
-        #         raise serializers.ValidationError(
-        #             'Only draft shifts can be edited, consider making your shift a draft first')
+
+        clockins = Clockin.objects.filter(shift__id=self.instance.id).count()
+        if clockins > 0:
+            raise serializers.ValidationError(
+                'This shift cannot be updated because someone has already clock-in')
 
         return data
 
@@ -219,7 +215,12 @@ class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
         return shift
 
 
+class ShiftDates(serializers.Serializer):
+    starting_at = serializers.DateTimeField()
+    ending_at = serializers.DateTimeField()
+
 class ShiftPostSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Shift
         exclude = ()
@@ -228,9 +229,9 @@ class ShiftPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         shift = super(ShiftPostSerializer, self).create(validated_data)
-        if self.context['request'].data['status'] == 'DRAFT':
-            shift.status = "OPEN"
-            shift.save()
+        # if self.context['request'].data['status'] == 'DRAFT':
+        #     shift.status = "OPEN"
+        #     shift.save()
 
         talents = []
         if shift.application_restriction == 'SPECIFIC_PEOPLE':

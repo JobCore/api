@@ -456,16 +456,34 @@ class EmployerShiftView(EmployerView, CustomPagination):
 
     def post(self, request):
 
+        _all_serializers = []
         request.data["employer"] = self.employer.id
-        serializer = shift_serializer.ShiftPostSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-            return_serializer = shift_serializer.ShiftGetSerializer(
-                serializer.instance, many=False)
-            return Response(return_serializer.data,
-                            status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if 'multiple_dates' in request.data:
+            for date in request.data['multiple_dates']:
+                shift_date = dict(date)
+                data = dict(request.data)
+                data["starting_at"] = shift_date['starting_at']
+                data["ending_at"] = shift_date['ending_at']
+                data.pop('multiple_dates', None)
+                serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                if serializer.is_valid():
+                    _all_serializers.append(serializer)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = shift_serializer.ShiftPostSerializer( data=request.data, context={"request": request})
+            if serializer.is_valid():
+                _all_serializers.append(serializer)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        _shifts = []
+        for s in _all_serializers:
+            s.save()
+            return_serializer = shift_serializer.ShiftGetSerializer(s.instance, many=False)
+            _shifts.append(return_serializer.data)
+
+        return Response(_shifts, status=status.HTTP_201_CREATED)
 
     def put(self, request, id):
 
