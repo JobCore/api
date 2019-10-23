@@ -150,7 +150,8 @@ class PasswordView(APIView):
                 validators.error_object('Email not found on the database'),
                 status=status.HTTP_404_NOT_FOUND)
 
-        #tokenDic = { "token": notify_password_reset_code(user) }
+        tokenDic = { "token": notify_password_reset_code(user) }
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):

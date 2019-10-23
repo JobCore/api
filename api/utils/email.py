@@ -33,8 +33,9 @@ def send_email_message(slug, to, data={}):
         # print('Email not sent because notifications are not enabled')
         return True
 
-def send_sms():
+def send_sms(slug, phone_number, data={}):
 
+    template = get_template_content(slug, data, ["email", "fms"])
     # Your Account Sid and Auth Token from twilio.com/console
     # DANGER! This is insecure. See http://twil.io/secure
     TWILLIO_SID = os.environ.get('TWILLIO_SID')
@@ -43,7 +44,7 @@ def send_sms():
 
     message = client.messages \
                     .create(
-                        body="Join Earth's mightiest heroes. Like Kevin Bacon.",
+                        body=template['fms'],
                         from_='+15017122661',
                         to='+15558675310'
                     )
@@ -64,7 +65,7 @@ def send_fcm(slug, registration_ids, data={}):
         if 'DATA' not in data:
             raise Exception("There is no data for the notification")
         message_data = data['DATA']
-        print(message_body)
+
         result = push_service.notify_multiple_devices(
             registration_ids=registration_ids,
             message_title=message_title,
