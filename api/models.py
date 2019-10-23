@@ -335,6 +335,9 @@ class ShiftInvite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+    def __str__(self):
+        return str(self.employee) + " for " + str(self.shift) + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
+
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
@@ -369,6 +372,9 @@ class JobCoreInvite(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.first_name + " " + self.last_name + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
 
 
 class Rate(models.Model):

@@ -5,7 +5,11 @@ from .models import *
 admin.site.register(Employer)
 admin.site.register(Employee)
 admin.site.register(Shift)
-admin.site.register(ShiftInvite)
+
+class ShiftInviteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'shift', 'employee', 'status')
+    list_per_page = 100
+admin.site.register(ShiftInvite, ShiftInviteAdmin)
 admin.site.register(Profile)
 admin.site.register(Badge)
 admin.site.register(Position)
