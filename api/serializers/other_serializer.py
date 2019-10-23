@@ -83,12 +83,12 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         if not data.get('email'):
             raise serializers.ValidationError('invalid payload')
 
-        try:
-            User.objects.get(email=data["email"])
-            raise serializers.ValidationError(
-                "The user is already registered in jobcore")
-        except User.DoesNotExist:
-            pass
+        user = User.objects.filter(email=data["email"]).first()
+        if user is not None:
+            profile = Profile.objects.filter(user=user).first()
+            if profile is not None:
+                raise serializers.ValidationError(
+                    "The user is already registered in jobcore")
 
         try:
             sender = self.context['request'].user.profile.id
@@ -99,7 +99,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
             )
 
             raise serializers.ValidationError(
-                "User with this email has already been invited")
+                "User with this email has already accepted an invite")
         except JobCoreInvite.DoesNotExist:
             pass
 
