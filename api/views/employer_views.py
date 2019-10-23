@@ -550,9 +550,9 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ClockinsMeView(EmployerView):
+class EmployerClockinsMeView(EmployerView):
     def get_queryset(self):
-        return Clockin.objects.filter(shift__employer__id=self.employee.id)
+        return Clockin.objects.filter(shift__employer__id=self.employer.id)
 
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
