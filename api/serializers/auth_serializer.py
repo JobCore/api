@@ -131,7 +131,7 @@ class UserRegisterSerializer(serializers.Serializer):
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
         if not user:
-            user = super(UserRegisterSerializer, self).create(validated_data)
+            user = User.objects.create(**{**validated_data, "username": validated_data["email"]})
 
         user.set_password(validated_data['password'])
         user.save()
