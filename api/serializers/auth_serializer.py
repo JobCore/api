@@ -153,8 +153,10 @@ class UserRegisterSerializer(serializers.Serializer):
                 if data['user_email'] == user.email:
                     status = 'ACTIVE'
 
-            emp = Employee.objects.create(user=user)
-            user.employee.save()
+            emp = Employee.objects.filter(user__id=user.id).first()
+            if emp is None:
+                emp = Employee.objects.create(user=user)
+                user.employee.save()
 
             # availably all week by default
             employee_actions.create_default_availablity(emp)
