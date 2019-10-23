@@ -202,4 +202,4 @@ class RemoveEmployeesWithoutProfile(APIView):
         total = query.count()
         query.delete()
 
-        return Response({ "ok" : str(total)+" employees deleted" }, status=status.HTTP_200_OK)
+        return Response({ "ok" : str(total)+" user deleted" }, status=status.HTTP_200_OK)

@@ -81,23 +81,24 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
         }
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
+class UserRegisterSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
     account_type = serializers.CharField(required=True, write_only=True)
-
     employer = serializers.PrimaryKeyRelatedField(
         required=False, many=False, write_only=True,
         queryset=Employer.objects.all())
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'first_name',
-                  'last_name', 'email', 'password', 'account_type', 'employer')
-        extra_kwargs = {"password": {"write_only": True}}
+    email = serializers.EmailField(required=True)
+    first_name = serializers.CharField(required=True, max_length=50)
+    last_name = serializers.CharField(required=True, max_length=50)
+    password = serializers.CharField(required=True, max_length=14)
 
     def validate(self, data):
-        user = User.objects.filter(email=data["email"])
-        if user.exists() and (user.employer is not None or user.employee is not None):
-            raise serializers.ValidationError("This email already exist.")
+
+        user = User.objects.filter(email=data["email"]).first()
+        if user is not None:
+            profile = Profile.objects.filter(user=user).first()
+            if profile is not None:
+                raise serializers.ValidationError("This email already exist.")
 
         if len(data["email"]) > 150:
             raise serializers.ValidationError(
@@ -142,15 +143,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         elif account_type == 'employee':
 
-            emp = Employee.objects.create(user=user)
-            user.employee.save()
-
-            # availably all week by default
-            employee_actions.create_default_availablity(emp)
-
-            # add the talent to all positions by default
-            employee_actions.add_default_positions(emp)
-
             status = 'PENDING_EMAIL_VALIDATION'
 
             # if the user is coming from an email link
@@ -160,6 +152,15 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 data = jwt_decode_handler(token)
                 if data['user_email'] == user.email:
                     status = 'ACTIVE'
+
+            emp = Employee.objects.create(user=user)
+            user.employee.save()
+
+            # availably all week by default
+            employee_actions.create_default_availablity(emp)
+
+            # add the talent to all positions by default
+            employee_actions.add_default_positions(emp)
 
             Profile.objects.create(
                 user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile'+str(randint(1, 3))+'.png', employee=emp, status=status)
