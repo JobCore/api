@@ -2,7 +2,7 @@ from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
-    Badge, JobCoreInvite, Rate, Employer,
+    Badge, JobCoreInvite, Rate, Employer, Profile,
     Shift, Employee, User, AvailabilityBlock,
 )
 
