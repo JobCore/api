@@ -177,18 +177,19 @@ def notify_invite_accepted(invite):
     })
 
 
-def notify_single_shift_invite(invite):
+def notify_single_shift_invite(invite, withEmail=False):
 
     # invite.employee.user.email
-    send_email_message("invite_to_shift", invite.sender.user.email, {
-        "SENDER": '{} {}'.format(
-            invite.sender.user.first_name, invite.sender.user.last_name),
-        "COMPANY": invite.sender.user.profile.employer.title,
-        "POSITION": invite.shift.position.title,
-        "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
-        "LINK": EMPLOYEE_URL + '/shift/'+str(invite.shift.id),
-        "DATA": {"type": "invite", "id": invite.id}
-    })
+    if withEmail:
+        send_email_message("invite_to_shift", invite.employee.user.email, {
+            "SENDER": '{} {}'.format(
+                invite.sender.user.first_name, invite.sender.user.last_name),
+            "COMPANY": invite.sender.user.profile.employer.title,
+            "POSITION": invite.shift.position.title,
+            "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
+            "LINK": EMPLOYEE_URL + '/shift/'+str(invite.shift.id),
+            "DATA": {"type": "invite", "id": invite.id}
+        })
 
     send_fcm_notification("invite_to_shift", invite.employee.user.id, {
         "SENDER": '{} {}'.format(

@@ -1,4 +1,4 @@
-import pytz
+import pytz, os
 utc = pytz.UTC
 from datetime import datetime
 from api.serializers import other_serializer, venue_serializer, employer_serializer, employee_serializer, favlist_serializer
@@ -7,7 +7,7 @@ from api.utils import notifier
 from django.db.models import Q
 from django.utils import timezone
 from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
-
+BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
 
 #
 # NESTED
@@ -234,9 +234,12 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         #     shift.save()
 
         talents = []
+        includeEmailNotification = False
         if shift.application_restriction == 'SPECIFIC_PEOPLE':
             talents = Employee.objects.filter(id__in=[talent['value'] for talent in self.context['request'].data['pending_invites']])
+            includeEmailNotification = True
         else:
+            includeEmailNotification = (BROADCAST_NOTIFICATIONS_BY_EMAIL == 'TRUE')
             talents = notifier.get_talents_to_notify(shift)
 
         for talent in talents:
@@ -245,7 +248,7 @@ class ShiftPostSerializer(serializers.ModelSerializer):
                 sender=self.context['request'].user.profile,
                 shift=shift)
             invite.save()
-            notifier.notify_single_shift_invite(invite)
+            notifier.notify_single_shift_invite(invite, withEmail=includeEmailNotification)
 
         return shift
 
@@ -372,7 +375,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         instance = super().create(validated_data)
-        notifier.notify_single_shift_invite(instance)
+        notifier.notify_single_shift_invite(instance, withEmail=True)
         return instance
 
 
