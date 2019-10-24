@@ -437,16 +437,13 @@ class Notification(models.Model):
     data = models.TextField(max_length=1500)
     read = models.BooleanField(default=False)
     sent = models.BooleanField(default=False)
-    scheduled_at = models.DateTimeField(blank=False)
-    sent_at = models.DateTimeField(blank=False)
+    scheduled_at = models.DateTimeField(blank=False, null=True)
+    sent_at = models.DateTimeField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    class Meta:
-        ordering = ['id']
-
     def __str__(self):
-        return self.user.username
+        return self.owner.user.email + ":" + self.title
 
 
 APPROVED = 'APPROVED'
