@@ -13,7 +13,7 @@ from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin,
                         Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position)
 
 from api.actions import employee_actions
-from api.serializers import clockin_serializer, payment_serializer
+from api.serializers import clockin_serializer, payment_serializer, shift_serializer
 
 from rest_framework import serializers
 
@@ -119,7 +119,7 @@ class ClockOutExpiredShifts(APIView):
             clockin.save()
 
         #also expire the shift if its still open or filled
-        Shift.objects.filter(ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
+        Shift.objects.filter(ending_at__lte= NOW + (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
 
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
 
@@ -137,9 +137,11 @@ class ExpireOldInvites(APIView):
             invite.status = 'EXPIRED'
             invite.save()
 
+        serializer = shift_serializer.ShiftGetSmallSerializer(invites, many=True)
+
         #JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
 
-        return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Expire applications that were never approved
 class ExpireOldApplications(APIView):
