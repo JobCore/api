@@ -424,8 +424,8 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
         if(shift.ending_at < present):
             # @TODO: if the shift has already passsed the invitation needs to be deleted
             raise serializers.ValidationError(
-                "This shift has already passed: " +
-                shift.starting_at.strftime("%Y-%m-%d %H:%M:%S") +
+                "This shift ending time has already passed: " +
+                shift.ending_at.strftime("%Y-%m-%d %H:%M:%S") +
                 " < " +
                 present.strftime("%Y-%m-%d %H:%M:%S"))
 
