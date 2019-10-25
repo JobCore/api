@@ -421,7 +421,7 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
 
         # validate that the shift has not passed
         present = utc.localize(datetime.now())
-        if(shift.starting_at < present):
+        if(shift.ending_at < present):
             # @TODO: if the shift has already passsed the invitation needs to be deleted
             raise serializers.ValidationError(
                 "This shift has already passed: " +

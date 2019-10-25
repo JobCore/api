@@ -4,7 +4,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
-    DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
+    DefaultAvailabilityHook, ClockOutExpiredShifts,
     ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications,
     AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
 )
@@ -364,8 +364,6 @@ urlpatterns = [
     #
     # HOOKS
     #
-    path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
-    path('hook/delete_all_data', DeleteAllData.as_view()),
     path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
     path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
 

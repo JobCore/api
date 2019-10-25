@@ -52,3 +52,4 @@ pyfcm==1.4.5
 PyYAML==3.13
 cloudinary==1.14.0
 twilio==6.32.0
+django-admin-tools==0.8.1

@@ -617,6 +617,18 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
 
+    def build_lookup(self, request):
+        lookup = {}
+
+        # intentionally rewrite lookup to consider
+        # employee OR employer, but not both at the same time
+
+        qs_period = request.GET.get('period')
+        if qs_period:
+            lookup = {'payroll_period__id': qs_period}
+
+        return lookup
+
     def get(self, request, payment_id=None):
 
         if payment_id is not None:
@@ -627,7 +639,11 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(payment, many=False)
         else:
-            return Response(validators.error_object('You need to speficy a payment to review'), status=status.HTTP_400_BAD_REQUEST)
+
+            lookup = self.build_lookup(request)
+            qs = qs.filter(**lookup)
+
+            serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
