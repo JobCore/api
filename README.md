@@ -3,47 +3,32 @@
 
 ## Requirements
 
-1. Python 3
-2. PIP package manager
+1. Python 3.7.4
+2. Pipenv
 3. Postgree
 
 ## Installation
 
-- Install `virtualenv` on your machine
-
-```bash
-$ pip3 install virtualenv
-```
-* CD into the cloned repository and run:
-```bash
-$ virtualenv venv
-```
-
-- Activate environment on Windows and install packages
-Activete venv on windows: `$ venv\Scripts\activate.bat`
-Activate venv Linux/MacOS `$ source venv/bin/activate`
-To deactivate use `deactivate`
-
 - Install required packages
 ```bash
-$ pip3 install -r requirements.txt
+$ pipenv install
 ```
 
 - Copy and rename `jobcore/.env.example` to `jobcore/.env` and set environment variables
-- Generate a new Secret Key `$ python3 keygen_django.py` or `$ openssl rand -base64 32`
+- Generate a new Secret Key `$ pipenv run genkey` or `$ openssl rand -base64 32`
 
-Run migrations: `$ python3 manage.py migrate`
+Run migrations: `$ pipenv run migrate`
 
-Run django: `$ python3 manage.py runserver $IP:$PORT`
+Run django: `$ pipenv run start`
 
 ### Lod fixtures (if needed)
-```python
-python3 manage.py loaddata api/fixtures/development/*.yaml
+```sh
+$ python3 manage.py seed [development|production]
 ```
 
 ### Run tests
-```
-python manage.py test api
+```sh
+$ pipenv run tests
 ```
 
 Note: If you are running the old tests:
