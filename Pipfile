@@ -64,7 +64,7 @@ rollbar = "==0.14.7"
 ruamel-yaml = "*"
 
 [requires]
-python_version = "3.7.4"
+python_version = "3.7.5"
 
 [scripts]
 start="python3 manage.py runserver 8080"
