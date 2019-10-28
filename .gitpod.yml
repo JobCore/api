@@ -8,12 +8,7 @@ tasks:
       init: >
         npm i -g heroku;
         cp jobcore/.env.example jobcore/.env;
-        virtualenv venv;
-        source venv/bin/activate;
-        pip3 install -r requirements.txt;
+        pipenv install;
     - name: Terminal
       command: >
         npm i -g heroku;
-        virtualenv venv;
-        source venv/bin/activate;
-        python3 manage.py runserver 8080;
