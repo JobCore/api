@@ -639,7 +639,7 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(payment, many=False)
         else:
-
+            qs = self.get_queryset()
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
 

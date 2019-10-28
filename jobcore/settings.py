@@ -27,6 +27,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('DEBUG') == 'TRUE')
+ENVIRONMENT = os.environ.get('ENVIRONMENT')
+ROLLBAR_POST_ACCESS_TOKEN = os.environ.get('ROLLBAR_POST_ACCESS_TOKEN')
 
 # TODO: Remember deleting unused hosts in production
 ALLOWED_HOSTS = [
@@ -63,6 +65,13 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend'
 )
 
+ROLLBAR = {
+    'access_token': ROLLBAR_POST_ACCESS_TOKEN,
+    'environment': ENVIRONMENT,
+    'branch': 'master',
+    'root': os.getcwd(),
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -74,6 +83,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
 
 ROOT_URLCONF = 'jobcore.urls'
@@ -172,7 +183,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'rollbar.contrib.django_rest_framework.post_exception_handler',
 }
 
 # CORS Settings
@@ -199,6 +211,12 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+        # 'rollbar': {
+        #     'filters': ['require_debug_false'],
+        #     'access_token': ROLLBAR_POST_ACCESS_TOKEN,
+        #     'environment': ENVIRONMENT,
+        #     'class': 'rollbar.logger.RollbarHandler',
+        # },
     },
     'loggers': {
         'jobcore:general': {
