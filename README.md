@@ -14,6 +14,12 @@
 $ pipenv install
 ```
 
+- Create database:
+```
+psql postgres -c "CREATE DATABASE jobcore;"
+psql postgres -c CREATE EXTENSION unaccent;" -d=jobcore"
+```
+
 - Copy and rename `jobcore/.env.example` to `jobcore/.env` and set environment variables
 - Generate a new Secret Key `$ pipenv run genkey` or `$ openssl rand -base64 32`
 
