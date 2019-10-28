@@ -9,6 +9,9 @@ from django.utils import timezone
 from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
 BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
 
+import logging
+logger = logging.getLogger('shifts')
+
 #
 # NESTED
 #
@@ -153,6 +156,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
 
         # now i can finally update the shift
         Shift.objects.filter(pk=shift.id).update(**validated_data)
+        logger.debug("Updated shift "+shift.id+": to "+str(shift))
 
         # I have to delete all previous employes and invite all the new
         # prospects
@@ -249,6 +253,8 @@ class ShiftPostSerializer(serializers.ModelSerializer):
                 shift=shift)
             invite.save()
             notifier.notify_single_shift_invite(invite, withEmail=includeEmailNotification)
+
+        logger.debug("Created shift: "+str(shift))
 
         return shift
 

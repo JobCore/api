@@ -284,8 +284,8 @@ class Shift(models.Model):
         blank=True, default=15, null=True)  # in minutes
 
     def __str__(self):
-        return "{} at {} on {}".format(
-            self.position, self.venue, self.starting_at)
+        return "{} at {} on {} - {}".format(
+            self.position, self.venue, self.starting_at, self.ending_at)
 
 
 class ShiftEmployee(models.Model):

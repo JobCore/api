@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'oauth2_provider',
     'corsheaders',
@@ -208,6 +209,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/hooks.log'),
         },
+        'shifts.log': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/shifts.log'),
+        },
         'console': {
             'class': 'logging.StreamHandler',
         },
@@ -228,6 +234,12 @@ LOGGING = {
         'jobcore:hooks': {
             #'handlers': ['console'],
             'handlers': ['hooks.log', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'jobcore:shifts': {
+            #'handlers': ['console'],
+            'handlers': ['shifts.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
