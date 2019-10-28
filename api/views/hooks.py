@@ -17,8 +17,7 @@ from api.serializers import clockin_serializer, payment_serializer, shift_serial
 
 from rest_framework import serializers
 
-import logging
-logger = logging.getLogger('hooks')
+from api.utils.loggers import log_debug
 
 class ShiftInviteGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,7 +90,7 @@ class GeneratePeriodsView(APIView):
 
         qEmployer = request.GET.get('employer')
 
-        logger.debug('GeneratePeriodsView:get: init....')
+        log_debug("hooks",'GeneratePeriodsView:get: init....')
         if qEmployer:
             try:
                 employer = Employer.objects.get(id=qEmployer)
@@ -101,7 +100,7 @@ class GeneratePeriodsView(APIView):
             periods = payment_serializer.generate_periods_and_payments(employer)
 
         else:
-            logger.debug('GeneratePeriodsView:get: Looking for all employers periods')
+            log_debug("hooks",'GeneratePeriodsView:get: Looking for all employers periods')
             employers = Employer.objects.all()
             periods = []
             for employer in employers:

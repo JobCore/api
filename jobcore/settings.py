@@ -200,21 +200,34 @@ CORS_ORIGIN_ALLOW_ALL = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'debug.log': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
+            'formatter': 'simple',
         },
         'hooks.log': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/hooks.log'),
+            'formatter': 'simple',
         },
         'shifts.log': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/shifts.log'),
+            'formatter': 'simple',
         },
         'console': {
             'class': 'logging.StreamHandler',
