@@ -46,7 +46,6 @@ pytest-env = "==0.6.2"
 python-dateutil = "==2.7.2"
 pytz = "==2018.3"
 requests = "==2.18.4"
-ruamel-yaml = "==0.15.37"
 six = "==1.11.0"
 text-unidecode = "==1.2"
 uritemplate = "==3.0.0"
@@ -62,9 +61,12 @@ cloudinary = "==1.14.0"
 twilio = "==6.32.0"
 django-admin-tools = "==0.8.1"
 rollbar = "==0.14.7"
+ruamel-yaml = "*"
 
 [requires]
 python_version = "3.7.4"
 
 [scripts]
 start="python3 manage.py runserver 8080"
+migrate="python3 manage.py migrate"
+genkey="python3 keygen_django.py"

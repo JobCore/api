@@ -28,6 +28,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('DEBUG') == 'TRUE')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
 ROLLBAR_POST_ACCESS_TOKEN = os.environ.get('ROLLBAR_POST_ACCESS_TOKEN')
 
 # TODO: Remember deleting unused hosts in production
@@ -116,7 +118,7 @@ WSGI_APPLICATION = 'jobcore.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config()
+    'default': dj_database_url.config(default=DATABASE_URL)
 }
 
 # Password validation
