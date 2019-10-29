@@ -138,8 +138,10 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Missing recurrency type')
 
     def validate(self, data):
+        if AvailabilityBlock.objects.filter(employee_id=self.context['request'].user.profile.employee.id).count() == 7:
+            raise serializers.ValidationError('Max 7 blocks are valid')
 
-        if 'allday' in data:
+        if 'allday' in data and data.get('allday'):
             return data
 
         if 'starting_at' not in data:
@@ -156,6 +158,20 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         if (end - start).days > 0:
             raise serializers.ValidationError('Invalid availability rarge')
 
+        if AvailabilityBlock.objects.filter(
+                employee_id=self.context['request'].user.profile.employee.id,
+                starting_at__day=start.day,
+                starting_at__month=start.month,
+                starting_at__year=start.year,
+                starting_at__hour=start.hour,
+                starting_at__minute=start.minute,
+                ending_at__day=end.day,
+                ending_at__month=end.month,
+                ending_at__year=end.year,
+                ending_at__hour=end.hour,
+                ending_at__minute=end.minute).exists():
+            raise serializers.ValidationError('Duplicated block')
+
         if 'recurrent' in data and data['recurrent']:
             self.force_recurrency(data)
 
@@ -166,7 +182,7 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         # domingo = 1 y sabado = 7
         # con un poquito de juego matematico, resolvemos el problema
 
-        if data['recurrency_type'] == 'WEEKLY' and data['allday'] == True:
+        if data.get('recurrency_type', None) == 'WEEKLY' and data['allday'] == True:
             days = {
                 "1": "Sunday",
                 "2": "Monday",

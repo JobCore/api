@@ -329,7 +329,7 @@ class ClockinsMeView(EmployeeView):
         request_data['employee'] = self.employee.id
         request_data['author'] = self.employee.user.profile.id
 
-        logger.debug(f'ClockinsMeView:post: {request_data}')
+        logger.debug('ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
             return Response(
@@ -373,6 +373,13 @@ class EmployeeAvailabilityBlockView(
 
     def get_queryset(self):
         return AvailabilityBlock.objects.filter(employee_id=self.employee.id)
+
+    def delete(self, request, block_id):
+        availability = self.get_queryset().filter(id=block_id)
+        if availability.exists():
+            availability.delete()
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request):
         unavailability_blocks = self.get_queryset()
