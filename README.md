@@ -16,8 +16,8 @@ $ pipenv install
 
 - Create database:
 ```
-psql postgres -c "CREATE DATABASE jobcore;"
-psql postgres -c CREATE EXTENSION unaccent;" -d=jobcore"
+psql -U gitpod -c 'CREATE DATABASE jobcore;'
+psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore
 ```
 
 - Copy and rename `jobcore/.env.example` to `jobcore/.env` and set environment variables

@@ -114,7 +114,6 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
 
         return data
 
-    # @TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
 
         # Sync employees
@@ -146,36 +145,29 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
 
         # before updating the shift I have to let the employees know that the
         # shift is no longer available
-        if self.has_sensitive_updates(validated_data, old_data) and shift.status == 'DRAFT':
-            notifier.notify_shift_update(
-                user=self.context['request'].user,
-                shift=shift,
-                status='being_cancelled',
-                pending_invites=pending_invites,
-                old_data=old_shift)
+        if 'status' in validated_data and validated_data['status'] in ['DRAFT', 'CANCELLED']:
+            if old_data['status'] != 'DRAFT' or validated_data['status'] != 'DRAFT':
+                notifier.notify_shift_cancellation(user=self.context['request'].user,shift=shift)
 
         # now i can finally update the shift
         Shift.objects.filter(pk=shift.id).update(**validated_data)
         log_debug("shifts", "Updated shift "+str(shift.id)+": to "+str(shift))
 
-        # I have to delete all previous employes and invite all the new
-        # prospects
+        # I have to delete all previous employes and invite all the new prospects
         if self.has_sensitive_updates(validated_data, old_data):
 
-            notifier.notify_shift_update(
-                user=self.context['request'].user,
-                shift=shift,
-                status='being_updated',
-                old_data=old_shift,
-                pending_invites=pending_invites)
-            # delete all accepeted employees
-            if ('statis' in validated_data and validated_data['status'] in [
-                    'DRAFT', 'CANCELLED']) or shift.status in [
-                    'DRAFT', 'CANCELLED']:
-                ShiftInvite.objects.filter(shift=shift).delete()
-                ShiftApplication.objects.filter(shift=shift).delete()
-                shift.candidates.clear()
-                shift.employees.clear()
+            ShiftInvite.objects.filter(shift=shift).delete()
+            ShiftApplication.objects.filter(shift=shift).delete()
+            shift.candidates.clear()
+            shift.employees.clear()
+
+            if validated_data['status'] != 'DRAFT':
+                notifier.notify_shift_update(
+                    user=self.context['request'].user,
+                    shift=shift,
+                    pending_invites=pending_invites)
+                # delete all accepeted employees
+
 
         return shift
 

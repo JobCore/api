@@ -31,9 +31,6 @@ def get_talents_to_notify(shift):
                 Q(favoritelist__in=favorite_lists)
             )
 
-    elif shift.status == 'CANCELLED' or shift.status == 'DRAFT':
-        talents_to_notify = shift.candidates.all() | shift.employees.all()
-
     return talents_to_notify
 
 
@@ -62,7 +59,30 @@ def notify_email_validation(user):
     })
 
 
-def notify_shift_update(user, shift, status='being_updated', old_data=None, pending_invites=[]):
+def notify_shift_cancellation(user, shift):
+    # automatic notification
+    shift = Shift.objects.get(id=shift.id)  # IMPORTANT: override the shift
+
+    talents_to_notify = shift.candidates.all() | shift.employees.all()
+    for talent in talents_to_notify:
+
+        send_email_message('cancelled_shift', talent.user.email, {
+            "COMPANY": shift.employer.title,
+            "POSITION": shift.position.title,
+            "DATE": shift.starting_at,
+            "DATA": {"type": "shift", "id": shift.id}
+        })
+
+        send_fcm_notification("cancelled_shift", talent.user.id, {
+            "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
+            "COMPANY": user.profile.employer.title,
+            "POSITION": shift.position.title,
+            "LINK": EMPLOYER_URL,
+            "DATE": shift.starting_at.strftime('%m/%d/%Y'),
+            "DATA": {"type": "shift", "id": shift.id}
+        })
+
+def notify_shift_update(user, shift, pending_invites=[]):
     # automatic notification
     shift = Shift.objects.get(id=shift.id)  # IMPORTANT: override the shift
 
@@ -72,51 +92,30 @@ def notify_shift_update(user, shift, status='being_updated', old_data=None, pend
     else:
         talents_to_notify = get_talents_to_notify(shift)
 
-    if status == 'being_updated':
-        for talent in talents_to_notify:
+    for talent in talents_to_notify:
 
-            ShiftInvite.objects.create(
-                sender=user.profile,
-                shift=shift,
-                employee=talent
-            )
+        ShiftInvite.objects.create(
+            sender=user.profile,
+            shift=shift,
+            employee=talent
+        )
 
-            if BROADCAST_NOTIFICATIONS_BY_EMAIL == 'TRUE' or shift.application_restriction == 'SPECIFIC_PEOPLE':
-                send_email_message('new_shift', talent.user.email, {
-                    "COMPANY": shift.employer.title,
-                    "POSITION": shift.position.title,
-                    "DATE": shift.starting_at,
-                    "DATA": {"type": "shift", "id": shift.id}
-                })
-
-            send_fcm_notification("new_shift", talent.user.id, {
-                "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
-                "COMPANY": user.profile.employer.title,
-                "POSITION": shift.position.title,
-                "LINK": EMPLOYER_URL,
-                "DATE": shift.starting_at.strftime('%m/%d/%Y'),
-                "DATA": {"type": "shift", "id": shift.id}
-            })
-
-    if status == 'being_cancelled':
-        for talent in talents_to_notify:
-
-            send_email_message('cancelled_shift', talent.user.email, {
+        if BROADCAST_NOTIFICATIONS_BY_EMAIL == 'TRUE' or shift.application_restriction == 'SPECIFIC_PEOPLE':
+            send_email_message('new_shift', talent.user.email, {
                 "COMPANY": shift.employer.title,
                 "POSITION": shift.position.title,
                 "DATE": shift.starting_at,
                 "DATA": {"type": "shift", "id": shift.id}
             })
 
-            send_fcm_notification("cancelled_shift", talent.user.id, {
-                "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
-                "COMPANY": user.profile.employer.title,
-                "POSITION": shift.position.title,
-                "LINK": EMPLOYER_URL,
-                "DATE": shift.starting_at.strftime('%m/%d/%Y'),
-                "DATA": {"type": "shift", "id": shift.id}
-            })
-
+        send_fcm_notification("new_shift", talent.user.id, {
+            "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
+            "COMPANY": user.profile.employer.title,
+            "POSITION": shift.position.title,
+            "LINK": EMPLOYER_URL,
+            "DATE": shift.starting_at.strftime('%m/%d/%Y'),
+            "DATA": {"type": "shift", "id": shift.id}
+        })
 
 def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
 
