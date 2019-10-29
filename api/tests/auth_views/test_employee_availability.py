@@ -149,6 +149,82 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
             400,
             'It should return an error response')
 
+    def test_post_new_availability_too_many(self):
+        """
+        """
+        create_default_availablity(self.test_employee)
+
+        self.client.force_login(self.test_user_employee)
+        url = reverse_lazy('api:me-employees-availability')
+
+        avail_start = timezone.now() + timedelta(days=30)
+        avail_end = avail_start + timedelta(hours=8)
+
+        payload = {
+            'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
+            'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
+        }
+
+        response = self.client.post(url, data=payload)
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+    def test_post_delete_availability(self):
+        create_default_availablity(self.test_employee)
+        self.client.force_login(self.test_user_employee)
+
+        availability = AvailabilityBlock.objects.last()
+        url = reverse_lazy('api:me-employees-availability', kwargs={
+            'block_id': 1
+            })
+
+        response = self.client.delete(url)
+
+        self.assertEquals(
+            response.status_code,
+            404,
+            'It should return an error response')
+
+        url = reverse_lazy('api:me-employees-availability', kwargs={
+            'block_id': availability.id
+            })
+
+        response = self.client.delete(url)
+        self.assertEquals(
+            response.status_code,
+            200,
+            'It should return a success response')
+
+    def test_post_new_availability_duplicate(self):
+        """
+        """
+        avail_start = timezone.now() + timedelta(days=30)
+        avail_end = avail_start + timedelta(hours=8)
+        availability = mixer.blend(AvailabilityBlock,
+                employee=self.test_employee,
+                starting_at=avail_start,
+                ending_at=avail_end)
+
+        self.client.force_login(self.test_user_employee)
+        url = reverse_lazy('api:me-employees-availability')
+
+        payload = {
+            'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
+            'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
+        }
+
+        response = self.client.post(url, data=payload)
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return an error response')
+
+
+
     def test_post_new_availability_bad_recurrent(self):
         """
         """
