@@ -6,13 +6,12 @@ ports:
 tasks:
     - name: Instalation
       init: >
-        npm i -g heroku;
         cp jobcore/.env.example jobcore/.env;
-        pipenv install;
-        psql -U gitpod -c 'CREATE DATABASE jobcore;'
-        psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore
+        psql -U gitpod -c 'CREATE DATABASE jobcore;';
+        psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore;
         pipenv run migrate;
         pipenv run seed;
     - name: Terminal
       command: >
         npm i -g heroku;
+        pipenv install;
