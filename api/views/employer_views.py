@@ -174,7 +174,7 @@ class EmployerShiftInviteView(EmployerView):
             shift = self.request.GET.get('shift')
             lookup['shift_id'] = shift
 
-        return self.get_queryset().filter(**lookup).order_by('-starting_at')
+        return self.get_queryset().filter(**lookup).order_by('-created_at')
 
     def get(self, request, id=False):
 
@@ -456,16 +456,34 @@ class EmployerShiftView(EmployerView, CustomPagination):
 
     def post(self, request):
 
+        _all_serializers = []
         request.data["employer"] = self.employer.id
-        serializer = shift_serializer.ShiftPostSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-            return_serializer = shift_serializer.ShiftGetSerializer(
-                serializer.instance, many=False)
-            return Response(return_serializer.data,
-                            status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if 'multiple_dates' in request.data:
+            for date in request.data['multiple_dates']:
+                shift_date = dict(date)
+                data = dict(request.data)
+                data["starting_at"] = shift_date['starting_at']
+                data["ending_at"] = shift_date['ending_at']
+                data.pop('multiple_dates', None)
+                serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                if serializer.is_valid():
+                    _all_serializers.append(serializer)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = shift_serializer.ShiftPostSerializer( data=request.data, context={"request": request})
+            if serializer.is_valid():
+                _all_serializers.append(serializer)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        _shifts = []
+        for s in _all_serializers:
+            s.save()
+            return_serializer = shift_serializer.ShiftGetSerializer(s.instance, many=False)
+            _shifts.append(return_serializer.data)
+
+        return Response(_shifts, status=status.HTTP_201_CREATED)
 
     def put(self, request, id):
 
@@ -532,9 +550,9 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ClockinsMeView(EmployerView):
+class EmployerClockinsMeView(EmployerView):
     def get_queryset(self):
-        return Clockin.objects.filter(shift__employer__id=self.employee.id)
+        return Clockin.objects.filter(shift__employer__id=self.employer.id)
 
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
@@ -599,6 +617,18 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
 
+    def build_lookup(self, request):
+        lookup = {}
+
+        # intentionally rewrite lookup to consider
+        # employee OR employer, but not both at the same time
+
+        qs_period = request.GET.get('period')
+        if qs_period:
+            lookup = {'payroll_period__id': qs_period}
+
+        return lookup
+
     def get(self, request, payment_id=None):
 
         if payment_id is not None:
@@ -609,7 +639,11 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(payment, many=False)
         else:
-            return Response(validators.error_object('You need to speficy a payment to review'), status=status.HTTP_400_BAD_REQUEST)
+            qs = self.get_queryset()
+            lookup = self.build_lookup(request)
+            qs = qs.filter(**lookup)
+
+            serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

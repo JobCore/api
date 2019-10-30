@@ -27,6 +27,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get('DEBUG') == 'TRUE')
+ENVIRONMENT = os.environ.get('ENVIRONMENT')
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+ROLLBAR_POST_ACCESS_TOKEN = os.environ.get('ROLLBAR_POST_ACCESS_TOKEN')
 
 # TODO: Remember deleting unused hosts in production
 ALLOWED_HOSTS = [
@@ -36,6 +40,10 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'admin_tools',
+    'admin_tools.theming',
+    'admin_tools.menu',
+    'admin_tools.dashboard',
     'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'oauth2_provider',
     'corsheaders',
@@ -59,6 +68,13 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend'
 )
 
+ROLLBAR = {
+    'access_token': ROLLBAR_POST_ACCESS_TOKEN,
+    'environment': ENVIRONMENT,
+    'branch': 'master',
+    'root': os.getcwd(),
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -70,6 +86,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
 
 ROOT_URLCONF = 'jobcore.urls'
@@ -78,7 +96,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -86,6 +103,12 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'loaders': [
+                # insert your TEMPLATE_LOADERS here
+                'admin_tools.template_loaders.Loader',
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
         },
     },
 ]
@@ -95,7 +118,7 @@ WSGI_APPLICATION = 'jobcore.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config()
+    'default': dj_database_url.config(default=DATABASE_URL)
 }
 
 # Password validation
@@ -163,7 +186,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'rollbar.contrib.django_rest_framework.post_exception_handler',
 }
 
 # CORS Settings
@@ -176,32 +200,67 @@ CORS_ORIGIN_ALLOW_ALL = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
-        'file': {
+        'debug.log': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
+            'formatter': 'simple',
+        },
+        'hooks.log': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/hooks.log'),
+            'formatter': 'simple',
+        },
+        'shifts.log': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/shifts.log'),
+            'formatter': 'simple',
         },
         'console': {
             'class': 'logging.StreamHandler',
         },
+        # 'rollbar': {
+        #     'filters': ['require_debug_false'],
+        #     'access_token': ROLLBAR_POST_ACCESS_TOKEN,
+        #     'environment': ENVIRONMENT,
+        #     'class': 'rollbar.logger.RollbarHandler',
+        # },
     },
     'loggers': {
         'jobcore:general': {
             'handlers': ['console'],
-            # 'handlers': ['file', 'console'],
+            # 'handlers': ['debug.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:hooks': {
-            'handlers': ['console'],
-            # 'handlers': ['file', 'console'],
+            #'handlers': ['console'],
+            'handlers': ['hooks.log', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'jobcore:shifts': {
+            #'handlers': ['console'],
+            'handlers': ['shifts.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:employee_views:': {
             'handlers': ['console'],
-            # 'handlers': ['file', 'console'],
+            # 'handlers': ['debug.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },

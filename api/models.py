@@ -284,8 +284,8 @@ class Shift(models.Model):
         blank=True, default=15, null=True)  # in minutes
 
     def __str__(self):
-        return "{} at {} on {}".format(
-            self.position, self.venue, self.starting_at)
+        return "{} at {} on {} - {}".format(
+            self.position, self.venue, self.starting_at, self.ending_at)
 
 
 class ShiftEmployee(models.Model):
@@ -335,6 +335,9 @@ class ShiftInvite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+    def __str__(self):
+        return str(self.employee) + " for " + str(self.shift) + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
+
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
@@ -369,6 +372,9 @@ class JobCoreInvite(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.first_name + " " + self.last_name + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
 
 
 class Rate(models.Model):
@@ -431,16 +437,13 @@ class Notification(models.Model):
     data = models.TextField(max_length=1500)
     read = models.BooleanField(default=False)
     sent = models.BooleanField(default=False)
-    scheduled_at = models.DateTimeField(blank=False)
-    sent_at = models.DateTimeField(blank=False)
+    scheduled_at = models.DateTimeField(blank=False, null=True)
+    sent_at = models.DateTimeField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    class Meta:
-        ordering = ['id']
-
     def __str__(self):
-        return self.user.username
+        return self.owner.user.email + ":" + self.title
 
 
 APPROVED = 'APPROVED'

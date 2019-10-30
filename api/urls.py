@@ -4,7 +4,7 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
-    DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
+    DefaultAvailabilityHook, ClockOutExpiredShifts,
     ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications,
     AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
 )
@@ -31,7 +31,7 @@ from api.views.employer_views import (
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
-    EmployerMePayrollPeriodPaymentView
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView
 )
 
 app_name = "api"
@@ -249,8 +249,8 @@ urlpatterns = [
         RateView.as_view(),
         name="me-employer-single-ratings"),
 
-    path('employers/me/clockins', ClockinsMeView.as_view(), name="me-employer-single-clockins"),
-    path('employers/me/clockins/<int:id>', ClockinsMeView.as_view(), name="me-employer-clockins"),
+    path('employers/me/clockins', EmployerClockinsMeView.as_view(), name="me-employer-clockins"),
+    path('employers/me/clockins/<int:id>', EmployerClockinsMeView.as_view(), name="me-employer-single-clockins"),
 
     path('employers/me/batch', EmployerBatchActions.as_view(), name="me-batch-actions"),
 
@@ -364,8 +364,6 @@ urlpatterns = [
     #
     # HOOKS
     #
-    path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
-    path('hook/delete_all_data', DeleteAllData.as_view()),
     path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
     path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
 

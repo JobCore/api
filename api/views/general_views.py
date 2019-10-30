@@ -150,7 +150,8 @@ class PasswordView(APIView):
                 validators.error_object('Email not found on the database'),
                 status=status.HTTP_404_NOT_FOUND)
 
-        #tokenDic = { "token": notify_password_reset_code(user) }
+        tokenDic = { "token": notify_password_reset_code(user) }
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
@@ -561,9 +562,9 @@ class CatalogView(APIView):
             qName = request.GET.get('full_name')
             if qName:
                 search_args = []
-                for term in qName.split():
-                    for query in ('profile__user__first_name__istartswith',
-                                  'profile__user__last_name__istartswith'):
+                for term in qName.split():#first_name__unaccent__startswith
+                    for query in ('profile__user__first_name__unaccent__istartswith',
+                                  'profile__user__last_name__unaccent__istartswith'):
                         search_args.append(Q(**{query: term}))
 
                 employees = employees.filter(

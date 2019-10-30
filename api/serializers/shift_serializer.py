@@ -1,4 +1,4 @@
-import pytz
+import pytz, os
 utc = pytz.UTC
 from datetime import datetime
 from api.serializers import other_serializer, venue_serializer, employer_serializer, employee_serializer, favlist_serializer
@@ -7,6 +7,9 @@ from api.utils import notifier
 from django.db.models import Q
 from django.utils import timezone
 from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
+BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
+
+from api.utils.loggers import log_debug
 
 
 #
@@ -103,19 +106,14 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
 
         data = super(ShiftUpdateSerializer, self).validate(data)
-        # if ('status' in data):
-        #     status = data['status'].upper()
-        #     if status != 'DRAFT' and status != 'CANCELLED' and self.instance.status != 'DRAFT':
-        #         raise serializers.ValidationError(
-        #             'Only draft shifts can be edited, consider making your shift a draft first')
-        # else:
-        #     if self.instance.status != 'DRAFT':
-        #         raise serializers.ValidationError(
-        #             'Only draft shifts can be edited, consider making your shift a draft first')
+
+        clockins = Clockin.objects.filter(shift__id=self.instance.id).count()
+        if clockins > 0:
+            raise serializers.ValidationError(
+                'This shift cannot be updated because someone has already clock-in')
 
         return data
 
-    # @TODO: Validate that only draft shifts can me updated
     def update(self, shift, validated_data):
 
         # Sync employees
@@ -147,35 +145,29 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
 
         # before updating the shift I have to let the employees know that the
         # shift is no longer available
-        if self.has_sensitive_updates(validated_data, old_data) and shift.status == 'DRAFT':
-            notifier.notify_shift_update(
-                user=self.context['request'].user,
-                shift=shift,
-                status='being_cancelled',
-                pending_invites=pending_invites,
-                old_data=old_shift)
+        if 'status' in validated_data and validated_data['status'] in ['DRAFT', 'CANCELLED']:
+            if old_data['status'] != 'DRAFT' or validated_data['status'] != 'DRAFT':
+                notifier.notify_shift_cancellation(user=self.context['request'].user,shift=shift)
 
         # now i can finally update the shift
         Shift.objects.filter(pk=shift.id).update(**validated_data)
+        log_debug("shifts", "Updated shift "+str(shift.id)+": to "+str(shift))
 
-        # I have to delete all previous employes and invite all the new
-        # prospects
+        # I have to delete all previous employes and invite all the new prospects
         if self.has_sensitive_updates(validated_data, old_data):
 
-            notifier.notify_shift_update(
-                user=self.context['request'].user,
-                shift=shift,
-                status='being_updated',
-                old_data=old_shift,
-                pending_invites=pending_invites)
-            # delete all accepeted employees
-            if ('statis' in validated_data and validated_data['status'] in [
-                    'DRAFT', 'CANCELLED']) or shift.status in [
-                    'DRAFT', 'CANCELLED']:
-                ShiftInvite.objects.filter(shift=shift).delete()
-                ShiftApplication.objects.filter(shift=shift).delete()
-                shift.candidates.clear()
-                shift.employees.clear()
+            ShiftInvite.objects.filter(shift=shift).delete()
+            ShiftApplication.objects.filter(shift=shift).delete()
+            shift.candidates.clear()
+            shift.employees.clear()
+
+            if validated_data['status'] != 'DRAFT':
+                notifier.notify_shift_update(
+                    user=self.context['request'].user,
+                    shift=shift,
+                    pending_invites=pending_invites)
+                # delete all accepeted employees
+
 
         return shift
 
@@ -219,7 +211,12 @@ class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
         return shift
 
 
+class ShiftDates(serializers.Serializer):
+    starting_at = serializers.DateTimeField()
+    ending_at = serializers.DateTimeField()
+
 class ShiftPostSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Shift
         exclude = ()
@@ -228,14 +225,17 @@ class ShiftPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         shift = super(ShiftPostSerializer, self).create(validated_data)
-        if self.context['request'].data['status'] == 'DRAFT':
-            shift.status = "OPEN"
-            shift.save()
+        # if self.context['request'].data['status'] == 'DRAFT':
+        #     shift.status = "OPEN"
+        #     shift.save()
 
         talents = []
+        includeEmailNotification = False
         if shift.application_restriction == 'SPECIFIC_PEOPLE':
             talents = Employee.objects.filter(id__in=[talent['value'] for talent in self.context['request'].data['pending_invites']])
+            includeEmailNotification = True
         else:
+            includeEmailNotification = (BROADCAST_NOTIFICATIONS_BY_EMAIL == 'TRUE')
             talents = notifier.get_talents_to_notify(shift)
 
         for talent in talents:
@@ -244,7 +244,9 @@ class ShiftPostSerializer(serializers.ModelSerializer):
                 sender=self.context['request'].user.profile,
                 shift=shift)
             invite.save()
-            notifier.notify_single_shift_invite(invite)
+            notifier.notify_single_shift_invite(invite, withEmail=includeEmailNotification)
+
+        log_debug("shifts","Created shift: "+str(shift))
 
         return shift
 
@@ -371,7 +373,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         instance = super().create(validated_data)
-        notifier.notify_single_shift_invite(instance)
+        notifier.notify_single_shift_invite(instance, withEmail=True)
         return instance
 
 
@@ -417,11 +419,11 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
 
         # validate that the shift has not passed
         present = utc.localize(datetime.now())
-        if(shift.starting_at < present):
+        if(shift.ending_at < present):
             # @TODO: if the shift has already passsed the invitation needs to be deleted
             raise serializers.ValidationError(
-                "This shift has already passed: " +
-                shift.starting_at.strftime("%Y-%m-%d %H:%M:%S") +
+                "This shift ending time has already passed: " +
+                shift.ending_at.strftime("%Y-%m-%d %H:%M:%S") +
                 " < " +
                 present.strftime("%Y-%m-%d %H:%M:%S"))
 
