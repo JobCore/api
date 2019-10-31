@@ -187,7 +187,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
-    'EXCEPTION_HANDLER': 'rollbar.contrib.django_rest_framework.post_exception_handler',
+    'EXCEPTION_HANDLER': 'api.utils.validators.post_exception_handler',
 }
 
 # CORS Settings
