@@ -36,20 +36,6 @@ PAYROLL_LENGTH_TYPE = (
 )
 
 
-class Document(models.Model):
-    PENDING = 'PENDING'
-    APPROVED = 'APPROVED'
-    DOCUMENT_STATUS = (
-        (PENDING, 'Pending'),
-        (APPROVED, 'Approved'),
-    )
-    document = models.URLField()
-    public_id = models.CharField(max_length=30, null=True)
-    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-
-
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -66,7 +52,7 @@ class Employer(models.Model):
 
     # the company can configure how it wants the payroll period
     payroll_period_starting_time = models.DateTimeField(
-        blank=True, null=True)  # 12:00am GMT
+        blank=True, default=MIDNIGHT)  # 12:00am GMT
     payroll_period_length = models.IntegerField(blank=True, default=7)
     payroll_period_type = models.CharField(
         max_length=25,
@@ -91,12 +77,6 @@ class Employer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    def save(self, *args, **kwargs):
-        if self.payroll_period_starting_time is None:
-            self.payroll_period_starting_time = MIDNIGHT
-
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.title
 
@@ -116,7 +96,6 @@ class Employee(models.Model):
         Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
-    documents = models.ManyToManyField('Document', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -581,21 +560,4 @@ class PayrollPeriodPayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
-class PaymentDeduction(models.Model):
-    employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
-    name = models.CharField(max_length=200)
-    amount = models.FloatField()
-
-
-class BankAccount(models.Model):
-    user = models.ForeignKey(
-        Profile,
-        related_name='bank_accounts', 
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True)
-    access_token = models.CharField(max_length=100)
-    name = models.CharField(max_length=200)
-    institution_name = models.CharField(max_length=200)
-    item_id = models.CharField(max_length=100)
 
