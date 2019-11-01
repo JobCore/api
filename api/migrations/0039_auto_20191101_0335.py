@@ -11,15 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='paymentdeduction',
-            name='employer',
-        ),
-        migrations.AddField(
-            model_name='employer',
-            name='deductions',
-            field=models.ManyToManyField(to='api.PaymentDeduction'),
-        ),
         migrations.CreateModel(
             name='BankAccount',
             fields=[
