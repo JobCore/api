@@ -36,6 +36,11 @@ PAYROLL_LENGTH_TYPE = (
 )
 
 
+class PaymentDeduction(models.Model):
+    name = models.CharField(max_length=200)
+    amount = models.FloatField()
+
+
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -73,6 +78,8 @@ class Employer(models.Model):
 
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
+
+    deductions = models.ManyToManyField(PaymentDeduction)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -563,7 +570,15 @@ class PayrollPeriodPayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
-class PaymentDeduction(models.Model):
-    employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
+class BankAccount(models.Model):
+    user = models.ForeignKey(
+        Profile,
+        related_name='bank_accounts', 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True)
+    access_token = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
-    amount = models.FloatField()
+    institution_name = models.CharField(max_length=200)
+    item_id = models.CharField(max_length=100)
+
