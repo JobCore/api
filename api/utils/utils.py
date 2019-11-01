@@ -1,5 +1,5 @@
 from math import radians, cos, sin, asin, sqrt
-
+import datetime
 from django.utils.timezone import is_aware, make_aware
 from django.utils.dateparse import parse_datetime
 
@@ -41,3 +41,10 @@ def get_aware_datetime(date_str):
     if not is_aware(ret):
         ret = make_aware(ret)
     return ret
+
+def nearest_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0: # Target day already happened this week
+        days_ahead -= 7
+    new_date = d + datetime.timedelta(days_ahead)
+    return new_date
