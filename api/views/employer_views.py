@@ -15,8 +15,7 @@ from api.models import (
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
-    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
-    PaymentDeduction
+    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
 
 from api.utils import validators
@@ -712,7 +711,6 @@ class EmployeerRateView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
 class EmployerBatchActions(EmployerView):
 
     def post(self, request):
@@ -728,50 +726,3 @@ class EmployerBatchActions(EmployerView):
                     log.append("Updating "+entity+" ")
 
         return Response(log, status=status.HTTP_200_OK)
-
-
-class EmployerPaymentDeductionView(EmployerView):
-    def get_queryset(self):
-        return self.employer.deductions.all()
-
-    def get(self, request, deduction_id=None):
-        many = True
-        deduction = self.get_queryset()
-        if deduction_id:
-            try:
-                deduction = deduction.get(id=deduction_id)
-                many = False
-            except PaymentDeduction.DoesNotExist:
-                return Response(
-                    validators.error_object('The payment deduction  was not found'),status=status.HTTP_404_NOT_FOUND)
-        serializer = payment_serializer.PaymentDeductionSerializer(deduction, many=many)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, deduction_id):    
-        deduction = self.get_queryset().filter(id=deduction_id)
-        if not deduction.exists():
-            try:
-                deduction = PaymentDeduction.objects.get(id=deduction_id)
-            except:
-                return Response(
-                    validators.error_object('The payment deduction  was not found'),status=status.HTTP_404_NOT_FOUND)
-            self.employer.deductions.add(deduction)
-        else:
-            deduction = deduction.last()
-        serializer = payment_serializer.PaymentDeductionSerializer(deduction, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def post(self, request):
-        request.data['employer'] = self.employer.id
-        serializer = payment_serializer.PaymentDeductionSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-

@@ -4,7 +4,7 @@ import decimal
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue, PaymentDeduction
+from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 #
@@ -320,8 +320,3 @@ def get_employee_payments(
         payments = payments.filter(shift__id=qShift)
 
     return result
-
-class PaymentDeductionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PaymentDeduction
-        exclude = ()
