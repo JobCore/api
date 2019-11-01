@@ -42,9 +42,12 @@ def get_aware_datetime(date_str):
         ret = make_aware(ret)
     return ret
 
-def nearest_weekday(d, weekday):
+def nearest_weekday(d, weekday, fallback_direction='forward'):
     days_ahead = weekday - d.weekday()
     if days_ahead <= 0: # Target day already happened this week
-        days_ahead -= 7
+        if fallback_direction == 'backward':
+            days_ahead -= 7
+        else:
+            days_ahead += 7
     new_date = d + datetime.timedelta(days_ahead)
     return new_date

@@ -212,10 +212,10 @@ def generate_periods_and_payments(employer, generate_since=None):
     #
     last_period_ending_date = None
     if last_processed_period is not None:
-        last_period_ending_date = last_processed_period.ending_at
+        last_period_ending_date = nearest_weekday(last_processed_period.ending_at, weekday, fallback_direction='forward')
     else:
         log_debug('hooks','generate_periods:Employer: the payroll starting weekday is '+str(weekday))
-        last_period_ending_date = nearest_weekday(employer.created_at, weekday)
+        last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')
         log_debug('hooks','generate_periods:Employer: the nearest date with that weekday is '+str(last_period_ending_date))
         last_period_ending_date = (last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
         #last_period_ending_date = (employer.created_at.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))

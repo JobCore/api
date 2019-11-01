@@ -69,6 +69,7 @@ python_version = "3.7.4"
 [scripts]
 start="python3 manage.py runserver 8080"
 migrate="python3 manage.py migrate"
+makemigrations="python3 manage.py makemigrations"
 keygen="python3 keygen_django.py"
 seed="python3 manage.py seed development"
 reset="python3 manage.py reset_database"
