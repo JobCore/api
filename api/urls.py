@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView
+    PositionView, OnboardingView, ValidateSendEmailView, RegisterBankAccountView
 )
 
 from api.views.admin_views import (
@@ -374,6 +374,7 @@ urlpatterns = [
         'document/',
         DocumentAdmin.as_view(),
         name="admin-document"),
+    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 

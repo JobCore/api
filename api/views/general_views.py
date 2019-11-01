@@ -939,7 +939,7 @@ class OnboardingView(APIView):
                 return Response([], status=status.HTTP_200_OK)
 
 
-class RegisterBankAccount(APIView):
+class RegisterBankAccountView(APIView):
     def post(self, request):
         plaidClient = plaid.Client(
                 client_id=os.environ.get('PLAID_CLIENT_ID'),
