@@ -25,6 +25,9 @@ import logging
 from api.views.general_views import RateView
 from api.mixins import EmployeeView, WithProfileView
 
+
+import cloudinary.uploader
+
 logger = logging.getLogger('jobcore:general')
 # jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -518,3 +521,40 @@ class EmployeeDeviceMeView(WithProfileView):
         qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EmployeeMeDocumentView(EmployeeView):
+    def post(self, request):
+        result = cloudinary.uploader.upload(
+            request.FILES['document'],
+            tags=['i9_document'],
+            use_filename=1,
+            unique_filename=1,
+            resource_type='auto'
+                
+        )
+        request.data['document'] = result['secure_url']
+        serializer = other_serializer.DocumentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            request_data = {} 
+
+            request_data['employee'] = self.employee.id
+            request_data['documents'] = [serializer.instance.id]
+            serializer = other_serializer.EmployeeDocumentSerializer(
+                    data=request_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            document = Document.objects.get(id=id)
+        except Document.DoesNotExist:
+            return Response(validators.error_object(
+                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        cloudinary.uploader.destroy(document.public_id)
+        document.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
