@@ -36,11 +36,6 @@ PAYROLL_LENGTH_TYPE = (
 )
 
 
-class PaymentDeduction(models.Model):
-    name = models.CharField(max_length=200)
-    amount = models.FloatField()
-
-
 class Document(models.Model):
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
@@ -92,8 +87,6 @@ class Employer(models.Model):
 
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
-
-    deductions = models.ManyToManyField(PaymentDeduction)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -583,6 +576,12 @@ class PayrollPeriodPayment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
+class PaymentDeduction(models.Model):
+    employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)
+    amount = models.FloatField()
 
 
 class BankAccount(models.Model):
