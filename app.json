@@ -1,0 +1,64 @@
+{
+  "addons": [
+    "heroku-postgresql",
+    "rollbar"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+    "API_URL": {
+      "required": true
+    },
+    "BROADCAST_NOTIFICATIONS_BY_EMAIL": {
+      "required": true
+    },
+    "DEBUG": {
+      "required": true
+    },
+    "DISABLE_COLLECTSTATIC": {
+      "required": true
+    },
+    "EMPLOYEE_URL": {
+      "required": true
+    },
+    "EMPLOYER_URL": {
+      "required": true
+    },
+    "ENABLE_NOTIFICATIONS": {
+      "required": true
+    },
+    "ENVIRONMENT": {
+      "required": true
+    },
+    "FIREBASE_KEY": {
+      "required": true
+    },
+    "MAILGUN_API_KEY": {
+      "required": true
+    },
+    "MAILGUN_FROM": {
+      "required": true
+    },
+    "ROLLBAR_ENDPOINT": {
+      "required": true
+    },
+    "ROLLBAR_POST_ACCESS_TOKEN": {
+      "required": true
+    },
+    "SECRET_KEY": {
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "name": "api",
+  "scripts": {
+  },
+  "stack": "heroku-18"
+}
