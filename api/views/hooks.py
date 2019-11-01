@@ -47,41 +47,17 @@ class ClockOutExpiredShifts(APIView):
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()
 
-        #also expire the shift if its still open or filled
+        # also expire the shift if its still open or filled
         Shift.objects.filter(ending_at__lte= NOW + (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
 
+        # expire pending invites with passed shifts
+        ShiftInvite.objects.filter(status= 'PENDING', shift__status='EXPIRED').update(status='EXPIRED')
+
+        # delete applications for expired shifts
+        ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
+
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-# Expire invitations that its shifts have already started.
-class ExpireOldInvites(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-
-        NOW = utc.localize(datetime.now())
-        invites = ShiftInvite.objects.filter(status= 'PENDING', shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
-        for invite in invites:
-            invite.status = 'EXPIRED'
-            invite.save()
-
-        serializer = shift_serializer.ShiftGetSmallSerializer(invites, many=True)
-
-        #JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-# Expire applications that were never approved
-class ExpireOldApplications(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-
-        NOW = utc.localize(datetime.now())
-        ShiftApplication.objects.filter(shift__ending_at__lte= NOW + (timedelta(minutes=1))).delete()
-
-        return Response({ "ok" : "ok" }, status=status.HTTP_200_OK)
 
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]
@@ -134,3 +110,26 @@ class RemoveEmployeesWithoutProfile(APIView):
         query.delete()
 
         return Response({ "ok" : str(total)+" user deleted" }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+# (Not being used) Expire invitations that its shifts have already started.
+class ExpireOldInvites(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        NOW = utc.localize(datetime.now())
+        invites = ShiftInvite.objects.filter(status= 'PENDING', shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
+        for invite in invites:
+            invite.status = 'EXPIRED'
+            invite.save()
+
+        serializer = shift_serializer.ShiftGetSmallSerializer(invites, many=True)
+
+        #JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
