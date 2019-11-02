@@ -540,9 +540,11 @@ class PayrollPeriod(models.Model):
 PENDING = 'PENDING'
 PAID = 'PAID'
 APPROVED = 'APPROVED'
+REJECTED = 'REJECTED'
 PAYMENT_STATUS = (
     (PENDING, 'Pending'),
     (APPROVED, 'Approved'),
+    (REJECTED, 'Rejected'),
     (PAID, 'Paid')
 )
 
@@ -565,6 +567,7 @@ class PayrollPeriodPayment(models.Model):
         choices=PAYMENT_STATUS,
         default=PENDING)
 
+    breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
     over_time = models.DecimalField(

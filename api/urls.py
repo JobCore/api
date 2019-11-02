@@ -5,7 +5,7 @@ from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
     DefaultAvailabilityHook, ClockOutExpiredShifts,
-    ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications,
+    ExpireOldInvites, GeneratePeriodsView,
     AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
 )
 
@@ -383,11 +383,10 @@ urlpatterns = [
     #
     path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
     path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
-
-    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
-    path('hook/expire_old_invites', ExpireOldInvites.as_view()),  # every 5 min
-    path('hook/delete_old_applications', ExpireOldApplications.as_view()),  # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
+
+    # clocks out, deletes invites, deletes applications
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional
