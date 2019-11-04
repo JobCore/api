@@ -62,6 +62,7 @@ twilio = "==6.32.0"
 django-admin-tools = "==0.8.1"
 rollbar = "==0.14.7"
 ruamel-yaml = "*"
+plaid-python = "==3.4.0"
 
 [requires]
 python_version = "3.7.4"
