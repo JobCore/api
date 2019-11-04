@@ -65,8 +65,8 @@ class Employer(models.Model):
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
     # the company can configure how it wants the payroll period
-    payroll_period_starting_time = models.DateTimeField(
-        blank=True, null=True)  # 12:00am GMT
+    payroll_period_starting_time = models.DateTimeField(blank=True, null=True)  # 12:00am GMT
+
     payroll_period_length = models.IntegerField(blank=True, default=7)
     payroll_period_type = models.CharField(
         max_length=25,
@@ -90,12 +90,6 @@ class Employer(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-
-    def save(self, *args, **kwargs):
-        if self.payroll_period_starting_time is None:
-            self.payroll_period_starting_time = MIDNIGHT
-
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -590,7 +584,7 @@ class PaymentDeduction(models.Model):
 class BankAccount(models.Model):
     user = models.ForeignKey(
         Profile,
-        related_name='bank_accounts', 
+        related_name='bank_accounts',
         on_delete=models.CASCADE,
         blank=True,
         null=True)

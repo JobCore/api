@@ -162,8 +162,9 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 success=True
             )
 
+        # upcoming pproved shifts for the empoyee
         search = {
-            'upcoming': 'true',
+            'approved': 'true',
         }
 
         querystring = urlencode(search)

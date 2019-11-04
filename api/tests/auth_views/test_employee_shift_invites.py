@@ -36,9 +36,10 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
 
         starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
 
         self.test_shift, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at),
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
             employer=self.test_employer)
 
         self.test_invite = mixer.blend(
@@ -159,7 +160,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action=":evil")
         )
@@ -178,7 +179,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=999999,
             action="APPLY")
         )
@@ -197,7 +198,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY")
         )
@@ -223,7 +224,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             employees=[self.test_employee]
         )
 
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -235,12 +236,14 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             url,
             content_type="application/json")
 
+        print(response.content)
         self.assertEquals(
             response.status_code,
             200,
             'It should return a success response')
 
-    def test_put_double_apply_favourite(self):
+
+    def test_put_double_apply_favorite(self):
         """
         """
         mixer.blend(
@@ -249,7 +252,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             auto_accept_employees_on_this_list=True,
             employees=[self.test_employee]
         )
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -278,7 +281,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     def test_put_double_apply_regular(self):
         """
         """
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY"
         )
@@ -308,7 +311,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         """
 
-        url = reverse_lazy('api:me-employees-get-jobinvites', kwargs=dict(
+        url = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
             id=self.test_invite.id,
             action="APPLY")
         )

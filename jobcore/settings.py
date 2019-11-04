@@ -229,6 +229,12 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'logs/shifts.log'),
             'formatter': 'simple',
         },
+        'clockin.log': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/clockin.log'),
+            'formatter': 'simple',
+        },
         'console': {
             'class': 'logging.StreamHandler',
         },
@@ -255,6 +261,12 @@ LOGGING = {
         'jobcore:shifts': {
             #'handlers': ['console'],
             'handlers': ['shifts.log', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'jobcore:clockin': {
+            #'handlers': ['console'],
+            'handlers': ['clockin.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },

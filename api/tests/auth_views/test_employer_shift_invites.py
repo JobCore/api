@@ -39,9 +39,10 @@ class EmployerShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
 
         starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
 
         self.test_shift, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at),
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
             employer=self.test_employer)
 
     def test_list_shift_invites(self):

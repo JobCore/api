@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from jwt.exceptions import DecodeError
 
-import os 
+import os
 import plaid
 
 from rest_framework import status
@@ -72,8 +72,8 @@ class ValidateEmailView(APIView):
                 raise ValidationError('Your email has been already activated')
 
             try:
-                db_token = UserToken.objects.get(token=token, email=user.email)
-                db_token.delete()
+                # db_token = UserToken.objects.get(token=token, email=user.email)
+                # db_token.delete()
 
                 user.profile.status = 'ACTIVE'  # email validation completed
                 user.profile.save()

@@ -26,9 +26,7 @@ class FavoriteListSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
 
-        if self.instance and self.instance.title == '' and ( 'title' not in data or data['title'] == ''):
-            raise serializers.ValidationError('The favorite list needs a title')
-        elif self.instance is None and ('title' not in data or data['title'] == ''):
+        if 'title' in data and data['title'] == '':
             raise serializers.ValidationError('The favorite list needs a title')
 
         return data

@@ -18,7 +18,7 @@ from api.views.general_views import (
 
 from api.views.admin_views import (
     EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
-    DocumentAdmin 
+    DocumentAdmin
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
@@ -279,7 +279,7 @@ urlpatterns = [
     path(
         'employees/me/shifts/invites/<int:id>/<str:action>',
         EmployeeShiftInviteView.as_view(),
-        name="me-employees-get-jobinvites"),
+        name="me-employees-get-jobinvites-apply"),
     path(
         'employees/me/shifts',
         EmployeeMeShiftView.as_view(),

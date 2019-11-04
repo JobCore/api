@@ -90,6 +90,7 @@ class EEShiftApplicationTestSuite(TestCase, WithMakeUser, WithMakeShift):
         first = response_json[0]
         last = response_json[-1]
 
+        # applications should be sorted by date
         self.assertLessEqual(
             first['shift']['starting_at'], last['shift']['starting_at'])
 

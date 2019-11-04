@@ -204,7 +204,14 @@ class EmployerShiftInviteView(EmployerView):
         invites = []
 
         shifts = request.data['shifts']
-        employees = request.data['employees']
+
+        employees = None
+        if 'employees' in request.data:
+            employees = request.data['employees']
+        elif 'employee' in request.data:
+            employees = request.data['employee']
+        else:
+            return Response(validators.error_object('Missing employees for the invite'), status=status.HTTP_400_BAD_REQUEST)
 
         if not isinstance(shifts, list):
             shifts = [shifts]
@@ -747,7 +754,7 @@ class EmployerPaymentDeductionView(EmployerView):
         serializer = payment_serializer.PaymentDeductionSerializer(deduction, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, deduction_id):    
+    def put(self, request, deduction_id):
         deduction = self.get_queryset().filter(id=deduction_id)
         if not deduction.exists():
             try:

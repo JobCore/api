@@ -225,9 +225,9 @@ class ShiftPostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         shift = super(ShiftPostSerializer, self).create(validated_data)
-        # if self.context['request'].data['status'] == 'DRAFT':
-        #     shift.status = "OPEN"
-        #     shift.save()
+        shift.maximum_clockin_delta_minutes = shift.employer.maximum_clockin_delta_minutes
+        shift.maximum_clockout_delay_minutes = shift.employer.maximum_clockout_delay_minutes
+        shift.save()
 
         talents = []
         includeEmailNotification = False
@@ -314,7 +314,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         # validate shift has not ended
         NOW = timezone.now()
         if self.instance.shift.ending_at <= NOW:
-                raise serializers.ValidationError("This shift has already ended")
+                raise serializers.ValidationError("This shift has already ended at "+self.instance.shift.ending_at.strftime("%Y-%m-%d %H:%M:%S"))
 
         # @TODO we have to validate the employee availability
 
@@ -367,7 +367,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         # validate shift has not ended
         NOW = timezone.now()
         if data['shift'].ending_at <= NOW:
-                raise serializers.ValidationError("This shift has already ended")
+                raise serializers.ValidationError("This shift has already ended at "+data['shift'].ending_at.strftime("%Y-%m-%d %H:%M:%S"))
 
         return data
 
