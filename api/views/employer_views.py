@@ -343,7 +343,7 @@ class FavListView(EmployerView):
     def post(self, request):
 
         request.data['employer'] = self.employer.id
-        serializer = favlist_serializer.FavoriteListSerializer(
+        serializer = favlist_serializer.FavoriteListPostSerializer(
             data=request.data)
 
         if not serializer.is_valid():
