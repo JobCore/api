@@ -4,6 +4,7 @@ from django.test import TestCase, override_settings
 
 from dotenv import parse_dotenv, read_dotenv
 from mixer.backend.django import mixer
+from mock import patch
 import os 
 import plaid
 
@@ -32,9 +33,15 @@ class BankAccountTestSuite(TestCase):
         profile = mixer.blend('api.Profile', **profilekwargs)
         profile.save()
 
-
-
-    def test_register_account(self):
+    @patch('plaid.api.item.PublicToken.exchange', return_value={'access_token': '1234'})
+    @patch('plaid.api.auth.Auth.get',
+        return_value={
+            "accounts": [
+                {"name": "Test Bank Account"}],
+            "item":{
+                "institution_id": "4321",
+                "item_id": "7777"}})
+    def test_register_account(self, mocked_request, mocked_auth_request):
         self.client.force_login(self.user)
         url = reverse_lazy('api:register-bank-account')
         response = self.client.post(url, data={'public_token': self.public_token})
