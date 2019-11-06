@@ -61,5 +61,12 @@
   "scripts": {
       "postdeploy": "pipenv run migrate"
   },
-  "stack": "heroku-18"
+  "stack": "heroku-18",
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "pipenv run tests"
+      }
+    }
+  }
 }
