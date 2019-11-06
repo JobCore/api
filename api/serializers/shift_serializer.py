@@ -186,10 +186,11 @@ class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         shift = Shift.objects.get(id=self.instance.id)
-        if ('status' in data and data['status'] !=
-                'OPEN') and shift.status != 'OPEN':
-            raise serializers.ValidationError(
-                'This shift is not opened for applicants')
+        if ('status' in data and data['status'] !='OPEN') and shift.status != 'OPEN':
+            raise serializers.ValidationError('This shift is not opened for applicants')
+
+        if 'employees' in data and len(data['employees']) > shift.maximum_allowed_employees:
+            raise serializers.ValidationError('The shift is already full, delete some accepted employees in order to be able to approve more.')
 
         return data
 
@@ -315,6 +316,17 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         NOW = timezone.now()
         if self.instance.shift.ending_at <= NOW:
                 raise serializers.ValidationError("This shift has already ended at "+self.instance.shift.ending_at.strftime("%Y-%m-%d %H:%M:%S"))
+
+        # the employee cannot apply to shift for positinos he does not like
+        employee_positions = current_user.profile.employee.positions.all()
+        employee_positions_ids = [p.id for p in employee_positions]
+
+        if len(employee_positions_ids) == 0:
+            raise serializers.ValidationError("Please go to preferences and specify your preffered positions to work, you don't seem to have any")
+
+        employee_positions_titles = [p.title for p in employee_positions]
+        if self.instance.shift.position.id not in employee_positions_ids:
+            raise serializers.ValidationError("You can only apply to your preferred positions: "+', '.join(employee_positions_titles))
 
         # @TODO we have to validate the employee availability
 

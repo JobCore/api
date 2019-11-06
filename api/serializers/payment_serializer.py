@@ -197,8 +197,10 @@ def generate_periods_and_payments(employer, generate_since=None):
     NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
-        raise serializers.ValidationError(
-            'The only supported period type is DAYS (for now)')
+        raise serializers.ValidationError('The only supported period type is DAYS (for now)')
+
+    if employer.payroll_period_starting_time is None:
+        raise serializers.ValidationError('You have to setup your payroll configuration')
 
     weekday = employer.payroll_period_starting_time.weekday()
     h_hour = employer.payroll_period_starting_time.hour
