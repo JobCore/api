@@ -79,8 +79,9 @@ class EEShiftApplicationTestSuite(TestCase, WithMakeUser, WithMakeShift):
             response.status_code,
             200,
             'It should return a success response')
-
         response_json = response.json()
+
+        print([str(appli['shift']['starting_at']) for appli in response_json])
 
         count = ShiftApplication.objects.filter(
             employee_id=self.test_employee.id).count()
@@ -90,9 +91,8 @@ class EEShiftApplicationTestSuite(TestCase, WithMakeUser, WithMakeShift):
         first = response_json[0]
         last = response_json[-1]
 
-        # applications should be sorted by date
-        self.assertLessEqual(
-            first['shift']['starting_at'], last['shift']['starting_at'])
+        # applications should be sorted by date decreasing
+        self.assertLessEqual(last['shift']['starting_at'], first['shift']['starting_at'])
 
     def test_detail_application(self):
         """

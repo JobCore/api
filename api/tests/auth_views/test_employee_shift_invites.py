@@ -13,14 +13,6 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
 
     def setUp(self):
-        self.test_user_employee, self.test_employee, _ = self._make_user(
-            'employee',
-            userkwargs=dict(
-                username='employee1',
-                email='employee1@testdoma.in',
-                is_active=True,
-            )
-        )
 
         (
             self.test_user_employer,
@@ -41,6 +33,16 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.test_shift, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
             employer=self.test_employer)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(positions=[self.test_shift.position.id]),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
 
         self.test_invite = mixer.blend(
             'api.ShiftInvite',
@@ -236,7 +238,6 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             url,
             content_type="application/json")
 
-        print(response.content)
         self.assertEquals(
             response.status_code,
             200,
@@ -264,6 +265,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             url,
             content_type="application/json")
 
+        print(response.content)
         self.assertEquals(
             response.status_code,
             200,

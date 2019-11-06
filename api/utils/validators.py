@@ -20,7 +20,7 @@ def html_error(msg, data=None):
         "status": "error",
         "msg": msg
     })
-    return HttpResponse(template['html'])
+    return HttpResponse(template['html'], status=400)
 
 
 def post_exception_handler(exc, context):

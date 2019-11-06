@@ -288,13 +288,13 @@ class EmployerShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.assertEquals(ShiftInvite.objects.all().count(), 1)
 
-    def test_create_invite_list(self):
+    def test_create_invite_for_expired_shift(self):
         """
         """
-        starting_at = timezone.now() + timedelta(days=2)
+        ending_at = timezone.now() - timedelta(days=2)
 
         second_shift, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at),
+            shiftkwargs=dict(status='OPEN', ending_at=ending_at),
             employer=self.test_employer)
 
         url = reverse_lazy('api:me-employer-get-jobinvites')
@@ -312,10 +312,10 @@ class EmployerShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.assertEquals(
             response.status_code,
-            201,
-            'It should return an error')
+            400,
+            'It should return an error because the started its 2 days ago')
 
-        self.assertEquals(ShiftInvite.objects.all().count(), 2)
+        self.assertEquals(ShiftInvite.objects.all().count(), 1)
 
     def test_create_invite_list_bad_app(self):
         """
