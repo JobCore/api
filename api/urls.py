@@ -13,18 +13,16 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, RegisterBankAccountView
+    PositionView, OnboardingView, ValidateSendEmailView
 )
 
 from api.views.admin_views import (
     EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
-    DocumentAdmin
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
-    EmployeeMeDocumentView
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView
 )
 
 from api.views.employer_views import (
@@ -33,8 +31,7 @@ from api.views.employer_views import (
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
-    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
-    EmployerPaymentDeductionView,
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView
 )
 
 app_name = "api"
@@ -166,8 +163,6 @@ urlpatterns = [
     path('employers/me/payment', EmployerMePayrollPeriodPaymentView.as_view(), name="me-get-payroll-payments"),
     path('employers/me/payment/<int:payment_id>', EmployerMePayrollPeriodPaymentView.as_view(), name="me-single-payroll-payments"),
     path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(), name="me-get-single-payroll-period"),
-    path('employers/me/payment-deductions', EmployerPaymentDeductionView.as_view(), name="me-payment-deduction"),
-    path('employers/me/payment-deductions/<int:deduction_id>', EmployerPaymentDeductionView.as_view(), name="me-get-single-payment-deduction"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -338,9 +333,6 @@ urlpatterns = [
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
 
-    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
-
     #
     # ADMIN USE ONLY
     #
@@ -366,15 +358,6 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
-    path(
-        'document/<int:document_id>',
-        DocumentAdmin.as_view(),
-        name="admin-get-document"),
-    path(
-        'document/',
-        DocumentAdmin.as_view(),
-        name="admin-document"),
-    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 

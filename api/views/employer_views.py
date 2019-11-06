@@ -15,8 +15,7 @@ from api.models import (
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
-    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
-    PaymentDeduction
+    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
 
 from api.utils import validators
@@ -719,7 +718,6 @@ class EmployeerRateView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
 class EmployerBatchActions(EmployerView):
 
     def post(self, request):
@@ -735,7 +733,6 @@ class EmployerBatchActions(EmployerView):
                     log.append("Updating "+entity+" ")
 
         return Response(log, status=status.HTTP_200_OK)
-
 
 class EmployerPaymentDeductionView(EmployerView):
     def get_queryset(self):
