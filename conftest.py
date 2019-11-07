@@ -1,4 +1,5 @@
 import pytest, os, dj_database_url
+
 TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL')
 
 @pytest.fixture(scope='session')
