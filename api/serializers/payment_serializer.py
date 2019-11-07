@@ -134,7 +134,13 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
         return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 
+class RoundingDecimalField(serializers.DecimalField):
+    def validate_precision(self, value):
+        return value
+
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
+    regular_hours = RoundingDecimalField(max_digits=21, decimal_places=2)
+
     class Meta:
         model = PayrollPeriodPayment
         exclude = ()
