@@ -27,3 +27,15 @@ class EmployerSerializer(serializers.ModelSerializer):
         exclude = (
             'rating', 'total_ratings'
             )
+
+    def validate(self, data):
+
+        data = super(EmployerSerializer, self).validate(data)
+
+        if 'title' in data and data['title'] == '':
+            raise serializers.ValidationError('Company title cannot by empty')
+
+        if 'bio' in data and data['bio'] == '':
+            raise serializers.ValidationError('Company bio cannot by empty')
+
+        return data

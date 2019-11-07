@@ -8,7 +8,7 @@ import datetime
 
 NOW = timezone.now()
 
-logger = logging.getLogger('jobcore:clockin_serializer:')
+from api.utils.loggers import log_debug
 
 
 class ClockinSerializer(serializers.ModelSerializer):
@@ -47,7 +47,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('You cannot clock in/out after shift starting time')  # NOQA
 
     def _validate_clockin(self, data):
-        logger.info('ClockinSerializer:_validate_clockin:')
+        log_debug("clockin",'ClockinSerializer:_validate_clockin:')
         shift = data['shift']
 
         if 'latitude_in' not in data or 'longitude_in' not in data:
@@ -65,11 +65,11 @@ class ClockinSerializer(serializers.ModelSerializer):
 
         # The employee first clockin for this Shift
         if last_clockin_for_shift is None:
-            if shift.employer.maximum_clockin_delta_minutes is not None:
-                delta = datetime.timedelta(minutes=shift.employer.maximum_clockin_delta_minutes)
-                logger.debug('started at: %s' % data["started_at"])
-                logger.debug('shift.starting_at: %s' % shift.starting_at)
-                logger.debug('delta: %s' % delta)
+            if shift.maximum_clockin_delta_minutes is not None:
+                delta = datetime.timedelta(minutes=shift.maximum_clockin_delta_minutes)
+                log_debug("clockin",'started at: %s' % data["started_at"])
+                log_debug("clockin",'shift.starting_at: %s' % shift.starting_at)
+                log_debug("clockin",'delta: %s' % delta)
 
                 #if data['started_at'] > shift.starting_at + delta:
                 #    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
@@ -82,7 +82,6 @@ class ClockinSerializer(serializers.ModelSerializer):
 
     def _validate_clockout(self, data):
         shift = data['shift']
-        now = timezone.now()
 
         if 'latitude_out' not in data or 'longitude_out' not in data:
             raise serializers.ValidationError(
@@ -91,11 +90,15 @@ class ClockinSerializer(serializers.ModelSerializer):
         currentPos = (data['latitude_out'], data['longitude_out'])
         self._ensure_distance_threshold(currentPos, shift)
 
-        # only if the employer has a clockout_dely limit
-        if shift.employer.maximum_clockout_delay_minutes is not None:
-            delta = datetime.timedelta(minutes=shift.employer.maximum_clockout_delay_minutes)
+        # only if the shift has a clockout_dely limit
+        if shift.maximum_clockout_delay_minutes is not None:
+            delta = datetime.timedelta(minutes=shift.maximum_clockout_delay_minutes)
+            log_debug("clockin",'ended at: %s' % data["ended_at"])
+            log_debug("clockin",'shift.ending_at: %s' % shift.ending_at)
+            log_debug("clockin",'delta: %s' % delta)
+
             # the Shift already ended
-            if now > shift.ending_at + delta:
+            if shift.ending_at + delta < data["ended_at"]:
                 raise serializers.ValidationError(
                     "You can't Clock out after the Shift has ended. The System clock you out automatically")
 
@@ -105,7 +108,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can't Clock out if you haven't Clocked in")
 
     def validate(self, data):
-        logger.info('ClockinSerializer:validate:')
+        log_debug("clockin",'ClockinSerializer:validate:')
         if 'started_at' in data and 'ended_at' in data:
             raise serializers.ValidationError(
                 "You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")  # NOQA

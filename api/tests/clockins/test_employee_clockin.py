@@ -244,7 +244,7 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         url = reverse_lazy('api:me-employees-clockins')
 
-        maximun = self.test_employer.maximum_clockin_delta_minutes
+        maximun = self.test_shift.maximum_clockin_delta_minutes
         started_at = self.test_shift.starting_at + timedelta(seconds=maximun * 60)
 
         payload = {
@@ -607,7 +607,7 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
     def test_clocking_in_before_delta_minutes(self):
         url = reverse_lazy('api:me-employees-clockins')
 
-        maximun_plus_one = self.test_employer.maximum_clockin_delta_minutes + 1
+        maximun_plus_one = self.test_shift.maximum_clockin_delta_minutes + 1
         started_at = self.test_shift.starting_at - timedelta(seconds=60 * maximun_plus_one)
 
         payload = {
@@ -630,7 +630,8 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
     def test_clocking_in_just_before_delta_minutes(self):
         url = reverse_lazy('api:me-employees-clockins')
 
-        started_at = self.test_shift.starting_at - timedelta(seconds=60 * 15)
+        clockin_delta = self.test_shift.maximum_clockin_delta_minutes
+        started_at = self.test_shift.starting_at - timedelta(seconds=60 * clockin_delta)
 
         payload = {
             'shift': self.test_shift.id,
@@ -686,27 +687,40 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(count, 1)
 
     #
-    def test_clocking_in_just_after_delta_minutes(self):
+    def test_clocking_out_within_time(self):
         url = reverse_lazy('api:me-employees-clockins')
 
-        started_at = self.test_shift.starting_at + timedelta(seconds=60 * 15)
+        mixer.blend(
+            'api.ClockIn',
+            employee=self.test_employee,
+            shift=self.test_shift,
+            author=self.test_profile_employee,
+            started_at=self.test_shift.starting_at,
+            latitude_in=-64,
+            longitude_in=10,
+            ended_at=None,
+        )
+
+        ended_at = self.test_shift.ending_at
 
         payload = {
             'shift': self.test_shift.id,
             'author': self.test_profile_employee.id,
-            'started_at': started_at,
-            'latitude_in': -64,
-            'longitude_in': 10,
+            'ended_at': ended_at,
+            'latitude_out': -64,
+            'longitude_out': 10,
         }
 
         response = self.client.post(url, data=payload)
+        #print(response.content)
         self.assertEquals(response.status_code, 201)
+
 
         response_json = response.json()
 
         self.assertEquals(
-            response_json['started_at'],
-            started_at.strftime('%FT%R:%S.%fZ')
+            response_json['ended_at'],
+            ended_at.strftime('%FT%R:%S.%fZ')
         )
         count = Clockin.objects.filter(
             employee_id=self.test_employee.id,
@@ -714,24 +728,75 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         ).count()
         self.assertEquals(count, 1)
 
-    def test_clocking_in_after_delta_minutes(self):
+    def test_clocking_out_within_delta_minutes(self):
         url = reverse_lazy('api:me-employees-clockins')
 
-        started_at = self.test_shift.starting_at + timedelta(seconds=60 * 16)
+        mixer.blend(
+            'api.ClockIn',
+            employee=self.test_employee,
+            shift=self.test_shift,
+            author=self.test_profile_employee,
+            started_at=self.test_shift.starting_at,
+            latitude_in=-64,
+            longitude_in=10,
+            ended_at=None,
+        )
+
+        # the maximum allowed time to clock out
+        clockout_delta = self.test_shift.maximum_clockout_delay_minutes
+        ending_at = self.test_shift.ending_at + timedelta(seconds=60 * (clockout_delta - 1))
 
         payload = {
             'shift': self.test_shift.id,
             'author': self.test_profile_employee.id,
-            'started_at': started_at,
-            'latitude_in': -64,
-            'longitude_in': 10,
+            'ended_at': ending_at,
+            'latitude_out': -64,
+            'longitude_out': 10,
         }
 
         response = self.client.post(url, data=payload)
+        # trying a clock OUT on a shift within the delta out
+        self.assertEquals(response.status_code, 201)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+        ).count()
+        self.assertEquals(count, 1)
+
+    def test_clocking_out_after_delta_minutes(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        mixer.blend(
+            'api.ClockIn',
+            employee=self.test_employee,
+            shift=self.test_shift,
+            author=self.test_profile_employee,
+            started_at=self.test_shift.starting_at,
+            latitude_in=-64,
+            longitude_in=10,
+            ended_at=None,
+        )
+
+        # the maximum allowed time to clock out
+        clockout_delta = self.test_shift.maximum_clockout_delay_minutes
+        ending_at = self.test_shift.ending_at + timedelta(seconds=60 * (clockout_delta + 1))
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'ended_at': ending_at,
+            'latitude_out': -64,
+            'longitude_out': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+
+        # trying a clock OUT on a shift within the delta out
         self.assertEquals(response.status_code, 400)
 
         count = Clockin.objects.filter(
             employee_id=self.test_employee.id,
             shift_id=self.test_shift.id,
         ).count()
-        self.assertEquals(count, 0)
+        self.assertEquals(count, 1)

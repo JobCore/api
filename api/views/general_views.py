@@ -12,7 +12,11 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 
-from jwt.exceptions import DecodeError
+from jwt.exceptions import DecodeError, ExpiredSignatureError
+
+import os
+import plaid
+
 
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -31,6 +35,7 @@ from api.pagination import CustomPagination
 from api.models import *
 from api.utils.notifier import notify_password_reset_code, notify_email_validation
 from api.utils import validators
+from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
 
 from api.serializers import (
@@ -59,17 +64,17 @@ class ValidateEmailView(APIView):
 
         try:
             payload = jwt_decode_handler(token)
-        except DecodeError:
-            raise ValidationError('Invalid Token')
+        except (DecodeError, ExpiredSignatureError) as e:
+            return html_error('Your email validation link has expired, please resend it and try again')
 
         try:
             user = User.objects.get(id=payload["user_id"])
             if user.profile.status != 'PENDING_EMAIL_VALIDATION':
-                raise ValidationError('Your email has been already activated')
+                return html_error('Your email has been already activated, open the JobCore App and go ahead and sign in')
 
             try:
-                db_token = UserToken.objects.get(token=token, email=user.email)
-                db_token.delete()
+                # db_token = UserToken.objects.get(token=token, email=user.email)
+                # db_token.delete()
 
                 user.profile.status = 'ACTIVE'  # email validation completed
                 user.profile.save()
@@ -78,12 +83,10 @@ class ValidateEmailView(APIView):
                 return HttpResponse(template['html'])
 
             except UserToken.DoesNotExist:
-                return Response(validators.error_object(
-                    'Invalid validation token'), status=status.HTTP_404_NOT_FOUND)
+                return html_error('Your email validation link has expired, please resend it and try again')
 
         except User.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return html_error('Not found')
 
 
 class ValidateSendEmailView(APIView):
@@ -117,14 +120,12 @@ class PasswordView(APIView):
         try:
             data = jwt_decode_handler(token)
         except DecodeError as e:
-            raise ValidationError('Invalid Token: '+str(e))
+            return html_error('Invalid Token')
 
         try:
             user = User.objects.get(id=data['user_id'])
         except User.DoesNotExist:
-            return Response({
-                'error': 'Email not found on the database'
-            }, status=status.HTTP_404_NOT_FOUND)
+            return html_error('Email not found on the database')
 
         token = api.utils.jwt.internal_payload_encode({
             "user_email": user.email,
@@ -150,7 +151,8 @@ class PasswordView(APIView):
                 validators.error_object('Email not found on the database'),
                 status=status.HTTP_404_NOT_FOUND)
 
-        #tokenDic = { "token": notify_password_reset_code(user) }
+        tokenDic = { "token": notify_password_reset_code(user) }
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
@@ -582,9 +584,9 @@ class CatalogView(APIView):
             qName = request.GET.get('full_name')
             if qName:
                 search_args = []
-                for term in qName.split():
-                    for query in ('profile__user__first_name__istartswith',
-                                  'profile__user__last_name__istartswith'):
+                for term in qName.split():#first_name__unaccent__startswith
+                    for query in ('profile__user__first_name__unaccent__istartswith',
+                                  'profile__user__last_name__unaccent__istartswith'):
                         search_args.append(Q(**{query: term}))
 
                 employees = employees.filter(

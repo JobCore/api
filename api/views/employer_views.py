@@ -44,7 +44,7 @@ class EmployerMeView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request):
+    def put(self, request, employer_id=None):
         serializer = employer_serializer.EmployerSerializer(
             request.user.profile.employer, data=request.data)
         if serializer.is_valid():
@@ -174,7 +174,7 @@ class EmployerShiftInviteView(EmployerView):
             shift = self.request.GET.get('shift')
             lookup['shift_id'] = shift
 
-        return self.get_queryset().filter(**lookup).order_by('-starting_at')
+        return self.get_queryset().filter(**lookup).order_by('-created_at')
 
     def get(self, request, id=False):
 
@@ -203,7 +203,14 @@ class EmployerShiftInviteView(EmployerView):
         invites = []
 
         shifts = request.data['shifts']
-        employees = request.data['employees']
+
+        employees = None
+        if 'employees' in request.data:
+            employees = request.data['employees']
+        elif 'employee' in request.data:
+            employees = request.data['employee']
+        else:
+            return Response(validators.error_object('Missing employees for the invite'), status=status.HTTP_400_BAD_REQUEST)
 
         if not isinstance(shifts, list):
             shifts = [shifts]
@@ -335,7 +342,7 @@ class FavListView(EmployerView):
     def post(self, request):
 
         request.data['employer'] = self.employer.id
-        serializer = favlist_serializer.FavoriteListSerializer(
+        serializer = favlist_serializer.FavoriteListPostSerializer(
             data=request.data)
 
         if not serializer.is_valid():
@@ -449,23 +456,47 @@ class EmployerShiftView(EmployerView, CustomPagination):
 
             qEmployeeNot = request.GET.get('employee_not')
             if qEmployeeNot is not None:
-                shifts = shifts.exclude(employees__in=(int(qEmployeeNot),))
+                emp_list = qEmployeeNot.split(',')
+                shifts = shifts.exclude(employees__in=[int(emp) for emp in emp_list])
+
+            qCandidateNot = request.GET.get('candidate_not')
+            if qCandidateNot is not None:
+                emp_list = qCandidateNot.split(',')
+                shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
             serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
 
+        _all_serializers = []
         request.data["employer"] = self.employer.id
-        serializer = shift_serializer.ShiftPostSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-            return_serializer = shift_serializer.ShiftGetSerializer(
-                serializer.instance, many=False)
-            return Response(return_serializer.data,
-                            status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if 'multiple_dates' in request.data:
+            for date in request.data['multiple_dates']:
+                shift_date = dict(date)
+                data = dict(request.data)
+                data["starting_at"] = shift_date['starting_at']
+                data["ending_at"] = shift_date['ending_at']
+                data.pop('multiple_dates', None)
+                serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                if serializer.is_valid():
+                    _all_serializers.append(serializer)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = shift_serializer.ShiftPostSerializer( data=request.data, context={"request": request})
+            if serializer.is_valid():
+                _all_serializers.append(serializer)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        _shifts = []
+        for s in _all_serializers:
+            s.save()
+            return_serializer = shift_serializer.ShiftGetSerializer(s.instance, many=False)
+            _shifts.append(return_serializer.data)
+
+        return Response(_shifts, status=status.HTTP_201_CREATED)
 
     def put(self, request, id):
 
@@ -532,9 +563,9 @@ class EmployerShiftEmployeesView(EmployerView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ClockinsMeView(EmployerView):
+class EmployerClockinsMeView(EmployerView):
     def get_queryset(self):
-        return Clockin.objects.filter(shift__employer__id=self.employee.id)
+        return Clockin.objects.filter(shift__employer__id=self.employer.id)
 
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
@@ -591,6 +622,34 @@ class EmployerMePayrollPeriodsView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request, period_id=None):
+
+        if 'status' not in request.data:
+            return Response(validators.error_object('You need to specify the status'),status=status.HTTP_404_NOT_FOUND)
+
+        period = self.fetch_one(period_id)
+        if period is None:
+            return Response(validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
+
+        new_statuses = {
+            'FINALIZED': 'FINALIZED',
+            'OPEN': 'FINALIZED',
+        }
+        data = {
+            "status": new_statuses[request.data['status']]
+        }
+
+        periodSerializer = payment_serializer.PayrollPeriodSerializer(
+            period,
+            data=data,
+            many=False,
+            context={"request": request}
+        )
+        if periodSerializer.is_valid():
+            periodSerializer.save()
+            return Response(periodSerializer.data, status=status.HTTP_200_OK)
+        return Response(periodSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EmployerMePayrollPeriodPaymentView(EmployerView):
     def get_queryset(self):
@@ -598,6 +657,18 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
     def fetch_one(self, id):
         return self.get_queryset().filter(id=id).first()
+
+    def build_lookup(self, request):
+        lookup = {}
+
+        # intentionally rewrite lookup to consider
+        # employee OR employer, but not both at the same time
+
+        qs_period = request.GET.get('period')
+        if qs_period:
+            lookup = {'payroll_period__id': qs_period}
+
+        return lookup
 
     def get(self, request, payment_id=None):
 
@@ -609,7 +680,11 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(payment, many=False)
         else:
-            return Response(validators.error_object('You need to speficy a payment to review'), status=status.HTTP_400_BAD_REQUEST)
+            qs = self.get_queryset()
+            lookup = self.build_lookup(request)
+            qs = qs.filter(**lookup)
+
+            serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -692,3 +767,49 @@ class EmployerBatchActions(EmployerView):
                     log.append("Updating "+entity+" ")
 
         return Response(log, status=status.HTTP_200_OK)
+
+class EmployerPaymentDeductionView(EmployerView):
+    def get_queryset(self):
+        return self.employer.deductions.all()
+
+    def get(self, request, deduction_id=None):
+        many = True
+        deduction = self.get_queryset()
+        if deduction_id:
+            try:
+                deduction = deduction.get(id=deduction_id)
+                many = False
+            except PaymentDeduction.DoesNotExist:
+                return Response(
+                    validators.error_object('The payment deduction  was not found'),status=status.HTTP_404_NOT_FOUND)
+        serializer = payment_serializer.PaymentDeductionSerializer(deduction, many=many)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, deduction_id):
+        deduction = self.get_queryset().filter(id=deduction_id)
+        if not deduction.exists():
+            try:
+                deduction = PaymentDeduction.objects.get(id=deduction_id)
+            except:
+                return Response(
+                    validators.error_object('The payment deduction  was not found'),status=status.HTTP_404_NOT_FOUND)
+            self.employer.deductions.add(deduction)
+        else:
+            deduction = deduction.last()
+        serializer = payment_serializer.PaymentDeductionSerializer(deduction, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request):
+        request.data['employer'] = self.employer.id
+        serializer = payment_serializer.PaymentDeductionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+

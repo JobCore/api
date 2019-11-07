@@ -4,8 +4,8 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
-    DeleteAllShifts, DefaultAvailabilityHook, ClockOutExpiredShifts, DeleteAllData,
-    ExpireOldInvites, GeneratePeriodsView, ExpireOldApplications,
+    DefaultAvailabilityHook, ClockOutExpiredShifts,
+    ExpireOldInvites, GeneratePeriodsView,
     AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
 )
 
@@ -17,7 +17,7 @@ from api.views.general_views import (
 )
 
 from api.views.admin_views import (
-    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview
+    EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
@@ -31,7 +31,7 @@ from api.views.employer_views import (
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
-    EmployerMePayrollPeriodPaymentView
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView
 )
 
 app_name = "api"
@@ -138,10 +138,8 @@ urlpatterns = [
     # FOR THE EMPLOYER
     #
 
-    path(
-        'employers/me',
-        EmployerMeView.as_view(),
-        name="me-employer"),
+    path('employers/me',EmployerMeView.as_view(),name="me-employer"),
+    path('employers/me/<int:employer_id>',EmployerMeView.as_view(),name="me-employer"),
     path(
         'employers/me/image',
         EmployerMeImageView.as_view(),
@@ -251,8 +249,8 @@ urlpatterns = [
         RateView.as_view(),
         name="me-employer-single-ratings"),
 
-    path('employers/me/clockins', ClockinsMeView.as_view(), name="me-employer-single-clockins"),
-    path('employers/me/clockins/<int:id>', ClockinsMeView.as_view(), name="me-employer-clockins"),
+    path('employers/me/clockins', EmployerClockinsMeView.as_view(), name="me-employer-clockins"),
+    path('employers/me/clockins/<int:id>', EmployerClockinsMeView.as_view(), name="me-employer-single-clockins"),
 
     path('employers/me/batch', EmployerBatchActions.as_view(), name="me-batch-actions"),
 
@@ -276,7 +274,7 @@ urlpatterns = [
     path(
         'employees/me/shifts/invites/<int:id>/<str:action>',
         EmployeeShiftInviteView.as_view(),
-        name="me-employees-get-jobinvites"),
+        name="me-employees-get-jobinvites-apply"),
     path(
         'employees/me/shifts',
         EmployeeMeShiftView.as_view(),
@@ -366,15 +364,12 @@ urlpatterns = [
     #
     # HOOKS
     #
-    path('hook/delete_all_shifts', DeleteAllShifts.as_view()),
-    path('hook/delete_all_data', DeleteAllData.as_view()),
     path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
     path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
-
-    path('hook/clock_out_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
-    path('hook/expire_old_invites', ExpireOldInvites.as_view()),  # every 5 min
-    path('hook/delete_old_applications', ExpireOldApplications.as_view()),  # every 5 min
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
+
+    # clocks out, deletes invites, deletes applications
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional

@@ -178,13 +178,14 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             'employee': self.test_employee.id,
             'rating': 4,
             'shift': self.test_shift.id,
-            'comments': 'Lorem ipsum dolor sit amet'
+            'comments': 'Lorem ipsum dolor sit amet jlkasdlkas dalsdjikn asdljskb adlajksdasd ljkadsl;k asdiljkdsilsdkja '
         }
         response = self.client.post(
             url,
             data=json.dumps(payload),
             content_type="application/json")
 
+        #print(response.content)
         self.assertEquals(
             response.status_code,
             201,
@@ -213,13 +214,14 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             'employee': self.test_employee.id,
             'rating': 4,
             'shift': self.test_shift.id,
-            'comments': 'Lorem ipsum dolor sit amet'
+            'comments': 'Lorem ipsum dolor sit amet lkjdfsdklfjn dfildjkfjsdlkfm skldfjsnmd flijksdfiokjlsdfn sidfoklsdnf sjdfks'
         }
         response = self.client.post(
             url,
             data=json.dumps(payload),
             content_type="application/json")
 
+        #print(response.content)
         self.assertEquals(
             response.status_code,
             201,

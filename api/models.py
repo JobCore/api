@@ -58,8 +58,8 @@ class Employer(models.Model):
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
     # the company can configure how it wants the payroll period
-    payroll_period_starting_time = models.DateTimeField(
-        blank=True, default=MIDNIGHT)  # 12:00am GMT
+    payroll_period_starting_time = models.DateTimeField(blank=True, null=True)  # 12:00am GMT
+
     payroll_period_length = models.IntegerField(blank=True, default=7)
     payroll_period_type = models.CharField(
         max_length=25,
@@ -299,8 +299,8 @@ class Shift(models.Model):
         blank=True, default=15, null=True)  # in minutes
 
     def __str__(self):
-        return "{} at {} on {}".format(
-            self.position, self.venue, self.starting_at)
+        return "{} at {} on {} - {}".format(
+            self.position, self.venue, self.starting_at, self.ending_at)
 
 
 class ShiftEmployee(models.Model):
@@ -350,6 +350,9 @@ class ShiftInvite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
+    def __str__(self):
+        return str(self.employee) + " for " + str(self.shift) + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
+
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
@@ -384,6 +387,9 @@ class JobCoreInvite(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.first_name + " " + self.last_name + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
 
 
 class Rate(models.Model):
@@ -446,16 +452,13 @@ class Notification(models.Model):
     data = models.TextField(max_length=1500)
     read = models.BooleanField(default=False)
     sent = models.BooleanField(default=False)
-    scheduled_at = models.DateTimeField(blank=False)
-    sent_at = models.DateTimeField(blank=False)
+    scheduled_at = models.DateTimeField(blank=False, null=True)
+    sent_at = models.DateTimeField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    class Meta:
-        ordering = ['id']
-
     def __str__(self):
-        return self.user.username
+        return self.owner.user.email + ":" + self.title
 
 
 APPROVED = 'APPROVED'
@@ -496,11 +499,13 @@ class Clockin(models.Model):
         default=PENDING)
 
 
-FINALIZED = 'FINALIZED'
 OPEN = 'OPEN'
+FINALIZED = 'FINALIZED'
+PAID = 'PAID'
 PERIOD_STATUS = (
-    (PENDING, 'Finalized'),
-    (OPEN, 'Open')
+    (OPEN, 'Open'),
+    (FINALIZED, 'Finalized'),
+    (PAID, 'Paid')
 )
 
 
@@ -531,9 +536,11 @@ class PayrollPeriod(models.Model):
 PENDING = 'PENDING'
 PAID = 'PAID'
 APPROVED = 'APPROVED'
+REJECTED = 'REJECTED'
 PAYMENT_STATUS = (
     (PENDING, 'Pending'),
     (APPROVED, 'Approved'),
+    (REJECTED, 'Rejected'),
     (PAID, 'Paid')
 )
 
@@ -556,6 +563,7 @@ class PayrollPeriodPayment(models.Model):
         choices=PAYMENT_STATUS,
         default=PENDING)
 
+    breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
     over_time = models.DecimalField(
@@ -569,4 +577,21 @@ class PayrollPeriodPayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
+class PaymentDeduction(models.Model):
+    employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)
+    amount = models.FloatField()
+
+
+class BankAccount(models.Model):
+    user = models.ForeignKey(
+        Profile,
+        related_name='bank_accounts',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True)
+    access_token = models.CharField(max_length=100)
+    name = models.CharField(max_length=200)
+    institution_name = models.CharField(max_length=200)
+    item_id = models.CharField(max_length=100)
 

@@ -1,0 +1,256 @@
+- model: api.venue
+  pk: 1
+  fields:
+    title: "The Club of Knights"
+    street_address: "270 Catalonia, Coral Gables"
+    country: "US"
+    latitude: 25.744526
+    longitude: -80.260033
+    employer_id: 1
+    created_at: "2019-09-13T19:45:00Z"
+    updated_at: "2019-09-13T19:45:00Z"
+- model: api.venue
+  pk: 2
+  fields:
+    title: "The Miller Plantation"
+    street_address: "Coral Gables"
+    country: "US"
+    latitude: 25.744526
+    longitude: -80.260033
+    employer_id: 1
+    created_at: "2019-09-13T19:45:00Z"
+    updated_at: "2019-09-13T19:45:00Z"
+
+#
+# Shifts
+#
+
+- model: api.Shift
+  pk: 1
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 11
+
+    starting_at: "2019-05-29T16:45:00Z"
+    ending_at: "2019-05-29T16:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+- model: api.Shift
+  pk: 2
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 3
+    minimum_hourly_rate: 18
+    starting_at: "2019-09-10T19:45:00Z"
+    ending_at: "2019-09-10T23:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.Shift
+  pk: 3
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 1
+    minimum_hourly_rate: 15
+    starting_at: "2019-09-05T19:45:00Z"
+    ending_at: "2019-09-05T23:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.Shift
+  pk: 4
+  fields:
+    venue: 1
+    position: 1
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 1
+    minimum_hourly_rate: 15
+    starting_at: "2019-09-09T19:45:00Z"
+    ending_at: "2019-09-10T02:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.Shift
+  pk: 5
+  fields:
+    venue: 2
+    position: 3
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 15
+    starting_at: "2019-09-09T19:45:00Z"
+    ending_at: "2019-09-10T02:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.Shift
+  pk: 6
+  fields:
+    venue: 2
+    position: 3
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 15
+    starting_at: "2019-09-09T19:45:00Z"
+    ending_at: "2019-09-10T02:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+- model: api.Shift
+  pk: 7
+  fields:
+    venue: 2
+    position: 3
+    employer: 1
+    status: "OPEN"
+    maximum_allowed_employees: 2
+    minimum_hourly_rate: 15
+    starting_at: "2020-09-09T19:45:00Z"
+    ending_at: "2020-09-10T02:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.Shift
+  pk: 8
+  fields:
+    venue: 2
+    position: 3
+    employer: 1
+    status: "FILLED"
+    maximum_allowed_employees: 1
+    minimum_hourly_rate: 15
+    starting_at: "2020-07-07T19:45:00Z"
+    ending_at: "2020-07-07T02:45:00Z"
+
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+#
+# Shift Employee
+#
+
+- model: api.ShiftEmployee
+  pk: 1
+  fields:
+    shift: 1
+    employee: 2
+    created_at: "2019-08-05T19:45:00Z"
+    updated_at: "2019-08-05T19:45:00Z"
+
+- model: api.ShiftEmployee
+  pk: 2
+  fields:
+    shift: 1
+    employee: 3
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftEmployee
+  pk: 3
+  fields:
+    shift: 4
+    employee: 3
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftEmployee
+  pk: 4
+  fields:
+    shift: 6
+    employee: 2
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftEmployee
+  pk: 4
+  fields:
+    shift: 8
+    employee: 2
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+#
+# Applications
+#
+
+- model: api.ShiftApplication
+  pk: 3
+  fields:
+    shift: 2
+    employee: 2
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 4
+  fields:
+    shift: 2
+    employee: 3
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 5
+  fields:
+    shift: 3
+    employee: 3
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+- model: api.ShiftApplication
+  pk: 6
+  fields:
+    shift: 7
+    employee: 3
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 7
+  fields:
+    shift: 7
+    employee: 4
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 8
+  fields:
+    shift: 7
+    employee: 5
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+- model: api.ShiftApplication
+  pk: 9
+  fields:
+    shift: 7
+    employee: 6
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"

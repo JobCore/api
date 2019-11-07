@@ -21,7 +21,8 @@ from rest_framework.documentation import include_docs_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('docs/', include_docs_urls(title='JobCore', description='JobCore main API', 
+    path('admin_tools/', include('admin_tools.urls')),
+    path('docs/', include_docs_urls(title='JobCore', description='JobCore main API',
                     authentication_classes=[],
                     permission_classes=(permissions.AllowAny,)))
 ]
