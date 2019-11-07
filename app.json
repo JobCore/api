@@ -12,6 +12,12 @@
     "API_URL": {
       "required": true
     },
+    "TEST_DATABASE_URL":{
+      "required": true
+    },
+    "DATABASE_URL": {
+      "required": true
+    },
     "BROADCAST_NOTIFICATIONS_BY_EMAIL": {
       "required": true
     },
@@ -64,6 +70,13 @@
   "stack": "heroku-18",
   "environments": {
     "test": {
+      "addons": ["heroku-postgresql:hobby-dev"],
+      "scripts": {
+        "test": "pipenv run tests"
+      }
+    },
+    "review": {
+      "addons": ["heroku-postgresql:hobby-dev"],
       "scripts": {
         "test": "pipenv run tests"
       }
