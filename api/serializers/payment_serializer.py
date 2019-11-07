@@ -130,7 +130,7 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'payments')
 
     def get_payments(self, instance):
-        _payments = instance.payments.all().order_by('-shift__starting_at')
+        _payments = instance.payments.all().order_by('shift__starting_at')
         return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 
@@ -141,9 +141,14 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
 
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PayrollPeriod
         exclude = ()
+        extra_kwargs = {
+            'ending_at': {'read_only': True},
+            'starting_at': {'read_only': True}
+        }
 
 
 def get_projected_payments(

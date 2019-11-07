@@ -616,6 +616,34 @@ class EmployerMePayrollPeriodsView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request, period_id=None):
+
+        if 'status' not in request.data:
+            return Response(validators.error_object('You need to specify the status'),status=status.HTTP_404_NOT_FOUND)
+
+        period = self.fetch_one(period_id)
+        if period is None:
+            return Response(validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
+
+        new_statuses = {
+            'FINALIZED': 'FINALIZED',
+            'OPEN': 'FINALIZED',
+        }
+        data = {
+            "status": new_statuses[request.data['status']]
+        }
+
+        periodSerializer = payment_serializer.PayrollPeriodSerializer(
+            period,
+            data=data,
+            many=False,
+            context={"request": request}
+        )
+        if periodSerializer.is_valid():
+            periodSerializer.save()
+            return Response(periodSerializer.data, status=status.HTTP_200_OK)
+        return Response(periodSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EmployerMePayrollPeriodPaymentView(EmployerView):
     def get_queryset(self):

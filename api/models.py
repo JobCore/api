@@ -484,11 +484,13 @@ class Clockin(models.Model):
         default=PENDING)
 
 
-FINALIZED = 'FINALIZED'
 OPEN = 'OPEN'
+FINALIZED = 'FINALIZED'
+PAID = 'PAID'
 PERIOD_STATUS = (
-    (PENDING, 'Finalized'),
-    (OPEN, 'Open')
+    (OPEN, 'Open'),
+    (FINALIZED, 'Finalized'),
+    (PAID, 'Paid')
 )
 
 
