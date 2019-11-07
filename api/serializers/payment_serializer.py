@@ -112,7 +112,8 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
 
 
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    payments = serializers.SerializerMethodField()
     employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -127,6 +128,10 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'ending_at',
             'created_at',
             'payments')
+
+    def get_payments(self, instance):
+        _payments = instance.payments.all().order_by('-shift__starting_at')
+        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
