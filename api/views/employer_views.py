@@ -44,7 +44,7 @@ class EmployerMeView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request):
+    def put(self, request, employer_id=None):
         serializer = employer_serializer.EmployerSerializer(
             request.user.profile.employer, data=request.data)
         if serializer.is_valid():
@@ -456,7 +456,13 @@ class EmployerShiftView(EmployerView, CustomPagination):
 
             qEmployeeNot = request.GET.get('employee_not')
             if qEmployeeNot is not None:
-                shifts = shifts.exclude(employees__in=(int(qEmployeeNot),))
+                emp_list = qEmployeeNot.split(',')
+                shifts = shifts.exclude(employees__in=[int(emp) for emp in emp_list])
+
+            qCandidateNot = request.GET.get('candidate_not')
+            if qCandidateNot is not None:
+                emp_list = qCandidateNot.split(',')
+                shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
             serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

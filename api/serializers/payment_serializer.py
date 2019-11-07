@@ -139,11 +139,29 @@ class RoundingDecimalField(serializers.DecimalField):
         return value
 
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
-    regular_hours = RoundingDecimalField(max_digits=21, decimal_places=2)
 
     class Meta:
         model = PayrollPeriodPayment
         exclude = ()
+
+    def validate(self, data):
+
+        data = super(PayrollPeriodPaymentSerializer, self).validate(data)
+
+        if 'status' not in data:
+            raise serializers.ValidationError('You need to specify the shift status')
+
+        return data
+
+    def update(self, payment, validated_data):
+
+        params = validated_data.copy()
+        print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
+        params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+
+        PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
+
+        return payment
 
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):

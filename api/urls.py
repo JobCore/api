@@ -136,10 +136,8 @@ urlpatterns = [
     # FOR THE EMPLOYER
     #
 
-    path(
-        'employers/me',
-        EmployerMeView.as_view(),
-        name="me-employer"),
+    path('employers/me',EmployerMeView.as_view(),name="me-employer"),
+    path('employers/me/<int:employer_id>',EmployerMeView.as_view(),name="me-employer"),
     path(
         'employers/me/image',
         EmployerMeImageView.as_view(),
