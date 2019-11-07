@@ -36,6 +36,13 @@ PAYROLL_LENGTH_TYPE = (
 )
 
 
+class City(models.Model):
+    name = models.CharField(max_length=30, blank=False, null=False)
+
+    def __str__(self):
+        return self.name
+
+
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -125,6 +132,8 @@ class Profile(models.Model):
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     city = models.CharField(max_length=30, blank=True)
+    profile_city_man = models.CharField(max_length=30, null=True, blank=True)
+    profile_city = models.ForeignKey(City, null=True, on_delete=models.CASCADE)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(
@@ -148,6 +157,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    @property
+    def get_city(self):
+        if self.profile_city_id is None:
+            return self.profile_city_man
+        return self.profile_city.name
 
 
 WEEKLY = 'WEEKLY'

@@ -174,7 +174,9 @@ class UserRegisterView(APIView):
         if "token" in request.data:
             token = request.data["token"]
 
-        serializer = auth_serializer.UserRegisterSerializer(data=request.data, context={"token": token })
+        serializer = auth_serializer.UserRegisterSerializer(
+            data=request.data,
+            context={"token": token, 'city': request.data.get('city'), 'city_id': request.data.get('city_id')})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -445,6 +447,25 @@ class PositionView(APIView):
 
         position.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CityView(APIView):
+
+    def get(self, request, id=None):
+        if (id):
+            try:
+                city = City.objects.get(pk=id)
+            except City.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = other_serializer.CitySerializer(city, many=False)
+
+        else:
+            cities = City.objects.all()
+            serializer = other_serializer.CitySerializer(cities, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BadgeView(APIView):

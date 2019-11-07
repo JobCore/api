@@ -2,8 +2,8 @@ from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
-    Badge, JobCoreInvite, Rate, Employer, Profile,
-    Shift, Employee, User, AvailabilityBlock,
+   Badge, JobCoreInvite, Rate, Employer, Profile,
+   Shift, Employee, User, AvailabilityBlock, City
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
@@ -41,6 +41,12 @@ class RatingGetSerializer(serializers.ModelSerializer):
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
+        exclude = ()
+
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
         exclude = ()
 
 

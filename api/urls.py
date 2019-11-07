@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView
 )
 
 from api.views.admin_views import (
@@ -64,6 +64,8 @@ urlpatterns = [
     # FOR EVERYONE LOGGED IN
     # (execution permissions may vary depending on your privileges)
     #
+    path('cities', CityView.as_view(), name='get-cities'),
+    path('cities/<int:id>', CityView.as_view(), name='id-cities'),
 
     path(
         'employers',
