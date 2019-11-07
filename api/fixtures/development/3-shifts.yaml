@@ -229,3 +229,28 @@
     employee: 3
     created_at: "2019-08-13T19:45:00Z"
     updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 7
+  fields:
+    shift: 7
+    employee: 4
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+- model: api.ShiftApplication
+  pk: 8
+  fields:
+    shift: 7
+    employee: 5
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"
+
+
+- model: api.ShiftApplication
+  pk: 9
+  fields:
+    shift: 7
+    employee: 6
+    created_at: "2019-08-13T19:45:00Z"
+    updated_at: "2019-08-13T19:45:00Z"

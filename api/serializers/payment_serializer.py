@@ -4,7 +4,7 @@ import decimal
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue, PaymentDeduction
+from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 #
@@ -112,7 +112,8 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
 
 
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    payments = serializers.SerializerMethodField()
     employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -128,17 +129,50 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'created_at',
             'payments')
 
+    def get_payments(self, instance):
+        _payments = instance.payments.all().order_by('shift__starting_at')
+        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
+
+
+class RoundingDecimalField(serializers.DecimalField):
+    def validate_precision(self, value):
+        return value
 
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PayrollPeriodPayment
         exclude = ()
 
+    def validate(self, data):
+
+        data = super(PayrollPeriodPaymentSerializer, self).validate(data)
+
+        if 'status' not in data:
+            raise serializers.ValidationError('You need to specify the shift status')
+
+        return data
+
+    def update(self, payment, validated_data):
+
+        params = validated_data.copy()
+        print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
+        params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+
+        PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
+
+        return payment
+
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PayrollPeriod
         exclude = ()
+        extra_kwargs = {
+            'ending_at': {'read_only': True},
+            'starting_at': {'read_only': True}
+        }
 
 
 def get_projected_payments(
@@ -197,8 +231,10 @@ def generate_periods_and_payments(employer, generate_since=None):
     NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
-        raise serializers.ValidationError(
-            'The only supported period type is DAYS (for now)')
+        raise serializers.ValidationError('The only supported period type is DAYS (for now)')
+
+    if employer.payroll_period_starting_time is None:
+        raise serializers.ValidationError('You have to setup your payroll configuration')
 
     weekday = employer.payroll_period_starting_time.weekday()
     h_hour = employer.payroll_period_starting_time.hour
@@ -320,8 +356,3 @@ def get_employee_payments(
         payments = payments.filter(shift__id=qShift)
 
     return result
-
-class PaymentDeductionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PaymentDeduction
-        exclude = ()

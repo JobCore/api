@@ -77,7 +77,7 @@ class GeneratePeriodsView(APIView):
 
         else:
             log_debug("hooks",'GeneratePeriodsView:get: Looking for all employers periods')
-            employers = Employer.objects.all()
+            employers = Employer.objects.filter(payroll_period_starting_time__isnull=False)
             periods = []
             for employer in employers:
                 periods = periods + \

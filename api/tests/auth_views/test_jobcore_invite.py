@@ -143,50 +143,6 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
             False,
             'It should NOT have called requests.post to send mail')
 
-    @patch('api.utils.email.requests')
-    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_send_double_jobcore_invite(self, mocked_requests):
-        """
-        Send 2 invitations to the same email.
-        """
-
-        url = reverse_lazy('api:get-jcinvites')
-        self.client.force_login(self.test_user_employer)
-
-        payload = {
-            'email': 'test@doma.in',
-        }
-
-        response = self.client.post(
-            url,
-            data=json.dumps(payload),
-            content_type="application/json")
-
-        self.assertEquals(
-            response.status_code,
-            201,
-            'It should return a success response')
-
-        self.assertEquals(
-            mocked_requests.post.call_count,
-            1,
-            'It should have called requests.post to send mail')
-
-        response = self.client.post(
-            url,
-            data=json.dumps(payload),
-            content_type="application/json")
-
-        self.assertEquals(
-            response.status_code,
-            400,
-            'It should return an error response')
-
-        self.assertEquals(
-            mocked_requests.post.call_count,
-            1,
-            'It should NOT have called requests.post to send mail')
-
     def test_delete_jobcore_invite(self):
         """
         Delete an invitation

@@ -40,5 +40,10 @@ class Migration(migrations.Migration):
             model_name='notification',
             name='sent_at',
             field=models.DateTimeField(null=True),
-        )
+        ),
+        migrations.AlterField(
+            model_name='employer',
+            name='payroll_period_starting_time',
+            field=models.DateTimeField(blank=True, default=datetime.datetime(2019, 10, 24, 0, 0, 0, 387447, tzinfo=utc)),
+        ),
     ]

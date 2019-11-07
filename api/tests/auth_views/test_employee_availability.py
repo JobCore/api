@@ -86,7 +86,7 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
             401,
             'It should return an error response')
 
-    def test_post_new_availability(self):
+    def test_post_new_availability_no_recurrency(self):
         """
         """
         self.client.force_login(self.test_user_employee)
@@ -104,8 +104,8 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.assertEquals(
             response.status_code,
-            200,
-            'It should return a success response')
+            400,
+            'It should fail because non-recurrent types are not allowed yet')
 
     def test_post_new_availability_bad_start_end(self):
         """
@@ -148,82 +148,6 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
             response.status_code,
             400,
             'It should return an error response')
-
-    def test_post_new_availability_too_many(self):
-        """
-        """
-        create_default_availablity(self.test_employee)
-
-        self.client.force_login(self.test_user_employee)
-        url = reverse_lazy('api:me-employees-availability')
-
-        avail_start = timezone.now() + timedelta(days=30)
-        avail_end = avail_start + timedelta(hours=8)
-
-        payload = {
-            'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
-            'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
-        }
-
-        response = self.client.post(url, data=payload)
-
-        self.assertEquals(
-            response.status_code,
-            400,
-            'It should return an error response')
-
-    def test_post_delete_availability(self):
-        create_default_availablity(self.test_employee)
-        self.client.force_login(self.test_user_employee)
-
-        availability = AvailabilityBlock.objects.last()
-        url = reverse_lazy('api:me-employees-availability', kwargs={
-            'block_id': 1
-            })
-
-        response = self.client.delete(url)
-
-        self.assertEquals(
-            response.status_code,
-            404,
-            'It should return an error response')
-
-        url = reverse_lazy('api:me-employees-availability', kwargs={
-            'block_id': availability.id
-            })
-
-        response = self.client.delete(url)
-        self.assertEquals(
-            response.status_code,
-            200,
-            'It should return a success response')
-
-    def test_post_new_availability_duplicate(self):
-        """
-        """
-        avail_start = timezone.now() + timedelta(days=30)
-        avail_end = avail_start + timedelta(hours=8)
-        availability = mixer.blend(AvailabilityBlock,
-                employee=self.test_employee,
-                starting_at=avail_start,
-                ending_at=avail_end)
-
-        self.client.force_login(self.test_user_employee)
-        url = reverse_lazy('api:me-employees-availability')
-
-        payload = {
-            'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
-            'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
-        }
-
-        response = self.client.post(url, data=payload)
-
-        self.assertEquals(
-            response.status_code,
-            400,
-            'It should return an error response')
-
-
 
     def test_post_new_availability_bad_recurrent(self):
         """
@@ -279,29 +203,25 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
             200,
             'It should return an error response')
 
-    def test_overlapping_availability_weekly(self):
-        """
-        """
-        create_default_availablity(self.test_employee)
-        self.client.force_login(self.test_user_employee)
-        url = reverse_lazy('api:me-employees-availability')
+    # def test_overlapping_availability_weekly(self):
+    #     """
+    #     """
+    #     create_default_availablity(self.test_employee)
+    #     self.client.force_login(self.test_user_employee)
+    #     url = reverse_lazy('api:me-employees-availability')
 
-        avail_start = timezone.now() + timedelta(days=30)
-        avail_end = avail_start + timedelta(hours=8)
+    #     avail_start = timezone.now() + timedelta(days=30)
+    #     avail_end = avail_start + timedelta(hours=8)
 
-        payload = {
-            'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
-            'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
-            'recurrent': True,
-            'recurrency_type': 'WEEKLY'
-        }
+    #     payload = {
+    #         'starting_at': avail_start.strftime('%Y-%m-%dT%H:%M:%S'),
+    #         'ending_at': avail_end.strftime('%Y-%m-%dT%H:%M:%S'),
+    #         'recurrent': True,
+    #         'recurrency_type': 'WEEKLY'
+    #     }
 
-        response = self.client.post(url, data=payload)
-
-        self.assertEquals(
-            response.status_code,
-            400,
-            'It should return an error response')
+    #     response = self.client.post(url, data=payload)
+    #     self.assertEquals(response.status_code,400,'It should return an error response')
 
     def test_update_block(self):
         """
@@ -324,8 +244,7 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
         }
 
         payload = self.client._encode_data(payload, MULTIPART_CONTENT)
-        response = self.client.put(
-            url, payload, content_type=MULTIPART_CONTENT)
+        response = self.client.put(url, payload, content_type=MULTIPART_CONTENT)
 
         self.assertEquals(
             response.status_code,
@@ -353,10 +272,9 @@ class EEAvailabilityTestSuite(TestCase, WithMakeUser, WithMakeShift):
         }
 
         payload = self.client._encode_data(payload, MULTIPART_CONTENT)
-        response = self.client.put(
-            url, payload, content_type=MULTIPART_CONTENT)
+        response = self.client.put(url, payload, content_type=MULTIPART_CONTENT)
 
         self.assertEquals(
             response.status_code,
-            400,
-            'It should return an error response')
+            200,
+            'It should allow and update the original block')

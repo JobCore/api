@@ -8,15 +8,15 @@ import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
-from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 
-from jwt.exceptions import DecodeError
+from jwt.exceptions import DecodeError, ExpiredSignatureError
 
-import os 
+import os
 import plaid
+
 
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -35,6 +35,7 @@ from api.pagination import CustomPagination
 from api.models import *
 from api.utils.notifier import notify_password_reset_code, notify_email_validation
 from api.utils import validators
+from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
 
 from api.serializers import (
@@ -63,17 +64,17 @@ class ValidateEmailView(APIView):
 
         try:
             payload = jwt_decode_handler(token)
-        except DecodeError:
-            raise ValidationError('Invalid Token')
+        except (DecodeError, ExpiredSignatureError) as e:
+            return html_error('Your email validation link has expired, please resend it and try again')
 
         try:
             user = User.objects.get(id=payload["user_id"])
             if user.profile.status != 'PENDING_EMAIL_VALIDATION':
-                raise ValidationError('Your email has been already activated')
+                return html_error('Your email has been already activated, open the JobCore App and go ahead and sign in')
 
             try:
-                db_token = UserToken.objects.get(token=token, email=user.email)
-                db_token.delete()
+                # db_token = UserToken.objects.get(token=token, email=user.email)
+                # db_token.delete()
 
                 user.profile.status = 'ACTIVE'  # email validation completed
                 user.profile.save()
@@ -82,12 +83,10 @@ class ValidateEmailView(APIView):
                 return HttpResponse(template['html'])
 
             except UserToken.DoesNotExist:
-                return Response(validators.error_object(
-                    'Invalid validation token'), status=status.HTTP_404_NOT_FOUND)
+                return html_error('Your email validation link has expired, please resend it and try again')
 
         except User.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+            return html_error('Not found')
 
 
 class ValidateSendEmailView(APIView):
@@ -121,14 +120,12 @@ class PasswordView(APIView):
         try:
             data = jwt_decode_handler(token)
         except DecodeError as e:
-            raise ValidationError('Invalid Token: '+str(e))
+            return html_error('Invalid Token')
 
         try:
             user = User.objects.get(id=data['user_id'])
         except User.DoesNotExist:
-            return Response({
-                'error': 'Email not found on the database'
-            }, status=status.HTTP_404_NOT_FOUND)
+            return html_error('Email not found on the database')
 
         token = api.utils.jwt.internal_payload_encode({
             "user_email": user.email,
@@ -937,26 +934,4 @@ class OnboardingView(APIView):
                 return Response(views[view_slug], status=status.HTTP_200_OK)
             else:
                 return Response([], status=status.HTTP_200_OK)
-
-
-class RegisterBankAccountView(APIView):
-    def post(self, request):
-        plaidClient = plaid.Client(
-                client_id=os.environ.get('PLAID_CLIENT_ID'),
-                secret=os.environ.get('PLAID_SECRET'),
-                public_key=os.environ.get('PLAID_PUBLIC_KEY'),
-                environment=os.environ.get('PLAID_ENV'))
-
-        access_token = plaidClient.Item.public_token.exchange(request.POST.get('public_token'))['access_token']
-        response = plaidClient.Auth.get(access_token)
-        for account in response['accounts']:
-            BankAccount.objects.create(
-                    user=request.user.profile,
-                    access_token=access_token,
-                    name=account.get('name'),
-                    institution_name=response.get('item').get('institution_id'),
-                    item_id=response.get('item').get('item_id'))
-
-
-        return Response(status=status.HTTP_200_OK)
 

@@ -3,6 +3,7 @@ import logging
 _logs = {
     'jobcore:general': logging.getLogger('jobcore:general'),
     'jobcore:hooks': logging.getLogger('jobcore:hooks'),
+    'jobcore:clockin': logging.getLogger('jobcore:clockin'),
     'jobcore:shifts': logging.getLogger('jobcore:shifts')
 }
 

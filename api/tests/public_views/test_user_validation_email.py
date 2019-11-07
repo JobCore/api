@@ -95,7 +95,6 @@ class UserValidationEmailTestSuite(TestCase, WithMakeUser):
         """
 
         jtw_payload = jwt_payload_handler(self.test_user)
-
         token = jwt_encode_handler(jtw_payload)
 
         payload = {
