@@ -22,9 +22,4 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
         ),
-        migrations.AddField(
-            model_name='employee',
-            name='documents',
-            field=models.ManyToManyField(blank=True, to='api.Document'),
-        ),
     ]

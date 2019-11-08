@@ -224,7 +224,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(
             response.status_code,
             201,
-            f'It should return a success response: {str(response.content)}')
+            'It should return a success response: {str(response.content)}')
 
         response = self.client.post(
             url,
@@ -234,7 +234,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(
             response.status_code,
             400,
-            f'It should return a success response: {str(response.content)}')
+            'It should return a success response: {str(response.content)}')
 
     def test_rate_without_clocking_in(self):
         """

@@ -18,26 +18,10 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=30)),
             ],
         ),
-        migrations.CreateModel(
-            name='Document',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('document', models.URLField()),
-                ('public_id', models.CharField(max_length=30, null=True)),
-                ('state', models.CharField(choices=[('PENDING', 'Pending'), ('APPROVED', 'Approved')], default='PENDING', max_length=8)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-            ],
-        ),
         migrations.AddField(
             model_name='profile',
             name='profile_city_man',
             field=models.CharField(blank=True, max_length=30, null=True),
-        ),
-        migrations.AddField(
-            model_name='employee',
-            name='documents',
-            field=models.ManyToManyField(blank=True, to='api.Document'),
         ),
         migrations.AddField(
             model_name='profile',

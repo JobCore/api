@@ -527,6 +527,14 @@ class EmployeeDeviceMeView(WithProfileView):
 
 class EmployeeMeDocumentView(EmployeeView):
     def post(self, request):
+        result = cloudinary.uploader.upload(
+            request.FILES['document'],
+            tags=['i9_document'],
+            use_filename=1,
+            unique_filename=1,
+            resource_type='auto'
+        )
+        request.data['document'] = result['secure_url']
         serializer = other_serializer.DocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
