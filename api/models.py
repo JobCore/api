@@ -74,6 +74,8 @@ class Employer(models.Model):
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
 
+    documents = models.ManyToManyField('Document', blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -580,3 +582,15 @@ class BankAccount(models.Model):
     institution_name = models.CharField(max_length=200)
     item_id = models.CharField(max_length=100)
 
+class Document(models.Model):
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    DOCUMENT_STATUS = (
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+    )
+    document = models.FileField()
+    state = models.CharField(max_length=7, choices=DOCUMENT_STATUS, default=PENDING)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
