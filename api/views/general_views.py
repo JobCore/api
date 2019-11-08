@@ -956,3 +956,25 @@ class OnboardingView(APIView):
             else:
                 return Response([], status=status.HTTP_200_OK)
 
+
+
+class RegisterBankAccountView(APIView):
+    def post(self, request):
+        plaidClient = plaid.Client(
+                client_id=os.environ.get('PLAID_CLIENT_ID'),
+                secret=os.environ.get('PLAID_SECRET'),
+                public_key=os.environ.get('PLAID_PUBLIC_KEY'),
+                environment=os.environ.get('PLAID_ENV'))
+
+        access_token = plaidClient.Item.public_token.exchange(request.POST.get('public_token'))['access_token']
+        response = plaidClient.Auth.get(access_token)
+        for account in response['accounts']:
+            BankAccount.objects.create(
+                    user=request.user.profile,
+                    access_token=access_token,
+                    name=account.get('name'),
+                    institution_name=response.get('item').get('institution_id'),
+                    item_id=response.get('item').get('item_id'))
+
+
+        return Response(status=status.HTTP_200_OK)
