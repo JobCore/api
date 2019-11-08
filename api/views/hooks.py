@@ -57,6 +57,7 @@ class ClockOutExpiredShifts(APIView):
         ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
 
         serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class GeneratePeriodsView(APIView):

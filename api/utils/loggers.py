@@ -9,7 +9,6 @@ _logs = {
 
 def log_debug(context, msg):
     context = 'jobcore:'+context
-    print(msg)
     if context in _logs:
         _logs[context].debug(str(msg))
     else:
