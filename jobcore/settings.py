@@ -86,9 +86,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
+
+if ENVIRONMENT == 'production':
+    MIDDLEWARE.extend([
+        'rollbar.contrib.django.middleware.RollbarNotifierMiddleware'
+    ])
 
 ROOT_URLCONF = 'jobcore.urls'
 
@@ -247,19 +250,19 @@ LOGGING = {
             'propagate': True,
         },
         'jobcore:hooks': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['hooks.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:shifts': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['shifts.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:clockin': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['clockin.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,

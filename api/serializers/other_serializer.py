@@ -199,12 +199,13 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
             "7": "Saturday"
         }
         django_start_week_day = (start.isoweekday() % 7) + 1
-        #django_end_week_day = (start.isoweekday() % 7) + 1
+        # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
 
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
-                starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY', employee_id=self.context['request'].user.profile.id
+                starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
+                employee_id=self.context['request'].user.profile.id
             )
 
             #if updating
@@ -217,6 +218,7 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('This employee has '+str(previous_ablock_in_week)+' day block(s) for '+days[str(django_start_week_day)]+' already')  # NOQA
 
         return data
+
 
 class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
     class Meta:
@@ -240,7 +242,7 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
         if start > end:
             raise serializers.ValidationError('Invalid availability range')
 
-        if (end-start).days > 0:
+        if (end - start).days > 0:
             raise serializers.ValidationError('Invalid availability rarge')
 
         if 'recurrent' in data and data['recurrent']:
@@ -263,22 +265,25 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
             "7": "Saturday"
         }
         django_start_week_day = (start.isoweekday() % 7) + 1
-        #django_end_week_day = (start.isoweekday() % 7) + 1
+        # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
 
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
-                starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY', employee_id=self.context['request'].user.profile.id
+                starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
+                employee_id=self.context['request'].user.profile.id
             )
 
-            #if updating
+            # if updating
             if self.instance:
                 previous_ablock_in_week = previous_ablock_in_week.exclude(
                     id=self.instance.id)
 
             previous_ablock_in_week = previous_ablock_in_week.count()
             if previous_ablock_in_week > 0:
-                raise serializers.ValidationError('This employee has '+str(previous_ablock_in_week)+' all day blocks for '+days[str(django_start_week_day)]+' already')  # NOQA
+                raise serializers.ValidationError(
+                    'This employee has ' + str(previous_ablock_in_week) + ' all day blocks for ' + days[
+                        str(django_start_week_day)] + ' already')  # NOQA
 
         return data
 

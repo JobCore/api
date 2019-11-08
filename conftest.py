@@ -1,8 +1,18 @@
-import pytest, os, dj_database_url
+#import pytest, os, dj_database_url
+# 'default': dj_database_url.config(default="sqlite3:///tests.sqlite3")
+# tests="pytest --color=yes --cov --cov-report=html --reuse-db --ds=jobcore.settings"
 
-TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL')
+import os
+import pytest
+import dj_database_url
 
 @pytest.fixture(scope='session')
-def django_db_setup():
-    from django.conf import settings
-    settings.DATABASES['default'] = dj_database_url.config(default=TEST_DATABASE_URL)
+def django_db_modify_db_settings(request):
+    from jobcore import settings
+    settings.DATABASES['default'] = {
+        'ENGINE':'django.db.backends.sqlite3',
+        'TEST': 'test.sqlite3',
+        'NAME': 'test.sqlite3'
+    }
+    #print("pipo"+str(settings.DATABASES['default']))
+    #exit()

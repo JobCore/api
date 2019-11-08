@@ -221,11 +221,10 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             data=json.dumps(payload),
             content_type="application/json")
 
-        #print(response.content)
         self.assertEquals(
             response.status_code,
             201,
-            'It should return a success response')
+            f'It should return a success response: {str(response.content)}')
 
         response = self.client.post(
             url,
@@ -235,7 +234,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(
             response.status_code,
             400,
-            'It should return a success response')
+            f'It should return a success response: {str(response.content)}')
 
     def test_rate_without_clocking_in(self):
         """

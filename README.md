@@ -14,7 +14,7 @@
 $ pipenv install
 ```
 
-- Create database:
+- Create database (if needed):
 ```
 psql -U gitpod -c 'CREATE DATABASE jobcore;'
 psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore
@@ -29,6 +29,7 @@ Run django: `$ pipenv run start`
 
 ### Lod fixtures (if needed)
 ```sh
+$ python3 manage.py reset
 $ python3 manage.py seed [development|production]
 ```
 
@@ -37,10 +38,9 @@ $ python3 manage.py seed [development|production]
 $ pipenv run tests
 ```
 
-Note: If you are running the old tests:
+Note: If you are running a particular test:
 
 - For a particular test: `pytest api/tests/test_invites.py`
-- For all tests: `pytest`
 
 ### Extra useful stuff
 

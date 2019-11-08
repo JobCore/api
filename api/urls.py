@@ -388,4 +388,7 @@ urlpatterns = [
     # every hour, will generate payment periods, params:
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
+
+    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]
