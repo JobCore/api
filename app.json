@@ -1,3 +1,4 @@
+
 {
   "addons": [
     "heroku-postgresql",
@@ -36,21 +37,6 @@
     "ENVIRONMENT": {
       "required": true
     },
-    "FIREBASE_KEY": {
-      "required": true
-    },
-    "MAILGUN_API_KEY": {
-      "required": true
-    },
-    "MAILGUN_FROM": {
-      "required": true
-    },
-    "ROLLBAR_ENDPOINT": {
-      "required": true
-    },
-    "ROLLBAR_POST_ACCESS_TOKEN": {
-      "required": true
-    },
     "SECRET_KEY": {
       "required": true
     }
@@ -66,6 +52,25 @@
   },
   "stack": "heroku-18",
   "environments": {
+    "production": {
+        "env": {
+            "ROLLBAR_ENDPOINT": {
+                "required": true
+            },
+            "ROLLBAR_POST_ACCESS_TOKEN": {
+                "required": true
+            },
+            "FIREBASE_KEY": {
+                "required": true
+            },
+            "MAILGUN_API_KEY": {
+                "required": true
+            },
+            "MAILGUN_FROM": {
+                "required": true
+            }
+        }
+    },
     "test": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
@@ -81,11 +86,6 @@
         "addons": ["heroku-postgresql:hobby-dev"],
         "scripts": {
             "test": "pipenv run tests"
-        },
-        "env": {
-            "TEST_DATABASE_URL":{
-                "required": true
-            }
         }
     }
   }
