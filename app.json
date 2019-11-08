@@ -67,7 +67,7 @@
   "stack": "heroku-18",
   "environments": {
     "test": {
-        "addons": ["heroku-postgresql:hobby-dev"],
+        "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
             "test": "pipenv run tests"
         },
