@@ -142,7 +142,6 @@ class UserRegisterSerializer(serializers.Serializer):
             # user.profile.save()
 
         elif account_type == 'employee':
-
             status = 'PENDING_EMAIL_VALIDATION'
 
             # if the user is coming from an email link
@@ -165,7 +164,8 @@ class UserRegisterSerializer(serializers.Serializer):
             employee_actions.add_default_positions(emp)
 
             Profile.objects.create(
-                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile'+str(randint(1, 3))+'.png', employee=emp, status=status)
+                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile'+str(randint(1, 3))+'.png', employee=emp, status=status,
+                profile_city_id=self.context.get("city_id"), profile_city_man=self.context.get("city"))
 
             jobcore_invites = JobCoreInvite.objects.all().filter(
                 email=user.email)

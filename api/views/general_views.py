@@ -174,7 +174,9 @@ class UserRegisterView(APIView):
         if "token" in request.data:
             token = request.data["token"]
 
-        serializer = auth_serializer.UserRegisterSerializer(data=request.data, context={"token": token })
+        serializer = auth_serializer.UserRegisterSerializer(
+            data=request.data,
+            context={"token": token, 'city': request.data.get('city'), 'city_id': request.data.get('city_id')})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -445,6 +447,25 @@ class PositionView(APIView):
 
         position.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CityView(APIView):
+
+    def get(self, request, id=None):
+        if (id):
+            try:
+                city = City.objects.get(pk=id)
+            except City.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = other_serializer.CitySerializer(city, many=False)
+
+        else:
+            cities = City.objects.all()
+            serializer = other_serializer.CitySerializer(cities, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BadgeView(APIView):
@@ -935,3 +956,25 @@ class OnboardingView(APIView):
             else:
                 return Response([], status=status.HTTP_200_OK)
 
+
+
+class RegisterBankAccountView(APIView):
+    def post(self, request):
+        plaidClient = plaid.Client(
+                client_id=os.environ.get('PLAID_CLIENT_ID'),
+                secret=os.environ.get('PLAID_SECRET'),
+                public_key=os.environ.get('PLAID_PUBLIC_KEY'),
+                environment=os.environ.get('PLAID_ENV'))
+
+        access_token = plaidClient.Item.public_token.exchange(request.POST.get('public_token'))['access_token']
+        response = plaidClient.Auth.get(access_token)
+        for account in response['accounts']:
+            BankAccount.objects.create(
+                    user=request.user.profile,
+                    access_token=access_token,
+                    name=account.get('name'),
+                    institution_name=response.get('item').get('institution_id'),
+                    item_id=response.get('item').get('item_id'))
+
+
+        return Response(status=status.HTTP_200_OK)

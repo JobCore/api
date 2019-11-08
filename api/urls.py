@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, RegisterBankAccountView
 )
 
 from api.views.admin_views import (
@@ -22,7 +22,8 @@ from api.views.admin_views import (
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
+    EmployeeMeDocumentView
 )
 
 from api.views.employer_views import (
@@ -64,6 +65,8 @@ urlpatterns = [
     # FOR EVERYONE LOGGED IN
     # (execution permissions may vary depending on your privileges)
     #
+    path('cities', CityView.as_view(), name='get-cities'),
+    path('cities/<int:id>', CityView.as_view(), name='id-cities'),
 
     path(
         'employers',
@@ -356,6 +359,7 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
+    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 
@@ -372,4 +376,7 @@ urlpatterns = [
     # every hour, will generate payment periods, params:
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
+
+    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]
