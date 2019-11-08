@@ -241,12 +241,6 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        # 'rollbar': {
-        #     'filters': ['require_debug_false'],
-        #     'access_token': ROLLBAR_POST_ACCESS_TOKEN,
-        #     'environment': ENVIRONMENT,
-        #     'class': 'rollbar.logger.RollbarHandler',
-        # },
     },
     'loggers': {
         'jobcore:general': {

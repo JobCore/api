@@ -84,6 +84,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 class UserRegisterSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     account_type = serializers.CharField(required=True, write_only=True)
+
     employer = serializers.PrimaryKeyRelatedField(
         required=False, many=False, write_only=True,
         queryset=Employer.objects.all())
