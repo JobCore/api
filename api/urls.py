@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, RegisterBankAccountView
 )
 
 from api.views.admin_views import (
@@ -358,6 +358,7 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
+    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 
