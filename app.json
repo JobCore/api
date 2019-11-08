@@ -79,7 +79,8 @@
         "env": {
             "TEST_DATABASE_URL":{
                 "required": true
-            }
+            },
+            "POSTGRESQL_VERSION": "10"
         }
     },
     "review": {
