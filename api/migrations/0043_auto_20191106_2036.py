@@ -20,11 +20,4 @@ class Migration(migrations.Migration):
                 ('employer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deductions', to='api.Employer')),
             ],
         ),
-        migrations.RemoveField(
-            model_name='employee',
-            name='documents',
-        ),
-        migrations.DeleteModel(
-            name='Document',
-        ),
     ]

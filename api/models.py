@@ -43,20 +43,6 @@ class City(models.Model):
         return self.name
 
 
-class Document(models.Model):
-    PENDING = 'PENDING'
-    APPROVED = 'APPROVED'
-    DOCUMENT_STATUS = (
-        (PENDING, 'Pending'),
-        (APPROVED, 'Approved'),
-    )
-    document = models.URLField()
-    public_id = models.CharField(max_length=30, null=True)
-    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-
-
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -624,8 +610,10 @@ class Document(models.Model):
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
     )
-    document = models.FileField()
-    state = models.CharField(max_length=7, choices=DOCUMENT_STATUS, default=PENDING)
-
+    document = models.URLField()
+    public_id = models.CharField(max_length=30, null=True)
+    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
