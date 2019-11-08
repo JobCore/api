@@ -22,7 +22,8 @@ from api.views.admin_views import (
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
+    EmployeeMeDocumentView
 )
 
 from api.views.employer_views import (
@@ -374,4 +375,7 @@ urlpatterns = [
     # every hour, will generate payment periods, params:
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
+
+    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]

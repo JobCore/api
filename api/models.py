@@ -81,6 +81,8 @@ class Employer(models.Model):
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
 
+    documents = models.ManyToManyField('Document', blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -108,6 +110,7 @@ class Employee(models.Model):
 
     def __str__(self):
         return self.user.email
+
 
 ACTIVE = 'ACTIVE'
 PAUSED = 'PAUSED'
@@ -351,7 +354,8 @@ class ShiftInvite(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return str(self.employee) + " for " + str(self.shift) + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
+        return str(self.employee) + " for " + str(self.shift) + " on " + self.created_at.strftime(
+            "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
 
 
 PENDING = 'PENDING'
@@ -360,6 +364,7 @@ JOBCORE_INVITE_STATUS_CHOICES = (
     (PENDING, 'Pending'),
     (ACCEPTED, 'Accepted'),
 )
+
 
 class UserToken(models.Model):
     token = models.TextField(max_length=255, blank=True)
@@ -370,6 +375,7 @@ class UserToken(models.Model):
 
     def __str__(self):
         return self.email + " " + self.token
+
 
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(
@@ -389,7 +395,8 @@ class JobCoreInvite(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return self.first_name + " " + self.last_name + " on "+ self.created_at.strftime("%m/%d/%Y, %H:%M:%S") +" ("+self.status+")"
+        return self.first_name + " " + self.last_name + " on " + self.created_at.strftime(
+            "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
 
 
 class Rate(models.Model):
@@ -408,7 +415,7 @@ class Rate(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def save(self, *args, **kwargs):
-        log_debug('general','save_rate')
+        log_debug('general', 'save_rate')
 
         super().save(*args, **kwargs)  # Call the "real" save() method.
 
@@ -417,19 +424,18 @@ class Rate(models.Model):
         if self.employee is not None:
             obj = self.employee
             new_ratings = (
-                Employee.objects.aggregate(new_avg=Avg('rate__rating'),new_total=Count('rate__id'))
+                Employee.objects.aggregate(new_avg=Avg('rate__rating'), new_total=Count('rate__id'))
             )
         elif self.employer is not None:
             obj = self.employer
             new_ratings = (
-                Employer.objects.aggregate(new_avg=Avg('rate__rating'),new_total=Count('rate__id'))
+                Employer.objects.aggregate(new_avg=Avg('rate__rating'), new_total=Count('rate__id'))
             )
 
         if obj is not None:
             obj.total_ratings = new_ratings['new_total']
             obj.rating = new_ratings['new_avg']
             obj.save()
-
 
 
 class FCMDevice(models.Model):
@@ -490,7 +496,7 @@ class Clockin(models.Model):
         max_digits=14, decimal_places=11, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
-    #auto_closed_at = models.DateTimeField(blank=True, null=True)
+    # auto_closed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(
@@ -595,3 +601,16 @@ class BankAccount(models.Model):
     institution_name = models.CharField(max_length=200)
     item_id = models.CharField(max_length=100)
 
+
+class Document(models.Model):
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    DOCUMENT_STATUS = (
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+    )
+    document = models.FileField()
+    state = models.CharField(max_length=7, choices=DOCUMENT_STATUS, default=PENDING)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
