@@ -53,10 +53,6 @@
   "stack": "heroku-18",
   "environments": {
     "production": {
-        "addons": ["heroku-postgresql:in-dyno"],
-        "scripts": {
-            "test": "pipenv run tests"
-        },
         "env": {
             "ROLLBAR_ENDPOINT": {
                 "required": true
