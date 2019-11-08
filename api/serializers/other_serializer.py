@@ -3,9 +3,8 @@ from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
     Badge, JobCoreInvite, Rate, Employer, Profile,
-    Shift, Employee, User, AvailabilityBlock, City
-    Document
-)
+    Shift, Employee, User, AvailabilityBlock, City,
+    Document)
 
 from api.serializers.position_serializer import PositionSmallSerializer
 
