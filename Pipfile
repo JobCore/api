@@ -68,6 +68,7 @@ plaid-python = "==3.4.0"
 python_version = "3.7.4"
 
 [scripts]
+collectstatic="python3 manage.py collectstatic"
 start="python3 manage.py runserver 8080"
 migrate="python3 manage.py migrate"
 makemigrations="python3 manage.py makemigrations"

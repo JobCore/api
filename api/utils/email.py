@@ -9,8 +9,10 @@ from django.conf import settings
 import requests
 from twilio.rest import Client
 
+push_service = None
 FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
-push_service = FCMNotification(api_key=FIREBASE_KEY)
+if(FIREBASE_KEY and FIREBASE_KEY!=''):
+    push_service = FCMNotification(api_key=FIREBASE_KEY)
 
 
 def send_email_message(slug, to, data={}):
@@ -51,7 +53,7 @@ def send_sms(slug, phone_number, data={}):
 
 
 def send_fcm(slug, registration_ids, data={}):
-    if(len(registration_ids) > 0):
+    if(len(registration_ids) > 0 and push_service):
         template = get_template_content(slug, data, ["email", "fms"])
 
         if 'fms' not in template:
@@ -71,15 +73,12 @@ def send_fcm(slug, registration_ids, data={}):
             message_title=message_title,
             message_body=message_body,
             data_message=message_data)
-        print('FMC_SENT: ' + slug + ' to ' +
-              "".join(map(str, registration_ids)))
 
         # if(result["failure"] or not result["success"]):
         #     raise APIException("Problem sending the notification")
 
         return result
     else:
-        print('FMC_SENT: no registration_ids found')
         return False
 
 
