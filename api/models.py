@@ -105,6 +105,7 @@ class Employee(models.Model):
         Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
+    documents = models.ManyToManyField('Document', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -609,8 +610,10 @@ class Document(models.Model):
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
     )
-    document = models.FileField()
-    state = models.CharField(max_length=7, choices=DOCUMENT_STATUS, default=PENDING)
-
+    document = models.URLField()
+    public_id = models.CharField(max_length=30, null=True)
+    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+

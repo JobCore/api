@@ -15,4 +15,14 @@ class Migration(migrations.Migration):
             name='status',
             field=models.CharField(choices=[('FINALIZED', 'Finalized'), ('OPEN', 'Open')], default='OPEN', max_length=9),
         ),
+        migrations.AddField(
+            model_name='employee',
+            name='documents',
+            field=models.ManyToManyField(blank=True, to='api.Document'),
+        ),
+        migrations.AddField(
+            model_name='employer',
+            name='documents',
+            field=models.ManyToManyField(blank=True, to='api.Document'),
+        ),
     ]
