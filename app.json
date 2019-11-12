@@ -80,7 +80,8 @@
     "review": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
-            "test": "pipenv run tests"
+            "test": "pipenv run tests",
+            "postdeploy": "pipenv run migrate && pipenv run seed"
         }
     }
   }
