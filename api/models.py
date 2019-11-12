@@ -135,8 +135,7 @@ class Profile(models.Model):
     location = models.CharField(max_length=250, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
-    city = models.CharField(max_length=30, blank=True)
-    profile_city_man = models.CharField(max_length=30, null=True, blank=True)
+    city = models.CharField(max_length=30, blank=True, null=True)
     profile_city = models.ForeignKey(City, null=True, on_delete=models.CASCADE)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
@@ -165,7 +164,7 @@ class Profile(models.Model):
     @property
     def get_city(self):
         if self.profile_city_id is None:
-            return self.profile_city_man
+            return self.city
         return self.profile_city.name
 
 
