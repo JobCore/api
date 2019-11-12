@@ -86,9 +86,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 ]
+
+if ENVIRONMENT == 'production':
+    MIDDLEWARE.extend([
+        'rollbar.contrib.django.middleware.RollbarNotifierMiddleware'
+    ])
 
 ROOT_URLCONF = 'jobcore.urls'
 
@@ -163,9 +166,10 @@ STATICFILES_FINDERS = [
 
 # if(os.environ.get('DEBUG') != 'TRUE'):
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# else:
-# STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+if ENVIRONMENT == 'production':
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+else:
+    STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
 
 JWT_AUTH = {
@@ -238,12 +242,6 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        # 'rollbar': {
-        #     'filters': ['require_debug_false'],
-        #     'access_token': ROLLBAR_POST_ACCESS_TOKEN,
-        #     'environment': ENVIRONMENT,
-        #     'class': 'rollbar.logger.RollbarHandler',
-        # },
     },
     'loggers': {
         'jobcore:general': {
@@ -253,19 +251,19 @@ LOGGING = {
             'propagate': True,
         },
         'jobcore:hooks': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['hooks.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:shifts': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['shifts.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'jobcore:clockin': {
-            #'handlers': ['console'],
+            # 'handlers': ['console'],
             'handlers': ['clockin.log', 'console'],
             'level': 'DEBUG',
             'propagate': True,

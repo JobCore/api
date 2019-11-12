@@ -216,6 +216,7 @@ class ShiftDates(serializers.Serializer):
     starting_at = serializers.DateTimeField()
     ending_at = serializers.DateTimeField()
 
+
 class ShiftPostSerializer(serializers.ModelSerializer):
 
     class Meta:
