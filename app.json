@@ -74,7 +74,7 @@
     "test": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
-            "test": "pipenv run tests"
+            "fake": "pipenv run fake"
         }
     },
     "review": {
