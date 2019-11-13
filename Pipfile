@@ -68,7 +68,7 @@ plaid-python = "==3.4.0"
 python_version = "3.7.4"
 
 [scripts]
-fake="python manage.py migrate --fake api 0043_auto_2019"
+fake="python manage.py migrate --fake api 0043_auto_20191106_2036"
 collectstatic="python3 manage.py collectstatic"
 start="python3 manage.py runserver 8080"
 migrate="python3 manage.py migrate"
