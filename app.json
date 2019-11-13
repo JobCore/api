@@ -47,6 +47,9 @@
     }
   },
   "name": "api",
+  "scripts": {
+      "postdeploy": "pipenv run migrate"
+  },
   "stack": "heroku-18",
   "environments": {
     "production": {
