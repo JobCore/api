@@ -47,9 +47,6 @@
     }
   },
   "name": "api",
-  "scripts": {
-      "postdeploy": "pipenv run migrate"
-  },
   "stack": "heroku-18",
   "environments": {
     "production": {
@@ -80,7 +77,7 @@
     "review": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
-            "test": "pipenv run fake",
+            "test": "pipenv run tests",
             "postdeploy": "pipenv run migrate && pipenv run seed"
         }
     }
