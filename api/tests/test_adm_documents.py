@@ -7,7 +7,7 @@ from mixer.backend.django import mixer
 from mock import patch
 
 from api.tests.mixins import WithMakeUser
-from api.models import Document
+# from api.models import Document
 
 
 # class AdminDocumentTestSuite(TestCase, WithMakeUser):

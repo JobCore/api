@@ -4,7 +4,7 @@ from api.utils import notifier
 from api.models import (
    Badge, JobCoreInvite, Rate, Employer, Profile,
    Shift, Employee, User, AvailabilityBlock, City,
-   Document
+   # Document
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
@@ -288,28 +288,28 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
         return data
 
 
-class DocumentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Document
-        exclude = ()
-
-
-class EmployeeDocumentSerializer(serializers.Serializer):
-    documents = serializers.PrimaryKeyRelatedField(
-        queryset=Document.objects.all(),
-        many=True,
-        required=True)
-    employee = serializers.PrimaryKeyRelatedField(
-        queryset=Employee.objects.all(),
-        required=True
-    )
-
-    def validate_documents(self, value):
-        if len(value) == 0:
-            raise serializers.ValidationError('You need to specify the document')
-        return value
-
-    def create(self, validated_data):
-        employee = validated_data['employee']
-        employee.documents.add(*validated_data['documents'])
-        return validated_data
+# class DocumentSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Document
+#         exclude = ()
+#
+#
+# class EmployeeDocumentSerializer(serializers.Serializer):
+#     documents = serializers.PrimaryKeyRelatedField(
+#         queryset=Document.objects.all(),
+#         many=True,
+#         required=True)
+#     employee = serializers.PrimaryKeyRelatedField(
+#         queryset=Employee.objects.all(),
+#         required=True
+#     )
+#
+#     def validate_documents(self, value):
+#         if len(value) == 0:
+#             raise serializers.ValidationError('You need to specify the document')
+#         return value
+#
+#     def create(self, validated_data):
+#         employee = validated_data['employee']
+#         employee.documents.add(*validated_data['documents'])
+#         return validated_data

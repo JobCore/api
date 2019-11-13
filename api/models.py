@@ -81,8 +81,6 @@ class Employer(models.Model):
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
 
-    documents = models.ManyToManyField('Document', blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -105,7 +103,6 @@ class Employee(models.Model):
         Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
-    documents = models.ManyToManyField('Document', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -602,17 +599,21 @@ class BankAccount(models.Model):
     item_id = models.CharField(max_length=100)
 
 
-class Document(models.Model):
+class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
+    REJECTED = 'REJECTED'
     DOCUMENT_STATUS = (
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
     )
     document = models.URLField()
     public_id = models.CharField(max_length=30, null=True)
+    rejected_reason = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
 
 

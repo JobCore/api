@@ -18,13 +18,13 @@ from api.views.general_views import (
 
 from api.views.admin_views import (
     EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
-    DocumentAdmin 
+    # DocumentAdmin
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
     EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
-    EmployeeMeDocumentView
+    # EmployeeMeDocumentView
 )
 
 from api.views.employer_views import (
@@ -335,9 +335,6 @@ urlpatterns = [
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
 
-    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
-
     #
     # ADMIN USE ONLY
     #
@@ -364,14 +361,14 @@ urlpatterns = [
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
     path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
-    path(
-        'document/<int:document_id>',
-        DocumentAdmin.as_view(),
-        name="admin-get-document"),
-    path(
-        'document/',
-        DocumentAdmin.as_view(),
-        name="admin-document"),
+    # path(
+    #     'document/<int:document_id>',
+    #     DocumentAdmin.as_view(),
+    #     name="admin-get-document"),
+    # path(
+    #     'document/',
+    #     DocumentAdmin.as_view(),
+    #     name="admin-document"),
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 
@@ -389,6 +386,6 @@ urlpatterns = [
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
 
-    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    # path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    # path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]
