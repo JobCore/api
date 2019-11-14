@@ -16,6 +16,7 @@ $ pipenv install
 
 - Create database (if needed):
 ```
+psql -U gitpod -c 'DROP DATABASE jobcore;'
 psql -U gitpod -c 'CREATE DATABASE jobcore;'
 psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore
 ```

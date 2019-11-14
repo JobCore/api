@@ -191,7 +191,7 @@ class EmployeeShiftInviteView(EmployeeView):
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
             })
 
-        return self.get_queryset().filter(status=status).order_by('-shift__starting_at')
+        return self.get_queryset().filter(status=status).order_by('shift__starting_at')
 
     def get(self, request, id=False):
         data = None
