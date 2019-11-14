@@ -4,12 +4,12 @@ about: Basic User Story Issue
 title: "VIEW: DETAIL"
 ---
 
-### User Story**
+### User Story
 **_User Type:_**  
 **_Wants To:_**  
 **_So That:_**  
 
-### Technical Requirements**
+### Technical Requirements
 - [ ] 1.
 - [ ] 2.
 - [ ] 3.
