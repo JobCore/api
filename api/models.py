@@ -109,7 +109,7 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return self.user.email
+        return "("+self.user.email+") receving invites?:"+str(self.stop_receiving_invites)
 
 
 ACTIVE = 'ACTIVE'

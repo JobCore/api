@@ -15,7 +15,9 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 def get_talents_to_notify(shift):
 
     talents_to_notify = []
+    
     if shift.status == 'OPEN' and shift.application_restriction != 'SPECIFIC_PEOPLE':
+    
         rating = shift.minimum_allowed_rating
         favorite_lists = shift.allowed_from_list.all()
         talents_to_notify = Employee.objects.filter(
@@ -25,6 +27,7 @@ def get_talents_to_notify(shift):
             # is accepting invites
             Q(stop_receiving_invites=False)
         )
+   
         if len(favorite_lists) > 0:
             talents_to_notify = talents_to_notify.filter(
                 # the employer gets to pick employers only from his favlists
