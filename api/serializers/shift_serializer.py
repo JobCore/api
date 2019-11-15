@@ -325,7 +325,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Please go to preferences and specify your preffered positions to work, you don't seem to have any")
 
         employee_positions_titles = [p.title for p in employee_positions]
-        if self.instance.shift.position.id not in employee_positions_ids:
+        if 'status' in data and data['status']=='APPLIED' and self.instance.shift.position.id not in employee_positions_ids:
             raise serializers.ValidationError("You can only apply to your preferred positions: "+', '.join(employee_positions_titles))
 
         # @TODO we have to validate the employee availability

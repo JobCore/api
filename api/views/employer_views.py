@@ -459,6 +459,11 @@ class EmployerShiftView(EmployerView, CustomPagination):
                 emp_list = qEmployeeNot.split(',')
                 shifts = shifts.exclude(employees__in=[int(emp) for emp in emp_list])
 
+            qEmployee = request.GET.get('employee')
+            if qEmployee is not None:
+                emp_list = qEmployee.split(',')
+                shifts = shifts.filter(employees__in=[int(emp) for emp in emp_list])
+
             qCandidateNot = request.GET.get('candidate_not')
             if qCandidateNot is not None:
                 emp_list = qCandidateNot.split(',')
