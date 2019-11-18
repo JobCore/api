@@ -156,8 +156,10 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
     def update(self, payment, validated_data):
 
         params = validated_data.copy()
-        print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
-        params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+
+        if 'regular_hours' in params:
+            print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
+            params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
 
         PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
 
@@ -290,9 +292,9 @@ def generate_periods_and_payments(employer, generate_since=None):
             for clockin in all_clockins:
                 # the payment needs to be inside the payment period
                 starting_time = clockin.started_at if clockin.started_at > period.starting_at else period.starting_at
-                ending_time = clockin.ended_at if clockin.ended_at < period.ending_at else period.ending_at
-                total_hours = (
-                    ending_time - starting_time).total_seconds() / 3600
+                
+                ending_time = clockin.ended_at if clockin.ended_at is not None and clockin.ended_at < period.ending_at else period.ending_at
+                total_hours = (ending_time - starting_time).total_seconds() / 3600 if clockin.ended_at is not None else None
 
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
@@ -315,7 +317,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     hourly_rate=clockin.shift.minimum_hourly_rate,
                     total_amount=clockin.shift.minimum_hourly_rate *
                     decimal.Decimal(total_hours),
-                    splited_payment=False if clockin.started_at == starting_time and ending_time == clockin.ended_at else True
+                    splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
 
