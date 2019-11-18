@@ -1,6 +1,6 @@
 # Bank Accounts
 
-Create a new bank account
+## Create a new bank account
 
 **URL** : `/api/bank-accounts`
 
@@ -34,6 +34,40 @@ http://localhost:5000/api/bank-accounts
 
 ```json
 
+```
+
+## Notes
+
+## List my bank accounts
+
+**URL** : `/api/bank-accounts`
+
+**Method** : `GET`
+
+**Auth required** : YES
+
+**Permissions required** : Authenticated User
+
+## Example:
+
+http://localhost:5000/api/bank-accounts
+
+## Success Response
+
+**Code** : `200 OK`
+
+**Content examples**
+
+
+```json
+[
+    {
+        "institution_name":"Institution Name",
+        "name": " name",
+        "id": 123,
+    }
+            ...
+]
 ```
 
 ## Notes
