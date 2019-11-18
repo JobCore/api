@@ -360,7 +360,7 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
-    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
+    path('bank-accounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     # path(
     #     'document/<int:document_id>',
     #     DocumentAdmin.as_view(),

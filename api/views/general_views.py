@@ -1003,3 +1003,17 @@ class RegisterBankAccountView(APIView):
             raise ValueError(f"Error crearting the Bank Account: f{str(e)}")
 
         return Response(status=status.HTTP_200_OK)
+
+    def get(self, request):
+        profile = request.user.profile
+        accounts = BankAccount.objects.filter(user_id=profile.id)
+        json_accounts = []
+        for acc in accounts:
+            acc_obj = {
+                "institution_name": acc.institution_name,
+                "name": acc.name,
+                "id": acc.id,
+            }
+            json_accounts.append(acc_obj)
+
+        return Response(json_accounts, status=status.HTTP_200_OK)
