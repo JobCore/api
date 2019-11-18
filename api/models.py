@@ -595,8 +595,8 @@ class BankAccount(models.Model):
         null=True)
     access_token = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
-    institution_name = models.CharField(max_length=200)
-    item_id = models.CharField(max_length=100)
+    institution_name = models.CharField(max_length=200, null=True, blank=True)
+    stripe_bank_account_token = models.CharField(max_length=200, null=True, blank=True)
 
 
 class EmployeeDocument(models.Model):
@@ -615,5 +615,3 @@ class EmployeeDocument(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
-
-
