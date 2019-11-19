@@ -975,10 +975,10 @@ class RegisterBankAccountView(APIView):
         plaid_link_institution_name = request.POST.get('institution_name', "")
 
         if plaid_link_account_id is None:
-            raise ValueError(f"'plaid_link_account_id' is required")
+            raise ValueError(f"'account_id' is required: {str(request.POST)}")
 
         if plaid_link_public_token is None:
-            raise ValueError(f"'plaid_link_public_token' is required")
+            raise ValueError(f"'public_token' is required: {str(request.POST)}")
 
         try:
             plaid_request = plaid_client.Item.public_token.exchange(plaid_link_public_token)
