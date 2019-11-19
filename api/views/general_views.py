@@ -983,8 +983,8 @@ class RegisterBankAccountView(APIView):
         try:
             plaid_request = plaid_client.Item.public_token.exchange(plaid_link_public_token)
         except Exception as e:
-            log.error(f"Error exchanging the Token: f{str(e)}")
-            raise ValueError(f"Error exchanging the Token: f{str(e)}")
+            log.error(f"Error exchanging the Token: {e}")
+            raise ValueError(f"Error exchanging the Token: {e}")
 
         access_token = plaid_request['access_token']
 
@@ -999,8 +999,8 @@ class RegisterBankAccountView(APIView):
                 institution_name=plaid_link_institution_name,
                 stripe_bank_account_token=bank_account_token)
         except Exception as e:
-            log.error(f"Error crearting the Bank Account: f{str(e)}")
-            raise ValueError(f"Error crearting the Bank Account: f{str(e)}")
+            log.error(f"Error creating the Bank Account: {e}")
+            raise ValueError(f"Error creating the Bank Account: {e}")
 
         return Response(status=status.HTTP_200_OK)
 
