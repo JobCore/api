@@ -39,13 +39,15 @@ class WithMakeShift:
                     shiftkwargs={}, venuekwargs={}, poskwargs={}):
 
         venue = mixer.blend('api.Venue', employer=employer, **venuekwargs)
-        position = mixer.blend('api.Position', **poskwargs)
+
+        if 'position' not in shiftkwargs:
+            shiftkwargs['position'] = mixer.blend('api.Position', **poskwargs)
+
 
         shift = mixer.blend(
             'api.Shift',
             venue=venue,
-            position=position,
             employer=employer,
             **shiftkwargs,)
 
-        return shift, venue, position
+        return shift, venue, shiftkwargs['position']
