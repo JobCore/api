@@ -707,6 +707,14 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request, payment_id=None):
+
+        serializer = payment_serializer.PayrollPeriodPaymentPostSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class EmployeerRateView(EmployerView):
 
     def get_queryset(self):

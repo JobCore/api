@@ -138,6 +138,32 @@ class RoundingDecimalField(serializers.DecimalField):
     def validate_precision(self, value):
         return value
 
+class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PayrollPeriodPayment
+        exclude = ()
+
+    def validate(self, data):
+
+        data = super(PayrollPeriodPaymentPostSerializer, self).validate(data)
+
+        # previous_payment = PayrollPeriodPayment.objects.filter(employee__id=data['employee'].id, shift__id=data['shift'].id).first()
+        # if previous_payment is not None:
+        #     raise serializers.ValidationError('There is already a payment for this talent and shift')
+
+        return data
+
+    def create(self, validated_data):
+
+        params = validated_data.copy()
+        params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
+        params['total_amount'] = params['hourly_rate'] * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+        payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
+
+        return payment
+
+
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
