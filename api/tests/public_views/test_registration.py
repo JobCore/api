@@ -170,18 +170,22 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
 
-        self.assertEquals(response.status_code, 201)
-        self.assertEquals(
-            mocked_requests.post.called,
-            True,
-            'It should have called requests.post to send mail')
-        Profile = apps.get_model('api.Profile')
+        self.assertEquals(response.status_code, 400) #should be a 400 because registration is disabled right now
 
-        jsonresp = response.json()
-        self.assertEquals(
-            Profile.objects.filter(user_id=jsonresp['id']).count(),
-            1
-        )
+        # Once the registration is activated again we have re-enable this commented code
+
+        # self.assertEquals(response.status_code, 201)
+        # self.assertEquals(
+        #     mocked_requests.post.called,
+        #     True,
+        #     'It should have called requests.post to send mail')
+        # Profile = apps.get_model('api.Profile')
+
+        # jsonresp = response.json()
+        # self.assertEquals(
+        #     Profile.objects.filter(user_id=jsonresp['id']).count(),
+        #     1
+        # )
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
