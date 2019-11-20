@@ -4,6 +4,8 @@ from api.models import Employee, ShiftInvite, Shift, Profile
 from api.utils.email import send_email_message, send_fcm_notification
 import api.utils.jwt
 from rest_framework_jwt.settings import api_settings
+from django.utils import timezone
+from datetime import timedelta
 API_URL = os.environ.get('API_URL')
 EMPLOYER_URL = os.environ.get('EMPLOYER_URL')
 EMPLOYEE_URL = os.environ.get('EMPLOYEE_URL')
@@ -15,11 +17,19 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 def get_talents_to_notify(shift):
 
     talents_to_notify = []
-    print(talents_to_notify)
     if shift.status == 'OPEN' and shift.application_restriction != 'SPECIFIC_PEOPLE':
-        print(shift.status)
+
+        non_expired_shifts = Shift.objects.filter(
+            Q(status__in=["OPEN", "FILLED"]),
+            Q(starting_at__range=[shift.starting_at, shift.ending_at]) | Q(ending_at__range=[shift.starting_at, shift.ending_at]) | 
+            Q(starting_at__lte=shift.starting_at, ending_at__gte=shift.ending_at)
+        )
+        print(non_expired_shifts)
+
+        
         rating = shift.minimum_allowed_rating
         favorite_lists = shift.allowed_from_list.all()
+       
         talents_to_notify = Employee.objects.filter(
             Q(rating__gte=rating) | Q(rating__isnull=True),
             # the employee gets to pick the minimum hourly rate
@@ -28,8 +38,11 @@ def get_talents_to_notify(shift):
             Q(stop_receiving_invites=False),
             # positions not in shift
             Q(positions__id=shift.position.id),
-        )
-        print(talents_to_notify)
+        ).exclude(shift_accepted_employees__in=[s.id for s in non_expired_shifts])
+        # exclude the talent if it has other shifts during the same time
+       
+        
+        # print(talents_to_notify)
         if len(favorite_lists) > 0:
             talents_to_notify = talents_to_notify.filter(
                 # the employer gets to pick employers only from his favlists

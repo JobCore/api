@@ -10,7 +10,7 @@ from api.utils import notifier
 from api.actions.employee_actions import create_default_availablity
 
 AvailabilityBlock = apps.get_model('api', 'AvailabilityBlock')
-
+ShiftInvite = apps.get_model('api', 'ShiftInvite')
 @override_settings(STATICFILES_STORAGE=None)
 class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
@@ -30,33 +30,33 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
             )
         )
  
-        starting_at = timezone.now() + timedelta(days=1)
-        ending_at = starting_at + timedelta(minutes=90)
+        # starting_at = timezone.now() + timedelta(days=1)
+        # ending_at = starting_at + timedelta(minutes=90)
         
         
-        self.test_shift, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
-            employer=self.test_employer)
+        # self.test_shift, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
+        #     employer=self.test_employer)
 
-        self.test_shift_with_rating_rate, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
-            employer=self.test_employer)            
-        self.test_shift_min_rate_10, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate = 10),
-            employer=self.test_employer)
+        # self.test_shift_with_rating_rate, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+        #     employer=self.test_employer)            
+        # self.test_shift_min_rate_10, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate = 10),
+        #     employer=self.test_employer)
 
-        self.test_shift4, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
-            venuekwargs=dict(latitude=25, longitude=-80),
-            employer=self.test_employer)
+        # self.test_shift4, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
+        #     venuekwargs=dict(latitude=25, longitude=-80),
+        #     employer=self.test_employer)
 
-        self.test_shift3, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_allowed_rating  = 3),
-            employer=self.test_employer)
+        # self.test_shift3, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_allowed_rating  = 3),
+        #     employer=self.test_employer)
 
-        self.test_shift5, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_allowed_rating  = 3),
-            employer=self.test_employer)
+        # self.test_shift5, _, __ = self._make_shift(
+        #     shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_allowed_rating  = 3),
+        #     employer=self.test_employer)
 
 
     def test_employee_stop_receiving_invites_ON(self):
@@ -246,70 +246,70 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
 
 
-    def test_shift_further_employee_address(self):
-        #An employee cannot receive invites from shifts located (venue.latitude, venue.longitude) further than employee.maximum_job_distance_miles from the employee address (profile.latitude, profile.longitud).
-        position = mixer.blend('api.Position')
+    # def test_shift_further_employee_address(self):
+    #     #An employee cannot receive invites from shifts located (venue.latitude, venue.longitude) further than employee.maximum_job_distance_miles from the employee address (profile.latitude, profile.longitud).
+    #     position = mixer.blend('api.Position')
 
-        starting_at = timezone.now() + timedelta(days=1)
-        ending_at = starting_at + timedelta(minutes=90)
+    #     starting_at = timezone.now() + timedelta(days=1)
+    #     ending_at = starting_at + timedelta(minutes=90)
 
-        self.test_shift_further_employee_address, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 3  ),
-            venuekwargs=dict(latitude=40, longitude=-73), #Brooklyn New York Lat/Long
-            employer=self.test_employer)        
+    #     self.test_shift_further_employee_address, _, __ = self._make_shift(
+    #         shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 3  ),
+    #         venuekwargs=dict(latitude=40, longitude=-73), #Brooklyn New York Lat/Long
+    #         employer=self.test_employer)        
         
-        self.test_user_employee, self.test_employee, _ = self._make_user(
-            'employee',
-            employexkwargs=dict(
-                maximum_job_distance_miles= 30,
-                positions=[position.id],         
-            ),
-            profilekwargs = dict( #Coral Gable Lat/Long
-                latitude = 25, 
-                longitude = -80
-            ),
-            userkwargs=dict(
-                username='employee1',
-                email='employee1@testdoma.in',
-                is_active=True,
-            )
-        )
-        talents = []
-        talents = notifier.get_talents_to_notify(self.test_shift_further_employee_address)
-        self.assertEquals(len(talents) == 0, True, 'Venue location is farther than the employee address so the shift invite cannot be delivered')
+    #     self.test_user_employee, self.test_employee, _ = self._make_user(
+    #         'employee',
+    #         employexkwargs=dict(
+    #             maximum_job_distance_miles= 30,
+    #             positions=[position.id],         
+    #         ),
+    #         profilekwargs = dict( #Coral Gable Lat/Long
+    #             latitude = 25, 
+    #             longitude = -80
+    #         ),
+    #         userkwargs=dict(
+    #             username='employee1',
+    #             email='employee1@testdoma.in',
+    #             is_active=True,
+    #         )
+    #     )
+    #     talents = []
+    #     talents = notifier.get_talents_to_notify(self.test_shift_further_employee_address)
+    #     self.assertEquals(len(talents) == 0, True, 'Venue location is farther than the employee address so the shift invite cannot be delivered')
 
 
-    def test_shift_near_employee_address(self):
-        #An employee cannot receive invites from shifts located (venue.latitude, venue.longitude) further than employee.maximum_job_distance_miles from the employee address (profile.latitude, profile.longitud).
-        position = mixer.blend('api.Position')
+    # def test_shift_near_employee_address(self):
+    #     #An employee cannot receive invites from shifts located (venue.latitude, venue.longitude) further than employee.maximum_job_distance_miles from the employee address (profile.latitude, profile.longitud).
+    #     position = mixer.blend('api.Position')
 
-        starting_at = timezone.now() + timedelta(days=1)
-        ending_at = starting_at + timedelta(minutes=90)
+    #     starting_at = timezone.now() + timedelta(days=1)
+    #     ending_at = starting_at + timedelta(minutes=90)
 
-        self.test_shift_further_employee_address, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 3  ),
-            venuekwargs=dict(latitude=40, longitude=-73),
-            employer=self.test_employer)        
+    #     self.test_shift_further_employee_address, _, __ = self._make_shift(
+    #         shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 3  ),
+    #         venuekwargs=dict(latitude=40, longitude=-73),
+    #         employer=self.test_employer)        
         
-        self.test_user_employee, self.test_employee, _ = self._make_user(
-            'employee',
-            employexkwargs=dict(
-                maximum_job_distance_miles= 30,
-                positions=[position.id],         
-            ),
-            profilekwargs = dict(
-                latitude = 40,
-                longitude = -73
-            ),
-            userkwargs=dict(
-                username='employee1',
-                email='employee1@testdoma.in',
-                is_active=True,
-            )
-        )
-        talents = []
-        talents = notifier.get_talents_to_notify(self.test_shift_further_employee_address)
-        self.assertEquals(len(talents) > 0, True, 'Venue location is nearer than the employee address so the shift invite can be delivered')
+    #     self.test_user_employee, self.test_employee, _ = self._make_user(
+    #         'employee',
+    #         employexkwargs=dict(
+    #             maximum_job_distance_miles= 30,
+    #             positions=[position.id],         
+    #         ),
+    #         profilekwargs = dict(
+    #             latitude = 40,
+    #             longitude = -73
+    #         ),
+    #         userkwargs=dict(
+    #             username='employee1',
+    #             email='employee1@testdoma.in',
+    #             is_active=True,
+    #         )
+    #     )
+    #     talents = []
+    #     talents = notifier.get_talents_to_notify(self.test_shift_further_employee_address)
+    #     self.assertEquals(len(talents) > 0, True, 'Venue location is nearer than the employee address so the shift invite can be delivered')
 
     def test_shifts_position_not_included_employee_position(self):
         # An employee cannot receive invites from shifts were shift.position is not included in employee.positions.
@@ -361,7 +361,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 minimum_hourly_rate = 9,
                 rating=5,
                 positions=[position.id],
-                # stop_receiving_invites=True,
+                stop_receiving_invites=False,
                 maximum_job_distance_miles= 15
             ),
             profilekwargs = dict(
@@ -374,8 +374,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
-        
-             
+            
         talents = []
         talents = notifier.get_talents_to_notify(self.test_shift_position)
         self.assertEquals(len(talents) > 0, True, 'Employee should receive invite from shift because shift.position is included in the employee positions')
@@ -390,7 +389,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         # employee_available_ending_at = shift_ending_at
 
         self.test_shift_availability_block, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=shift_starting_at, ending_at=shift_ending_at, position=position ),
+            shiftkwargs=dict(status='OPEN', starting_at=shift_starting_at, ending_at=shift_ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
             employer=self.test_employer)
             
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -408,62 +407,208 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         talents = notifier.get_talents_to_notify(self.test_shift_availability_block)
         self.assertEquals(len(talents) == 0, True, 'Employee can get invite if the employee starting at is lesser than shift starting at or the employee ending at is greater than the shift endingt at ') 
     
-    def test_shift_in_availability_block_allday(self):
+    def test_shift_not_in_availability_block_allday(self):
         # An employee cannot receive invites from shifts that occur (shift.starting_at, shift.ending_at) outside of its availability blocks (employee.availabilit_block_set).
         position = mixer.blend('api.Position')
-        shift_starting_at = timezone.now() + timedelta(days=1)
-        shift_ending_at = shift_starting_at + timedelta(minutes=90)
-     
 
-        self.test_shift_availability_block, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=shift_starting_at, ending_at=shift_ending_at, position=position ),
-            employer=self.test_employer)
-            
-        self.test_user_employee, self.test_employee, _ = self._make_user(
-            'employee',
-            userkwargs=dict(
-                username='employee1',
-                email='employee1@testdoma.in',
-                is_active=True,
-                positions=[position.id],                
-            )
-        )
-
-        #create_default_availablity(self.test_employee)
-        #print(AvailabilityBlock.objects.filter(employee_id=self.test_employee.id).count())
-        talents = []
-        talents = notifier.get_talents_to_notify(self.test_shift_availability_block)
-        self.assertEquals(len(talents) > 0, True, 'It should send invites because they have all the possible availability') 
-    
-    def test_shift_occur_same_time_employee_shift(self):
-       # An employee cannot receive invites from shifts that occur (shift.starting_at, shift.ending_at) at within the time that other shifts were the employee is already an employee of.
         starting_at = timezone.now() + timedelta(days=1)
         ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift_availability, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            employer=self.test_employer)
+
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 9,
+                rating=5,
+                positions=[position.id],
+                stop_receiving_invites=False,
+                maximum_job_distance_miles= 15
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
             userkwargs=dict(
                 username='employee1',
                 email='employee1@testdoma.in',
                 is_active=True,
             )
         )
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at - timedelta(minutes=180), ending_at = ending_at - timedelta(minutes=90), allday=True)
+
+        talents = []
+        talents = notifier.get_talents_to_notify(self.test_shift_availability)
+        self.assertEquals(len(talents) > 0, True, 'There should be more than 0 invites because the talent is accepting invites')
+    def test_shift_same_time_applied_other_shift(self):
+       # An employee cannot receive invites from shifts that occur (shift.starting_at, shift.ending_at) at within the time that other shifts were the employee is already an employee of.
+        position = mixer.blend('api.Position')
+
+        starting_at = timezone.now()
+        ending_at = starting_at + timedelta(minutes=120)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 9,
+                rating=5,
+                positions=[position.id],
+                stop_receiving_invites=False,
+                maximum_job_distance_miles= 15
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+        #this in range of the shift  
+        self.test_shift_pending_inrange, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at - timedelta(minutes=15),  ending_at=ending_at, position=position, minimum_hourly_rate=10, minimum_allowed_rating = 1  ),
+            employer=self.test_employer)
+
+        self.test_shift_accepted_employees, _, __ = self._make_shift(
+            shiftkwargs=dict(
+                employees=self.test_employee,
+                status='OPEN', 
+                starting_at=starting_at, 
+                ending_at=ending_at, 
+                position=position, 
+                minimum_hourly_rate=11.50, 
+                minimum_allowed_rating = 0  ),
+                employer=self.test_employer,
+            )
+        talents = []
+        talents = notifier.get_talents_to_notify(self.test_shift_pending_inrange)
+        self.assertEquals(len(talents) == 0, True, 'There should be more than 0 invites because the talent is accepting invites within the same timeframe') 
+
+    def test_shift_same_time_applied_other_shift(self):
+       # An employee cannot receive invites from shifts that occur (shift.starting_at, shift.ending_at) at within the time that other shifts were the employee is already an employee of.
+        position = mixer.blend('api.Position')
+
+        starting_at = timezone.now()
+        ending_at = starting_at + timedelta(minutes=120)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 9,
+                rating=5,
+                positions=[position.id],
+                stop_receiving_invites=False,
+                maximum_job_distance_miles= 15
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+        #this one available to be sent because is outside the range of the applied shift
+        self.test_shift_pending_outrange, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at - timedelta(minutes=125),  ending_at=starting_at - timedelta(minutes=5), position=position, minimum_hourly_rate=10, minimum_allowed_rating = 1  ),
+            employer=self.test_employer)
+
+        self.test_shift_accepted_employees, _, __ = self._make_shift(
+            shiftkwargs=dict(
+                employees=self.test_employee,
+                status='OPEN', 
+                starting_at=starting_at, 
+                ending_at=ending_at, 
+                position=position, 
+                minimum_hourly_rate=11.50, 
+                minimum_allowed_rating = 0  ),
+                employer=self.test_employer,
+            )
+        talents = []
+        talents = notifier.get_talents_to_notify(self.test_shift_pending_outrange)
+        self.assertEquals(len(talents) > 0, True, 'There should be more than 0 invites because the talent is accepting invites outside the same timeframe') 
+
+    def test_limitation_for_employees_in_favoritelist(self):
+        position = mixer.blend('api.Position')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift_favlist, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=9, minimum_allowed_rating = 3  ),
+            employer=self.test_employer)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 10,
+                rating=1,
+                positions=[position.id],
+                stop_receiving_invites=False,
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+    
         mixer.blend(
-            'api.ShiftInvite',
-            sender=self.test_profile_employer,
-            shift=self.test_shift,
-            employee=self.test_employee,
-            status='APPLIED'
+            'api.FavoriteList',
+            employer=self.test_employer,
+            auto_accept_employees_on_this_list=True,
+            employees=[self.test_employee]
         )
 
         talents = []
-        talents = notifier.get_talents_to_notify(self.test_shift)
-        self.assertEquals(len(talents) == 0, True, 'error') 
+        talents = notifier.get_talents_to_notify(self.test_shift_favlist)
+        self.assertEquals(len(talents) == 0, True, 'There should be more than 0 invites because the only favorite employe dont pass any of the requierement') 
 
-    # def test_limitation_for_employees_in_favoritelist(self):
-        
-    #     mixer.blend(
-    #         'api.FavoriteList',
-    #         employer=self.test_employer,
-    #         auto_accept_employees_on_this_list=True,
-    #         employees=[self.test_employee]
-    #     )
+    def test_shift_manual_invite_no_limitation(self):
+        #MANUAL INVITE    
+        position = mixer.blend('api.Position')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=9, minimum_allowed_rating = 3  ),
+            employer=self.test_employer)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 10,
+                rating=1,
+                positions=[position.id],
+                stop_receiving_invites=False,
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+        url = reverse_lazy('api:me-employer-get-jobinvites')
+        self.client.force_login(self.test_user_employer)
+        create_default_availablity(self.test_employee)
+        payload = {
+            'shifts': self.test_shift.id,
+            'employee': self.test_employee.id,
+        }
+
+        response = self.client.post(
+            url,
+            data=payload,
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return an 201 because manual invite will be sent with or without requirements')
