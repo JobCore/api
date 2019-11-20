@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from api.pagination import CustomPagination
-from django.db.models import Q
+from django.db.models import Q, F, Value
 from django.db.transaction import atomic
 from api.models import *
 from api.models import SHIFT_INVITE_STATUS_CHOICES, PAYMENT_STATUS
@@ -98,7 +98,6 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request, id=None):
 
         if id != None:
-            many = False
             shift = self.fetch_one(id)
             if shift is None:
                 return Response(
@@ -144,6 +143,12 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             if qFailed == 'true':
                 shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
 
+            qActive = request.GET.get('active')
+            if qActive == 'true':
+                shifts = shifts.filter( 
+                    Q(clockin__ended_at__isnull=True) | Q(starting_at__lte= NOW - (datetime.timedelta(minutes=1) * F('maximum_clockin_delta_minutes')), ending_at__gte= NOW + (datetime.timedelta(minutes=1) * F('maximum_clockout_delta_minutes')))
+                )
+            
             serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
