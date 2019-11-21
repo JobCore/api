@@ -42,7 +42,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
     def validate(self, attrs):
         lookup = Q(email=attrs.get("username_or_email")) \
-            | Q(username=attrs.get("username_or_email"))
+                 | Q(username=attrs.get("username_or_email"))
 
         password = attrs.get("password")
         user_obj = User.objects.filter(lookup).first()
@@ -122,13 +122,10 @@ class UserRegisterSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        account_type = validated_data['account_type']
-        validated_data.pop('account_type', None)
-
-        employer = None
-        if 'employer' in validated_data:
-            employer = validated_data['employer']
-            validated_data.pop('employer', None)
+        account_type = validated_data.pop('account_type', None)
+        employer = validated_data.pop('employer', None)
+        city = validated_data.pop('city', None)
+        profile_city = validated_data.pop('profile_city', None)
 
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
@@ -140,9 +137,7 @@ class UserRegisterSerializer(serializers.Serializer):
         user.save()
 
         if account_type == 'employer':
-
             Profile.objects.create(user=user, picture='', employer=employer)
-            # user.profile.save()
 
         elif account_type == 'employee':
             status = 'PENDING_EMAIL_VALIDATION'
@@ -167,8 +162,10 @@ class UserRegisterSerializer(serializers.Serializer):
             employee_actions.add_default_positions(emp)
 
             Profile.objects.create(
-                user=user, picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile'+str(randint(1, 3))+'.png', employee=emp, status=status,
-                profile_city=validated_data.get("profile_city"), city=self.context.get("city"))
+                user=user,
+                picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile' + str(
+                    randint(1, 3)) + '.png', employee=emp, status=status,
+                profile_city=profile_city, city=city)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(
                 email=user.email)

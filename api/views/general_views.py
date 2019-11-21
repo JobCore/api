@@ -177,7 +177,7 @@ class UserRegisterView(APIView):
 
         serializer = auth_serializer.UserRegisterSerializer(
             data=request.data,
-            context={"token": token, 'city': request.data.get('city'), 'city_id': request.data.get('city_id')})
+            context={"token": token})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
