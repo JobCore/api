@@ -469,7 +469,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
                 emp_list = qCandidateNot.split(',')
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
-            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
+            serializer = shift_serializer.ShiftGetSmallSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):

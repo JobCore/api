@@ -146,10 +146,14 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             qActive = request.GET.get('active')
             if qActive == 'true':
                 shifts = shifts.filter( 
-                    Q(clockin__ended_at__isnull=True) | Q(starting_at__lte= NOW - (datetime.timedelta(minutes=1) * F('maximum_clockin_delta_minutes')), ending_at__gte= NOW + (datetime.timedelta(minutes=1) * F('maximum_clockout_delta_minutes')))
+                    Q(clockin__started_at__isnull=False, clockin__ended_at__isnull=True) | 
+                    Q(
+                        (Q(maximum_clockin_delta_minutes__isnull=False, starting_at__lte= NOW + (datetime.timedelta(minutes=1) * F('maximum_clockin_delta_minutes'))) | Q(maximum_clockin_delta_minutes__isnull=True, starting_at__lte= NOW)),
+                        (Q(maximum_clockout_delay_minutes__isnull=False, ending_at__gte= NOW - (datetime.timedelta(minutes=1) * F('maximum_clockout_delay_minutes'))) | Q(maximum_clockout_delay_minutes__isnull=True, ending_at__gte= NOW))
+                    )
                 )
             
-            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
+            serializer = shift_serializer.ShiftGetSmallSerializer(shifts.order_by('-starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
