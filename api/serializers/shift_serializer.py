@@ -70,6 +70,24 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
         model = Venue
         fields = ('title', 'id', 'latitude', 'longitude', 'street_address', 'zip_code')
 
+class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'allowed_from_list',
+            'required_badges',
+            'candidates',
+            'employees',
+            'rating',
+            'application_restriction',
+            'updated_at')
+
 class ShiftGetTinySerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)

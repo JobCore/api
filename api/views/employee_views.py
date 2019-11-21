@@ -153,7 +153,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
                     )
                 )
             
-            serializer = shift_serializer.ShiftGetSmallSerializer(shifts.order_by('-starting_at'), many=True)
+            serializer = shift_serializer.ShiftGetTinyForEmployeesSerializer(shifts.order_by('-starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
