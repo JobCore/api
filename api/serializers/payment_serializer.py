@@ -95,6 +95,23 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ('shift', 'employee')
 
+class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
+    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    payments = serializers.SerializerMethodField()
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'payments'
+        )
+
+    def get_payments(self, instance):
+        _payments = instance.payments.all().order_by('shift__starting_at')
+        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
+
 #
 # MAIN
 #
@@ -158,7 +175,7 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
         params = validated_data.copy()
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
-        params['total_amount'] = params['hourly_rate'] * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+        params['total_amount'] = params['hourly_rate'] * (decimal.Decimal(params['regular_hours']) + decimal.Decimal(params['over_time']) - decimal.Decimal(params['breaktime_minutes'] / 60))
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
 
         return payment

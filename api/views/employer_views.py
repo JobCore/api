@@ -623,7 +623,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
         else:
             periods = self.get_queryset().order_by('-starting_at')
-            serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
+            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
