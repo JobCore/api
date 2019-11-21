@@ -426,7 +426,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
 
 
 class ShiftInviteGetSerializer(serializers.ModelSerializer):
-    shift = ShiftGetSmallSerializer(many=False, read_only=True)
+    shift = ShiftGetTinyForEmployeesSerializer(many=False, read_only=True)
     employee = EmployeeGetSmallSerializer(read_only=True)
 
     class Meta:
