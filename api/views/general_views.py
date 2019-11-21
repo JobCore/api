@@ -452,6 +452,7 @@ class PositionView(APIView):
 
 
 class CityView(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request, id=None):
         if (id):
