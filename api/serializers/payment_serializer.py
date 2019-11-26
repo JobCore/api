@@ -350,6 +350,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     regular_hours = projected_hours
                 else:
                     regular_hours = clocked_hours
+                    clocked_hours = 0
 
 
                 payment = PayrollPeriodPayment(
@@ -361,8 +362,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     regular_hours=regular_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount=clockin.shift.minimum_hourly_rate *
-                    decimal.Decimal(clocked_hours),
+                    total_amount=clockin.shift.minimum_hourly_rate * decimal.Decimal(clocked_hours),
                     splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
