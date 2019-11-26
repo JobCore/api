@@ -120,6 +120,22 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+class ShiftGetBigSerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    employees= EmployeeGetSmallSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'allowed_from_list',
+            'required_badges',
+            'rating',
+            'application_restriction',
+            'updated_at')
+
 
 #
 # MAIN
