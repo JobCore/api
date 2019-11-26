@@ -1,6 +1,6 @@
 import pytz, os
 utc = pytz.UTC
-from datetime import datetime
+import datetime
 from api.serializers import other_serializer, venue_serializer, employer_serializer, employee_serializer, favlist_serializer
 from rest_framework import serializers
 from api.utils import notifier
@@ -69,6 +69,56 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
         fields = ('title', 'id', 'latitude', 'longitude', 'street_address', 'zip_code')
+
+class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    employer = EmployerGetSmallSerializer(read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'allowed_from_list',
+            'required_badges',
+            'candidates',
+            'employees',
+            'rating',
+            'application_restriction',
+            'updated_at')
+
+class ShiftGetTinySerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+    
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'allowed_from_list',
+            'required_badges',
+            'candidates',
+            'employees',
+            'rating',
+            'application_restriction',
+            'updated_at')
+
+class ShiftGetSmallSerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'allowed_from_list',
+            'required_badges',
+            'rating',
+            'application_restriction',
+            'updated_at')
 
 
 #
@@ -252,36 +302,14 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         return shift
 
 
-class ShiftGetSmallSerializer(serializers.ModelSerializer):
-    venue = VenueGetSmallSerializer(read_only=True)
-    position = PositionGetSmallSerializer(read_only=True)
-    employer = EmployerGetSmallSerializer(read_only=True)
-
-    class Meta:
-        model = Shift
-        exclude = (
-            'maximum_allowed_employees',
-            'minimum_allowed_rating',
-            'allowed_from_list',
-            'required_badges',
-            'candidates',
-            'employees',
-            'rating',
-            'application_restriction',
-            'updated_at')
-
-
 class ShiftGetSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
-    candidates = employee_serializer.EmployeeGetSerializer(
-        many=True, read_only=True)
+    candidates = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
     employees = EmployeeGetSerializer(many=True, read_only=True)
     employer = EmployerGetSmallSerializer(many=False, read_only=True)
-    required_badges = other_serializer.BadgeSerializer(
-        many=True, read_only=True)
-    allowed_from_list = favlist_serializer.FavoriteListGetSerializer(
-        many=True, read_only=True)
+    required_badges = other_serializer.BadgeSerializer(many=True, read_only=True)
+    allowed_from_list = favlist_serializer.FavoriteListGetSerializer(many=True, read_only=True)
 
     class Meta:
         model = Shift
@@ -291,6 +319,14 @@ class ShiftGetSerializer(serializers.ModelSerializer):
 class ShiftGetBigSerializer(ShiftGetSerializer):
     clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
     employer = EmployerGetSmallSerializer(many=False, read_only=True)
+
+    happening_right_now = serializers.SerializerMethodField('_happening_right_now')
+
+    def _happening_right_now(self, obj):
+        NOW = datetime.datetime.now(tz=timezone.utc)
+        clockin_delta = obj.maximum_clockin_delta_minutes if obj.maximum_clockin_delta_minutes else 0
+        clockout_delta = obj.maximum_clockout_delay_minutes if obj.maximum_clockout_delay_minutes else 0
+        return (obj.starting_at <= NOW + datetime.timedelta(minutes=clockin_delta) and obj.ending_at >= NOW - datetime.timedelta(minutes=clockout_delta))
 
 
 class ShiftInviteSerializer(serializers.ModelSerializer):
@@ -325,7 +361,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Please go to preferences and specify your preffered positions to work, you don't seem to have any")
 
         employee_positions_titles = [p.title for p in employee_positions]
-        if self.instance.shift.position.id not in employee_positions_ids:
+        if 'status' in data and data['status']=='APPLIED' and self.instance.shift.position.id not in employee_positions_ids:
             raise serializers.ValidationError("You can only apply to your preferred positions: "+', '.join(employee_positions_titles))
 
         # @TODO we have to validate the employee availability
@@ -390,7 +426,7 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
 
 
 class ShiftInviteGetSerializer(serializers.ModelSerializer):
-    shift = ShiftGetSmallSerializer(many=False, read_only=True)
+    shift = ShiftGetTinyForEmployeesSerializer(many=False, read_only=True)
     employee = EmployeeGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -430,7 +466,7 @@ class ShiftApplicationSerializer(serializers.ModelSerializer):
                 "This shift is not open for new applications anymore")
 
         # validate that the shift has not passed
-        present = utc.localize(datetime.now())
+        present = utc.localize(datetime.datetime.now())
         if(shift.ending_at < present):
             # @TODO: if the shift has already passsed the invitation needs to be deleted
             raise serializers.ValidationError(

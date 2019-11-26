@@ -10,7 +10,6 @@ from api.utils import notifier
 from api.actions.employee_actions import create_default_availablity
 
 AvailabilityBlock = apps.get_model('api', 'AvailabilityBlock')
-ShiftInvite = apps.get_model('api', 'ShiftInvite')
 @override_settings(STATICFILES_STORAGE=None)
 class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """

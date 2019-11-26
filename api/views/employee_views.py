@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from api.pagination import CustomPagination
-from django.db.models import Q
+from django.db.models import Q, F, Value
 from django.db.transaction import atomic
 from api.models import *
 from api.models import SHIFT_INVITE_STATUS_CHOICES, PAYMENT_STATUS
@@ -98,7 +98,6 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
     def get(self, request, id=None):
 
         if id != None:
-            many = False
             shift = self.fetch_one(id)
             if shift is None:
                 return Response(
@@ -144,7 +143,17 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
             if qFailed == 'true':
                 shifts = shifts.filter(ending_at__lte=NOW, clockins=0)
 
-            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
+            qActive = request.GET.get('active')
+            if qActive == 'true':
+                shifts = shifts.filter( 
+                    Q(clockin__started_at__isnull=False, clockin__ended_at__isnull=True) | 
+                    Q(
+                        (Q(maximum_clockin_delta_minutes__isnull=False, starting_at__lte= NOW + (datetime.timedelta(minutes=1) * F('maximum_clockin_delta_minutes'))) | Q(maximum_clockin_delta_minutes__isnull=True, starting_at__lte= NOW)),
+                        (Q(maximum_clockout_delay_minutes__isnull=False, ending_at__gte= NOW - (datetime.timedelta(minutes=1) * F('maximum_clockout_delay_minutes'))) | Q(maximum_clockout_delay_minutes__isnull=True, ending_at__gte= NOW))
+                    )
+                )
+            
+            serializer = shift_serializer.ShiftGetTinyForEmployeesSerializer(shifts.order_by('-starting_at'), many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -191,7 +200,7 @@ class EmployeeShiftInviteView(EmployeeView):
                 'status': 'Not a valid status, valid choices are: "{}"'.format(valid_choices)  # NOQA
             })
 
-        return self.get_queryset().filter(status=status).order_by('-shift__starting_at')
+        return self.get_queryset().filter(status=status).order_by('shift__starting_at')
 
     def get(self, request, id=False):
         data = None

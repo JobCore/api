@@ -109,7 +109,7 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return "("+self.user.email+") receving invites?:"+str(self.stop_receiving_invites)
+        return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
 
 
 ACTIVE = 'ACTIVE'
@@ -562,7 +562,7 @@ class PayrollPeriodPayment(models.Model):
     shift = models.ForeignKey(
         Shift, on_delete=models.CASCADE, blank=True)
     clockin = models.ForeignKey(
-        Clockin, on_delete=models.CASCADE, blank=True)
+        Clockin, on_delete=models.CASCADE, blank=True, null=True)
     splited_payment = models.BooleanField(default=True)
     status = models.CharField(
         max_length=9,

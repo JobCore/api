@@ -42,7 +42,11 @@ class ClockOutExpiredShifts(APIView):
 
         NOW = utc.localize(datetime.now())
         # if now > shift.ending_at + delta:
-        clockins = Clockin.objects.filter(ended_at__isnull=True, shift__ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
+        clockins = Clockin.objects.filter(
+            ended_at__isnull=True, 
+            shift__maximum_clockout_delay_minutes__isnull=False, 
+            shift__ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
+        ).select_related('shift')
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()

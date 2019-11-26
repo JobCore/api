@@ -459,12 +459,17 @@ class EmployerShiftView(EmployerView, CustomPagination):
                 emp_list = qEmployeeNot.split(',')
                 shifts = shifts.exclude(employees__in=[int(emp) for emp in emp_list])
 
+            qEmployee = request.GET.get('employee')
+            if qEmployee is not None:
+                emp_list = qEmployee.split(',')
+                shifts = shifts.filter(employees__in=[int(emp) for emp in emp_list])
+
             qCandidateNot = request.GET.get('candidate_not')
             if qCandidateNot is not None:
                 emp_list = qCandidateNot.split(',')
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
-            serializer = shift_serializer.ShiftGetSerializer(shifts.order_by('-starting_at'), many=True)
+            serializer = shift_serializer.ShiftGetSmallSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -618,7 +623,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
         else:
             periods = self.get_queryset().order_by('-starting_at')
-            serializer = payment_serializer.PayrollPeriodGetSerializer(periods, many=True)
+            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -697,6 +702,14 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
 
         serializer = payment_serializer.PayrollPeriodPaymentSerializer(
             payment, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, payment_id=None):
+
+        serializer = payment_serializer.PayrollPeriodPaymentPostSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

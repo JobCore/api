@@ -95,6 +95,23 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ('shift', 'employee')
 
+class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
+    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    payments = serializers.SerializerMethodField()
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'payments'
+        )
+
+    def get_payments(self, instance):
+        _payments = instance.payments.all().order_by('shift__starting_at')
+        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
+
 #
 # MAIN
 #
@@ -138,6 +155,32 @@ class RoundingDecimalField(serializers.DecimalField):
     def validate_precision(self, value):
         return value
 
+class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PayrollPeriodPayment
+        exclude = ()
+
+    def validate(self, data):
+
+        data = super(PayrollPeriodPaymentPostSerializer, self).validate(data)
+
+        # previous_payment = PayrollPeriodPayment.objects.filter(employee__id=data['employee'].id, shift__id=data['shift'].id).first()
+        # if previous_payment is not None:
+        #     raise serializers.ValidationError('There is already a payment for this talent and shift')
+
+        return data
+
+    def create(self, validated_data):
+
+        params = validated_data.copy()
+        params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
+        params['total_amount'] = params['hourly_rate'] * (decimal.Decimal(params['regular_hours']) + decimal.Decimal(params['over_time']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+        payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
+
+        return payment
+
+
 class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -156,8 +199,10 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
     def update(self, payment, validated_data):
 
         params = validated_data.copy()
-        print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
-        params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+
+        if 'regular_hours' in params:
+            print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
+            params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
 
         PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
 
@@ -248,15 +293,13 @@ def generate_periods_and_payments(employer, generate_since=None):
     #
     last_period_ending_date = None
     if last_processed_period is not None:
-        last_period_ending_date = nearest_weekday(last_processed_period.ending_at, weekday, fallback_direction='forward')
+        last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(seconds=1), weekday, fallback_direction='forward')
     else:
-        log_debug('hooks','generate_periods:Employer: the payroll starting weekday is '+str(weekday))
         last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')
-        log_debug('hooks','generate_periods:Employer: the nearest date with that weekday is '+str(last_period_ending_date))
+        log_debug('hooks','generate_periods:Employer: This is the first payroll, and the company started existing on '+str(employer.created_at))
         last_period_ending_date = (last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
-        #last_period_ending_date = (employer.created_at.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
-
-    log_debug('hooks','generate_periods:Employer:'+employer.title+' from '+str(last_period_ending_date))
+    
+    log_debug('hooks','generate_periods: Generating payroll for '+employer.title+' from '+str(last_processed_period))
 
     # the ending date will be X days later, X = employer.payroll_period_length
     end_date = last_period_ending_date + \
@@ -290,9 +333,9 @@ def generate_periods_and_payments(employer, generate_since=None):
             for clockin in all_clockins:
                 # the payment needs to be inside the payment period
                 starting_time = clockin.started_at if clockin.started_at > period.starting_at else period.starting_at
-                ending_time = clockin.ended_at if clockin.ended_at < period.ending_at else period.ending_at
-                total_hours = (
-                    ending_time - starting_time).total_seconds() / 3600
+                
+                ending_time = clockin.ended_at if clockin.ended_at is not None and clockin.ended_at < period.ending_at else period.ending_at
+                clocked_hours = (ending_time - starting_time).total_seconds() / 3600 if clockin.ended_at is not None else None
 
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
@@ -301,8 +344,14 @@ def generate_periods_and_payments(employer, generate_since=None):
 
                 log_debug('hooks','Projected hours '+str(projected_hours))
                 overtime = 0
-                if(total_hours > projected_hours):
-                    overtime = total_hours - projected_hours
+                regular_hours = 0
+                if clocked_hours is not None and (clocked_hours > projected_hours):
+                    overtime = clocked_hours - projected_hours
+                    regular_hours = projected_hours
+                else:
+                    regular_hours = clocked_hours
+                    clocked_hours = 0
+
 
                 payment = PayrollPeriodPayment(
                     payroll_period=period,
@@ -310,12 +359,11 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employer=employer,
                     shift=clockin.shift,
                     clockin=clockin,
-                    regular_hours=total_hours,
+                    regular_hours=regular_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount=clockin.shift.minimum_hourly_rate *
-                    decimal.Decimal(total_hours),
-                    splited_payment=False if clockin.started_at == starting_time and ending_time == clockin.ended_at else True
+                    total_amount=clockin.shift.minimum_hourly_rate * decimal.Decimal(clocked_hours),
+                    splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
 

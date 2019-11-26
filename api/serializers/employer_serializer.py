@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from api.models import Employer
+from api.models import Employer, Shift
+from datetime import datetime
+from django.utils import timezone
 from api.serializers.badge_serializers import BadgeGetSmallSerializer
 
 #
@@ -22,6 +24,8 @@ class EmployerGetSerializer(serializers.ModelSerializer):
 
 
 class EmployerSerializer(serializers.ModelSerializer):
+    retroactive = serializers.BooleanField(write_only=True, required=False)
+
     class Meta:
         model = Employer
         exclude = (
@@ -39,3 +43,17 @@ class EmployerSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Company bio cannot by empty')
 
         return data
+
+    def update(self, employer, validated_data):
+
+        employer = super(EmployerSerializer, self).update(employer, validated_data)
+
+        # update shifts settings retroactively
+        if 'retroactive' in validated_data and validated_data['retroactive'] == True:
+            NOW = datetime.now(tz=timezone.utc)
+            Shift.objects.filter(ending_at__gte=NOW, employer__id=employer.id).update(
+                maximum_clockin_delta_minutes=validated_data['maximum_clockin_delta_minutes'], 
+                maximum_clockout_delay_minutes=validated_data['maximum_clockout_delay_minutes']
+            )
+
+        return employer
