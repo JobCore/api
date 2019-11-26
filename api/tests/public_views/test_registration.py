@@ -82,6 +82,11 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_all_good(self, mocked_requests):
         city = City.objects.create(name="Miami")
+        Employee = apps.get_model('api.Employee')
+        AvailabilityBlock = apps.get_model('api.AvailabilityBlock')
+        Profile = apps.get_model('api.Profile')
+        ShiftInvite = apps.get_model('api.ShiftInvite')
+
         payload = {
             'username': 'test',
             'first_name': 'Alpha',
@@ -93,39 +98,48 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-
         self.assertEquals(response.status_code, 201)
-
         self.assertEquals(
             mocked_requests.post.called,
             True,
             'It should have called requests.post to send mail')
-
-        jsonresp = response.json()
-        uid = jsonresp['id']
-        Employee = apps.get_model('api.Employee')
-        AvailabilityBlock = apps.get_model('api.AvailabilityBlock')
-        Profile = apps.get_model('api.Profile')
-        ShiftInvite = apps.get_model('api.ShiftInvite')
+        json_resp = response.json()
+        uid = json_resp['id']
 
         employee = Employee.objects.filter(user_id=uid).first()
         self.assertNotEquals(employee, None)
+        self.assertEqual(AvailabilityBlock.objects.filter(employee=employee).count(), 7)
+        self.assertEqual(Profile.objects.filter(user_id=uid).count(), 1)
+        self.assertEqual(ShiftInvite.objects.filter(
+            shift=self.jc_invite.shift,
+            employee=employee,
+            sender=self.jc_invite.sender
+        ).count(), 1)
 
-        self.assertEqual(
-            AvailabilityBlock.objects.filter(employee=employee).count(),
-            7)
+        # Testing city text
+        payload = {
+            'username': 'test',
+            'first_name': 'Alpha',
+            'last_name': 'Bravo',
+            'email': 'delta@mail3.tld',
+            'password': 'ABD',
+            'account_type': 'employee',
+            "city": "Chicago"
+        }
 
-        self.assertEqual(
-            Profile.objects.filter(user_id=uid).count(),
-            1)
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 201, response.content)
+        self.assertEquals(
+            mocked_requests.post.called,
+            True,
+            'It should have called requests.post to send mail')
+        json_resp = response.json()
+        uid = json_resp['id']
 
-        self.assertEqual(
-            ShiftInvite.objects.filter(
-                shift=self.jc_invite.shift,
-                employee=employee,
-                sender=self.jc_invite.sender
-            ).count(),
-            1)
+        employee = Employee.objects.filter(user_id=uid).first()
+        self.assertNotEquals(employee, None)
+        self.assertEqual(AvailabilityBlock.objects.filter(employee=employee).count(), 7)
+        self.assertEqual(Profile.objects.filter(user_id=uid).count(), 1)
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
