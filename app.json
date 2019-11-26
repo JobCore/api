@@ -19,6 +19,9 @@
     "BROADCAST_NOTIFICATIONS_BY_EMAIL": {
       "required": true
     },
+    "VALIDATE_CLOCKIN_DISTANCE": {
+      "required": true
+    },
     "DEBUG": {
       "required": true
     },
