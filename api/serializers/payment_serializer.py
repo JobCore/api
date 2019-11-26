@@ -335,7 +335,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                 starting_time = clockin.started_at if clockin.started_at > period.starting_at else period.starting_at
                 
                 ending_time = clockin.ended_at if clockin.ended_at is not None and clockin.ended_at < period.ending_at else period.ending_at
-                total_hours = (ending_time - starting_time).total_seconds() / 3600 if clockin.ended_at is not None else None
+                clocked_hours = (ending_time - starting_time).total_seconds() / 3600 if clockin.ended_at is not None else None
 
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
@@ -344,8 +344,13 @@ def generate_periods_and_payments(employer, generate_since=None):
 
                 log_debug('hooks','Projected hours '+str(projected_hours))
                 overtime = 0
-                if(total_hours > projected_hours):
-                    overtime = total_hours - projected_hours
+                regular_hours = 0
+                if clocked_hours is not None and (clocked_hours > projected_hours):
+                    overtime = clocked_hours - projected_hours
+                    regular_hours = projected_hours
+                else:
+                    regular_hours = clocked_hours
+
 
                 payment = PayrollPeriodPayment(
                     payroll_period=period,
@@ -353,11 +358,11 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employer=employer,
                     shift=clockin.shift,
                     clockin=clockin,
-                    regular_hours=total_hours,
+                    regular_hours=regular_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
                     total_amount=clockin.shift.minimum_hourly_rate *
-                    decimal.Decimal(total_hours),
+                    decimal.Decimal(clocked_hours),
                     splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
