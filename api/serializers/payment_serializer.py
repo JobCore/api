@@ -349,7 +349,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     overtime = clocked_hours - projected_hours
                     regular_hours = projected_hours
                 else:
-                    regular_hours = clocked_hours
+                    regular_hours = 0
                     clocked_hours = 0
 
 
@@ -359,7 +359,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employer=employer,
                     shift=clockin.shift,
                     clockin=clockin,
-                    regular_hours=regular_hours,
+                    regular_hours= 0 if regular_hours is None else regular_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
                     total_amount=clockin.shift.minimum_hourly_rate * decimal.Decimal(clocked_hours),

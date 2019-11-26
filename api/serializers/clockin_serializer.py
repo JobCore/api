@@ -1,15 +1,12 @@
-import logging
+import logging, os
 from api.serializers import shift_serializer, employee_serializer
 from rest_framework import serializers
 from api.models import Clockin
 from api.utils.utils import haversine
 from django.utils import timezone
 import datetime
-
-NOW = timezone.now()
-
 from api.utils.loggers import log_debug
-
+VALIDATE_CLOCKIN_DISTANCE = os.environ.get('VALIDATE_CLOCKIN_DISTANCE')
 
 class ClockinSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,7 +23,7 @@ class ClockinSerializer(serializers.ModelSerializer):
             shift_lat, shift_lon
         )
 
-        if distance > threshold:
+        if distance > threshold and VALIDATE_CLOCKIN_DISTANCE != 'FALSE':
             raise serializers.ValidationError(
                 "You need to be {} miles near {} to clock in/out. Right now you"
                 "are at {} miles".format(threshold, venue.title, distance)
@@ -113,8 +110,10 @@ class ClockinSerializer(serializers.ModelSerializer):
                 "You cannot clock in and out at the same time, you need to specify only the started or ended time, but not both at the same time")  # NOQA
 
         if 'started_at' not in data and 'ended_at' not in data:
-            raise serializers.ValidationError(
-                "You need to specify the started or ended time")
+            raise serializers.ValidationError("You need to specify the started or ended time")
+
+        if 'employee' not in data:
+            raise serializers.ValidationError("You need to specify the employee that is clocking in")
 
         shift = data['shift']
         employee = data['employee']
