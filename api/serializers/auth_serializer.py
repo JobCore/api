@@ -165,7 +165,7 @@ class UserRegisterSerializer(serializers.Serializer):
                 user=user,
                 picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile' + str(
                     randint(1, 3)) + '.png', employee=emp, status=status,
-                profile_city=profile_city, city=city)
+                profile_city_id=profile_city, city=city)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(
                 email=user.email)

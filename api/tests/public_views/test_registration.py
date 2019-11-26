@@ -8,6 +8,8 @@ from datetime import timedelta
 from django.utils import timezone
 from api.tests.mixins import WithMakeUser
 
+from api.models import City
+
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -52,7 +54,8 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'username': 'test',
             'first_name': 'Alpha',
             'last_name': 'Bravo',
-            'email': 'alpha.beta.gamma.delta.alpha.beta.gamma.delta.go.go.power.rangers@gosh.u.better.store.my.mail.mail.mail.very.evil.mail.why.u.hate.this.linter.so.much.tld',  # NOQA: E261
+            'email': 'alpha.beta.gamma.delta.alpha.beta.gamma.delta.go.go.power.rangers@gosh.u.better.store.my.mail.mail.mail.very.evil.mail.why.u.hate.this.linter.so.much.tld',
+            # NOQA: E261
             'password': 'ABD',
             'account_type': 'employee'
         }
@@ -78,13 +81,15 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_all_good(self, mocked_requests):
+        city = City.objects.create(name="Miami")
         payload = {
             'username': 'test',
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
             'password': 'ABD',
-            'account_type': 'employee'
+            'account_type': 'employee',
+            "profile_city": city.id
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
