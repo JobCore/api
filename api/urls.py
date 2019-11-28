@@ -367,7 +367,7 @@ urlpatterns = [
         name="admin-get-periods"),
     path('bank-accounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
     # DOCUMENTS
-    path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="admin-get-document"),
+    path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
     path('document/', EmployeeDocumentAPI.as_view(), name="employee-document"),
 
     ###

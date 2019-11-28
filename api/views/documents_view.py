@@ -38,7 +38,7 @@ class EmployeeDocumentAPI(EmployeeView):
     def get(self, request):
         documents = EmployeeDocument.objects.filter(employee_id=self.employee.id)
         data = documents_serializer.EmployeeDocumentSerializer(documents, many=True).data
-        return JsonResponse(data, status=200)
+        return JsonResponse(data, status=200, safe=False)
 
 
 class EmployeeDocumentDetailAPI(EmployeeView):

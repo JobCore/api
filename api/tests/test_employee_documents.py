@@ -4,6 +4,8 @@ from django.urls import reverse_lazy
 from mock import patch
 from io import BytesIO
 from django.test.client import MULTIPART_CONTENT
+
+from api.models import EmployeeDocument
 from api.tests.mixins import WithMakeUser
 
 
@@ -42,3 +44,19 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
             response.status_code,
             201,
             f'It should return a success response: {str(response.content)}')
+
+    @patch('cloudinary.uploader.upload')
+    def test_get_my_documents(self, mocked_uploader):
+        document = {
+            'document': 'http://a-valid.url/for-the-doc',
+            "employee_id": self.test_user_employee.id
+        }
+        EmployeeDocument.objects.create(**document)
+
+        url = reverse_lazy('api:employee-document')
+        self.client.force_login(self.test_user_employee)
+        response = self.client.get(url, content_type='application/json')
+        json_response = response.json()
+        self.assertEquals(response.status_code, 200, response.content)
+        self.assertEquals(len(json_response), 1, response.content)
+        self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
