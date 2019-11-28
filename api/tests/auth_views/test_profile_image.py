@@ -28,14 +28,9 @@ class ProfileTestSuite(TestCase, WithMakeUser):
 
     @patch('cloudinary.uploader.upload')
     def test_post_profile(self, mocked_uploader):
-        """
-        Get user profile
-        """
-
         mocked_uploader.return_value = {
             'secure_url': 'da_url'
         }
-
         url = reverse_lazy('api:me-profiles-image')
         self.client.force_login(self.test_user_employee)
 

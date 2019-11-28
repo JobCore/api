@@ -15,10 +15,10 @@
 
 | key                   | Example Value | Required?     |
 | --------------------  | ------------  | ------------- |
-| public_token          |  "MM/DD/YYYY" |     Yes       |
-| account_id            |  "MM/DD/YYYY" |     Yes       |
-| account_name          |  "MM/DD/YYYY" |      No       |
-| institution_name      |  "MM/DD/YYYY" |      No       |
+| public_token          |  "" |     Yes       |
+| account_id            |  "" |     Yes       |
+| account_name          |  "" |      No       |
+| institution_name      |  "" |      No       |
 
 
 ## Example:

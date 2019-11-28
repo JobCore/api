@@ -368,7 +368,6 @@ class ProfileMeView(APIView):
 class ProfileMeImageView(APIView):
 
     def put(self, request):
-
         try:
             profile = Profile.objects.get(user=self.request.user)
         except Profile.DoesNotExist:
