@@ -16,9 +16,6 @@
 | key                   | Example Value | Required?     |
 | --------------------  | ------------  | ------------- |
 | public_token          |  "" |     Yes       |
-| account_id            |  "" |     Yes       |
-| account_name          |  "" |      No       |
-| institution_name      |  "" |      No       |
 
 
 ## Example:
@@ -62,7 +59,6 @@ http://localhost:5000/api/bank-accounts
 ```json
 [
     {
-        "institution_name":"Institution Name",
         "name": " name",
         "id": 123,
     }

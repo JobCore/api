@@ -587,6 +587,10 @@ class PaymentDeduction(models.Model):
 
 
 class BankAccount(models.Model):
+    """
+    {'account': '1111222233330000', 'account_id': 'XJJ3KQ5A8eSVlvK4Mj61tgBerwEdp8cdXwgaZ',
+    'routing': '011401533', 'wire_routing': '021000021'}
+    """
     user = models.ForeignKey(
         Profile,
         related_name='bank_accounts',
@@ -595,8 +599,10 @@ class BankAccount(models.Model):
         null=True)
     access_token = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
-    institution_name = models.CharField(max_length=200, null=True, blank=True)
-    stripe_bank_account_token = models.CharField(max_length=200, null=True, blank=True)
+    account_id = models.CharField(max_length=200, null=True, blank=True)
+    account = models.CharField(max_length=200, null=True, blank=True)
+    routing = models.CharField(max_length=200, null=True, blank=True)
+    wire_routing = models.CharField(max_length=200, null=True, blank=True)
 
 
 class EmployeeDocument(models.Model):

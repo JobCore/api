@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from api.models import *
 from api.utils import validators
 from api.serializers import documents_serializer

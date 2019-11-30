@@ -9,6 +9,7 @@ import cloudinary.api
 
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 
@@ -970,13 +971,6 @@ class RegisterBankAccountView(APIView):
             environment=os.environ.get('PLAID_ENV'))
 
         plaid_link_public_token = request.data.get('public_token', None)
-        plaid_link_account_id = request.data.get('account_id', None)
-        plaid_link_account_name = request.data.get('account_name', "")
-        plaid_link_institution_name = request.data.get('institution_name', "")
-
-        if plaid_link_account_id is None:
-            raise ValueError(f"'account_id' is required: {str(request.data)}")
-
         if plaid_link_public_token is None:
             raise ValueError(f"'public_token' is required: {str(request.data)}")
 
@@ -987,22 +981,45 @@ class RegisterBankAccountView(APIView):
             raise ValueError(f"Error exchanging the Token: {e}")
 
         access_token = plaid_request['access_token']
+        response = plaid_client.Auth.get(access_token)
+        accounts_data = {}
+        for account in response.get("accounts"):
+            accounts_data[account.get("account_id")] = account.get("name")
+        ach = response.get('numbers', {}).get("ach", None)
 
-        stripe_response = plaid_client.Processor.stripeBankAccountTokenCreate(access_token, plaid_link_account_id)
-        bank_account_token = stripe_response['stripe_bank_account_token']
+        # @asanchezr If connected with Stripe it is possible to get an Stripe token to make direct transfers
+        # stripe_response = plaid_client.Processor.stripeBankAccountTokenCreate(access_token, plaid_link_account_id)
+        # bank_account_token = stripe_response['stripe_bank_account_token']
+        # try:
+        #     BankAccount.objects.create(
+        #         user=request.user.profile,
+        #         access_token=access_token,
+        #         name=plaid_link_account_name,
+        #         institution_name=plaid_link_institution_name,
+        #         stripe_bank_account_token=bank_account_token)
+        # except Exception as e:
+        #     log.error(f"Error creating the Bank Account: {e}")
+        #     raise ValueError(f"Error creating the Bank Account: {e}")
+        with transaction.atomic():
+            for acc in ach:
+                account_id = acc.get("account_id")
+                account = acc.get("account")
+                routing = acc.get("routing")
+                wire_routing = acc.get("wire_routing")
+                try:
+                    BankAccount.objects.create(
+                        user=request.user.profile,
+                        access_token=access_token,
+                        name=accounts_data[account_id],
+                        account_id=account_id,
+                        account=account,
+                        routing=routing,
+                        wire_routing=wire_routing)
+                except Exception as e:
+                    log.error(f"Error creating the Bank Account: {e}")
+                    raise ValueError(f"Error creating the Bank Account: {e}")
 
-        try:
-            BankAccount.objects.create(
-                user=request.user.profile,
-                access_token=access_token,
-                name=plaid_link_account_name,
-                institution_name=plaid_link_institution_name,
-                stripe_bank_account_token=bank_account_token)
-        except Exception as e:
-            log.error(f"Error creating the Bank Account: {e}")
-            raise ValueError(f"Error creating the Bank Account: {e}")
-
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_201_CREATED)
 
     def get(self, request):
         profile = request.user.profile
