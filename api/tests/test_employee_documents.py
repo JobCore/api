@@ -5,7 +5,7 @@ from mock import patch
 from io import BytesIO
 from django.test.client import MULTIPART_CONTENT
 
-from api.models import EmployeeDocument
+from api.models import EmployeeDocument, Employee
 from api.tests.mixins import WithMakeUser
 
 
@@ -19,8 +19,8 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         ) = self._make_user(
             'employee',
             userkwargs=dict(
-                username='employee',
-                email='employee@testdoma.in',
+                username='employee1234',
+                email='employee1234@testdoma.in',
                 is_active=True,
             )
         )
@@ -49,10 +49,10 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
     def test_get_my_documents(self, mocked_uploader):
         document = {
             'document': 'http://a-valid.url/for-the-doc',
-            "employee_id": self.test_user_employee.id
+            "employee_id": Employee.objects.all()[0].id
         }
-        EmployeeDocument.objects.create(**document)
 
+        EmployeeDocument.objects.create(**document)
         url = reverse_lazy('api:employee-document')
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
