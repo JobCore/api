@@ -1003,9 +1003,9 @@ class RegisterBankAccountView(APIView):
         with transaction.atomic():
             for acc in ach:
                 account_id = acc.get("account_id")
-                account = acc.get("account")
-                routing = acc.get("routing")
-                wire_routing = acc.get("wire_routing")
+                account = acc.get("account", "")
+                routing = acc.get("routing", "")
+                wire_routing = acc.get("wire_routing", "")
                 try:
                     BankAccount.objects.create(
                         user=request.user.profile,
