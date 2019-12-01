@@ -70,3 +70,21 @@ class BankAccountTestSuite(TestCase):
         json_response = response.json()
         self.assertEqual(accounts_len, len(json_response), response.content)
         self.assertEqual('Bank of America Checking', json_response[0].get("name"), response.content)
+
+    def test_delete_bank_accounts(self):
+        account = BankAccount.objects.create(**{
+            "user_id": self.user.profile.id,
+            "name": 'Bank of America Checking',
+            "account_id": 'ACCOUNT_IDC',
+            "account": '1234512345',
+            "routing": '12345123456',
+            "wire_routing": '123451234567',
+        })
+        self.client.force_login(self.user)
+        url = reverse_lazy('api:detail-api-bank-accounts', kwargs={
+            'bank_account_id': account.id
+        })
+        response = self.client.delete(url, content_type="application/json")
+        self.assertEqual(response.status_code, 202, response.status_code)
+        accounts_len = BankAccount.objects.all().count()
+        self.assertEqual(accounts_len, 0, response.content)

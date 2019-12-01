@@ -13,8 +13,9 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView, RegisterBankAccountView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView
 )
+from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
 from api.views.admin_views import (
     EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
@@ -365,7 +366,8 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
-    path('bank-accounts/', RegisterBankAccountView.as_view(), name='api-bank-accounts'),
+    path('bank-accounts/', BankAccountAPIView.as_view(), name='api-bank-accounts'),
+    path('bank-accounts/<int:bank_account_id>', BankAccountDetailAPIView.as_view(), name='detail-api-bank-accounts'),
     # DOCUMENTS
     path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
     path('document/', EmployeeDocumentAPI.as_view(), name="employee-document"),
