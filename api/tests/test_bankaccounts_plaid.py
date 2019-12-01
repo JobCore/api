@@ -48,7 +48,7 @@ class BankAccountTestSuite(TestCase):
 
     def test_list_bank_accounts(self):
         BankAccount.objects.create(**{
-            "user_id": self.user.id,
+            "user_id": self.user.profile.id,
             "name": 'Bank of America Checking',
             "account_id": 'ACCOUNT_IDC',
             "account": '1234512345',
@@ -56,7 +56,7 @@ class BankAccountTestSuite(TestCase):
             "wire_routing": '123451234567',
         })
         BankAccount.objects.create(**{
-            "user_id": self.user.id,
+            "user_id": self.user.profile.id,
             "name": 'Bank of America Savings',
             "account_id": 'ACCOUNT_IDS',
             "account": '1234512345',
