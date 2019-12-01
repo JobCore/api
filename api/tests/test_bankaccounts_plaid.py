@@ -45,3 +45,28 @@ class BankAccountTestSuite(TestCase):
         response = self.client.post(url, data, content_type="application/json")
         accounts_len = BankAccount.objects.all().count()
         self.assertEqual(accounts_len > 0, True, response.content)
+
+    def test_list_bank_accounts(self):
+        BankAccount.objects.create(**{
+            "user_id": self.user.id,
+            "name": 'Bank of America Checking',
+            "account_id": 'ACCOUNT_IDC',
+            "account": '1234512345',
+            "routing": '12345123456',
+            "wire_routing": '123451234567',
+        })
+        BankAccount.objects.create(**{
+            "user_id": self.user.id,
+            "name": 'Bank of America Savings',
+            "account_id": 'ACCOUNT_IDS',
+            "account": '1234512345',
+            "routing": '12345123456',
+            "wire_routing": '123451234567',
+        })
+        self.client.force_login(self.user)
+        url = reverse_lazy('api:api-bank-accounts')
+        response = self.client.get(url, content_type="application/json")
+        accounts_len = BankAccount.objects.all().count()
+        json_response = response.json()
+        self.assertEqual(accounts_len, len(json_response), response.content)
+        self.assertEqual('Bank of America Checking', json_response[0].get("name"), response.content)

@@ -1022,12 +1022,10 @@ class RegisterBankAccountView(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
     def get(self, request):
-        profile = request.user.profile
-        accounts = BankAccount.objects.filter(user_id=profile.id)
+        accounts = BankAccount.objects.filter(user_id=request.user.id).order_by('id')
         json_accounts = []
         for acc in accounts:
             acc_obj = {
-                "institution_name": acc.institution_name,
                 "name": acc.name,
                 "id": acc.id,
             }
