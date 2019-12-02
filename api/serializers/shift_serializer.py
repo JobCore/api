@@ -103,6 +103,7 @@ class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
             'required_badges',
             'candidates',
             'created_at',
+            'employer',
             'employees',
             'rating',
             'application_restriction',
