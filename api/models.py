@@ -81,8 +81,6 @@ class Employer(models.Model):
     maximum_clockout_delay_minutes = models.IntegerField(
         blank=True, default=None, null=True)  # in minutes
 
-    documents = models.ManyToManyField('Document', blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -134,8 +132,7 @@ class Profile(models.Model):
     location = models.CharField(max_length=250, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
-    city = models.CharField(max_length=30, blank=True)
-    profile_city_man = models.CharField(max_length=30, null=True, blank=True)
+    city = models.CharField(max_length=30, blank=True, null=True)
     profile_city = models.ForeignKey(City, null=True, on_delete=models.CASCADE)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
@@ -164,7 +161,7 @@ class Profile(models.Model):
     @property
     def get_city(self):
         if self.profile_city_id is None:
-            return self.profile_city_man
+            return self.city
         return self.profile_city.name
 
 
@@ -590,6 +587,10 @@ class PaymentDeduction(models.Model):
 
 
 class BankAccount(models.Model):
+    """
+    {'account': '1111222233330000', 'account_id': 'XJJ3KQ5A8eSVlvK4Mj61tgBerwEdp8cdXwgaZ',
+    'routing': '011401533', 'wire_routing': '021000021'}
+    """
     user = models.ForeignKey(
         Profile,
         related_name='bank_accounts',
@@ -598,19 +599,26 @@ class BankAccount(models.Model):
         null=True)
     access_token = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
-    institution_name = models.CharField(max_length=200)
-    item_id = models.CharField(max_length=100)
+    account_id = models.CharField(max_length=200, null=True, blank=True)
+    account = models.CharField(max_length=200, null=True, blank=True)
+    routing = models.CharField(max_length=200, null=True, blank=True)
+    wire_routing = models.CharField(max_length=200, null=True, blank=True)
+    institution_name = models.CharField(max_length=200, null=True, blank=True)
 
 
-class Document(models.Model):
+class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
+    REJECTED = 'REJECTED'
     DOCUMENT_STATUS = (
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
     )
-    document = models.FileField()
-    state = models.CharField(max_length=7, choices=DOCUMENT_STATUS, default=PENDING)
-
+    document = models.URLField()
+    public_id = models.CharField(max_length=30, null=True)
+    rejected_reason = models.CharField(max_length=255, null=True)
+    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
