@@ -133,3 +133,5 @@ pip-selfcheck.json
 .idea/
 db.sqlite
 #static/*
+
+tmp/

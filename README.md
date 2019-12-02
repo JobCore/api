@@ -73,3 +73,12 @@ git push heroku master
 
 ## add remote
 heroku git:remote -a jobcore
+
+
+## Postgres docker
+
+## Postgres
+### Build
+docker build -t jobcore/bd -f ./DockerfileForPostgres .
+### Run
+docker run -it -p 5432:5432 -h localhost --ip 127.0.0.1 jobcore/bd
