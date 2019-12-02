@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
@@ -62,6 +62,8 @@ urlpatterns = [
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
     path('user/register', UserRegisterView.as_view(), name="register"),
+
+    path('public/shifts', PublicShiftView.as_view(), name="get-shifts"),
 
     path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
     path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
