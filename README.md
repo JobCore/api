@@ -83,3 +83,10 @@ heroku git:remote -a jobcore
 docker build -t jobcore/bd -f ./DockerfileForPostgres .
 ### Run
 docker run -it -p 5432:5432 -h localhost --ip 127.0.0.1 jobcore/bd
+
+
+## Django App
+### Build
+docker build -t jobcore/app -f ./DockerfileForLiveReloadApp  .
+### Run (pwd: fish shell variable pwd)
+docker run -it -p 5000:5000 -v (pwd):/app jobcore/app
