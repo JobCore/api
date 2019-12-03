@@ -88,6 +88,27 @@ class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
+    venue = VenueGetSmallSerializer(read_only=True)
+    position = PositionGetSmallSerializer(read_only=True)
+
+    class Meta:
+        model = Shift
+        exclude = (
+            'maximum_allowed_employees',
+            'minimum_allowed_rating',
+            'maximum_clockin_delta_minutes',
+            'maximum_clockout_delay_minutes',
+            'allowed_from_list',
+            'required_badges',
+            'candidates',
+            'created_at',
+            'employer',
+            'employees',
+            'rating',
+            'application_restriction',
+            'updated_at')
+
 class ShiftGetTinySerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
@@ -256,7 +277,7 @@ class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('This shift is not opened for applicants')
 
         if 'employees' in data and len(data['employees']) > shift.maximum_allowed_employees:
-            raise serializers.ValidationError('The shift is already full, delete some accepted employees in order to be able to approve more.')
+            raise serializers.ValidationError('The shift cannot have more than '+str(shift.maximum_allowed_employees)+' employees')
 
         return data
 

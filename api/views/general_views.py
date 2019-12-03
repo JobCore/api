@@ -8,7 +8,7 @@ import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import HttpResponse
 from django.utils import timezone
 
@@ -34,7 +34,7 @@ from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
 
 from api.serializers import (
-    user_serializer, profile_serializer, employee_serializer, other_serializer, payment_serializer
+    user_serializer, profile_serializer, employee_serializer, other_serializer, payment_serializer, shift_serializer
 )
 from api.serializers import (
     employer_serializer, auth_serializer, clockin_serializer,
@@ -48,6 +48,7 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 TODAY = datetime.datetime.now(tz=timezone.utc)
 log = logging.getLogger(__name__)
+DATE_FORMAT = '%Y-%m-%d'
 
 
 class ValidateEmailView(APIView):
@@ -957,3 +958,46 @@ class OnboardingView(APIView):
                 return Response([], status=status.HTTP_200_OK)
 
 
+class PublicShiftView(APIView, CustomPagination):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+
+        TODAY = datetime.datetime.now(tz=timezone.utc)
+
+        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(num_employees__lt=F('maximum_allowed_employees'))
+
+        qStatus = request.GET.get('status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            return Response(validators.error_object(
+                "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+        elif qStatus:
+            status_list = qStatus.split(",")
+            shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+        else:
+            shifts = shifts.filter(status='OPEN').exclude(status='CANCELLED')
+
+        qStatus = request.GET.get('not_status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            return Response(validators.error_object(
+                "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+        elif qStatus:
+            shifts = shifts.filter(~Q(status=qStatus))
+
+        qUpcoming = request.GET.get('upcoming')
+        if qUpcoming == 'true':
+            shifts = shifts.filter(starting_at__gte=TODAY)
+
+        qStart = request.GET.get('start')
+        if qStart is not None and qStart != '':
+            start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+            shifts = shifts.filter(starting_at__gte=start)
+
+        qEnd = request.GET.get('end')
+        if qEnd is not None and qEnd != '':
+            end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+            shifts = shifts.filter(ending_at__lte=end)
+
+        defaultSerializer = shift_serializer.ShiftGetPublicTinySerializer
+        serializer = defaultSerializer(shifts.order_by('-starting_at'), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
