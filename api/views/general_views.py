@@ -8,15 +8,11 @@ import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, F
 from django.http import HttpResponse
 from django.utils import timezone
 
 from jwt.exceptions import DecodeError, ExpiredSignatureError
-
-import os
-import plaid
-
 
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
@@ -28,7 +24,6 @@ from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
-
 import api.utils.jwt
 from api.pagination import CustomPagination
 
@@ -39,8 +34,7 @@ from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
 
 from api.serializers import (
-    user_serializer, profile_serializer, shift_serializer,
-    employee_serializer, other_serializer, payment_serializer
+    user_serializer, profile_serializer, employee_serializer, other_serializer, payment_serializer, shift_serializer
 )
 from api.serializers import (
     employer_serializer, auth_serializer, clockin_serializer,
@@ -53,7 +47,8 @@ jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 TODAY = datetime.datetime.now(tz=timezone.utc)
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+DATE_FORMAT = '%Y-%m-%d'
 
 
 class ValidateEmailView(APIView):
@@ -70,7 +65,8 @@ class ValidateEmailView(APIView):
         try:
             user = User.objects.get(id=payload["user_id"])
             if user.profile.status != 'PENDING_EMAIL_VALIDATION':
-                return html_error('Your email has been already activated, open the JobCore App and go ahead and sign in')
+                return html_error(
+                    'Your email has been already activated, open the JobCore App and go ahead and sign in')
 
             try:
                 # db_token = UserToken.objects.get(token=token, email=user.email)
@@ -104,11 +100,12 @@ class ValidateSendEmailView(APIView):
                 'The user was not found'), status=status.HTTP_400_BAD_REQUEST)
 
             if user.profile.status != 'PENDING_EMAIL_VALIDATION':
-                return Response(validators.error_object('This user is already validated'), status=status.HTTP_400_BAD_REQUEST)
+                return Response(validators.error_object('This user is already validated'),
+                                status=status.HTTP_400_BAD_REQUEST)
 
         notify_email_validation(user)
 
-        return Response({ "details": "The email was sent" }, status=status.HTTP_200_OK)
+        return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
 
 
 class PasswordView(APIView):
@@ -151,7 +148,7 @@ class PasswordView(APIView):
                 validators.error_object('Email not found on the database'),
                 status=status.HTTP_404_NOT_FOUND)
 
-        tokenDic = { "token": notify_password_reset_code(user) }
+        tokenDic = {"token": notify_password_reset_code(user)}
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -167,6 +164,7 @@ class PasswordView(APIView):
 
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]
+
     # serializer_class = user_serializer.UserSerializer
 
     def post(self, request):
@@ -176,7 +174,7 @@ class UserRegisterView(APIView):
 
         serializer = auth_serializer.UserRegisterSerializer(
             data=request.data,
-            context={"token": token, 'city': request.data.get('city'), 'city_id': request.data.get('city_id')})
+            context={"token": token})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -229,7 +227,7 @@ class UserView(APIView):
                         serializer.data.get("old_password")):
                     return Response({
                         "old_password": ["Wrong password."]
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 # Hash and save the password
                 user.set_password(serializer.data.get("new_password"))
             user.save()
@@ -297,6 +295,7 @@ class EmployeeView(APIView, CustomPagination):
                 employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
     # there shoud be no POST because it is created on signup (registration)
+
 
 class EmployerView(APIView):
     def get(self, request, id=False):
@@ -366,7 +365,6 @@ class ProfileMeView(APIView):
 class ProfileMeImageView(APIView):
 
     def put(self, request):
-
         try:
             profile = Profile.objects.get(user=self.request.user)
         except Profile.DoesNotExist:
@@ -450,6 +448,7 @@ class PositionView(APIView):
 
 
 class CityView(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request, id=None):
         if (id):
@@ -520,6 +519,7 @@ class BadgeView(APIView):
         badge.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class RateView(APIView):
 
     def get_queryset(self):
@@ -575,6 +575,7 @@ class RateView(APIView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class CatalogView(APIView):
     def get(self, request, catalog_type):
 
@@ -584,7 +585,7 @@ class CatalogView(APIView):
             qName = request.GET.get('full_name')
             if qName:
                 search_args = []
-                for term in qName.split():#first_name__unaccent__startswith
+                for term in qName.split():  # first_name__unaccent__startswith
                     for query in ('profile__user__first_name__unaccent__istartswith',
                                   'profile__user__last_name__unaccent__istartswith'):
                         search_args.append(Q(**{query: term}))
@@ -603,8 +604,8 @@ class CatalogView(APIView):
             employees = map(
                 lambda emp: {
                     "label": emp["first_name"] +
-                    ' ' +
-                    emp["last_name"],
+                             ' ' +
+                             emp["last_name"],
                     "value": emp["profile__employee__id"]},
                 employees.values(
                     'first_name',
@@ -642,6 +643,7 @@ class CatalogView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response("no catalog", status=status.HTTP_200_OK)
+
 
 class PayrollShiftsView(APIView, CustomPagination):
     def get(self, request):
@@ -841,7 +843,6 @@ class JobCoreInviteView(APIView):
 
 
 class OnboardingView(APIView):
-
     permission_classes = [AllowAny]
 
     def get(self, request, view_slug=None):
@@ -957,24 +958,46 @@ class OnboardingView(APIView):
                 return Response([], status=status.HTTP_200_OK)
 
 
+class PublicShiftView(APIView, CustomPagination):
+    permission_classes = (AllowAny,)
 
-class RegisterBankAccountView(APIView):
-    def post(self, request):
-        plaidClient = plaid.Client(
-                client_id=os.environ.get('PLAID_CLIENT_ID'),
-                secret=os.environ.get('PLAID_SECRET'),
-                public_key=os.environ.get('PLAID_PUBLIC_KEY'),
-                environment=os.environ.get('PLAID_ENV'))
+    def get(self, request):
 
-        access_token = plaidClient.Item.public_token.exchange(request.POST.get('public_token'))['access_token']
-        response = plaidClient.Auth.get(access_token)
-        for account in response['accounts']:
-            BankAccount.objects.create(
-                    user=request.user.profile,
-                    access_token=access_token,
-                    name=account.get('name'),
-                    institution_name=response.get('item').get('institution_id'),
-                    item_id=response.get('item').get('item_id'))
+        TODAY = datetime.datetime.now(tz=timezone.utc)
 
+        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(num_employees__lt=F('maximum_allowed_employees'))
 
-        return Response(status=status.HTTP_200_OK)
+        qStatus = request.GET.get('status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            return Response(validators.error_object(
+                "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+        elif qStatus:
+            status_list = qStatus.split(",")
+            shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+        else:
+            shifts = shifts.filter(status='OPEN').exclude(status='CANCELLED')
+
+        qStatus = request.GET.get('not_status')
+        if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
+            return Response(validators.error_object(
+                "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+        elif qStatus:
+            shifts = shifts.filter(~Q(status=qStatus))
+
+        qUpcoming = request.GET.get('upcoming')
+        if qUpcoming == 'true':
+            shifts = shifts.filter(starting_at__gte=TODAY)
+
+        qStart = request.GET.get('start')
+        if qStart is not None and qStart != '':
+            start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+            shifts = shifts.filter(starting_at__gte=start)
+
+        qEnd = request.GET.get('end')
+        if qEnd is not None and qEnd != '':
+            end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+            shifts = shifts.filter(ending_at__lte=end)
+
+        defaultSerializer = shift_serializer.ShiftGetPublicTinySerializer
+        serializer = defaultSerializer(shifts.order_by('-starting_at'), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -241,105 +241,63 @@ class ClockinOut(TestCase, WithMakeUser, WithMakeShift):
         ).count()
         self.assertEquals(count, 0)
 
-    # def test_clockout_no_clockin_past_shift(self):
+    def test_clockout_no_clockin_past_shift(self):
         # Si ya hice clockin en otro shift y no he hecho clockout, no puedo hacer clockin in este shift.
-        # url = reverse_lazy('api:me-employees-clockins')
+        url = reverse_lazy('api:me-employees-clockins')
 
-        # payload = {
-        #     'shift': self.test_shift.id,
-        #     'author': self.test_profile_employee.id,
-        #     'started_at': timezone.now(),
-            # 'ended_at': timezone.now() + timedelta(hours=8),
-            # 'latitude_in': -64,
-            # 'longitude_in': 10,
-        # }
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': timezone.now(),
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
 
-        # response = self.client.post(url, data=payload)
-        # self.assertEquals(response.status_code, 201)
-        # response_json = response.json()
-        # print(response.content)
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+        response_json = response.json()
+        print(response.content)
 
-        # count = Clockin.objects.filter(
-        #     employee_id=self.test_employee.id,
-        #     shift_id=self.test_shift.id,
-        # ).count()
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+        ).count()
 
-        # self.assertEquals(count, 1)
+        self.assertEquals(count, 1)
 
-    
-        # second shift clock in 
-        # second_shift_starting_at = timezone.now() + timedelta(hours=12)
-        # second_shift_ending_at = timezone.now() + timedelta(hours=20) 
+        second_shift_starting_at = timezone.now() + timedelta(hours=12)
+        second_shift_ending_at = timezone.now() + timedelta(hours=20) 
  
-        # self.test_second_shift, _, __ = self._make_shift(
-        #     venuekwargs={
-        #         'latitude': -64,
-        #         'longitude': 10
-        #     },
-        #     shiftkwargs={
-        #         'status': 'OPEN',
-        #         'maximum_clockin_delta_minutes': 5,
-        #         'maximum_clockout_delay_minutes': 5,
-        #         'starting_at': second_shift_starting_at,
-        #         'ending_at': second_shift_ending_at
-        #     },
-        #     employer=self.test_employer)
-        # mixer.blend(
-        #     'api.ShiftEmployee',
-        #     employee=self.test_employee,
-        #     shift=self.test_second_shift,
-        # )
-        # payload2 = {
-        #     'shift': self.test_second_shift.id,
-        #     'author': self.test_profile_employee.id,
-        #     'started_at': second_shift_starting_at,
-        #     'latitude_in': -64,
-        #     'longitude_in': 10,
-        # }
+        self.test_second_shift, _, __ = self._make_shift(
+            venuekwargs={
+                'latitude': -64,
+                'longitude': 10
+            },
+            shiftkwargs={
+                'status': 'OPEN',
+                'maximum_clockin_delta_minutes': 5,
+                'maximum_clockout_delay_minutes': 5,
+                'starting_at': second_shift_starting_at,
+                'ending_at': second_shift_ending_at
+            },
+            employer=self.test_employer)
+        mixer.blend(
+            'api.ShiftEmployee',
+            employee=self.test_employee,
+            shift=self.test_second_shift,
+        )
+        payload2 = {
+            'shift': self.test_second_shift.id,
+            'author': self.test_profile_employee.id,
+            'started_at': second_shift_starting_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
 
-        # response = self.client.post(url, data=payload2)
-        # print(response.content)
-        # self.assertEquals(response.status_code, 400, 'You are not able to clockin if you didnt clock out the previous shift')
-        # response_json = response.json()
-
-    # def test_clockin_out_no_employee(self):
-        # Si el author es none o no employee entonce deberai ser 400
-        # url = reverse_lazy('api:me-employees-clockins')
-
-        # payload = {
-        #     'shift': self.test_shift.id,
-        #     'employee': '',
-        #     'author': '',
-        #     'started_at': self.test_shift.starting_at,
-        #     'latitude_in': -64,
-        #     'longitude_in': 10,
-        # }
-
-        # response = self.client.post(url, data=payload)
-        # self.assertEquals(response.status_code, 400)
-        # response_json = response.json()
-
-        # count = Clockin.objects.filter(
-        #     employee_id=self.test_employee.id,
-        #     shift_id=self.test_shift.id,
-        # ).count()
-
-        # self.assertEquals(count, 0)
-
-        # payload = {
-        #     'shift': self.test_shift.id,
-        #     'employee': '',
-        #     'author': '',
-        #     'ended_at': self.test_shift.ending_at,
-        #     'latitude_out': -64,
-        #     'longitude_out': 10,
-        # }
-
-        # response = self.client.post(url, data=payload)
-        # self.assertEquals(response.status_code, 400)
-        # response_json = response.json()
-
-
+        response = self.client.post(url, data=payload2)
+        print(response.content)
+        self.assertEquals(response.status_code, 400, 'You are not able to clockin if you didnt clock out the previous shift')
+        response_json = response.json()
 
     def test_clockout_having_clockin_past_shift(self):
         # Si ya hice clockin en otro shift y hice clockout, puedo hacer clockin in este shift.
@@ -759,3 +717,75 @@ class ClockinOut(TestCase, WithMakeUser, WithMakeShift):
                 shift['maximum_clockin_delta_minutes'], 30)    
             self.assertEquals(
                 shift['maximum_clockout_delay_minutes'], 30) #All filled and open shift are now 30 instead of 15
+
+
+    def test_clockin_not_part_of_the_shift(self):
+        url = reverse_lazy('api:me-employees-clockins')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+        self.test_no_apply, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            employer=self.test_employer)
+
+
+        payload = {
+            'shift': self.test_no_apply.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+        ).count()
+        self.assertEquals(count, 0)
+
+    def test_clockout_not_part_of_the_shift(self):
+        #you need to be part of the shift to be able to clockin or clockout
+        url = reverse_lazy('api:me-employees-clockins')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+        self.test_no_apply, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            employer=self.test_employer)
+
+
+        payload = {
+            'shift': self.test_no_apply.id,
+            'author': self.test_profile_employee.id,
+            'started_at': started_at,
+            'latitude_in': -64,
+            'longitude_in': 10,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+        count = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+        ).count()
+        self.assertEquals(count, 1)
+
+        ended_at = timezone.now() + timedelta(hours=2)
+
+        payload = {
+            'shift': self.test_shift.id,
+            'author': self.test_profile_employee.id,
+            'ended_at': ended_at,
+        }
+
+        response = self.client.post(url, data=payload)
+        self.assertEquals(response.status_code, 400)
+
+        db_clockin = Clockin.objects.filter(
+            employee_id=self.test_employee.id,
+            shift_id=self.test_shift.id,
+        ).get()
+
+        self.assertEquals(db_clockin.ended_at, None)

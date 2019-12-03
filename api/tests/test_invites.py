@@ -10,6 +10,7 @@ from api.utils import notifier
 from api.actions.employee_actions import create_default_availablity
 
 AvailabilityBlock = apps.get_model('api', 'AvailabilityBlock')
+ShiftEmployee = apps.get_model('api', 'ShiftEmployee')
 @override_settings(STATICFILES_STORAGE=None)
 class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
@@ -611,3 +612,98 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
             response.status_code,
             201,
             'It should return an 201 because manual invite will be sent with or without requirements')
+
+    def test_double_invite_same_shift(self):
+        #If a user is already invited to a shift and gets invited again, the original invite must update its status to pending but only if the user has not been hired already for that shift. (you can check that on the shift employees).
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                stop_receiving_invites=False,
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )        
+        
+        
+        url = reverse_lazy('api:me-employer-get-jobinvites')
+        self.client.force_login(self.test_user_employer)
+
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at),
+            employer=self.test_employer)
+
+        payload = {
+            'shifts': self.test_shift.id,
+            'employee': self.test_employee.id,
+        }
+
+        response = self.client.post(
+            url,
+            data=payload,
+            content_type="application/json")
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a 201 response')
+
+        response_second = self.client.post(
+            url,
+            data=payload,
+            content_type="application/json")
+
+        self.client.force_login(self.test_user_employee)
+
+        url_all_shifts = reverse_lazy('api:me-employees-get-jobinvites')
+        response_all_shifts = self.client.get(url_all_shifts)
+        response_json = response_all_shifts.json()
+
+        self.assertEquals(response.status_code, 201)
+        self.assertEquals(response_json[0]['status'], "PENDING")
+
+    def test_double_invite_same_shift_hired(self):
+        #If a user is already invited to a shift and gets invited again, the original invite must update its status to pending but only if the user has not been hired already for that shift. (you can check that on the shift employees).
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                stop_receiving_invites=False,
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )        
+        
+        
+        url = reverse_lazy('api:me-employer-get-jobinvites')
+        self.client.force_login(self.test_user_employer)
+
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, maximum_allowed_employees=5, employees=self.test_employee),
+            employer=self.test_employer)
+
+        payload = {
+            'shifts': self.test_shift.id,
+            'employee': self.test_employee.id,
+        }
+
+        response = self.client.post(
+            url,
+            data=payload,
+            content_type="application/json")
+        print(response.content) 
+        self.assertEquals(
+            response.status_code,
+            400,
+            'Como ese employee ya trabaja para ese shift no se puede aplicar')

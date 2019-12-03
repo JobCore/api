@@ -20,21 +20,26 @@ from api.models import *
 from api.utils.notifier import notify_password_reset_code
 from api.utils import validators
 from api.utils.utils import get_aware_datetime
-from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, other_serializer, payment_serializer
-from api.serializers import favlist_serializer, venue_serializer, employer_serializer, auth_serializer, notification_serializer, clockin_serializer
+from api.serializers import user_serializer, profile_serializer, shift_serializer, employee_serializer, \
+    other_serializer, payment_serializer
+from api.serializers import favlist_serializer, venue_serializer, employer_serializer, auth_serializer, \
+    notification_serializer, clockin_serializer
 from api.serializers import rating_serializer
 from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
+
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 from django.utils import timezone
 import datetime
+
 TODAY = datetime.datetime.now(tz=timezone.utc)
 
 # from .utils import GeneralException
 import logging
+
 logger = logging.getLogger(__name__)
 from api.utils.email import get_template_content
 
@@ -55,7 +60,6 @@ class FMCView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
 
@@ -111,6 +115,7 @@ class PayrollPeriodView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class AdminClockinsview(APIView):
     permission_classes = [AllowAny]
 
@@ -132,3 +137,52 @@ class AdminClockinsview(APIView):
             clockins, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# class DocumentAdmin(APIView):
+#     def post(self, request):
+#         result = cloudinary.uploader.upload(
+#             request.FILES['document'],
+#             tags=['i9_document'],
+#             use_filename=1,
+#             unique_filename=1,
+#             resource_type='auto'
+#
+#         )
+#         request.data['document'] = result['secure_url']
+#         request.data['public_id'] = result['public_id']
+#         serializer = other_serializer.DocumentSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             request_data = {}
+#
+#             request_data['employee'] = self.request.user.profile.employee.id
+#             request_data['documents'] = [serializer.instance.id]
+#             serializer = other_serializer.EmployeeDocumentSerializer(
+#                     data=request_data)
+#             if serializer.is_valid():
+#                 serializer.save()
+#                 return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     def get(self, request, document_id):
+#         try:
+#             document = Document.objects.get(
+#                     id=document_id)
+#         except Document.DoesNotExist:
+#             return Reponse(validators_error_object(
+#                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
+#         return Response(document.document, status=status.HTTP_200_OK)
+#
+#     def put(seelf, request, document_id):
+#
+#         try:
+#             document = Document.objects.get(
+#                     id=document_id)
+#         except Document.DoesNotExist:
+#             return Response(validators_error_object(
+#                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
+#
+#         serializer = other_serializer.DocumentSerializer(document, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#         return Response(serializer.data, status=status.HTTP_200_OK)

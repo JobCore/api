@@ -8,6 +8,8 @@ from datetime import timedelta
 from django.utils import timezone
 from api.tests.mixins import WithMakeUser
 
+from api.models import City
+
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -52,7 +54,8 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'username': 'test',
             'first_name': 'Alpha',
             'last_name': 'Bravo',
-            'email': 'alpha.beta.gamma.delta.alpha.beta.gamma.delta.go.go.power.rangers@gosh.u.better.store.my.mail.mail.mail.very.evil.mail.why.u.hate.this.linter.so.much.tld',  # NOQA: E261
+            'email': 'alpha.beta.gamma.delta.alpha.beta.gamma.delta.go.go.power.rangers@gosh.u.better.store.my.mail.mail.mail.very.evil.mail.why.u.hate.this.linter.so.much.tld',
+            # NOQA: E261
             'password': 'ABD',
             'account_type': 'employee'
         }
@@ -75,12 +78,10 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         self.assertEquals(response.status_code, 400)
 
-    @patch('api.utils.email.requests')
-    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_employee_all_good(self, mocked_requests):
+    def test_pass_8_char(self):
         payload = {
             'username': 'test',
-            'first_name': 'Alpha',
+            'first_name': 'Beta',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
             'password': 'ABD',
@@ -89,38 +90,84 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
 
-        self.assertEquals(response.status_code, 201)
+        self.assertEquals(response.status_code, 400, "password must be 8 characters long")
 
-        self.assertEquals(
-            mocked_requests.post.called,
-            True,
-            'It should have called requests.post to send mail')
+    def test_pass_one_cap(self):
+        payload = {
+            'username': 'test',
+            'first_name': 'Beta',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'abcdefghi',
+            'account_type': 'employee'
+        }
 
-        jsonresp = response.json()
-        uid = jsonresp['id']
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+
+        self.assertEquals(response.status_code, 400, "password must have one capital letter")
+
+    @patch('api.utils.email.requests')
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
+    def test_employee_all_good(self, mocked_requests):
+        city = City.objects.create(name="Miami")
         Employee = apps.get_model('api.Employee')
         AvailabilityBlock = apps.get_model('api.AvailabilityBlock')
         Profile = apps.get_model('api.Profile')
         ShiftInvite = apps.get_model('api.ShiftInvite')
 
+        payload = {
+            'username': 'test',
+            'first_name': 'Alpha',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'ABD',
+            'account_type': 'employee',
+            "profile_city": city.id
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 201)
+        self.assertEquals(
+            mocked_requests.post.called,
+            True,
+            'It should have called requests.post to send mail')
+        json_resp = response.json()
+        uid = json_resp['id']
+
         employee = Employee.objects.filter(user_id=uid).first()
         self.assertNotEquals(employee, None)
+        self.assertEqual(AvailabilityBlock.objects.filter(employee=employee).count(), 7)
+        self.assertEqual(Profile.objects.filter(user_id=uid).count(), 1)
+        self.assertEqual(ShiftInvite.objects.filter(
+            shift=self.jc_invite.shift,
+            employee=employee,
+            sender=self.jc_invite.sender
+        ).count(), 1)
 
-        self.assertEqual(
-            AvailabilityBlock.objects.filter(employee=employee).count(),
-            7)
+        # Testing city text
+        payload = {
+            'username': 'test',
+            'first_name': 'Alpha',
+            'last_name': 'Bravo',
+            'email': 'delta@mail3.tld',
+            'password': 'ABD',
+            'account_type': 'employee',
+            "city": "Chicago"
+        }
 
-        self.assertEqual(
-            Profile.objects.filter(user_id=uid).count(),
-            1)
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 201, response.content)
+        self.assertEquals(
+            mocked_requests.post.called,
+            True,
+            'It should have called requests.post to send mail')
+        json_resp = response.json()
+        uid = json_resp['id']
 
-        self.assertEqual(
-            ShiftInvite.objects.filter(
-                shift=self.jc_invite.shift,
-                employee=employee,
-                sender=self.jc_invite.sender
-            ).count(),
-            1)
+        employee = Employee.objects.filter(user_id=uid).first()
+        self.assertNotEquals(employee, None)
+        self.assertEqual(AvailabilityBlock.objects.filter(employee=employee).count(), 7)
+        self.assertEqual(Profile.objects.filter(user_id=uid).count(), 1)
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)

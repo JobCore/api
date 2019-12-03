@@ -112,7 +112,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError("You need to specify the started or ended time")
 
-        if 'employee' not in data:
+        if 'employee' not in data or data['employee'] == '':
             raise serializers.ValidationError("You need to specify the employee that is clocking in")
 
         shift = data['shift']

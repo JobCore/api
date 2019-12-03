@@ -13,17 +13,22 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView, RegisterBankAccountView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView
 )
+from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
 from api.views.admin_views import (
     EmployeeBadgesView, PayrollPeriodView, EmailView, FMCView, AdminClockinsview,
+    # DocumentAdmin
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
     EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
-    EmployeeMeDocumentView
+)
+
+from api.views.documents_view import (
+    EmployeeDocumentAPI, EmployeeDocumentDetailAPI
 )
 
 from api.views.employer_views import (
@@ -57,6 +62,8 @@ urlpatterns = [
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
     path('user/register', UserRegisterView.as_view(), name="register"),
+
+    path('public/shifts', PublicShiftView.as_view(), name="get-shifts"),
 
     path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
     path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
@@ -139,8 +146,8 @@ urlpatterns = [
     # FOR THE EMPLOYER
     #
 
-    path('employers/me',EmployerMeView.as_view(),name="me-employer"),
-    path('employers/me/<int:employer_id>',EmployerMeView.as_view(),name="me-employer"),
+    path('employers/me', EmployerMeView.as_view(), name="me-employer"),
+    path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),
     path(
         'employers/me/image',
         EmployerMeImageView.as_view(),
@@ -162,8 +169,10 @@ urlpatterns = [
     #     name="me-employer-periods"),
     path('employers/me/payroll-periods', EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-period"),
     path('employers/me/payment', EmployerMePayrollPeriodPaymentView.as_view(), name="me-get-payroll-payments"),
-    path('employers/me/payment/<int:payment_id>', EmployerMePayrollPeriodPaymentView.as_view(), name="me-single-payroll-payments"),
-    path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(), name="me-get-single-payroll-period"),
+    path('employers/me/payment/<int:payment_id>', EmployerMePayrollPeriodPaymentView.as_view(),
+         name="me-single-payroll-payments"),
+    path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(),
+         name="me-get-single-payroll-period"),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
@@ -359,7 +368,14 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
-    path('bankaccounts/', RegisterBankAccountView.as_view(), name='register-bank-account'),
+    path('bank-accounts/', BankAccountAPIView.as_view(), name='api-bank-accounts'),
+    path('bank-accounts/<int:bank_account_id>', BankAccountDetailAPIView.as_view(), name='detail-api-bank-accounts'),
+    # DOCUMENTS
+    path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
+    path('document/', EmployeeDocumentAPI.as_view(), name="employee-document"),
+
+    ###
+
     path('email/<str:slug>', EmailView.as_view()),  # test email
     path('fmc', FMCView.as_view()),  # test mobile notification
 
@@ -377,6 +393,6 @@ urlpatterns = [
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
 
-    path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    # path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    # path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]
