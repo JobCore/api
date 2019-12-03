@@ -224,6 +224,7 @@ class EmployerShiftInviteView(EmployerView):
                     "employee": employee,
                     "sender": request.user.profile.id,
                     "shift": shift,
+                    "manually_created": True
                 }
 
                 serializer = shift_serializer.ShiftCreateInviteSerializer(

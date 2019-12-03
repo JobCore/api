@@ -347,6 +347,7 @@ class ShiftInvite(models.Model):
         choices=SHIFT_INVITE_STATUS_CHOICES,
         default=PENDING,
         blank=True)
+    manually_created = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

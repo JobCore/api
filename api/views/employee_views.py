@@ -250,15 +250,17 @@ class EmployeeShiftInviteView(EmployeeView):
             "status": new_statuses[action]
         }
 
-        # if the talent is on a preferred_talent list, automatically approve
-        # him
+        # if the talent is on a preferred_talent list for that employer, automatically approve him
         is_preferred_talent = FavoriteList.objects.filter(
             employer_id=invite.shift.employer.id,
             auto_accept_employees_on_this_list=True,
             employees__in=[self.employee]).exists()
+        
+        # if the invite was made manually to that specific person, automatically approve him
+        is_manual_invite = invite.manually_created
 
-        if is_preferred_talent:
-            data["status"] = 'APPLIED'
+        # if is_preferred_talent or is_manual_invite:
+        #     data["status"] = 'APPLIED'
 
         shiftSerializer = shift_serializer.ShiftInviteSerializer(
             invite,
@@ -268,11 +270,14 @@ class EmployeeShiftInviteView(EmployeeView):
         )
 
         if not shiftSerializer.is_valid():
-            return Response(shiftSerializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(shiftSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
         shiftSerializer.save()
 
-        if is_preferred_talent:
+        # If the invite was rejected, I have nothing else to do.
+        if data["status"] == 'REJECTED':
+            return Response(shiftSerializer.data,status=status.HTTP_200_OK)
+
+        if is_preferred_talent or is_manual_invite:
             ShiftEmployee.objects.create(
                 employee=self.employee,
                 shift=invite.shift
@@ -287,11 +292,10 @@ class EmployeeShiftInviteView(EmployeeView):
                 )
             )
 
-            return Response({
-                "details": "Your application was automatically approved because you are one of the vendors preferred talents.",
-                # NOQA
-            },
-                status=status.HTTP_200_OK)
+            if is_manual_invite:
+                return Response({ "details": "Your application was automatically approved because you were hand-picked for this shift." }, status=status.HTTP_200_OK)
+            elif is_preferred_talent:
+                return Response({ "details": "Your application was automatically approved because you are one of the vendors preferred talents." }, status=status.HTTP_200_OK)
 
         appSerializer = shift_serializer.ShiftApplicationSerializer(
             data={
@@ -301,13 +305,10 @@ class EmployeeShiftInviteView(EmployeeView):
             }, many=False)
 
         if not appSerializer.is_valid():
-            return Response(
-                appSerializer.errors,
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response(appSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
         appSerializer.save()
-        return Response(appSerializer.data,
-                        status=status.HTTP_200_OK)
+        return Response(appSerializer.data,status=status.HTTP_200_OK)
 
 
 class ClockinsMeView(EmployeeView):
