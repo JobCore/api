@@ -387,7 +387,7 @@ urlpatterns = [
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
 
     # clocks out, deletes invites, deletes applications
-    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),  # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional

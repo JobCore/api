@@ -200,23 +200,20 @@ class EmployerAcceptingEmployee(TestCase, WithMakeUser, WithMakeShift):
             'It should return a success response')
 
     def test_shift_manual_invite_no_autorization(self):
-        #Si un employer manda un shift invite manualmente a un employee. No se necesitara autorizacion 
         position = mixer.blend('api.Position')
-
-        starting_at = timezone.now() + timedelta(days=1)
-        ending_at = starting_at + timedelta(minutes=90)
-
-        self.test_shift_manual, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=12, maximum_allowed_employees=3 ),
-            employer=self.test_employer)
 
         self.test_user_employee2, self.test_employee2, _ = self._make_user(
             'employee',
             employexkwargs=dict(
-                minimum_hourly_rate = 10,
+                minimum_hourly_rate = 9,
                 rating=5,
+                stop_receiving_invites=True,
                 positions=[position.id],
-                stop_receiving_invites=False,
+                maximum_job_distance_miles= 15
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
             ),
             userkwargs=dict(
                 username='employee2',
@@ -224,37 +221,40 @@ class EmployerAcceptingEmployee(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
-        url = reverse_lazy('api:me-employer-get-jobinvites')
-        self.client.force_login(self.test_user_employer)
-        create_default_availablity(self.test_employee2)
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(hours=8)
+
+        self.test_shiftt, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=15,maximum_allowed_employees=4, position=position),
+            employer=self.test_employer)
+        test_shift_invite = mixer.blend(
+            'api.ShiftInvite',
+            sender=self.test_profile_employer,
+            shift=self.test_shiftt,
+            employee=self.test_employee2,
+            manually_created = True,
+            status='PENDING'
+        )
+
+        self.client.force_login(self.test_user_employee2)
+
+        url_apply_shift = reverse_lazy("api:me-employees-get-jobinvites-apply", kwargs=dict(
+            id=test_shift_invite.id, action="APPLY"))
         payload = {
-            'shifts': self.test_shift_manual.id,
+            'shifts': test_shift_invite.id,
             'employee': self.test_employee2.id,
         }
-
-        response = self.client.post(
-            url,
-            data=payload,
-            content_type="application/json")
-        response_json = response.json()
-        shift_invite_id = response_json[0]['id']
-        self.assertEquals(
-            response.status_code,
-            201,
-            'It should return an 201 because manual invite will be sent with or without requirements')
-       
-        self.client.force_login(self.test_user_employee2)
-        url_apply_shift = reverse_lazy("api:me-employees-get-jobinvites-apply", kwargs=dict(
-            id=shift_invite_id, action="APPLY"))
-
-        response2 = self.client.put(
+        response = self.client.put(
             url_apply_shift,
             data=payload,
             content_type="application/json")
 
-        print(Shift.Object.get)
+        response_json = response.json()
+
         self.assertEquals(
-            response2.status_code,
-            202,
-            'It should return an 201 because manual invite will be sent with or without requirements')
-      
+            response.status_code,
+            200,
+            'It should return an 200 because is approved')
+        self.assertEquals(
+            response_json,
+            {'details': 'Your application was automatically approved because you were hand-picked for this shift.'})       
