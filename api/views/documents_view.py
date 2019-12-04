@@ -31,7 +31,7 @@ class EmployeeDocumentAPI(EmployeeView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
         request.data['document'] = result['secure_url']
-        request.data['employee_id'] = self.employee.id
+        request.data['employee'] = self.employee.id
         log.debug(f"EmployeeDocumentAPI:post:{str(request.data)}")
         print(f"EmployeeDocumentAPI:post:{str(request.data)}")
         print(f"EmployeeDocumentAPI:post:{str(request.data)}")
