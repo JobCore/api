@@ -28,6 +28,7 @@ class EmployeeDocumentAPI(EmployeeView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
         request.data['document'] = result['secure_url']
+        request.data['employee_id'] = self.employee.id
         serializer = documents_serializer.EmployeeDocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
