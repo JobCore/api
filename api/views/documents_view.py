@@ -33,6 +33,8 @@ class EmployeeDocumentAPI(EmployeeView):
         request.data['document'] = result['secure_url']
         request.data['employee_id'] = self.employee.id
         log.debug(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
         serializer = documents_serializer.EmployeeDocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
