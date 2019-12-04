@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
-from django.db.models import F, Func, Count
+from django.db.models import F, Func, Count, Q
 
 from django.contrib.auth.models import User
 from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite,
@@ -45,14 +45,23 @@ class ClockOutExpiredShifts(APIView):
         clockins = Clockin.objects.filter(
             ended_at__isnull=True, 
             shift__maximum_clockout_delay_minutes__isnull=False, 
-            shift__ending_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
+            shift__ending_at__lte= NOW - (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
         ).select_related('shift')
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
             clockin.save()
 
-        # also expire the shift if its still open or filled
-        Shift.objects.filter(ending_at__lte= NOW + (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
+        # also expire the shift if its still open or filled but it has ended (ended_at + delay)
+        Shift.objects.filter(maximum_clockout_delay_minutes__isnull=False, ending_at__lte= NOW - (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
+        # also expire shift if it has passed and no clockouts are pending (delay == null)
+        Shift.objects.annotate(
+            open_clockins=Count('clockin', filter=Q(clockin__ended_at__isnull=True))
+        ).filter(
+            maximum_clockout_delay_minutes__isnull=True, 
+            ending_at__lte= NOW, 
+            status__in=['OPEN', 'FILLED'], 
+            open_clockins=0
+        ).update(status='EXPIRED')
 
         # expire pending invites with passed shifts
         ShiftInvite.objects.filter(status= 'PENDING', shift__status='EXPIRED').update(status='EXPIRED')
