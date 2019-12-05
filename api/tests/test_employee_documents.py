@@ -49,7 +49,8 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
     def test_get_my_documents(self, mocked_uploader):
         document = {
             'document': 'http://a-valid.url/for-the-doc',
-            "employee_id": Employee.objects.all()[0].id
+            "employee_id": Employee.objects.all()[0].id,
+            "name": "Test Name"
         }
 
         EmployeeDocument.objects.create(**document)
@@ -60,4 +61,5 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.assertEquals(response.status_code, 200, response.content)
         self.assertEquals(len(json_response), 1, response.content)
         self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
-        self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
+        self.assertEquals(json_response[0].get("employee"), document.get("employee_id"), response.content)
+        self.assertEquals(json_response[0].get("name"), document.get("name"), response.content)
