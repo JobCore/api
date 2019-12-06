@@ -604,6 +604,7 @@ class BankAccount(models.Model):
     routing = models.CharField(max_length=200, null=True, blank=True)
     wire_routing = models.CharField(max_length=200, null=True, blank=True)
     institution_name = models.CharField(max_length=200, null=True, blank=True)
+    stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
 
 class EmployeeDocument(models.Model):

@@ -36,7 +36,8 @@ class BankAccountTestSuite(TestCase):
                        {"account": "123412341234", "account_id": "123123123", "routing": "12341234123",
                         "wire_routing": "21341234213"}
                    ]}})
-    def test_register_account(self, mocked_plaid_item, mocked_plaid_auth):
+    @patch('plaid.api.Processor.stripeBankAccountTokenCreate', return_value={'stripe_bank_account_token': '1234'})
+    def test_register_account(self, mocked_plaid_item, mocked_plaid_auth, mocked_stripe_response):
         self.client.force_login(self.user)
         data = {
             "public_token": "public-development-397dd0e2-e48d-41c3-b022-9f392cf44bc6",
