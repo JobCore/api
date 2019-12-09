@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from api.pagination import CustomPagination
 from django.db.models import Q
 
 from api.utils.email import send_fcm
@@ -77,7 +76,7 @@ class FMCView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class EmployeeBadgesView(APIView, CustomPagination):
+class EmployeeBadgesView(APIView):
     def put(self, request, employee_id=None):
         request_data = request.data.copy()
         request_data['employee'] = employee_id
