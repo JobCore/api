@@ -93,12 +93,12 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(len(talents) == 0, True, 'There should be 0 invites because the talent is not accepting invites but there are')
 
     def test_employee_stop_receiving_invites_OFF(self):
-
+        position = mixer.blend('api.Position')
         starting_at = timezone.now() + timedelta(days=1)
         ending_at = starting_at + timedelta(minutes=90)
 
         self.test_shift_stop_receiving_invites_OFF, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -107,7 +107,8 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 minimum_hourly_rate = 9,
                 rating=5,
                 stop_receiving_invites=False,
-                maximum_job_distance_miles= 15
+                maximum_job_distance_miles= 15,
+                positions=[position.id]
             ),
             profilekwargs = dict(
                 latitude = 40,
@@ -126,18 +127,19 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
     def test_shifts_minimum_hourly_rate_lesser_employee(self):
         # An employee cannot receive invites from shifts.minimum_hourly_rate that pay less than its employee. minimum_hourly_rate
-
+        position = mixer.blend('api.Position')
         starting_at = timezone.now() + timedelta(days=1)
         ending_at = starting_at + timedelta(minutes=90)
 
         self.test_shift_minimum_hourly_rate_lesser_employee, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=9, minimum_allowed_rating = 0  ),
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=9, minimum_allowed_rating = 0  ),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',
             employexkwargs=dict(
-                minimum_hourly_rate = 10
+                minimum_hourly_rate = 10,
+                positions=[position.id]
             ),
             userkwargs=dict(
                 username='employee1',
@@ -152,18 +154,19 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
     def test_shifts_minimum_hourly_rate_greater_employee(self):
         # An employee can  receive invites from shifts.minimum_hourly_rate that pay greater than its employee. minimum_hourly_rate
-
+        position = mixer.blend('api.Position')
         starting_at = timezone.now() + timedelta(days=1)
         ending_at = starting_at + timedelta(minutes=90)
 
         self.test_shift_minimum_hourly_rate_greater_employee, _, __ = self._make_shift(
-            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at,minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, position=position, ending_at=ending_at,minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',
             employexkwargs=dict(
-                minimum_hourly_rate = 9
+                minimum_hourly_rate = 9,
+                positions=[position.id]
             ),
             userkwargs=dict(
                 username='employee1',

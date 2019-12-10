@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
 import api.utils.jwt
-from api.pagination import CustomPagination
+from api.pagination import HeaderLimitOffsetPagination
 
 from api.models import *
 from api.utils.notifier import notify_password_reset_code, notify_email_validation
@@ -247,7 +247,7 @@ class UserView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EmployeeView(APIView, CustomPagination):
+class EmployeeView(APIView, HeaderLimitOffsetPagination):
     def get(self, request, id=False):
         if (id):
             try:
@@ -645,7 +645,7 @@ class CatalogView(APIView):
         return Response("no catalog", status=status.HTTP_200_OK)
 
 
-class PayrollShiftsView(APIView, CustomPagination):
+class PayrollShiftsView(APIView, HeaderLimitOffsetPagination):
     def get(self, request):
 
         clockins = Clockin.objects.all()
@@ -958,7 +958,7 @@ class OnboardingView(APIView):
                 return Response([], status=status.HTTP_200_OK)
 
 
-class PublicShiftView(APIView, CustomPagination):
+class PublicShiftView(APIView, HeaderLimitOffsetPagination):
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -997,7 +997,13 @@ class PublicShiftView(APIView, CustomPagination):
         if qEnd is not None and qEnd != '':
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
+        
+        shifts = shifts.order_by('-starting_at')
 
-        defaultSerializer = shift_serializer.ShiftGetPublicTinySerializer
-        serializer = defaultSerializer(shifts.order_by('-starting_at'), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = HeaderLimitOffsetPagination()
+        page = paginator.paginate_queryset(shifts, request)
+        if page is not None:
+            serializer = shift_serializer.ShiftGetPublicTinySerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        else:
+            return Response([], status=status.HTTP_200_OK)

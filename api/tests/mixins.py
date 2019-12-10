@@ -42,9 +42,6 @@ class WithMakeShift:
 
         if 'position' not in shiftkwargs:
             shiftkwargs['position'] = mixer.blend('api.Position', **poskwargs)
-        else:
-            shiftkwargs['position'] = mixer.blend('api.Position')
-
 
         shift = mixer.blend(
             'api.Shift',

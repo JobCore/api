@@ -133,7 +133,8 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = (
-            'maximum_allowed_employees',
+            'maximum_clockin_delta_minutes',
+            'maximum_clockout_delay_minutes',
             'minimum_allowed_rating',
             'allowed_from_list',
             'required_badges',
@@ -446,11 +447,12 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         already_invited = ShiftInvite.objects.filter(
                 sender=data['sender'],
                 shift=data['shift'],
+                status='PENDING',
                 employee=data['employee']).count()
 
         if already_invited > 0:
             raise serializers.ValidationError(
-                'This talent is already invited to this shift')
+                'This talent already has an invite for this shift')
 
         # validate shift has not ended
         NOW = timezone.now()
@@ -460,7 +462,13 @@ class ShiftCreateInviteSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        instance = super().create(validated_data)
+
+        instance = ShiftInvite.objects.filter(sender=validated_data['sender'],shift=validated_data['shift'], employee=validated_data['employee']).first()
+        if instance is not None:
+            instance.status = "PENDING"
+            instance.save()
+        else:
+            instance = super().create(validated_data)
         notifier.notify_single_shift_invite(instance, withEmail=True)
         return instance
 

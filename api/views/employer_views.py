@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from api.pagination import CustomPagination
 from django.db.models import Q
 from django.http import HttpRequest
 
@@ -402,7 +401,7 @@ class FavListEmployeeView(EmployerView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EmployerShiftView(EmployerView, CustomPagination):
+class EmployerShiftView(EmployerView):
     def get(self, request, id=False):
 
         if (id):
@@ -542,7 +541,7 @@ class EmployerShiftView(EmployerView, CustomPagination):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class EmployerShiftCandidatesView(EmployerView, CustomPagination):
+class EmployerShiftCandidatesView(EmployerView):
     def put(self, request, id):
         try:
             shift = Shift.objects.get(id=id)
@@ -558,7 +557,7 @@ class EmployerShiftCandidatesView(EmployerView, CustomPagination):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EmployerShiftEmployeesView(EmployerView, CustomPagination):
+class EmployerShiftEmployeesView(EmployerView):
     def put(self, request, id):
         try:
             shift = Shift.objects.get(id=id)

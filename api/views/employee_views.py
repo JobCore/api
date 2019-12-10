@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from api.pagination import CustomPagination
 from django.db.models import Q, F, Value
 from django.db.transaction import atomic
 from api.models import *
@@ -61,8 +60,7 @@ class EmployeeMeSentRatingsView(EmployeeMeRateView):
         return self.http_method_not_allowed(request)
 
 
-class EmployeeMeApplicationsView(
-    EmployeeView, CustomPagination):
+class EmployeeMeApplicationsView(EmployeeView):
 
     def get_queryset(self):
         return ShiftApplication.objects.filter(
@@ -90,7 +88,7 @@ class EmployeeMeApplicationsView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployeeMeShiftView(EmployeeView, CustomPagination):
+class EmployeeMeShiftView(EmployeeView):
     def get_queryset(self):
         return Shift.objects.filter(employees__in=(self.employee.id,))
 
@@ -160,7 +158,7 @@ class EmployeeMeShiftView(EmployeeView, CustomPagination):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployeeMeView(EmployeeView, CustomPagination):
+class EmployeeMeView(EmployeeView):
     def get(self, request):
         employee = self.employee
         serializer = employee_serializer.EmployeeGetSerializer(
@@ -382,8 +380,7 @@ class ClockinsMeView(EmployeeView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class EmployeeAvailabilityBlockView(
-    EmployeeView, CustomPagination):
+class EmployeeAvailabilityBlockView(EmployeeView):
 
     def get_queryset(self):
         return AvailabilityBlock.objects.filter(employee_id=self.employee.id)
@@ -436,7 +433,7 @@ class EmployeeAvailabilityBlockView(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class EmployeeMePayrollPaymentsView(EmployeeView, CustomPagination):
+class EmployeeMePayrollPaymentsView(EmployeeView):
 
     def get_queryset(self):
         return PayrollPeriodPayment.objects.filter(employee_id=self.employee.id)
