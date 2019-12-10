@@ -78,6 +78,34 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         self.assertEquals(response.status_code, 400)
 
+    def test_pass_8_char(self):
+        payload = {
+            'username': 'test',
+            'first_name': 'Beta',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'ABD',
+            'account_type': 'employee'
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+
+        self.assertEquals(response.status_code, 400, "password must be 8 characters long")
+
+    def test_pass_one_cap(self):
+        payload = {
+            'username': 'test',
+            'first_name': 'Beta',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'abcdefghi',
+            'account_type': 'employee'
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+
+        self.assertEquals(response.status_code, 400, "password must have one capital letter")
+
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_all_good(self, mocked_requests):

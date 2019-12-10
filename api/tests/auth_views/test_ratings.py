@@ -1,10 +1,10 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
 
-
+@override_settings(STATICFILES_STORAGE=None)
 class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
     Endpoint tests for Rating
@@ -12,6 +12,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
 
     def setUp(self):
+        position = mixer.blend('api.Position')
         (
             self.test_user_employee,
             self.test_employee,
@@ -26,6 +27,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             employexkwargs=dict(
                 ratings=0,
                 total_ratings=0,
+                positions=[position.id]
             )
         )
 
@@ -47,7 +49,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
 
         self.test_shift, _, __ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         mixer.blend(
             'api.Clockin',
@@ -96,6 +98,8 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
+        
+        position = mixer.blend('api.Position')
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employee)
 
@@ -128,7 +132,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(self.test_employer.total_ratings, 1)
 
         new_shift, _, __ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         mixer.blend(
             'api.Clockin',
@@ -240,8 +244,9 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
+        position = mixer.blend('api.Position')
         new_shift, *_ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
         new_shift.save()
 
         url = reverse_lazy('api:get-ratings')
@@ -267,8 +272,9 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
+        position = mixer.blend('api.Position')
         new_shift, *_ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employee)
@@ -293,8 +299,9 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
+        position = mixer.blend('api.Position')
         new_shift, *_ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employee)
@@ -319,9 +326,9 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
-
+        position = mixer.blend('api.Position')
         new_shift, *_ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         mixer.blend(
             'api.Rate',
@@ -438,6 +445,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         """
         Gets ratings
         """
+        position = mixer.blend('api.Position')
         _, new_employer, __ = self._make_user(
             'employer',
             userkwargs=dict(
@@ -452,7 +460,7 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
 
         newshift, _, __ = self._make_shift(
-            employer=new_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
