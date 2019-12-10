@@ -100,3 +100,12 @@ docker run -it -p 5432:5432 -h localhost --ip 127.0.0.1 jobcore/bd
 docker build -t jobcore/app -f ./DockerfileForLiveReloadApp  .
 ### Run (pwd: fish shell variable pwd)
 docker run -it -p 5000:5000 -v (pwd):/app jobcore/app
+
+
+## Restoring a postgree dump
+psql -U gitpod -c 'DROP DATABASE jobcore;';
+psql -U gitpod -c 'CREATE DATABASE jobcore;';
+psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore;
+psql -U gitpod -c 'CREATE ROLE <role_name> WITH SUPERUSER';
+pg_restore -c -d jobcore [dumpfile_name]
+

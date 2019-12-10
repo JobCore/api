@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+import os
 from django.db.models import Q
 from random import randint
 from django.db import transaction
@@ -21,6 +22,7 @@ jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 
+EMPLOYER_REGISTRATION_DEACTIVATED = os.environ.get('EMPLOYER_REGISTRATION_DEACTIVATED')
 
 class UserLoginSerializer(serializers.ModelSerializer):
     employee = serializers.CharField(required=False)
@@ -91,7 +93,7 @@ class UserRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
-    password = serializers.CharField(required=True, max_length=14)
+    password = serializers.CharField(required=True, max_length=14, write_only=True)
     city = serializers.CharField(required=False, max_length=20)
     profile_city = serializers.CharField(required=False, max_length=20)
 
@@ -114,7 +116,7 @@ class UserRegisterSerializer(serializers.Serializer):
         if data['account_type'] not in ('employer', 'employee'):
             raise serializers.ValidationError(
                 "Account type can only be employer or employee")
-        elif data['account_type'] == 'employer':
+        elif data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
 
             # if 'employer' not in data: 
