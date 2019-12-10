@@ -605,6 +605,7 @@ class BankAccount(models.Model):
     routing = models.CharField(max_length=200, null=True, blank=True)
     wire_routing = models.CharField(max_length=200, null=True, blank=True)
     institution_name = models.CharField(max_length=200, null=True, blank=True)
+    stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
 
 class EmployeeDocument(models.Model):
@@ -618,6 +619,7 @@ class EmployeeDocument(models.Model):
     )
     document = models.URLField()
     public_id = models.CharField(max_length=30, null=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
     rejected_reason = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

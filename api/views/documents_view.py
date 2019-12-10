@@ -6,6 +6,9 @@ from api.serializers import documents_serializer
 from django.http import JsonResponse
 from api.mixins import EmployeeView
 import cloudinary.uploader
+import logging
+
+log = logging.getLogger('api.views.documents_views')
 
 
 class EmployeeDocumentAPI(EmployeeView):
@@ -28,6 +31,10 @@ class EmployeeDocumentAPI(EmployeeView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
         request.data['document'] = result['secure_url']
+        request.data['employee'] = self.employee.id
+        log.debug(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
         serializer = documents_serializer.EmployeeDocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
