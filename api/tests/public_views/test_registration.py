@@ -120,7 +120,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABhgvbhjbhjD',
             'account_type': 'employee',
             "profile_city": city.id
         }
@@ -150,7 +150,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail3.tld',
-            'password': 'ABD',
+            'password': 'AnbvcbchvBD',
             'account_type': 'employee',
             "city": "Chicago"
         }
@@ -182,7 +182,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'jhvjhghjbABD',
             'account_type': 'employee'
         }
 
@@ -217,7 +217,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
 
-        self.assertEquals(response.status_code, 400) #should be a 400 because registration is disabled right now
+        self.assertEquals(response.status_code, 201)
 
         # Once the registration is activated again we have re-enable this commented code
 
@@ -245,7 +245,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABuhbkhjbkjhbD',
             'account_type': 'employer',
             'employer': -1,
         }
@@ -269,7 +269,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABijnjknlkjnD',
             'account_type': 'employer',
             # 'employer': -1,
         }
@@ -293,7 +293,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABfdsvsdfvsdfvD',
             'account_type': 'employer',
             'employer': '2 OR 1=1',
         }
@@ -318,7 +318,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': self.test_user.email,
-            'password': 'ABD',
+            'password': 'ABdvsdfvsdfvsdfvD',
             'account_type': 'employee'
         }
 
@@ -343,7 +343,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABvdfvdfvdfvfvD',
             'account_type': ':evil type:'
         }
 
