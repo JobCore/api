@@ -210,13 +210,13 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'AadsasdadsdasBD',
+            'password': 'Aadsasdads',
             'account_type': 'employer',
             'employer': self.employer.id,
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-
+        print(response.content)
         self.assertEquals(response.status_code, 201)
 
         # Once the registration is activated again we have re-enable this commented code
