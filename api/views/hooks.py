@@ -40,38 +40,9 @@ class ClockOutExpiredShifts(APIView):
 
     def get(self, request):
 
-        NOW = utc.localize(datetime.now())
-        # if now > shift.ending_at + delta:
-        clockins = Clockin.objects.filter(
-            ended_at__isnull=True, 
-            shift__maximum_clockout_delay_minutes__isnull=False, 
-            shift__ending_at__lte= NOW - (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
-        ).select_related('shift')
-        for clockin in clockins:
-            clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
-            clockin.save()
+        status = process_experied_shifts()
 
-        # also expire the shift if its still open or filled but it has ended (ended_at + delay)
-        Shift.objects.filter(maximum_clockout_delay_minutes__isnull=False, ending_at__lte= NOW - (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
-        # also expire shift if it has passed and no clockouts are pending (delay == null)
-        Shift.objects.annotate(
-            open_clockins=Count('clockin', filter=Q(clockin__ended_at__isnull=True))
-        ).filter(
-            maximum_clockout_delay_minutes__isnull=True, 
-            ending_at__lte= NOW, 
-            status__in=['OPEN', 'FILLED'], 
-            open_clockins=0
-        ).update(status='EXPIRED')
-
-        # expire pending invites with passed shifts
-        ShiftInvite.objects.filter(status= 'PENDING', shift__status='EXPIRED').update(status='EXPIRED')
-
-        # delete applications for expired shifts
-        ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
-
-        serializer = clockin_serializer.ClockinGetSerializer(clockins, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"status": str(status)}, status=status.HTTP_200_OK)
 
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]
@@ -102,7 +73,7 @@ class GeneratePeriodsView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class AddTallentsToAllPositions(APIView):
+class AddTalentsToAllPositions(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -126,24 +97,35 @@ class RemoveEmployeesWithoutProfile(APIView):
         return Response({ "ok" : str(total)+" user deleted" }, status=status.HTTP_200_OK)
 
 
-
-
-
-
-# (Not being used) Expire invitations that its shifts have already started.
-class ExpireOldInvites(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
+def process_experied_shifts():
 
         NOW = utc.localize(datetime.now())
-        invites = ShiftInvite.objects.filter(status= 'PENDING', shift__starting_at__lte= NOW + (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))).select_related('shift')
-        for invite in invites:
-            invite.status = 'EXPIRED'
-            invite.save()
+        # if now > shift.ending_at + delta:
+        clockins = Clockin.objects.filter(
+            ended_at__isnull=True, 
+            shift__maximum_clockout_delay_minutes__isnull=False, 
+            shift__ending_at__lte= NOW - (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
+        ).select_related('shift')
+        for clockin in clockins:
+            clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
+            clockin.save()
 
-        serializer = shift_serializer.ShiftGetSmallSerializer(invites, many=True)
+        # also expire the shift if its still open or filled but it has ended (ended_at + delay)
+        Shift.objects.filter(maximum_clockout_delay_minutes__isnull=False, ending_at__lte= NOW - (timedelta(minutes=1) * F('maximum_clockout_delay_minutes')), status__in=['OPEN', 'FILLED']).update(status='EXPIRED')
+        # also expire shift if it has passed and no clockouts are pending (delay == null)
+        Shift.objects.annotate(
+            open_clockins=Count('clockin', filter=Q(clockin__ended_at__isnull=True))
+        ).filter(
+            maximum_clockout_delay_minutes__isnull=True, 
+            ending_at__lte= NOW, 
+            status__in=['OPEN', 'FILLED'], 
+            open_clockins=0
+        ).update(status='EXPIRED')
 
-        #JobCoreInvite.objects.filter(status= 'PENDING', expires_at__lte= NOW).delete()
+        # expire pending invites with passed shifts
+        ShiftInvite.objects.filter(status= 'PENDING', shift__status='EXPIRED').update(status='EXPIRED')
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # delete applications for expired shifts
+        ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
+
+        return True
