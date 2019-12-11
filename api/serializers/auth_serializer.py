@@ -121,7 +121,7 @@ class UserRegisterSerializer(serializers.Serializer):
         if data['account_type'] not in ('employer', 'employee'):
             raise serializers.ValidationError(
                 "Account type can only be employer or employee")
-        elif data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
+        if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
 
             # if 'employer' not in data: 

@@ -210,7 +210,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'AadsasdadsdasBD',
             'account_type': 'employer',
             'employer': self.employer.id,
         }
@@ -248,30 +248,6 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'password': 'ABuhbkhjbkjhbD',
             'account_type': 'employer',
             'employer': -1,
-        }
-
-        response = self.client.post(self.REGISTRATION_URL, data=payload)
-
-        self.assertEquals(response.status_code, 400)
-        self.assertEquals(
-            mocked_requests.post.called,
-            False,
-            'It should have called requests.post to send mail')
-
-    @patch('api.utils.email.requests')
-    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_employer_no_employer(self, mocked_requests):
-        """
-        """
-
-        payload = {
-            'username': 'test',
-            'first_name': 'Alpha',
-            'last_name': 'Bravo',
-            'email': 'delta@mail.tld',
-            'password': 'ABijnjknlkjnD',
-            'account_type': 'employer',
-            # 'employer': -1,
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
