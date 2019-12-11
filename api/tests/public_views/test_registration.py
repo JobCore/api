@@ -210,7 +210,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'AadsasdadsdasBD',
+            'password': 'AadadsdasBD',
             'account_type': 'employer',
             'employer': self.employer.id,
         }
