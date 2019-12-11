@@ -109,6 +109,11 @@ class UserRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "You email cannot contain more than 150 characters")
 
+        if len(data["password"]) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long")
+        if data["password"].lower() == data["password"]:
+            raise serializers.ValidationError("Password must contain at least one uppercase letter")
+
         if len(data["first_name"]) == 0 or len(data["last_name"]) == 0:
             raise serializers.ValidationError(
                 "Your first and last names must not be empty")
