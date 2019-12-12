@@ -104,7 +104,7 @@ class EmployeeMeShiftView(EmployeeView):
                     validators.error_object('The shift was not found'),  # NOQA
                     status=status.HTTP_404_NOT_FOUND)
 
-            serializer = shift_serializer.ShiftGetBigSerializer(shift, many=False)
+            serializer = shift_serializer.ShiftGetBigSerializer(shift, many=False, context={'employee': self.employee.id})
 
         else:
 

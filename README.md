@@ -108,4 +108,3 @@ psql -U gitpod -c 'CREATE DATABASE jobcore;';
 psql -U gitpod -c 'CREATE EXTENSION unaccent;' -d jobcore;
 psql -U gitpod -c 'CREATE ROLE <role_name> WITH SUPERUSER';
 pg_restore -c -d jobcore [dumpfile_name]
-
