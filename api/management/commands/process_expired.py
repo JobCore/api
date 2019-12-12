@@ -8,6 +8,6 @@ class Command(BaseCommand):
 
         #log = []
 
-        hooks.process_experied_shifts()
+        hooks.process_expired_shifts()
 
         self.stdout.write(self.style.SUCCESS("Successfully expired everything"))

@@ -40,9 +40,9 @@ class ClockOutExpiredShifts(APIView):
 
     def get(self, request):
 
-        status = process_experied_shifts()
+        _status = process_expired_shifts()
 
-        return Response({"status": str(status)}, status=status.HTTP_200_OK)
+        return Response({"status": str(_status)}, status=status.HTTP_200_OK)
 
 class GeneratePeriodsView(APIView):
     permission_classes = [AllowAny]
@@ -97,7 +97,7 @@ class RemoveEmployeesWithoutProfile(APIView):
         return Response({ "ok" : str(total)+" user deleted" }, status=status.HTTP_200_OK)
 
 
-def process_experied_shifts():
+def process_expired_shifts():
 
         NOW = utc.localize(datetime.now())
         # if now > shift.ending_at + delta:
