@@ -5,6 +5,7 @@ from mixer.backend.django import mixer
 from api.models import SHIFT_STATUS_CHOICES
 from django.utils import timezone
 from datetime import timedelta
+import datetime
 from django.apps import apps
 
 Clockin = apps.get_model('api', 'Clockin')
@@ -231,6 +232,34 @@ class HookTestClockinHooks(TestCase, WithMakeUser, WithMakeShift):
         shift_invite = ShiftInvite.objects.get( id=_inv.id)
         print(shift_invite)
         self.assertEquals(response.status_code, 200)
+
+    def test_shiftsinvites_with_pending_status(self):
+        position = mixer.blend('api.Position')
+        starting_at = datetime.datetime(2019, 10, 26, 21, 00)
+        ending_at = datetime.datetime(2019, 10, 27, 3, 15)
+        self.test_shiftinvite, _, __ = self._make_shift(
+            shiftkwargs=dict(status='EXPIRED', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=8, minimum_allowed_rating = 0, 
+            maximum_clockin_delta_minutes=15, maximum_clockout_delay_minutes= 15, maximum_allowed_employees = 5),
+            employer=self.test_employer)
+
+        _inv = mixer.blend(
+            'api.ShiftInvite',
+            sender=self.test_profile_employer,
+            shift=self.test_shiftinvite,
+            employee=self.test_employee,
+            status="PENDING"
+        )
+
+        url = reverse_lazy("api:hook-process-expired-shifts")
+        response = self.client.get(
+            url,
+            content_type="application/json")
+
+        response_json = response.json()
+        shift_invite = ShiftInvite.objects.get( id=_inv.id)
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(shift_invite.status == "EXPIRED", True)
    
         # _shiftinvite = ShiftInvite.objects.get(id=self.test_shift_with_delay.id)
         self.assertEquals(shift_invite.status == "EXPIRED", True, "The shift invitte must have been set as EXPIRED because it has a expired shift")

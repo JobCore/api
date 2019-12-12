@@ -65,6 +65,8 @@ class ClockOutExpiredShifts(APIView):
 
         # expire pending invites with passed shifts
         ShiftInvite.objects.filter(status= 'PENDING', shift__status='EXPIRED').update(status='EXPIRED')
+        # if the shift invite has been cancelled then there no need to keep the invite
+        ShiftInvite.objects.filter(shift__status='CANCELLED').delete()
 
         # delete applications for expired shifts
         ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
