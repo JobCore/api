@@ -58,7 +58,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         if data['started_at'] > shift.ending_at:
             raise serializers.ValidationError("You can't Clock in after the Shift ending time")  # NOQA
 
-        last_clockin_for_shift = Clockin.objects.filter(shift__id=shift.id).last()
+        last_clockin_for_shift = Clockin.objects.filter(shift__id=shift.id, employee__id=data['employee'].id).last()
         # The employee first clockin for this Shift
         if last_clockin_for_shift is None:
             if shift.maximum_clockin_delta_minutes is not None:
