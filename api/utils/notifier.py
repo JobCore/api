@@ -1,7 +1,7 @@
 import os
 from django.db.models import Q
 from api.models import Employee, ShiftInvite, Shift, Profile
-from api.utils.email import send_email_message, send_fcm_notification
+from api.utils.email import send_email_message, send_fcm_notification, send_sms
 import api.utils.jwt
 from rest_framework_jwt.settings import api_settings
 from django.utils import timezone
@@ -167,7 +167,7 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
         })
 
 
-def notify_jobcore_invite(invite):
+def notify_jobcore_invite(invite, include_sms=False):
     # manual invite
 
     token = api.utils.jwt.internal_payload_encode({
@@ -183,6 +183,9 @@ def notify_jobcore_invite(invite):
         "LINK": EMPLOYER_URL + "/invite?token=" + token,
         "DATA": {"type": "invite", "id": invite.id}
     })
+
+    if include_sms:
+        send_sms("invite_to_jobcore", invite.phone_number)
 
 
 def notify_invite_accepted(invite):
