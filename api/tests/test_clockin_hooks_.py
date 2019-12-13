@@ -296,5 +296,9 @@ class HookTestClockinHooks(TestCase, WithMakeUser, WithMakeShift):
             content_type="application/json")
 
         response_json = response.json()
+  
         self.assertEquals(response.status_code, 200)
-        #self.assertEquals(response_json, [], "All shift application must be deleted if they are completed, cancelled or expired")
+        count = ShiftApplication.objects.filter(
+            shift__employer=self.test_employer).count()
+
+        self.assertEquals(count, 2, "All shift application must be deleted if they are completed, cancelled or expired. There are 2 with no expired shift and one with one expired shift")
