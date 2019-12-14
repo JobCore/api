@@ -28,11 +28,11 @@ class Badge(models.Model):
         return self.title
 
 
-DAYS = 'DAYS'
-MONTHS = 'MONTHS'
+DAYS = "DAYS"
+MONTHS = "MONTHS"
 PAYROLL_LENGTH_TYPE = (
-    (DAYS, 'Days'),
-    (MONTHS, 'Months'),
+    (DAYS, "Days"),
+    (MONTHS, "Months"),
 )
 
 
@@ -49,8 +49,7 @@ class Employer(models.Model):
     website = models.CharField(max_length=30, blank=True)
     bio = models.TextField(max_length=250, blank=True)
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
-    rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=0, blank=True)
+    rating = models.DecimalField(max_digits=2, decimal_places=1, default=0, blank=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
 
@@ -58,14 +57,14 @@ class Employer(models.Model):
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
     # the company can configure how it wants the payroll period
-    payroll_period_starting_time = models.DateTimeField(blank=True, null=True)  # 12:00am GMT
+    payroll_period_starting_time = models.DateTimeField(
+        blank=True, null=True
+    )  # 12:00am GMT
 
     payroll_period_length = models.IntegerField(blank=True, default=7)
     payroll_period_type = models.CharField(
-        max_length=25,
-        choices=PAYROLL_LENGTH_TYPE,
-        default=DAYS,
-        blank=True)
+        max_length=25, choices=PAYROLL_LENGTH_TYPE, default=DAYS, blank=True
+    )
     last_payment_period = models.DateTimeField(default=None, null=True)
 
     # if this option is None, the talent will be able to checkout anytime
@@ -73,13 +72,15 @@ class Employer(models.Model):
     # time (before or after)
 
     maximum_clockin_delta_minutes = models.IntegerField(
-        blank=True, default=None, null=True)
+        blank=True, default=None, null=True
+    )
 
     # if this option is None, the talent will be able to checkout anytime,
     # by default the application will auto checkout after 15 min
 
     maximum_clockout_delay_minutes = models.IntegerField(
-        blank=True, default=None, null=True)  # in minutes
+        blank=True, default=None, null=True
+    )  # in minutes
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -92,33 +93,36 @@ class Employee(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     minimum_hourly_rate = models.DecimalField(
-        max_digits=3, decimal_places=1, default=8, blank=True)
+        max_digits=3, decimal_places=1, default=8, blank=True
+    )
     stop_receiving_invites = models.BooleanField(default=False)
     rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=None, blank=True, null=True)
+        max_digits=2, decimal_places=1, default=None, blank=True, null=True
+    )
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     total_pending_payments = models.IntegerField(blank=True, default=0)
     maximum_job_distance_miles = models.IntegerField(default=50)
-    positions = models.ManyToManyField(
-        Position, blank=True)
+    positions = models.ManyToManyField(Position, blank=True)
     job_count = models.IntegerField(default=0, blank=True)
     badges = models.ManyToManyField(Badge, blank=True)
+    documents = models.ManyToManyField('Document', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    document_active = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
 
 
-ACTIVE = 'ACTIVE'
-PAUSED = 'PAUSED'
-PENDING = 'PENDING_EMAIL_VALIDATION'
-SUSPENDED = 'SUSPENDED'
+ACTIVE = "ACTIVE"
+PAUSED = "PAUSED"
+PENDING = "PENDING_EMAIL_VALIDATION"
+SUSPENDED = "SUSPENDED"
 PROFILE_STATUS = (
-    (ACTIVE, 'Active'),
-    (PAUSED, 'Paused'),
-    (SUSPENDED, 'Suspended'),
-    (PENDING, 'PENDING_EMAIL_VALIDATION'),
+    (ACTIVE, "Active"),
+    (PAUSED, "Paused"),
+    (SUSPENDED, "Suspended"),
+    (PENDING, "PENDING_EMAIL_VALIDATION"),
 )
 
 
@@ -136,24 +140,22 @@ class Profile(models.Model):
     profile_city = models.ForeignKey(City, null=True, on_delete=models.CASCADE)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
-    latitude = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
-    longitude = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    latitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
+    longitude = models.DecimalField(max_digits=14, decimal_places=11, default=0)
 
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True, null=True)
+        Employer, on_delete=models.CASCADE, blank=True, null=True
+    )
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True, null=True)
+        Employee, on_delete=models.CASCADE, blank=True, null=True
+    )
     status = models.CharField(
-        max_length=25,
-        choices=PROFILE_STATUS,
-        default=PENDING,
-        blank=True)
+        max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True
+    )
 
     def __str__(self):
         return self.user.username
@@ -165,26 +167,23 @@ class Profile(models.Model):
         return self.profile_city.name
 
 
-WEEKLY = 'WEEKLY'
-MONTHLY = 'MONTHLY'
+WEEKLY = "WEEKLY"
+MONTHLY = "MONTHLY"
 RECURRENCY_TYPE = (
-    (WEEKLY, 'Weekly'),
-    (MONTHLY, 'Monthly'),
+    (WEEKLY, "Weekly"),
+    (MONTHLY, "Monthly"),
 )
 
 
 class AvailabilityBlock(models.Model):
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     starting_at = models.DateTimeField()
     ending_at = models.DateTimeField()
     recurrent = models.BooleanField(default=True)
     allday = models.BooleanField(default=True)
     recurrency_type = models.CharField(
-        max_length=25,
-        choices=RECURRENCY_TYPE,
-        default=WEEKLY,
-        blank=True)
+        max_length=25, choices=RECURRENCY_TYPE, default=WEEKLY, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -192,8 +191,7 @@ class AvailabilityBlock(models.Model):
 class FavoriteList(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employees = models.ManyToManyField(Employee, blank=True)
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -207,7 +205,8 @@ class FavoriteList(models.Model):
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True, null=True)
+        Employer, on_delete=models.CASCADE, blank=True, null=True
+    )
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
@@ -221,69 +220,67 @@ class Venue(models.Model):
         return self.title
 
 
-OPEN = 'OPEN'
-FILLED = 'FILLED'
-PAUSED = 'PAUSED'
-EXPIRED = 'EXPIRED'  # si todavia no ha sido pagado
-COMPLETED = 'COMPLETED'  # si ya fue pagado
-DRAFT = 'DRAFT'
-CANCELLED = 'CANCELLED'
+OPEN = "OPEN"
+FILLED = "FILLED"
+PAUSED = "PAUSED"
+EXPIRED = "EXPIRED"  # si todavia no ha sido pagado
+COMPLETED = "COMPLETED"  # si ya fue pagado
+DRAFT = "DRAFT"
+CANCELLED = "CANCELLED"
 SHIFT_STATUS_CHOICES = (
-    (OPEN, 'Receiving candidates'),
-    (FILLED, 'Filled'),
-    (PAUSED, 'Paused'),
-    (DRAFT, 'Draft'),
-    (EXPIRED, 'Expired'),
-    (COMPLETED, 'Completed'),
-    (CANCELLED, 'Cancelled'),
+    (OPEN, "Receiving candidates"),
+    (FILLED, "Filled"),
+    (PAUSED, "Paused"),
+    (DRAFT, "Draft"),
+    (EXPIRED, "Expired"),
+    (COMPLETED, "Completed"),
+    (CANCELLED, "Cancelled"),
 )
 
-FAVORITES = 'FAVORITES'
-ANYONE = 'ANYONE'
-SPECIFIC = 'SPECIFIC_PEOPLE'
+FAVORITES = "FAVORITES"
+ANYONE = "ANYONE"
+SPECIFIC = "SPECIFIC_PEOPLE"
 SHIFT_APPLICATION_RESTRICTIONS = (
-    (FAVORITES, 'Favorites Only'),
-    (ANYONE, 'Anyone can apply'),
-    (SPECIFIC, 'Specific People')
+    (FAVORITES, "Favorites Only"),
+    (ANYONE, "Anyone can apply"),
+    (SPECIFIC, "Specific People"),
 )
 
 
 class Shift(models.Model):
-    venue = models.ForeignKey(
-        Venue, on_delete=models.CASCADE, blank=True)
-    position = models.ForeignKey(
-        Position, on_delete=models.CASCADE, blank=True)
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, blank=True)
+    position = models.ForeignKey(Position, on_delete=models.CASCADE, blank=True)
     application_restriction = models.CharField(
         max_length=20,
         choices=SHIFT_APPLICATION_RESTRICTIONS,
         default=ANYONE,
-        blank=True)
+        blank=True,
+    )
     maximum_allowed_employees = models.IntegerField(default=0, blank=True)
     minimum_hourly_rate = models.DecimalField(
-        max_digits=3, decimal_places=1, default=0, blank=True)
-    minimum_allowed_rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=0, blank=True)
-    allowed_from_list = models.ManyToManyField(
-        FavoriteList, blank=True)
-    required_badges = models.ManyToManyField(
-        Badge, blank=True
+        max_digits=3, decimal_places=1, default=0, blank=True
     )
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True)
+    minimum_allowed_rating = models.DecimalField(
+        max_digits=2, decimal_places=1, default=0, blank=True
+    )
+    allowed_from_list = models.ManyToManyField(FavoriteList, blank=True)
+    required_badges = models.ManyToManyField(Badge, blank=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     status = models.CharField(
-        max_length=9,
-        choices=SHIFT_STATUS_CHOICES,
-        default=DRAFT,
-        blank=True)
+        max_length=9, choices=SHIFT_STATUS_CHOICES, default=DRAFT, blank=True
+    )
     starting_at = models.DateTimeField(blank=False)
     ending_at = models.DateTimeField(blank=False)
-    rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=0, blank=True)
+    rating = models.DecimalField(max_digits=2, decimal_places=1, default=0, blank=True)
     candidates = models.ManyToManyField(
-        Employee, blank=True, through="ShiftApplication")
+        Employee, blank=True, through="ShiftApplication"
+    )
     employees = models.ManyToManyField(
-        Employee, blank=True, related_name="shift_accepted_employees",
-        through='ShiftEmployee')
+        Employee,
+        blank=True,
+        related_name="shift_accepted_employees",
+        through="ShiftEmployee",
+    )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -291,23 +288,24 @@ class Shift(models.Model):
     # he wants. By default, he can only clockin within 15 min of the starting
     # time (before or after)
     maximum_clockin_delta_minutes = models.IntegerField(
-        blank=True, default=15, null=True)
+        blank=True, default=15, null=True
+    )
 
     # if this option is None, the talent will be able to clockout anytome,
     # by default the application will auto clockout after 15 min
     maximum_clockout_delay_minutes = models.IntegerField(
-        blank=True, default=15, null=True)  # in minutes
+        blank=True, default=15, null=True
+    )  # in minutes
 
     def __str__(self):
         return "{} at {} on {} - {}".format(
-            self.position, self.venue, self.starting_at, self.ending_at)
+            self.position, self.venue, self.starting_at, self.ending_at
+        )
 
 
 class ShiftEmployee(models.Model):
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True)
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     success = models.BooleanField(default=True)
     comments = models.TextField(max_length=450, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -315,33 +313,30 @@ class ShiftEmployee(models.Model):
 
 
 class ShiftApplication(models.Model):
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
-PENDING = 'PENDING'
-APPLIED = 'APPLIED'
-REJECTED = 'REJECTED'
-EXPIRED = 'EXPIRED'
+PENDING = "PENDING"
+APPLIED = "APPLIED"
+REJECTED = "REJECTED"
+EXPIRED = "EXPIRED"
 SHIFT_INVITE_STATUS_CHOICES = (
-    (PENDING, 'Pending'),
-    (APPLIED, 'Applied'),
-    (REJECTED, 'Rejected'),
-    (EXPIRED, 'Expired'),
+    (PENDING, "Pending"),
+    (APPLIED, "Applied"),
+    (REJECTED, "Rejected"),
+    (EXPIRED, "Expired"),
 )
 
 
 class ShiftInvite(models.Model):
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
     sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, blank=True, default=None)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True)
+        Profile, on_delete=models.CASCADE, blank=True, default=None
+    )
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
     status = models.CharField(
         max_length=9,
         choices=SHIFT_INVITE_STATUS_CHOICES,
@@ -352,15 +347,23 @@ class ShiftInvite(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return str(self.employee) + " for " + str(self.shift) + " on " + self.created_at.strftime(
-            "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
+        return (
+            str(self.employee)
+            + " for "
+            + str(self.shift)
+            + " on "
+            + self.created_at.strftime("%m/%d/%Y, %H:%M:%S")
+            + " ("
+            + self.status
+            + ")"
+        )
 
 
-PENDING = 'PENDING'
-ACCEPTED = 'ACCEPTED'
+PENDING = "PENDING"
+ACCEPTED = "ACCEPTED"
 JOBCORE_INVITE_STATUS_CHOICES = (
-    (PENDING, 'Pending'),
-    (ACCEPTED, 'Accepted'),
+    (PENDING, "Pending"),
+    (ACCEPTED, "Accepted"),
 )
 
 
@@ -376,44 +379,49 @@ class UserToken(models.Model):
 
 
 class JobCoreInvite(models.Model):
-    sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, blank=True)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
     first_name = models.TextField(max_length=100, blank=True)
     last_name = models.TextField(max_length=100, blank=True)
     shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True, default=None, null=True)
+        Shift, on_delete=models.CASCADE, blank=True, default=None, null=True
+    )
     email = models.TextField(max_length=100, blank=True)
     status = models.CharField(
-        max_length=9,
-        choices=JOBCORE_INVITE_STATUS_CHOICES,
-        default=PENDING,
-        blank=True)
+        max_length=9, choices=JOBCORE_INVITE_STATUS_CHOICES, default=PENDING, blank=True
+    )
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        return self.first_name + " " + self.last_name + " on " + self.created_at.strftime(
-            "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
+        return (
+            self.first_name
+            + " "
+            + self.last_name
+            + " on "
+            + self.created_at.strftime("%m/%d/%Y, %H:%M:%S")
+            + " ("
+            + self.status
+            + ")"
+        )
 
 
 class Rate(models.Model):
-    sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, blank=True)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True)
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True, null=True)
+        Employee, on_delete=models.CASCADE, blank=True, null=True
+    )
     employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True, null=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True, null=True)
+        Employer, on_delete=models.CASCADE, blank=True, null=True
+    )
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, null=True)
     comments = models.TextField()
-    rating = models.DecimalField(
-        max_digits=2, decimal_places=1, default=0, blank=True)
+    rating = models.DecimalField(max_digits=2, decimal_places=1, default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
     def save(self, *args, **kwargs):
-        log_debug('general', 'save_rate')
+        log_debug("general", "save_rate")
 
         super().save(*args, **kwargs)  # Call the "real" save() method.
 
@@ -421,24 +429,23 @@ class Rate(models.Model):
         obj = None
         if self.employee is not None:
             obj = self.employee
-            new_ratings = (
-                Employee.objects.aggregate(new_avg=Avg('rate__rating'), new_total=Count('rate__id'))
+            new_ratings = Employee.objects.aggregate(
+                new_avg=Avg("rate__rating"), new_total=Count("rate__id")
             )
         elif self.employer is not None:
             obj = self.employer
-            new_ratings = (
-                Employer.objects.aggregate(new_avg=Avg('rate__rating'), new_total=Count('rate__id'))
+            new_ratings = Employer.objects.aggregate(
+                new_avg=Avg("rate__rating"), new_total=Count("rate__id")
             )
 
         if obj is not None:
-            obj.total_ratings = new_ratings['new_total']
-            obj.rating = new_ratings['new_avg']
+            obj.total_ratings = new_ratings["new_total"]
+            obj.rating = new_ratings["new_avg"]
             obj.save()
 
 
 class FCMDevice(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     registration_id = models.TextField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -449,8 +456,12 @@ class FCMDevice(models.Model):
 
 class Notification(models.Model):
     owner = models.ForeignKey(
-        Profile, related_name='notifications', on_delete=models.CASCADE,
-        blank=True, null=True)
+        Profile,
+        related_name="notifications",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
     title = models.TextField()
     body = models.TextField()
     data = models.TextField(max_length=1500)
@@ -465,67 +476,47 @@ class Notification(models.Model):
         return self.owner.user.email + ":" + self.title
 
 
-APPROVED = 'APPROVED'
-PENDING = 'PENDING'
+APPROVED = "APPROVED"
+PENDING = "PENDING"
 CLOCKIN_STATUS = (
-    (APPROVED, 'Approved'),
-    (PENDING, 'Pending'),
+    (APPROVED, "Approved"),
+    (PENDING, "Pending"),
 )
 
 
 class Clockin(models.Model):
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True)
-    author = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, blank=True, null=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
-    latitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    latitude_in = models.DecimalField(max_digits=14, decimal_places=11, default=0)
 
-    longitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    longitude_in = models.DecimalField(max_digits=14, decimal_places=11, default=0)
 
-    latitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    latitude_out = models.DecimalField(max_digits=14, decimal_places=11, default=0)
 
-    longitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    longitude_out = models.DecimalField(max_digits=14, decimal_places=11, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
     # auto_closed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    status = models.CharField(
-        max_length=9,
-        choices=CLOCKIN_STATUS,
-        default=PENDING)
+    status = models.CharField(max_length=9, choices=CLOCKIN_STATUS, default=PENDING)
 
 
-OPEN = 'OPEN'
-FINALIZED = 'FINALIZED'
-PAID = 'PAID'
-PERIOD_STATUS = (
-    (OPEN, 'Open'),
-    (FINALIZED, 'Finalized'),
-    (PAID, 'Paid')
-)
+OPEN = "OPEN"
+FINALIZED = "FINALIZED"
+PAID = "PAID"
+PERIOD_STATUS = ((OPEN, "Open"), (FINALIZED, "Finalized"), (PAID, "Paid"))
 
 
 class PayrollPeriod(models.Model):
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     length = models.IntegerField(blank=True, default=7)
     length_type = models.CharField(
-        max_length=25,
-        choices=PAYROLL_LENGTH_TYPE,
-        default=DAYS,
-        blank=True)
-    status = models.CharField(
-        max_length=9,
-        choices=PERIOD_STATUS,
-        default=OPEN)
+        max_length=25, choices=PAYROLL_LENGTH_TYPE, default=DAYS, blank=True
+    )
+    status = models.CharField(max_length=9, choices=PERIOD_STATUS, default=OPEN)
 
     starting_at = models.DateTimeField(blank=False)
     ending_at = models.DateTimeField(blank=False)
@@ -537,15 +528,15 @@ class PayrollPeriod(models.Model):
         return "From " + str(self.starting_at) + " to " + str(self.ending_at)
 
 
-PENDING = 'PENDING'
-PAID = 'PAID'
-APPROVED = 'APPROVED'
-REJECTED = 'REJECTED'
+PENDING = "PENDING"
+PAID = "PAID"
+APPROVED = "APPROVED"
+REJECTED = "REJECTED"
 PAYMENT_STATUS = (
-    (PENDING, 'Pending'),
-    (APPROVED, 'Approved'),
-    (REJECTED, 'Rejected'),
-    (PAID, 'Paid')
+    (PENDING, "Pending"),
+    (APPROVED, "Approved"),
+    (REJECTED, "Rejected"),
+    (PAID, "Paid"),
 )
 
 
@@ -562,27 +553,30 @@ class PayrollPeriodPayment(models.Model):
     clockin = models.ForeignKey(
         Clockin, on_delete=models.CASCADE, blank=True, null=True)
     splited_payment = models.BooleanField(default=True)
-    status = models.CharField(
-        max_length=9,
-        choices=PAYMENT_STATUS,
-        default=PENDING)
+    status = models.CharField(max_length=9, choices=PAYMENT_STATUS, default=PENDING)
 
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
     over_time = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
     hourly_rate = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
     total_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
 class PaymentDeduction(models.Model):
-    employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
+    employer = models.ForeignKey(
+        Employer, related_name="deductions", on_delete=models.CASCADE
+    )
     name = models.CharField(max_length=200)
     amount = models.FloatField()
 
@@ -594,10 +588,11 @@ class BankAccount(models.Model):
     """
     user = models.ForeignKey(
         Profile,
-        related_name='bank_accounts',
+        related_name="bank_accounts",
         on_delete=models.CASCADE,
         blank=True,
-        null=True)
+        null=True,
+    )
     access_token = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     account_id = models.CharField(max_length=200, null=True, blank=True)
