@@ -105,6 +105,7 @@ class Employee(models.Model):
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    document_active = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
