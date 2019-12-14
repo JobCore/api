@@ -42,7 +42,6 @@ class ProfileTestSuite(TestCase, WithMakeUser):
             'It should return a success response')
 
         response_json = response.json()
-
         self.assertIsInstance(response_json, dict)
         self.assertIn('user', response_json)
         self.assertIn('employee', response_json)

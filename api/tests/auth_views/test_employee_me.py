@@ -34,9 +34,9 @@ class EmployeeMeTestSuite(TestCase, WithMakeUser):
         self.assertEquals(response.status_code, 200)
         response_json = response.json()
 
-        self.assertIn('user', response_json)
-        self.assertIn('positions', response_json)
-        self.assertIn('favoritelist_set', response_json)
+        self.assertIn('user', response_json, response_json)
+        self.assertIn('positions', response_json, response_json)
+        self.assertIn('favoritelist_set', response_json, response_json)
 
         self.assertIsInstance(response_json['favoritelist_set'], list)
         self.assertIsInstance(response_json['positions'], list)

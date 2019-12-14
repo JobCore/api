@@ -83,10 +83,8 @@ urlpatterns = [
         EmployerView.as_view(),
         name="id-employers"),
 
-    path(
-        'profiles/me',
-        ProfileMeView.as_view(),
-        name="me-profiles"),
+    path('profiles/me', ProfileMeView.as_view(), name="me-profiles"),
+
     path(
         'profiles/me/image',
         ProfileMeImageView.as_view(),
@@ -386,7 +384,8 @@ urlpatterns = [
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
 
     # clocks out, deletes invites, deletes applications
-    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),  # every 5 min
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),
+    # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional
