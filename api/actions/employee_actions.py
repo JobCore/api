@@ -45,7 +45,6 @@ def create_default_availablity(employee):
             today, 6), ending_at=next_weekday(
             today, 6), allday=True, recurrent=True, recurrency_type='WEEKLY')
 
-
 def add_default_positions(employee, positions=None):
     if positions is None:
         positions = Position.objects.all()

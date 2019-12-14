@@ -58,23 +58,23 @@ class ClockinSerializer(serializers.ModelSerializer):
         if data['started_at'] > shift.ending_at:
             raise serializers.ValidationError("You can't Clock in after the Shift ending time")  # NOQA
 
-        last_clockin_for_shift = Clockin.objects.filter(shift__id=shift.id).last()
-        # The employee first clockin for this Shift
-        if last_clockin_for_shift is None:
-            if shift.maximum_clockin_delta_minutes is not None:
-                delta = datetime.timedelta(minutes=shift.maximum_clockin_delta_minutes)
-                log_debug("clockin",'started at: %s' % data["started_at"])
-                log_debug("clockin",'shift.starting_at: %s' % shift.starting_at)
-                log_debug("clockin",'delta: %s' % delta)
-
-                #if data['started_at'] > shift.starting_at + delta:
-                #    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
-
-                if data['started_at'] < shift.starting_at - delta:
-                    raise serializers.ValidationError("You can only Clock in %s minutes before the Shift has started" % delta)
-
-        elif last_clockin_for_shift.ended_at is None:
+        last_clockin_for_shift = Clockin.objects.filter(shift__id=shift.id, employee__id=data['employee'].id).last()
+        
+        # if you have not clocked out
+        if last_clockin_for_shift is not None and last_clockin_for_shift.ended_at is None:
             raise serializers.ValidationError("You can't Clock in with a pending Clock out")
+
+        if shift.maximum_clockin_delta_minutes is not None:
+            delta = datetime.timedelta(minutes=shift.maximum_clockin_delta_minutes)
+            log_debug("clockin",'started at: %s' % data["started_at"])
+            log_debug("clockin",'shift.starting_at: %s' % shift.starting_at)
+            log_debug("clockin",'delta: %s' % delta)
+
+            #if data['started_at'] > shift.starting_at + delta:
+            #    raise serializers.ValidationError("You can't Clock in %s minutes after the Shift has started" % delta)
+
+            if data['started_at'] < shift.starting_at - delta:
+                raise serializers.ValidationError("You can only Clock in %s minutes before the Shift has started" % delta)
 
     def _validate_clockout(self, data):
         shift = data['shift']
@@ -98,7 +98,7 @@ class ClockinSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "You can't Clock out after the Shift has ended. The System clock you out automatically")
 
-        some_lockin_for_shift = Clockin.objects.filter(shift__id=shift.id, ended_at=None).first()
+        some_lockin_for_shift = Clockin.objects.filter(shift__id=shift.id, employee__id=data['employee'].id, ended_at=None).first()
         # There is no Clock in record with out a Clock out
         if some_lockin_for_shift is None:
             raise serializers.ValidationError("You can't Clock out if you haven't Clocked in")
@@ -112,7 +112,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         if 'started_at' not in data and 'ended_at' not in data:
             raise serializers.ValidationError("You need to specify the started or ended time")
 
-        if 'employee' not in data:
+        if 'employee' not in data or data['employee'] == '':
             raise serializers.ValidationError("You need to specify the employee that is clocking in")
 
         shift = data['shift']

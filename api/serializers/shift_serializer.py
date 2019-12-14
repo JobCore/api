@@ -358,16 +358,21 @@ class ShiftGetSerializer(serializers.ModelSerializer):
 
 
 class ShiftGetBigSerializer(ShiftGetSerializer):
-    clockin_set = ClockinGetSmallSerializer(many=True, read_only=True)
     employer = EmployerGetSmallSerializer(many=False, read_only=True)
 
     happening_right_now = serializers.SerializerMethodField('_happening_right_now')
+    clockin_set = serializers.SerializerMethodField('_clockin_set')
 
     def _happening_right_now(self, obj):
         NOW = datetime.datetime.now(tz=timezone.utc)
         clockin_delta = obj.maximum_clockin_delta_minutes if obj.maximum_clockin_delta_minutes else 0
         clockout_delta = obj.maximum_clockout_delay_minutes if obj.maximum_clockout_delay_minutes else 0
         return (obj.starting_at <= NOW + datetime.timedelta(minutes=clockin_delta) and obj.ending_at >= NOW - datetime.timedelta(minutes=clockout_delta))
+
+    def _clockin_set(self, obj):
+        clockins = Clockin.objects.filter(shift__id=obj.id, employee_id=self.context["employee"])
+        serializer = ClockinGetSmallSerializer(clockins, many=True)
+        return serializer.data
 
 
 class ShiftInviteSerializer(serializers.ModelSerializer):

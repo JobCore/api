@@ -37,19 +37,22 @@ def send_email_message(slug, to, data={}):
 
 def send_sms(slug, phone_number, data={}):
 
-    template = get_template_content(slug, data, ["email", "fms"])
+    template = get_template_content(slug, data, ["sms"])
     # Your Account Sid and Auth Token from twilio.com/console
     # DANGER! This is insecure. See http://twil.io/secure
     TWILLIO_SID = os.environ.get('TWILLIO_SID')
     TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
     client = Client(TWILLIO_SID, TWILLIO_SECRET)
 
-    message = client.messages \
-                    .create(
-                        body=template['fms'],
-                        from_='+15017122661',
-                        to='+15558675310'
-                    )
+    try:
+        message = client.messages.create(
+            body=template['sms'],
+            from_='+15017122661',
+            to='+1'+phone_number
+        )
+        return True
+    except Exception:
+        return False
 
 
 def send_fcm(slug, registration_ids, data={}):
@@ -116,6 +119,10 @@ def get_template_content(slug, data={}, formats=None):
     if formats is not None and "fms" in formats:
         fms = get_template(info['type'] + '/' + slug + '.fms')
         templates["fms"] = fms.render(z)
+
+    if formats is not None and "sms" in formats:
+        sms = get_template(info['type'] + '/' + slug + '.sms')
+        templates["sms"] = sms.render(z)
 
     return templates
 

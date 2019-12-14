@@ -272,7 +272,7 @@ def get_projected_payments(
 
 def generate_periods_and_payments(employer, generate_since=None):
 
-    log_debug('hooks','generate_periods:Employer: '+employer.title)
+    log_debug('hooks','generate_periods -> Employer: '+employer.title)
     NOW = timezone.now()
 
     if employer.payroll_period_type != 'DAYS':
@@ -293,20 +293,26 @@ def generate_periods_and_payments(employer, generate_since=None):
     #
     last_period_ending_date = None
     if last_processed_period is not None:
-        last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(seconds=1), weekday, fallback_direction='forward')
+        log_debug('hooks','Last period generated until '+str(last_processed_period))
+        last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(days=1), weekday, fallback_direction='forward')
+        log_debug('hooks','Will start generating from '+str(last_period_ending_date))
     else:
         last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')
         log_debug('hooks','generate_periods:Employer: This is the first payroll, and the company started existing on '+str(employer.created_at))
         last_period_ending_date = (last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour) - datetime.timedelta(seconds=1))
     
-    log_debug('hooks','generate_periods: Generating payroll for '+employer.title+' from '+str(last_processed_period))
+    #log_debug('hooks','Last period generated until '+str(last_period_ending_date))
 
     # the ending date will be X days later, X = employer.payroll_period_length
-    end_date = last_period_ending_date + \
-        datetime.timedelta(days=employer.payroll_period_length)
+    end_date = last_period_ending_date + datetime.timedelta(days=employer.payroll_period_length)
 
     generated_periods = []
+    if end_date >= NOW:
+        log_debug('hooks','No new periods to generate, now is '+ str(NOW) +' we have to wait until '+str(end_date))
+        return []
+
     while end_date < NOW:
+
         start_date = end_date - \
             datetime.timedelta(
                 days=employer.payroll_period_length) + datetime.timedelta(seconds=1)
@@ -320,8 +326,7 @@ def generate_periods_and_payments(employer, generate_since=None):
         period.save()
 
         # move the end_date forward to make sture the loop stops eventually
-        end_date = end_date + \
-            datetime.timedelta(days=employer.payroll_period_length)
+        end_date = end_date + datetime.timedelta(days=employer.payroll_period_length)
 
         # no lets start calculating the payaments
         try:

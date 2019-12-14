@@ -4,9 +4,8 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 
 from api.views.hooks import (
-    DefaultAvailabilityHook, ClockOutExpiredShifts,
-    ExpireOldInvites, GeneratePeriodsView,
-    AddTallentsToAllPositions, RemoveEmployeesWithoutProfile
+    DefaultAvailabilityHook, ClockOutExpiredShifts, GeneratePeriodsView,
+    AddTalentsToAllPositions, RemoveEmployeesWithoutProfile
 )
 
 from api.views.general_views import (
@@ -383,11 +382,11 @@ urlpatterns = [
     # HOOKS
     #
     path('hook/remove_employees_without_profile', RemoveEmployeesWithoutProfile.as_view()),
-    path('hook/add_talents_to_all_positions', AddTallentsToAllPositions.as_view()),
+    path('hook/add_talents_to_all_positions', AddTalentsToAllPositions.as_view()),
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
 
     # clocks out, deletes invites, deletes applications
-    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view()),  # every 5 min
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),  # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional
