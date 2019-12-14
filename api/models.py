@@ -503,6 +503,9 @@ class Clockin(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(max_length=9, choices=CLOCKIN_STATUS, default=PENDING)
 
+    def __str__(self):
+        return self.employee.user.first_name+" "+self.employee.user.last_name+", from "+str(self.started_at)+" to "+str(self.ended_at)
+
 
 OPEN = "OPEN"
 FINALIZED = "FINALIZED"

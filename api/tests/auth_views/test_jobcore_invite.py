@@ -14,12 +14,19 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
 
     def setUp(self):
+        position = mixer.blend('api.Position')
+
         self.test_user_employee, self.test_employee, _ = self._make_user(
             'employee',
             userkwargs=dict(
                 username='employee1',
                 email='employee1@testdoma.in',
                 is_active=True,
+            ),
+            employexkwargs=dict(
+                ratings=0,
+                total_ratings=0,
+                positions=[position.id]
             )
         )
 
@@ -34,10 +41,12 @@ class JobcoreInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 email='employer@testdoma.in',
                 is_active=True,
             )
+            
         )
 
         self.test_shift, _, __ = self._make_shift(
-            employer=self.test_employer)
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+
 
         self.test_invite = mixer.blend(
             'api.JobCoreInvite',

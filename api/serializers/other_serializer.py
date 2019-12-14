@@ -85,6 +85,7 @@ class JobCoreInviteGetSerializer(serializers.ModelSerializer):
 
 
 class JobCoreInvitePostSerializer(serializers.ModelSerializer):
+    include_sms = serializers.BooleanField(default=False, write_only=True)
 
     def validate(self, data):
         if not data.get('email'):
@@ -114,10 +115,11 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # TODO: send email message not working
+        include_sms = validated_data.pop('include_sms', False)
         invite = JobCoreInvite(**validated_data)
         invite.save()
 
-        notifier.notify_jobcore_invite(invite)
+        notifier.notify_jobcore_invite(invite, include_sms=include_sms)
 
         return invite
 

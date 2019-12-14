@@ -109,6 +109,11 @@ class UserRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "You email cannot contain more than 150 characters")
 
+        if len(data["password"]) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long")
+        if data["password"].lower() == data["password"]:
+            raise serializers.ValidationError("Password must contain at least one uppercase letter")
+
         if len(data["first_name"]) == 0 or len(data["last_name"]) == 0:
             raise serializers.ValidationError(
                 "Your first and last names must not be empty")
@@ -116,7 +121,7 @@ class UserRegisterSerializer(serializers.Serializer):
         if data['account_type'] not in ('employer', 'employee'):
             raise serializers.ValidationError(
                 "Account type can only be employer or employee")
-        elif data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
+        if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
 
             # if 'employer' not in data: 

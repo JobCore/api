@@ -78,6 +78,34 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
 
         self.assertEquals(response.status_code, 400)
 
+    def test_pass_8_char(self):
+        payload = {
+            'username': 'test',
+            'first_name': 'Beta',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'ABD',
+            'account_type': 'employee'
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+
+        self.assertEquals(response.status_code, 400, "password must be 8 characters long")
+
+    def test_pass_one_cap(self):
+        payload = {
+            'username': 'test',
+            'first_name': 'Beta',
+            'last_name': 'Bravo',
+            'email': 'delta@mail.tld',
+            'password': 'abcdefghi',
+            'account_type': 'employee'
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+
+        self.assertEquals(response.status_code, 400, "password must have one capital letter")
+
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
     def test_employee_all_good(self, mocked_requests):
@@ -92,7 +120,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABhgvbhjbhjD',
             'account_type': 'employee',
             "profile_city": city.id
         }
@@ -122,7 +150,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail3.tld',
-            'password': 'ABD',
+            'password': 'AnbvcbchvBD',
             'account_type': 'employee',
             "city": "Chicago"
         }
@@ -154,7 +182,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'jhvjhghjbABD',
             'account_type': 'employee'
         }
 
@@ -182,14 +210,14 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'AadadsdasBD',
             'account_type': 'employer',
             'employer': self.employer.id,
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
 
-        self.assertEquals(response.status_code, 400) #should be a 400 because registration is disabled right now
+        self.assertEquals(response.status_code, 201)
 
         # Once the registration is activated again we have re-enable this commented code
 
@@ -217,33 +245,9 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABuhbkhjbkjhbD',
             'account_type': 'employer',
             'employer': -1,
-        }
-
-        response = self.client.post(self.REGISTRATION_URL, data=payload)
-
-        self.assertEquals(response.status_code, 400)
-        self.assertEquals(
-            mocked_requests.post.called,
-            False,
-            'It should have called requests.post to send mail')
-
-    @patch('api.utils.email.requests')
-    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_employer_no_employer(self, mocked_requests):
-        """
-        """
-
-        payload = {
-            'username': 'test',
-            'first_name': 'Alpha',
-            'last_name': 'Bravo',
-            'email': 'delta@mail.tld',
-            'password': 'ABD',
-            'account_type': 'employer',
-            # 'employer': -1,
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
@@ -265,7 +269,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABfdsvsdfvsdfvD',
             'account_type': 'employer',
             'employer': '2 OR 1=1',
         }
@@ -290,7 +294,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': self.test_user.email,
-            'password': 'ABD',
+            'password': 'ABdvsdfvsdfvsdfvD',
             'account_type': 'employee'
         }
 
@@ -315,7 +319,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             'first_name': 'Alpha',
             'last_name': 'Bravo',
             'email': 'delta@mail.tld',
-            'password': 'ABD',
+            'password': 'ABvdfvdfvdfvfvD',
             'account_type': ':evil type:'
         }
 
