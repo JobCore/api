@@ -4,6 +4,8 @@ from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
 from decimal import Decimal
+
+from api.models import Profile, City
 from api.tests.mixins import WithMakeUser
 
 
@@ -103,6 +105,29 @@ class ProfileTestSuite(TestCase, WithMakeUser):
             response.status_code,
             401,
             'It should return an error response')
+
+    def test_update(self):
+        city = City.objects.create(name="New York")
+        payload = {
+            'first_name': 'Angel',
+            'last_name': 'Cerberus',
+            'bio': 'Some BIO',
+            "city": "Miami",
+            "profile_city": city.id
+        }
+
+        url = reverse_lazy('api:me-profiles')
+        self.client.force_login(self.test_user_employee)
+
+        response = self.client.put(
+            url, data=json.dumps(payload), content_type="application/json")
+
+        self.assertEquals(response.status_code, 200, response.content)
+
+        profile = Profile.objects.get(pk=self.test_profile.id)
+        self.assertEquals(profile.user.first_name, payload.get("first_name"))
+        self.assertEquals(profile.user.last_name, payload.get("last_name"))
+        self.assertEquals(profile.bio, payload.get("bio"))
 
     def test_lat_lon_1(self):
         """
