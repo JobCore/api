@@ -6,6 +6,13 @@ from api.serializers import documents_serializer
 from django.http import JsonResponse
 from api.mixins import EmployeeView
 import cloudinary.uploader
+import logging
+from django.utils.crypto import get_random_string
+from datetime import datetime
+
+u'rRXVe68NO7m3mHoBS488KdHaqQPD6Ofv'
+
+log = logging.getLogger('api.views.documents_views')
 
 
 class EmployeeDocumentAPI(EmployeeView):
@@ -16,10 +23,12 @@ class EmployeeDocumentAPI(EmployeeView):
                 validators.error_object('No Document'),
                 status=status.HTTP_400_BAD_REQUEST)
 
+        file_name = f'i9_documents/profile-{str(self.request.user.id)}-{datetime.now().strftime("%d-%m")}-{get_random_string(length=32)}/'
+
         try:
             result = cloudinary.uploader.upload(
                 request.FILES['document'],
-                public_id='profile' + str(self.request.user.id),
+                public_id=file_name,
                 tags=['i9_document'],
                 use_filename=1,
                 unique_filename=1,
@@ -28,6 +37,10 @@ class EmployeeDocumentAPI(EmployeeView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
         request.data['document'] = result['secure_url']
+        request.data['employee'] = self.employee.id
+        log.debug(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
+        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
         serializer = documents_serializer.EmployeeDocumentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

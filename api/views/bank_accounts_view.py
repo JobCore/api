@@ -38,25 +38,20 @@ class BankAccountAPIView(APIView):
             accounts_data[account.get("account_id")] = account.get("name")
         ach = response.get('numbers', {}).get("ach", None)
 
-        # @asanchezr If connected with Stripe it is possible to get an Stripe token to make direct transfers
-        # stripe_response = plaid_client.Processor.stripeBankAccountTokenCreate(access_token, plaid_link_account_id)
-        # bank_account_token = stripe_response['stripe_bank_account_token']
-        # try:
-        #     BankAccount.objects.create(
-        #         user=request.user.profile,
-        #         access_token=access_token,
-        #         name=plaid_link_account_name,
-        #         institution_name=plaid_link_institution_name,
-        #         stripe_bank_account_token=bank_account_token)
-        # except Exception as e:
-        #     log.error(f"Error creating the Bank Account: {e}")
-        #     raise ValueError(f"Error creating the Bank Account: {e}")
         with transaction.atomic():
             for acc in ach:
                 account_id = acc.get("account_id")
                 account = acc.get("account", "")
                 routing = acc.get("routing", "")
                 wire_routing = acc.get("wire_routing", "")
+
+                try:
+                    stripe_response = plaid_client.Processor.stripeBankAccountTokenCreate(access_token, account_id)
+                    bank_account_token = stripe_response['stripe_bank_account_token']
+                except Exception as e:
+                    log.error(f"Error creating the Stripe Token: {e}")
+                    raise ValueError(f"Error creating the Stripe Tokens: {e}")
+
                 try:
                     BankAccount.objects.create(
                         user=request.user.profile,
@@ -66,7 +61,8 @@ class BankAccountAPIView(APIView):
                         account=account,
                         routing=routing,
                         institution_name=institution_name,
-                        wire_routing=wire_routing)
+                        wire_routing=wire_routing,
+                        stripe_token=bank_account_token)
                 except Exception as e:
                     log.error(f"Error creating the Bank Account: {e}")
                     raise ValueError(f"Error creating the Bank Account: {e}")

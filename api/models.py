@@ -105,6 +105,7 @@ class Employee(models.Model):
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    document_active = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
@@ -608,6 +609,7 @@ class BankAccount(models.Model):
     routing = models.CharField(max_length=200, null=True, blank=True)
     wire_routing = models.CharField(max_length=200, null=True, blank=True)
     institution_name = models.CharField(max_length=200, null=True, blank=True)
+    stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
 
 class EmployeeDocument(models.Model):
@@ -621,6 +623,7 @@ class EmployeeDocument(models.Model):
     )
     document = models.URLField()
     public_id = models.CharField(max_length=30, null=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
     rejected_reason = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
