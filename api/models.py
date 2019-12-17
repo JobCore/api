@@ -516,7 +516,8 @@ class Clockin(models.Model):
         default=PENDING)
 
     def __str__(self):
-        return self.employee.user.first_name+" "+self.employee.user.last_name+", from "+str(self.started_at)+" to "+str(self.ended_at)
+        return self.employee.user.first_name + " " + self.employee.user.last_name + ", from " + str(
+            self.started_at) + " to " + str(self.ended_at)
 
 
 OPEN = 'OPEN'
@@ -644,11 +645,18 @@ class EmployeeDocument(models.Model):
         (REJECTED, 'Rejected'),
     )
     document = models.URLField()
+
     public_id = models.CharField(max_length=80, null=True)
+
     rejected_reason = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
-    
     document_type = models.ForeignKey(Document, null=True, on_delete=models.CASCADE)
+
+class AppVersion(models.Model):
+    version = models.IntegerField(default=94)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
