@@ -51,9 +51,24 @@ admin.site.register(City)
 
 class ClockinAdmin(admin.ModelAdmin):
     list_display = ('id', 'employee', 'started_at', 'ended_at', 'shift', 'author')
-    search_fields = ('employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name', 'author__user__last_name')
+    search_fields = (
+    'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
+    'author__user__last_name')
     list_filter = ('status',)
     list_per_page = 100
+
+
+class EmployeeDocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'name', 'state', 'created_at', 'updated_at', 'employee__user__first_name',
+                    'employee__user__last_name')
+    search_fields = (
+    'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
+    list_filter = ('state',)
+    list_per_page = 100
+
+
+class AppVersionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'version', 'created_at', 'updated_at')
 
 
 admin.site.register(Clockin, ClockinAdmin)
@@ -62,6 +77,6 @@ admin.site.register(UserToken)
 admin.site.register(Notification)
 admin.site.register(JobCoreInvite)
 admin.site.register(BankAccount)
-admin.site.register(EmployeeDocument)
+admin.site.register(EmployeeDocument, EmployeeDocumentAdmin)
+admin.site.register(AppVersion, AppVersionAdmin)
 admin.site.register(PaymentDeduction)
-# admin.site.register(City)
