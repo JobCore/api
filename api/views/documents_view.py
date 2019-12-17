@@ -44,13 +44,15 @@ class EmployeeDocumentAPI(EmployeeView):
             'document': result['secure_url'],
             'employee': self.employee.id,
             'document_type': request.data['document_type'],
-            'public_id': file_name,
+            'public_id': public_id,
         }
 
         serializer = documents_serializer.EmployeeDocumentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        result = cloudinary.uploader.destroy(public_id)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
@@ -82,11 +84,14 @@ class EmployeeDocumentDetailAPI(EmployeeView):
     def delete(self, request, document_id):
         try:
             document = EmployeeDocument.objects.get(id=document_id)
+
+            cloudinary.uploader.destroy(document.public_id)
+
+            document.delete()
         except EmployeeDocument.DoesNotExist:
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        document.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
