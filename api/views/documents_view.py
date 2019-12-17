@@ -18,39 +18,64 @@ log = logging.getLogger('api.views.documents_views')
 class EmployeeDocumentAPI(EmployeeView):
 
     def post(self, request):
-        if 'document' not in request.FILES:
-            return Response(
-                validators.error_object('No Document'),
-                status=status.HTTP_400_BAD_REQUEST)
 
-        file_name = f'i9_documents/profile-{str(self.request.user.id)}-{datetime.now().strftime("%d-%m")}-{get_random_string(length=32)}'
+        if 'document_type' not in request.data:
+            return Response(validators.error_object('You need to specify the type of document you are uploading'),status=status.HTTP_400_BAD_REQUEST)
+
+        if 'document' not in request.FILES:
+            return Response(validators.error_object('Please specify a document'),status=status.HTTP_400_BAD_REQUEST)
+
+        public_id = f'profile-{str(self.request.user.id)}-{datetime.now().strftime("%d-%m")}-{get_random_string(length=32)}'
+        file_name = f'{str(self.request.user.id)}/i9_documents/{public_id}'
 
         try:
             result = cloudinary.uploader.upload(
                 request.FILES['document'],
                 public_id=file_name,
-                tags=['i9_document'],
+                tags=['i9_document','profile-'+str(self.request.user.id), ],
                 use_filename=1,
                 unique_filename=1,
                 resource_type='auto'
             )
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
-        request.data['document'] = result['secure_url']
-        request.data['employee'] = self.employee.id
-        log.debug(f"EmployeeDocumentAPI:post:{str(request.data)}")
-        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
-        print(f"EmployeeDocumentAPI:post:{str(request.data)}")
-        serializer = documents_serializer.EmployeeDocumentSerializer(data=request.data)
+
+        data = {
+            'document': result['secure_url'],
+            'employee': self.employee.id,
+            'document_type': request.data['document_type'],
+            'public_id': file_name,
+        }
+
+        serializer = documents_serializer.EmployeeDocumentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+
         documents = EmployeeDocument.objects.filter(employee_id=self.employee.id)
-        data = documents_serializer.EmployeeDocumentSerializer(documents, many=True).data
-        return JsonResponse(data, status=200, safe=False)
+
+        qStatus = request.GET.get('status')
+        if qStatus:
+            documents = documents.filter(status=qStatus)
+
+        qType = request.GET.get('type')
+        if qType:
+            if qType == 'identity':
+                documents = documents.filter(document_type__validates_identity=True)
+            elif qType == 'employment':
+                documents = documents.filter(document_type__validates_employment=True)
+            elif qType == 'form':
+                documents = documents.filter(document_type__is_form=True)
+
+        qTypeId = request.GET.get('type_id')
+        if qTypeId:
+            documents = documents.filter(document_type=qTypeId)
+
+        serializer = documents_serializer.EmployeeDocumentGetSerializer(documents, many=True)
+        return JsonResponse(serializer.data, status=200, safe=False)
 
 
 class EmployeeDocumentDetailAPI(EmployeeView):
@@ -63,3 +88,22 @@ class EmployeeDocumentDetailAPI(EmployeeView):
 
         document.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DocumentAPI(EmployeeView):
+
+    def get(self, request):
+
+        documents = Document.objects.all()
+
+        qType = request.GET.get('type')
+        if qType:
+            if qType == 'identity':
+                documents = documents.filter(validates_identity=True)
+            elif qType == 'employment':
+                documents = documents.filter(validates_employment=True)
+            elif qType == 'form':
+                documents = documents.filter(is_form=True)
+
+        serializer = documents_serializer.DocumentSerializer(documents, many=True)
+        return JsonResponse(serializer.data, status=200, safe=False)

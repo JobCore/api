@@ -377,7 +377,7 @@ class ProfileMeImageView(APIView):
 
         result = cloudinary.uploader.upload(
             request.FILES['image'],
-            public_id='profile' + str(profile.id),
+            public_id=f'{str(profile.id)}/profile' + str(profile.id),
             crop='limit',
             width=450,
             height=450,
@@ -387,7 +387,7 @@ class ProfileMeImageView(APIView):
                 'radius': 100
             },
             ],
-            tags=['profile_picture']
+            tags=['profile_picture', 'profile'+str(profile.id)]
         )
 
         profile.picture = result['secure_url']

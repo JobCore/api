@@ -27,7 +27,7 @@ from api.views.employee_views import (
 )
 
 from api.views.documents_view import (
-    EmployeeDocumentAPI, EmployeeDocumentDetailAPI
+    EmployeeDocumentAPI, EmployeeDocumentDetailAPI, DocumentAPI
 )
 
 from api.views.employer_views import (
@@ -340,6 +340,11 @@ urlpatterns = [
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
 
+    # DOCUMENTS
+    path('document', DocumentAPI.as_view(), name="document"),
+    path('employees/me/document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
+    path('employees/me/document', EmployeeDocumentAPI.as_view(), name="employee-document"),
+
     #
     # ADMIN USE ONLY
     #
@@ -367,9 +372,6 @@ urlpatterns = [
         name="admin-get-periods"),
     path('bank-accounts/', BankAccountAPIView.as_view(), name='api-bank-accounts'),
     path('bank-accounts/<int:bank_account_id>', BankAccountDetailAPIView.as_view(), name='detail-api-bank-accounts'),
-    # DOCUMENTS
-    path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
-    path('document/', EmployeeDocumentAPI.as_view(), name="employee-document"),
 
     ###
 

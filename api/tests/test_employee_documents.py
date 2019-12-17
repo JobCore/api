@@ -39,7 +39,7 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
             }
             # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
             response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
-        print(response.content)
+
         self.assertEquals(
             response.status_code,
             201,

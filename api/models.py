@@ -87,6 +87,17 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+PENDING = 'PENDING'
+NOT_APPROVED = 'NOT_APPROVED'
+BEING_REVIEWED = 'BEING_REVIEWED'
+MISSING_DOCUMENTS = 'MISSING_DOCUMENTS'
+APPROVED = 'APPROVED'
+EMPLOYEMNT_STATUS = (
+    (NOT_APPROVED, 'Not Approved'),
+    (PENDING, 'Pending'),
+    (BEING_REVIEWED, 'Being Reviews'),
+    (APPROVED, 'Approved'),
+)
 
 class Employee(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
@@ -105,7 +116,8 @@ class Employee(models.Model):
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    document_active = models.BooleanField(default=False)
+
+    employment_verification_status = models.CharField(max_length=25,choices=EMPLOYEMNT_STATUS,default=NOT_APPROVED,blank=True)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
@@ -611,6 +623,16 @@ class BankAccount(models.Model):
     institution_name = models.CharField(max_length=200, null=True, blank=True)
     stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
+class Document(models.Model):
+
+    title = models.CharField(max_length=250, null=True, blank=True)
+    
+    validates_identity = models.BooleanField(default=False)
+    validates_employment = models.BooleanField(default=False)
+    is_form = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
@@ -622,10 +644,11 @@ class EmployeeDocument(models.Model):
         (REJECTED, 'Rejected'),
     )
     document = models.URLField()
-    public_id = models.CharField(max_length=30, null=True)
-    name = models.CharField(max_length=50, null=True, blank=True)
+    public_id = models.CharField(max_length=80, null=True)
     rejected_reason = models.CharField(max_length=255, null=True)
-    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
+    status = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
+    
+    document_type = models.ForeignKey(Document, null=True, on_delete=models.CASCADE)
