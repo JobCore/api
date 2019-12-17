@@ -623,7 +623,7 @@ class EmployeeDocument(models.Model):
     )
     document = models.URLField()
     public_id = models.CharField(max_length=30, null=True)
-    name = models.CharField(max_length=50, null=True, blank=True)
+    name = models.CharField(max_length=150, null=True, blank=True)
     rejected_reason = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
