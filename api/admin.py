@@ -59,11 +59,14 @@ class ClockinAdmin(admin.ModelAdmin):
 
 
 class EmployeeDocumentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'document', 'name', 'state', 'created_at', 'updated_at')
+    list_display = ('id', 'document', 'get_name', 'status', 'created_at', 'updated_at')
     search_fields = (
         'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
-    list_filter = ('state',)
+    list_filter = ('status','document_type__validates_identity','document_type__validates_employment','document_type__is_form')
     list_per_page = 100
+
+    def get_name(self, obj):
+        return obj.document_type.title
 
 
 class AppVersionAdmin(admin.ModelAdmin):
