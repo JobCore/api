@@ -12,8 +12,8 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView
-)
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
+    AppVersionView)
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
 from api.views.admin_views import (
@@ -357,10 +357,7 @@ urlpatterns = [
         'positions/<int:id>',
         PositionView.as_view(),
         name="admin-id-positions"),
-    path(
-        'periods',
-        PayrollPeriodView.as_view(),
-        name="admin-get-periods"),
+    path('periods', PayrollPeriodView.as_view(), name="admin-get-periods"),
     path(
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
@@ -391,6 +388,5 @@ urlpatterns = [
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
 
-    # path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    # path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
+    path('version', AppVersionView.as_view(), name="version"),
 ]

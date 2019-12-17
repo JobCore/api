@@ -24,6 +24,8 @@ from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
+from django.http import JsonResponse
+
 import api.utils.jwt
 from api.pagination import HeaderLimitOffsetPagination
 
@@ -965,7 +967,8 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
 
         TODAY = datetime.datetime.now(tz=timezone.utc)
 
-        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(num_employees__lt=F('maximum_allowed_employees'))
+        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(
+            num_employees__lt=F('maximum_allowed_employees'))
 
         qStatus = request.GET.get('status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -997,7 +1000,7 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         if qEnd is not None and qEnd != '':
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
-        
+
         shifts = shifts.order_by('-starting_at')
 
         paginator = HeaderLimitOffsetPagination()
@@ -1007,3 +1010,11 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
             return paginator.get_paginated_response(serializer.data)
         else:
             return Response([], status=status.HTTP_200_OK)
+
+
+class AppVersionView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        current_version = AppVersion.objects.last()
+        return JsonResponse({"version": current_version.version}, safe=False)
