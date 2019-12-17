@@ -87,6 +87,7 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+
 PENDING = 'PENDING'
 NOT_APPROVED = 'NOT_APPROVED'
 BEING_REVIEWED = 'BEING_REVIEWED'
@@ -98,6 +99,7 @@ EMPLOYEMNT_STATUS = (
     (BEING_REVIEWED, 'Being Reviews'),
     (APPROVED, 'Approved'),
 )
+
 
 class Employee(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
@@ -117,7 +119,8 @@ class Employee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    employment_verification_status = models.CharField(max_length=25,choices=EMPLOYEMNT_STATUS,default=NOT_APPROVED,blank=True)
+    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,
+                                                      blank=True)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
@@ -624,16 +627,17 @@ class BankAccount(models.Model):
     institution_name = models.CharField(max_length=200, null=True, blank=True)
     stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
-class Document(models.Model):
 
+class Document(models.Model):
     title = models.CharField(max_length=250, null=True, blank=True)
-    
+
     validates_identity = models.BooleanField(default=False)
     validates_employment = models.BooleanField(default=False)
     is_form = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
 
 class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
@@ -655,8 +659,8 @@ class EmployeeDocument(models.Model):
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
     document_type = models.ForeignKey(Document, null=True, on_delete=models.CASCADE)
 
+
 class AppVersion(models.Model):
     version = models.IntegerField(default=94)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-
