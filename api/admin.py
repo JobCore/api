@@ -52,17 +52,16 @@ admin.site.register(City)
 class ClockinAdmin(admin.ModelAdmin):
     list_display = ('id', 'employee', 'started_at', 'ended_at', 'shift', 'author')
     search_fields = (
-    'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
-    'author__user__last_name')
+        'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
+        'author__user__last_name')
     list_filter = ('status',)
     list_per_page = 100
 
 
 class EmployeeDocumentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'document', 'name', 'state', 'created_at', 'updated_at', 'employee__user__first_name',
-                    'employee__user__last_name')
+    list_display = ('id', 'document', 'name', 'state', 'created_at', 'updated_at')
     search_fields = (
-    'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
+        'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
     list_filter = ('state',)
     list_per_page = 100
 
