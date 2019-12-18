@@ -100,8 +100,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
             if profile is not None:
-                raise serializers.ValidationError(
-                    "The user is already registered in jobcore")
+                raise serializers.ValidationError("The user is already registered in jobcore")
 
         try:
             sender = self.context['request'].user.profile.id

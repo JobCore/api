@@ -118,7 +118,7 @@ FILING_STATUS = (
 
 
 class Employee(models.Model):
-    response_time = models.IntegerField(blank=True, default=0)  # in minutes
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=8, blank=True)
@@ -134,6 +134,10 @@ class Employee(models.Model):
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    #reponse time calculation
+    response_time = models.IntegerField(blank=True, default=0)  # in minutes
+    total_invites = models.IntegerField(blank=True, default=0)  # in minutes
 
     # employment and deducations
     employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,blank=True)
@@ -156,6 +160,12 @@ PROFILE_STATUS = (
     (PENDING, 'PENDING_EMAIL_VALIDATION'),
 )
 
+ADMIN = 'ADMIN'
+SUPERVISOR = 'SUPERVISOR'
+COMPANY_ROLES = (
+    (ADMIN, 'Admin'),
+    (SUPERVISOR, 'Supervisor'),
+)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
@@ -180,15 +190,13 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True, null=True)
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField(
-        max_length=25,
-        choices=PROFILE_STATUS,
-        default=PENDING,
-        blank=True)
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
+
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
+    employer_role = models.CharField(max_length=25,choices=COMPANY_ROLES,default=ADMIN,blank=True)
+
+    status = models.CharField(max_length=25,choices=PROFILE_STATUS,default=PENDING,blank=True)
 
     def __str__(self):
         return self.user.username
@@ -383,6 +391,7 @@ class ShiftInvite(models.Model):
         default=PENDING,
         blank=True)
     manually_created = models.BooleanField(default=False)
+    responded_at = models.DateTimeField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -390,13 +399,6 @@ class ShiftInvite(models.Model):
         return str(self.employee) + " for " + str(self.shift) + " on " + self.created_at.strftime(
             "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
 
-
-PENDING = 'PENDING'
-ACCEPTED = 'ACCEPTED'
-JOBCORE_INVITE_STATUS_CHOICES = (
-    (PENDING, 'Pending'),
-    (ACCEPTED, 'Accepted'),
-)
 
 
 class UserToken(models.Model):
@@ -410,13 +412,22 @@ class UserToken(models.Model):
         return self.email + " " + self.token
 
 
+
+PENDING = 'PENDING'
+ACCEPTED = 'ACCEPTED'
+JOBCORE_INVITE_STATUS_CHOICES = (
+    (PENDING, 'Pending'),
+    (ACCEPTED, 'Accepted'),
+)
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, blank=True)
     first_name = models.TextField(max_length=100, blank=True)
     last_name = models.TextField(max_length=100, blank=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True, default=None, null=True)
+
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, default=None, null=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, default=None, null=True)
+
     email = models.TextField(max_length=100, blank=True)
     status = models.CharField(
         max_length=9,

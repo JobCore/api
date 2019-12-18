@@ -152,10 +152,7 @@ urlpatterns = [
         'employers/me/image',
         EmployerMeImageView.as_view(),
         name="me-employers-image"),
-    path(
-        'employers/me/users',
-        EmployerMeUsersView.as_view(),
-        name="me-employer-users"),
+    path('employers/me/users', EmployerMeUsersView.as_view(),name="me-employer-users"),
     path(
         'employers/me/applications',
         ApplicantsView.as_view(),

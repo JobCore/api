@@ -144,6 +144,13 @@ class UserRegisterSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
 
+        #if there is a previous invite as an employer
+        previous_invite = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=False).last()
+        if previous_invite.employer is not None and account_type is None:
+            account_type = 'employer'
+            employer = previous_invite.employer
+
+
         if account_type == 'employer':
             Profile.objects.create(user=user, picture='', employer=employer)
 
@@ -175,11 +182,9 @@ class UserRegisterSerializer(serializers.Serializer):
                     randint(1, 3)) + '.png', employee=emp, status=status,
                 profile_city_id=profile_city, city=city)
 
-            jobcore_invites = JobCoreInvite.objects.all().filter(
-                email=user.email)
+            jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=True)
 
-            auth_actions.create_shift_invites_from_jobcore_invites(
-                jobcore_invites, user.profile.employee)
+            auth_actions.create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
 
             jobcore_invites.update(status='ACCEPTED')
 

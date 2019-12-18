@@ -191,8 +191,11 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
 
         data = super(PayrollPeriodPaymentSerializer, self).validate(data)
 
+        if data['payroll_period'].status != 'OPEN':
+            raise serializers.ValidationError('This payroll period is not open for changes anymore')
+
         if 'status' not in data:
-            raise serializers.ValidationError('You need to specify the shift status')
+            raise serializers.ValidationError('You need to specify the status')
 
         return data
 
