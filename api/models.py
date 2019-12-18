@@ -11,6 +11,9 @@ MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
+    description = models.TextField(max_length=1050, blank=True)
+    meta_description = models.TextField(max_length=250, blank=True)
+    meta_keywords = models.TextField(max_length=250, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -661,6 +664,8 @@ class EmployeeDocument(models.Model):
 
 
 class AppVersion(models.Model):
-    version = models.IntegerField(default=94)
+    version = models.CharField(max_length=10, unique=True, default=94)
+    change_log = models.TextField(max_length=450, blank=True)
+    force_update = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)

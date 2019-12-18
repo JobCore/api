@@ -13,7 +13,8 @@ from api.views.general_views import (
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
     PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
-    AppVersionView)
+    AppVersionView    
+)
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
 from api.views.admin_views import (
@@ -46,7 +47,9 @@ urlpatterns = [
     #
     # PUBLIC ENDPOINTS
     #
-
+    # path('version/<str:version_number>', AppVersionView.as_view(), name="single-version"),
+    # path('version', AppVersionView.as_view(), name="version"),
+    
     path('login', ObtainJSONWebToken.as_view(
         serializer_class=CustomJWTSerializer)),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),
@@ -390,5 +393,4 @@ urlpatterns = [
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view()),
 
-    path('version', AppVersionView.as_view(), name="version"),
 ]
