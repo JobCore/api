@@ -52,7 +52,7 @@ class EmployeeDocumentAPI(EmployeeView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        result = cloudinary.uploader.destroy(public_id)
+        cloudinary.uploader.destroy(public_id)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):

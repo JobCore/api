@@ -204,7 +204,7 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
-
+            # TODO: Duplicated code with line 273
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
                 starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
                 employee_id=self.context['request'].user.profile.id
@@ -270,7 +270,7 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
         # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
-
+            # TODO: Duplicated code with line 207
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
                 starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
                 employee_id=self.context['request'].user.profile.id
