@@ -1,5 +1,30 @@
 # Documents
 
+0. Crear un documento
+
+POST /employee/me/documents
+
+**Auth required** : YES
+
+**Permissions required** : Authenticated User
+
+**Parameters**:
+
+| key                   | Example Value | Required?     |
+| --------------------  | ------------  | ------------- |
+| document              | <base64 data> | Yes           |
+| document_type         | 1             | Yes           |
+
+
+
+## Success Response
+
+**Code** : `200 OK`
+
+
+## Notes
+
+
 1. Para obtener todos los tipos de documentos de una lista:
 
 **URL** : `/documents?type=<document_type>`

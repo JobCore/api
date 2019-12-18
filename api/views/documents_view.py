@@ -20,10 +20,11 @@ class EmployeeDocumentAPI(EmployeeView):
     def post(self, request):
 
         if 'document_type' not in request.data:
-            return Response(validators.error_object('You need to specify the type of document you are uploading'),status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('You need to specify the type of document you are uploading'),
+                            status=status.HTTP_400_BAD_REQUEST)
 
         if 'document' not in request.FILES:
-            return Response(validators.error_object('Please specify a document'),status=status.HTTP_400_BAD_REQUEST)
+            return Response(validators.error_object('Please specify a document'), status=status.HTTP_400_BAD_REQUEST)
 
         public_id = f'profile-{str(self.request.user.id)}-{datetime.now().strftime("%d-%m")}-{get_random_string(length=32)}'
         file_name = f'{str(self.request.user.id)}/i9_documents/{public_id}'
@@ -32,7 +33,7 @@ class EmployeeDocumentAPI(EmployeeView):
             result = cloudinary.uploader.upload(
                 request.FILES['document'],
                 public_id=file_name,
-                tags=['i9_document','profile-'+str(self.request.user.id), ],
+                tags=['i9_document', 'profile-' + str(self.request.user.id), ],
                 use_filename=1,
                 unique_filename=1,
                 resource_type='auto'
@@ -62,6 +63,9 @@ class EmployeeDocumentAPI(EmployeeView):
         qStatus = request.GET.get('status')
         if qStatus:
             documents = documents.filter(status=qStatus)
+        else:
+            # by default, archived documents will be hidden
+            documents = documents.filter(status__in=['PENDING', 'APPROVED', 'REJECTED'])
 
         qType = request.GET.get('type')
         if qType:

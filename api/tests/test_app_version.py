@@ -22,11 +22,11 @@ class AppVersionTestSuite(TestCase, WithMakeUser):
             )
         )
 
-    def test_get_my_documents(self):
+    def test_get(self):
         AppVersion.objects.create(version=10)
-        url = reverse_lazy('api:version')
+        url = reverse_lazy('api:single-version', kwargs=dict(version='last'))
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
         self.assertEquals(response.status_code, 200, response.content)
-        self.assertEquals(json_response.get("version"), 10, response.content)
+        self.assertEquals(json_response.get("build_number"), 94, response.content)

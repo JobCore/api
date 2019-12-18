@@ -389,7 +389,7 @@ class ProfileMeImageView(APIView):
                 'radius': 100
             },
             ],
-            tags=['profile_picture', 'profile'+str(profile.id)]
+            tags=['profile_picture', 'profile' + str(profile.id)]
         )
 
         profile.picture = result['secure_url']
@@ -1015,16 +1015,16 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
 class AppVersionView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request, version_number=None):
+    def get(self, request, version=None):
 
-        if version_number:
+        if version:
             try:
-                if version_number == 'last':
-                    version = AppVersion.objects.last()
+                if version == 'last':
+                    app_version = AppVersion.objects.last()
                 else:
-                    version = AppVersion.objects.get(version_number=version_number)
-                
-                serializer = other_serializer.AppVersionSerializer(version, many=False)
+                    app_version = AppVersion.objects.get(version=version)
+
+                serializer = other_serializer.AppVersionSerializer(app_version, many=False)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             except AppVersion.DoesNotExist:

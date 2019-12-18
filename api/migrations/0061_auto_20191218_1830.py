@@ -5,7 +5,7 @@ from django.db import migrations
 
 def seed_app_version(apps, schema_editor):
     AppVersion = apps.get_model('api', 'AppVersion')
-    AppVersion.objects.create()
+    AppVersion.objects.create(version='1.1.59')
 
 
 class Migration(migrations.Migration):
