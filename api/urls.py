@@ -47,8 +47,8 @@ urlpatterns = [
     #
     # PUBLIC ENDPOINTS
     #
-    # path('version/<str:version_number>', AppVersionView.as_view(), name="single-version"),
-    # path('version', AppVersionView.as_view(), name="version"),
+    path('version/<str:version>', AppVersionView.as_view(), name="single-version"),
+    path('version', AppVersionView.as_view(), name="version"),
     
     path('login', ObtainJSONWebToken.as_view(
         serializer_class=CustomJWTSerializer)),

@@ -49,7 +49,7 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
             f'It should return a success response: {str(response.content)}')
 
     @patch('cloudinary.uploader.upload')
-    def test_get_my_documents(self, mocked_uploader):
+    def test_get(self, mocked_uploader):
 
         document = {
             'document': 'http://a-valid.url/for-the-doc',
