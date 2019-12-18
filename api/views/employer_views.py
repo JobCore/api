@@ -472,7 +472,7 @@ class EmployerShiftView(EmployerView):
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
-                defaultSerializer = shift_serializer.ShiftGetBigSerializer
+                defaultSerializer = shift_serializer.ShiftGetBigListSerializer
 
             serializer = defaultSerializer(shifts.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

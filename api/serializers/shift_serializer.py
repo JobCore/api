@@ -142,7 +142,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetBigSerializer(serializers.ModelSerializer):
+class ShiftGetBigListSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     employees= EmployeeGetSmallSerializer(many=True, read_only=True)
