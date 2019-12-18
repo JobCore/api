@@ -2,9 +2,9 @@ from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
-   Badge, JobCoreInvite, Rate, Employer, Profile,
-   Shift, Employee, User, AvailabilityBlock, City,
-   AppVersion,
+    Badge, JobCoreInvite, Rate, Employer, Profile,
+    Shift, Employee, User, AvailabilityBlock, City,
+    AppVersion,
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
@@ -14,6 +14,7 @@ class AppVersionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppVersion
         exclude = ()
+
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -215,14 +216,16 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
                 employee_id=self.context['request'].user.profile.id
             )
 
-            #if updating
+            # if updating
             if self.instance:
                 previous_ablock_in_week = previous_ablock_in_week.exclude(
                     id=self.instance.id)
 
             previous_ablock_in_week = previous_ablock_in_week.count()
             if previous_ablock_in_week > 0:
-                raise serializers.ValidationError('This employee has '+str(previous_ablock_in_week)+' day block(s) for '+days[str(django_start_week_day)]+' already')  # NOQA
+                raise serializers.ValidationError(
+                    'This employee has ' + str(previous_ablock_in_week) + ' day block(s) for ' + days[
+                        str(django_start_week_day)] + ' already')  # NOQA
 
         return data
 
@@ -293,4 +296,3 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
                         str(django_start_week_day)] + ' already')  # NOQA
 
         return data
-

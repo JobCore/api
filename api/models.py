@@ -664,7 +664,8 @@ class EmployeeDocument(models.Model):
 
 
 class AppVersion(models.Model):
-    version = models.CharField(max_length=10, unique=True, default=94)
+    build_number = models.IntegerField(default=94)
+    version = models.CharField(max_length=10, unique=True, default='94')
     change_log = models.TextField(max_length=450, blank=True)
     force_update = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

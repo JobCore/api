@@ -1,43 +1,8 @@
 # Documents
 
-## Create a new Document
+1. Para obtener todos los tipos de documentos de una lista:
 
-**URL** : `/api/document`
-
-**Method** : `POST`
-
-**Auth required** : YES
-
-**Permissions required** : Authenticated User
-
-## Request Params
-
-
-| key                   | Example Value | Required?     |
-| --------------------  | ------------  | ------------- |
-| document              |       ""      |     Yes       |
-
-
-## Example:
-
-http://localhost:5000/api/document
-
-## Success Response
-
-**Code** : `200 OK`
-
-**Content examples**
-
-
-```json
-
-```
-
-## Notes
-
-## List my documents
-
-**URL** : `/api/document`
+**URL** : `/documents?type=<document_type>`
 
 **Method** : `GET`
 
@@ -45,9 +10,9 @@ http://localhost:5000/api/document
 
 **Permissions required** : Authenticated User
 
-## Example:
+**Querystring**:
+    - type=identity,employment,form
 
-http://localhost:5000/api/document
 
 ## Success Response
 
@@ -70,14 +35,6 @@ http://localhost:5000/api/document
 
 ## Notes
 
-Aqui esta la nueva version del api:
-
-1. Para obtener todos los tipos de documentos de una lista:
-```
-GET /documents?type=<document_type>
-
-Querystring:
-    - type=identity,employment,form
 
 ```
 2. Para obtener todos los documentos del employee que esta logeado:
@@ -91,7 +48,7 @@ Querystring:
 
 ```
 
-3. Para borrary un document
+3. Para borrar  un document
 ```
 DELETE /employee/me/documents/id
 ```
