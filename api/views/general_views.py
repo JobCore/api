@@ -1015,6 +1015,21 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
 class AppVersionView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request):
-        current_version = AppVersion.objects.last()
-        return JsonResponse({"version": current_version.version}, safe=False)
+    def get(self, request, version_number=None):
+
+        if version_number:
+            try:
+                if version_number == 'last':
+                    version = AppVersion.objects.last()
+                else:
+                    version = AppVersion.objects.get(version_number=version_number)
+                
+                serializer = other_serializer.AppVersionSerializer(version, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            except AppVersion.DoesNotExist:
+                return Response({"detail": "The app version was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        versions = AppVersion.objects.all()
+        serializer = other_serializer.AppVersionSerializer(versions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

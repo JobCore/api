@@ -4,11 +4,16 @@ from api.utils import notifier
 from api.models import (
    Badge, JobCoreInvite, Rate, Employer, Profile,
    Shift, Employee, User, AvailabilityBlock, City,
-   # Document
+   AppVersion,
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
 
+
+class AppVersionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppVersion
+        exclude = ()
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
