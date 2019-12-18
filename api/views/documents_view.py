@@ -62,6 +62,9 @@ class EmployeeDocumentAPI(EmployeeView):
         qStatus = request.GET.get('status')
         if qStatus:
             documents = documents.filter(status=qStatus)
+        else:
+            # by default, archived documents will be hidden
+            documents = documents.filter(status__in=['PENDING', 'APPROVED', 'REJECTED'])
 
         qType = request.GET.get('type')
         if qType:

@@ -99,8 +99,21 @@ APPROVED = 'APPROVED'
 EMPLOYEMNT_STATUS = (
     (NOT_APPROVED, 'Not Approved'),
     (PENDING, 'Pending'),
-    (BEING_REVIEWED, 'Being Reviews'),
+    (BEING_REVIEWED, 'Being Reviewed'),
     (APPROVED, 'Approved'),
+)
+
+SINGLE = 'SINGLE'
+MARRIED_JOINTLY = 'MARRIED_JOINTLY'
+MARRIED_SEPARATELY = 'MARRIED_SEPARATELY'
+HEAD = 'HEAD'
+WIDOWER = 'WIDOWER'
+FILING_STATUS = (
+    (SINGLE, 'Single'),
+    (MARRIED_JOINTLY, 'Married filing jointly'),
+    (MARRIED_SEPARATELY, 'Married filing separately'),
+    (HEAD, 'Head of household'),
+    (WIDOWER, 'Qualifying widow(er) with dependent child'),
 )
 
 
@@ -122,8 +135,11 @@ class Employee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,
-                                                      blank=True)
+    # employment and deducations
+    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,blank=True)
+    filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE,blank=True)
+    allowances = models.IntegerField(blank=True, default=0)
+    extra_withholding = models.FloatField(blank=True, default=0)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
@@ -645,10 +661,14 @@ class Document(models.Model):
 class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
+    ARCHIVED = 'ARCHIVED'
+    DELETED = 'DELETED'
     REJECTED = 'REJECTED'
     DOCUMENT_STATUS = (
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
+        (ARCHIVED, 'Archived'),
+        (DELETED, 'Deleted'),
         (REJECTED, 'Rejected'),
     )
     document = models.URLField()
@@ -657,6 +677,7 @@ class EmployeeDocument(models.Model):
 
     rejected_reason = models.CharField(max_length=255, null=True)
     status = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
+    expired_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
