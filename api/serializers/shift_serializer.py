@@ -370,7 +370,12 @@ class ShiftGetBigSerializer(ShiftGetSerializer):
         return (obj.starting_at <= NOW + datetime.timedelta(minutes=clockin_delta) and obj.ending_at >= NOW - datetime.timedelta(minutes=clockout_delta))
 
     def _clockin_set(self, obj):
-        clockins = Clockin.objects.filter(shift__id=obj.id, employee_id=self.context["employee"])
+        clockins = []
+        if "employee" in self.context:
+            clockins = Clockin.objects.filter(shift__id=obj.id, employee_id=self.context["employee"])
+        else:
+            clockins = Clockin.objects.filter(shift__id=obj.id)
+            
         serializer = ClockinGetSmallSerializer(clockins, many=True)
         return serializer.data
 
