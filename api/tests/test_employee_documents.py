@@ -4,6 +4,7 @@ from django.urls import reverse_lazy
 from mock import patch
 from io import BytesIO
 from django.test.client import MULTIPART_CONTENT
+from mixer.backend.django import mixer
 
 from api.models import EmployeeDocument, Employee
 from api.tests.mixins import WithMakeUser
@@ -34,8 +35,10 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.client.force_login(self.test_user_employee)
 
         with BytesIO(b'the-data') as f:
+            _type = mixer.blend('api.Document')
             payload = {
                 'document': f,
+                'document_type': _type.id
             }
             # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
             response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
@@ -47,10 +50,11 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
 
     @patch('cloudinary.uploader.upload')
     def test_get_my_documents(self, mocked_uploader):
+
         document = {
             'document': 'http://a-valid.url/for-the-doc',
             "employee_id": Employee.objects.all()[0].id,
-            "name": "Test Name"
+            "document_type": mixer.blend('api.Document')
         }
 
         EmployeeDocument.objects.create(**document)
