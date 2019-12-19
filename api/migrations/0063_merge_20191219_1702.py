@@ -6,7 +6,6 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0062_merge_20191218_1840'),
         ('api', '0062_auto_20191218_2140'),
     ]
 
