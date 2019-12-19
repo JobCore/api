@@ -22,7 +22,8 @@ from api.utils import validators
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
-    employee_serializer, clockin_serializer, rating_serializer
+    employee_serializer, clockin_serializer, rating_serializer,
+    profile_serializer
 )
 
 from django.utils import timezone
@@ -100,6 +101,30 @@ class EmployerMeUsersView(EmployerView):
 
         serializer = user_serializer.UserGetSmallSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, id):
+
+        try:
+            user = self.get_queryset().get(profile__id=id)
+        except User.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+
+        qs = self.get_queryset()
+        try:
+            qs = qs.get(profile__id=id)
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
 
 class ApplicantsView(EmployerView):
@@ -272,6 +297,8 @@ class EmployerVenueView(EmployerView):
             except Venue.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        else:
+            qs = qs.filter(status='ACTIVE')
 
         serializer = venue_serializer.VenueSerializer(qs, many=many)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -311,10 +338,15 @@ class EmployerVenueView(EmployerView):
         try:
             venue = self.get_queryset().get(id=id)
         except Venue.DoesNotExist:
-            return Response(validators.error_object(
-                'Not found.'), status=status.HTTP_404_NOT_FOUND)
-
-        venue.delete()
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        
+        count = venue.shift_set.count()
+        if count == 0:
+            venue.delete()
+        else:
+            venue.status = "DELETED"
+            venue.save()
+        
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

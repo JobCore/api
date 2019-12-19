@@ -411,7 +411,7 @@ class PositionView(APIView):
             serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
-            positions = Position.objects.all()
+            positions = Position.objects.filter(status='ACTIVE')
             serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
@@ -445,7 +445,12 @@ class PositionView(APIView):
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        position.delete()
+        if position.shift_set.count() > 0 or position.employee_set.count() > 0:
+            position.status = 'DELETED'
+            position.save()
+        else:
+            position.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

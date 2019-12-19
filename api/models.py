@@ -8,6 +8,12 @@ NOW = timezone.now()
 MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
 
 
+ACTIVE = 'ACTIVE'
+DELETED = 'DELETED'
+POSITION_STATUS = (
+    (ACTIVE, 'Active'),
+    (DELETED, 'Deleted'),
+)
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
@@ -16,6 +22,7 @@ class Position(models.Model):
     meta_keywords = models.TextField(max_length=250, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9,choices=POSITION_STATUS,default=ACTIVE,blank=True)
 
     def __str__(self):
         return self.title
@@ -247,6 +254,12 @@ class FavoriteList(models.Model):
         return self.title
 
 
+ACTIVE = 'ACTIVE'
+DELETED = 'DELETED'
+VENUE_STATUS = (
+    (ACTIVE, 'Active'),
+    (DELETED, 'Deleted'),
+)
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employer = models.ForeignKey(
@@ -259,6 +272,7 @@ class Venue(models.Model):
     zip_code = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9,choices=VENUE_STATUS,default=ACTIVE,blank=True)
 
     def __str__(self):
         return self.title
