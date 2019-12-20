@@ -67,6 +67,10 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
 
     def get_name(self, obj):
         return obj.document_type.title if obj.document_type is not None else 'Missing document type'
+admin.site.register(EmployeeDocument, EmployeeDocumentAdmin)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'validates_identity', 'validates_employment', 'is_form')
+admin.site.register(Document, DocumentAdmin)
 
 
 
@@ -77,7 +81,6 @@ admin.site.register(UserToken)
 admin.site.register(Notification)
 admin.site.register(JobCoreInvite)
 admin.site.register(BankAccount)
-admin.site.register(EmployeeDocument, EmployeeDocumentAdmin)
 
 class AppVersionAdmin(admin.ModelAdmin):
     list_display = ('id', 'version', 'force_update', 'created_at', 'updated_at')
