@@ -103,11 +103,13 @@ def process_expired_shifts():
         # if now > shift.ending_at + delta:
         clockins = Clockin.objects.filter(
             ended_at__isnull=True, 
+            status='PENDING',
             shift__maximum_clockout_delay_minutes__isnull=False, 
             shift__ending_at__lte= NOW - (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
         ).select_related('shift')
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
+            clockin.automatically_closed = True
             clockin.save()
 
         # also expire the shift if its still open or filled but it has ended (ended_at + delay)

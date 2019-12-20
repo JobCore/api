@@ -554,7 +554,9 @@ class Clockin(models.Model):
         max_digits=14, decimal_places=11, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
-    # auto_closed_at = models.DateTimeField(blank=True, null=True)
+
+    automatically_closed = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(
