@@ -165,6 +165,18 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
         data = super(PayrollPeriodPaymentPostSerializer, self).validate(data)
 
+        if 'shift' not in data:
+            raise serializers.ValidationError('Missing shift on the Payment')
+
+        if 'regular_hours' not in data:
+            raise serializers.ValidationError('You need to specify how many regular_hours were worked')
+
+        if 'over_time' not in data:
+            raise serializers.ValidationError('You need to specify how many over_time was worked')
+
+        if 'breaktime_minutes' not in data:
+            raise serializers.ValidationError('You need to specify how many breaktime_minutes was worked')
+
         # previous_payment = PayrollPeriodPayment.objects.filter(employee__id=data['employee'].id, shift__id=data['shift'].id).first()
         # if previous_payment is not None:
         #     raise serializers.ValidationError('There is already a payment for this talent and shift')

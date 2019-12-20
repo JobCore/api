@@ -202,6 +202,72 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         print(response_json)
         self.assertEquals(response.status_code, 400, "No se debe hacer payment sin regular hours")
 
+    def test_create_payment_without_over_time(self):
+
+        self.test_shift2, _, __ = self._make_shift(
+                    shiftkwargs=dict(status='OPEN', starting_at=timezone.now(), ending_at=timezone.now() + timedelta(hours=8), minimum_hourly_rate=15, minimum_allowed_rating = 0, 
+                    maximum_clockin_delta_minutes=15, maximum_clockout_delay_minutes= 15, maximum_allowed_employees = 5, employees=self.test_employee),
+                    employer=self.test_employer)
+
+        test_payroll_period = mixer.blend(
+                'api.PayrollPeriod',
+                employer=self.test_employer
+            )
+
+        payload = {
+            'payroll_period': test_payroll_period.id,
+            'employee': self.test_employee.id,
+            'employer': self.test_employer.id, 
+            'shift': self.test_shift2.id, # shift not associated 
+            # 'clockin': ,
+            'splited_payment': True,
+            'status':'PENDING',
+            'breaktime_minutes':5,
+            'regular_hours': 6, 
+            # 'over_time':5,
+            'hourly_rate':10,
+            'total_amount':80,
+            
+        }
+        url = reverse_lazy('api:me-get-payroll-payments-employer')
+        response = self.client.post(url, data=payload)
+        response_json = response.json()
+        print(response_json)
+        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin overtime")
+
+    def test_create_payment_without_breaktime_minutes(self):
+
+        self.test_shift2, _, __ = self._make_shift(
+                    shiftkwargs=dict(status='OPEN', starting_at=timezone.now(), ending_at=timezone.now() + timedelta(hours=8), minimum_hourly_rate=15, minimum_allowed_rating = 0, 
+                    maximum_clockin_delta_minutes=15, maximum_clockout_delay_minutes= 15, maximum_allowed_employees = 5, employees=self.test_employee),
+                    employer=self.test_employer)
+
+        test_payroll_period = mixer.blend(
+                'api.PayrollPeriod',
+                employer=self.test_employer
+            )
+
+        payload = {
+            'payroll_period': test_payroll_period.id,
+            'employee': self.test_employee.id,
+            'employer': self.test_employer.id, 
+            'shift': self.test_shift2.id, # shift not associated 
+            # 'clockin': ,
+            'splited_payment': True,
+            'status':'PENDING',
+            # 'breaktime_minutes':5,
+            'regular_hours': 6, 
+            'over_time':5,
+            'hourly_rate':10,
+            'total_amount':80,
+            
+        }
+        url = reverse_lazy('api:me-get-payroll-payments-employer')
+        response = self.client.post(url, data=payload)
+        response_json = response.json()
+        print(response_json)
+        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin overtime")
+
     def test_two_day_shift_payment(self):
 
         starting_at = timezone.now()
