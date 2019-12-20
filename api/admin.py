@@ -66,7 +66,7 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
     list_per_page = 100
 
     def get_name(self, obj):
-        return obj.document_type.title
+        return obj.document_type.title if obj.document_type is not None else 'Missing document type'
 
 
 
