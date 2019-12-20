@@ -53,6 +53,19 @@ class City(models.Model):
         return self.name
 
 
+PENDING = 'PENDING'
+NOT_APPROVED = 'NOT_APPROVED'
+BEING_REVIEWED = 'BEING_REVIEWED'
+APPROVED = 'APPROVED'
+DELETED = 'DELETED'
+EMPLOYER_STATUS = (
+    (NOT_APPROVED, 'Not Approved'),
+    (PENDING, 'Pending'),
+    (BEING_REVIEWED, 'Being Reviewed'),
+    (DELETED, 'Deleted'),
+    (APPROVED, 'Approved'),
+)
+
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -63,7 +76,7 @@ class Employer(models.Model):
         max_digits=2, decimal_places=1, default=0, blank=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
-
+    status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED,blank=True)
     # talents on employer's favlist's will be automatically accepted
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
@@ -106,6 +119,7 @@ APPROVED = 'APPROVED'
 EMPLOYEMNT_STATUS = (
     (NOT_APPROVED, 'Not Approved'),
     (PENDING, 'Pending'),
+    (MISSING_DOCUMENTS, 'Missing Documents'),
     (BEING_REVIEWED, 'Being Reviewed'),
     (APPROVED, 'Approved'),
 )
