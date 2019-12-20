@@ -146,7 +146,7 @@ class UserRegisterSerializer(serializers.Serializer):
 
         #if there is a previous invite as an employer
         previous_invite = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=False).last()
-        if previous_invite.employer is not None and account_type is None:
+        if previous_invite is not None and account_type is None:
             account_type = 'employer'
             employer = previous_invite.employer
 
