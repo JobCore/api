@@ -8,11 +8,21 @@ NOW = timezone.now()
 MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
 
 
+ACTIVE = 'ACTIVE'
+DELETED = 'DELETED'
+POSITION_STATUS = (
+    (ACTIVE, 'Active'),
+    (DELETED, 'Deleted'),
+)
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
+    description = models.TextField(max_length=1050, blank=True)
+    meta_description = models.TextField(max_length=250, blank=True)
+    meta_keywords = models.TextField(max_length=250, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9,choices=POSITION_STATUS,default=ACTIVE,blank=True)
 
     def __str__(self):
         return self.title
@@ -88,8 +98,34 @@ class Employer(models.Model):
         return self.title
 
 
+PENDING = 'PENDING'
+NOT_APPROVED = 'NOT_APPROVED'
+BEING_REVIEWED = 'BEING_REVIEWED'
+MISSING_DOCUMENTS = 'MISSING_DOCUMENTS'
+APPROVED = 'APPROVED'
+EMPLOYEMNT_STATUS = (
+    (NOT_APPROVED, 'Not Approved'),
+    (PENDING, 'Pending'),
+    (BEING_REVIEWED, 'Being Reviewed'),
+    (APPROVED, 'Approved'),
+)
+
+SINGLE = 'SINGLE'
+MARRIED_JOINTLY = 'MARRIED_JOINTLY'
+MARRIED_SEPARATELY = 'MARRIED_SEPARATELY'
+HEAD = 'HEAD'
+WIDOWER = 'WIDOWER'
+FILING_STATUS = (
+    (SINGLE, 'Single'),
+    (MARRIED_JOINTLY, 'Married filing jointly'),
+    (MARRIED_SEPARATELY, 'Married filing separately'),
+    (HEAD, 'Head of household'),
+    (WIDOWER, 'Qualifying widow(er) with dependent child'),
+)
+
+
 class Employee(models.Model):
-    response_time = models.IntegerField(blank=True, default=0)  # in minutes
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=8, blank=True)
@@ -105,7 +141,16 @@ class Employee(models.Model):
     badges = models.ManyToManyField(Badge, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    document_active = models.BooleanField(default=False)
+
+    #reponse time calculation
+    response_time = models.IntegerField(blank=True, default=0)  # in minutes
+    total_invites = models.IntegerField(blank=True, default=0)  # in minutes
+
+    # employment and deducations
+    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,blank=True)
+    filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE,blank=True)
+    allowances = models.IntegerField(blank=True, default=0)
+    extra_withholding = models.FloatField(blank=True, default=0)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
@@ -122,6 +167,12 @@ PROFILE_STATUS = (
     (PENDING, 'PENDING_EMAIL_VALIDATION'),
 )
 
+ADMIN = 'ADMIN'
+SUPERVISOR = 'SUPERVISOR'
+COMPANY_ROLES = (
+    (ADMIN, 'Admin'),
+    (SUPERVISOR, 'Supervisor'),
+)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
@@ -146,15 +197,13 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True, null=True)
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField(
-        max_length=25,
-        choices=PROFILE_STATUS,
-        default=PENDING,
-        blank=True)
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
+
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
+    employer_role = models.CharField(max_length=25,choices=COMPANY_ROLES,default=ADMIN,blank=True)
+
+    status = models.CharField(max_length=25,choices=PROFILE_STATUS,default=PENDING,blank=True)
 
     def __str__(self):
         return self.user.username
@@ -205,6 +254,12 @@ class FavoriteList(models.Model):
         return self.title
 
 
+ACTIVE = 'ACTIVE'
+DELETED = 'DELETED'
+VENUE_STATUS = (
+    (ACTIVE, 'Active'),
+    (DELETED, 'Deleted'),
+)
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employer = models.ForeignKey(
@@ -217,6 +272,7 @@ class Venue(models.Model):
     zip_code = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9,choices=VENUE_STATUS,default=ACTIVE,blank=True)
 
     def __str__(self):
         return self.title
@@ -349,6 +405,7 @@ class ShiftInvite(models.Model):
         default=PENDING,
         blank=True)
     manually_created = models.BooleanField(default=False)
+    responded_at = models.DateTimeField(blank=False, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -356,13 +413,6 @@ class ShiftInvite(models.Model):
         return str(self.employee) + " for " + str(self.shift) + " on " + self.created_at.strftime(
             "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
 
-
-PENDING = 'PENDING'
-ACCEPTED = 'ACCEPTED'
-JOBCORE_INVITE_STATUS_CHOICES = (
-    (PENDING, 'Pending'),
-    (ACCEPTED, 'Accepted'),
-)
 
 
 class UserToken(models.Model):
@@ -376,13 +426,22 @@ class UserToken(models.Model):
         return self.email + " " + self.token
 
 
+
+PENDING = 'PENDING'
+ACCEPTED = 'ACCEPTED'
+JOBCORE_INVITE_STATUS_CHOICES = (
+    (PENDING, 'Pending'),
+    (ACCEPTED, 'Accepted'),
+)
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, blank=True)
     first_name = models.TextField(max_length=100, blank=True)
     last_name = models.TextField(max_length=100, blank=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True, default=None, null=True)
+
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, default=None, null=True)
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, default=None, null=True)
+
     email = models.TextField(max_length=100, blank=True)
     status = models.CharField(
         max_length=9,
@@ -504,7 +563,8 @@ class Clockin(models.Model):
         default=PENDING)
 
     def __str__(self):
-        return self.employee.user.first_name+" "+self.employee.user.last_name+", from "+str(self.started_at)+" to "+str(self.ended_at)
+        return self.employee.user.first_name + " " + self.employee.user.last_name + ", from " + str(
+            self.started_at) + " to " + str(self.ended_at)
 
 
 OPEN = 'OPEN'
@@ -612,20 +672,50 @@ class BankAccount(models.Model):
     stripe_token = models.CharField(max_length=200, null=True, blank=True)
 
 
+class Document(models.Model):
+    title = models.CharField(max_length=250, null=True, blank=True)
+
+    validates_identity = models.BooleanField(default=False)
+    validates_employment = models.BooleanField(default=False)
+    is_form = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.title
+
+
 class EmployeeDocument(models.Model):
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
+    ARCHIVED = 'ARCHIVED'
+    DELETED = 'DELETED'
     REJECTED = 'REJECTED'
     DOCUMENT_STATUS = (
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),
+        (ARCHIVED, 'Archived'),
+        (DELETED, 'Deleted'),
         (REJECTED, 'Rejected'),
     )
     document = models.URLField()
-    public_id = models.CharField(max_length=30, null=True)
-    name = models.CharField(max_length=50, null=True, blank=True)
+
+    public_id = models.CharField(max_length=80, null=True)
+
     rejected_reason = models.CharField(max_length=255, null=True)
-    state = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
+    status = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
+    expired_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
+    document_type = models.ForeignKey(Document, null=True, on_delete=models.CASCADE)
+
+
+class AppVersion(models.Model):
+    build_number = models.IntegerField(default=94)
+    version = models.CharField(max_length=10, unique=True, default='94')
+    change_log = models.TextField(max_length=450, blank=True)
+    force_update = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)

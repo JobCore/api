@@ -24,6 +24,8 @@ from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 
+from django.http import JsonResponse
+
 import api.utils.jwt
 from api.pagination import HeaderLimitOffsetPagination
 
@@ -377,7 +379,7 @@ class ProfileMeImageView(APIView):
 
         result = cloudinary.uploader.upload(
             request.FILES['image'],
-            public_id='profile' + str(profile.id),
+            public_id=f'{str(profile.id)}/profile' + str(profile.id),
             crop='limit',
             width=450,
             height=450,
@@ -387,7 +389,7 @@ class ProfileMeImageView(APIView):
                 'radius': 100
             },
             ],
-            tags=['profile_picture']
+            tags=['profile_picture', 'profile' + str(profile.id)]
         )
 
         profile.picture = result['secure_url']
@@ -409,7 +411,7 @@ class PositionView(APIView):
             serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
-            positions = Position.objects.all()
+            positions = Position.objects.filter(status='ACTIVE')
             serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
@@ -443,7 +445,12 @@ class PositionView(APIView):
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        position.delete()
+        if position.shift_set.count() > 0 or position.employee_set.count() > 0:
+            position.status = 'DELETED'
+            position.save()
+        else:
+            position.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -965,7 +972,8 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
 
         TODAY = datetime.datetime.now(tz=timezone.utc)
 
-        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(num_employees__lt=F('maximum_allowed_employees'))
+        shifts = Shift.objects.annotate(num_employees=Count('employees')).filter(
+            num_employees__lt=F('maximum_allowed_employees'))
 
         qStatus = request.GET.get('status')
         if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -997,7 +1005,7 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         if qEnd is not None and qEnd != '':
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
-        
+
         shifts = shifts.order_by('-starting_at')
 
         paginator = HeaderLimitOffsetPagination()
@@ -1007,3 +1015,26 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
             return paginator.get_paginated_response(serializer.data)
         else:
             return Response([], status=status.HTTP_200_OK)
+
+
+class AppVersionView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request, version=None):
+
+        if version:
+            try:
+                if version == 'last':
+                    app_version = AppVersion.objects.last()
+                else:
+                    app_version = AppVersion.objects.get(version=version)
+
+                serializer = other_serializer.AppVersionSerializer(app_version, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            except AppVersion.DoesNotExist:
+                return Response({"detail": "The app version was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        versions = AppVersion.objects.all()
+        serializer = other_serializer.AppVersionSerializer(versions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

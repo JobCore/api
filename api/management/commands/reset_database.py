@@ -57,4 +57,7 @@ class Command(BaseCommand):
         log.insert(0, "Deleting PayrollPeriodPayments...")
         PayrollPeriodPayment.objects.all().delete()
 
+        log.insert(0, "Deleting Documents...")
+        Document.objects.all().delete()
+
         self.stdout.write(self.style.SUCCESS("Successfully deleted all models"))
