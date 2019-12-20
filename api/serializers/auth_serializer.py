@@ -92,9 +92,7 @@ class UserRegisterSerializer(serializers.Serializer):
     business_website = serializers.CharField(required=False, write_only=True)
     about_business = serializers.CharField(required=False, write_only=True)
 
-    employer = serializers.PrimaryKeyRelatedField(
-        required=False, many=False, write_only=True,
-        queryset=Employer.objects.all())
+    employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True,queryset=Employer.objects.all())
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
@@ -130,16 +128,13 @@ class UserRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("Company registration is disabled")
 
         # validate creation of new employer
-        if data['account_type'] == 'employer' and data['employer'] is None:
+        if data['account_type'] == 'employer' and 'employer' not in data or data['employer'] is None:
             if data['business_name'] is None:
-                raise serializers.ValidationError("You need to specify the business name")
+                raise serializers.ValidationError("You need to specify the business name or the employer id")
             if data['business_website'] is None:
-                raise serializers.ValidationError("You need to specify the business website")
+                raise serializers.ValidationError("You need to specify the business website or the employer id")
             if data['about_business'] is None:
-                raise serializers.ValidationError("You need to specify the business description")
-
-            # if 'employer' not in data: 
-            #     raise serializers.ValidationError("You need to specify the user employer id")
+                raise serializers.ValidationError("You need to specify the business description or the employer id")
 
         return data
 
@@ -158,12 +153,11 @@ class UserRegisterSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
 
-        #if there is a previous invite as an employer
-        previous_invite = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=False).last()
-        if previous_invite is not None and account_type is None:
-            account_type = 'employer'
-            employer = previous_invite.employer
-
+        # #if there is a previous invite as an employer
+        # previous_invite = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=False).last()
+        # if previous_invite is not None and account_type is None:
+        #     account_type = 'employer'
+        #     employer = previous_invite.employer
 
         if account_type == 'employer':
             if employer is None:
