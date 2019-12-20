@@ -128,7 +128,7 @@ class UserRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("Company registration is disabled")
 
         # validate creation of new employer
-        if data['account_type'] == 'employer' and 'employer' not in data or data['employer'] is None:
+        if data['account_type'] == 'employer' and ('employer' not in data or data['employer'] is None):
             if data['business_name'] is None:
                 raise serializers.ValidationError("You need to specify the business name or the employer id")
             if data['business_website'] is None:
