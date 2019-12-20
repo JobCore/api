@@ -142,6 +142,9 @@ class UserRegisterSerializer(serializers.Serializer):
         account_type = validated_data.pop('account_type', None)
         employer = validated_data.pop('employer', None)
         city = validated_data.pop('city', None)
+        business_name = validated_data.pop('business_name', None)
+        business_website = validated_data.pop('business_website', None)
+        about_business = validated_data.pop('about_business', None)
         profile_city = validated_data.pop('profile_city', None)
 
         # @TODO: Use IP address to get the initial address,
@@ -162,9 +165,9 @@ class UserRegisterSerializer(serializers.Serializer):
         if account_type == 'employer':
             if employer is None:
                 args = {
-                    "title": validated_data['business_name'],
-                    "website": validated_data['business_website'],
-                    "bio": validated_data['about_business'],
+                    "title": business_name,
+                    "website": business_website,
+                    "bio": about_business,
                 }
                 employer = Employer.objects.create(**args)
                 
