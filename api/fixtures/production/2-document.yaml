@@ -1,0 +1,219 @@
+- model: api.Document
+  pk: 1
+  fields:
+    title: U.S. Passport or U.S. Passport Card
+    validates_identity: True
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 2
+  fields:
+    title: Permanent Resident Card or Alien Registration Receipt Card (Form I-551)
+    validates_identity: True
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 4
+  fields:
+    title: Foreign passport that contains a temporary I-551 stamp or temporary I-551 printed notation on a machine-readable immigrant visa.
+    validates_identity: True
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 5
+  fields:
+    title: Employment Authorization Document that contains a photograph (Form I-766)
+    validates_identity: True
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 6
+  fields:
+    title: Foreign passport
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 7
+  fields:
+    title: Form I-94 or Form I-94A
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 8
+  fields:
+    title: Driver’s license or ID card
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 9
+  fields:
+    title: ID card issued by federal, state or local government
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 10
+  fields:
+    title: School ID card with a photograph
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 11
+  fields:
+    title: Voter’s registration card
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 12
+  fields:
+    title: U.S. Military card or draft record
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 13
+  fields:
+    title: Military dependent’s ID card
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 14
+  fields:
+    title: U.S. Coast Guard Merchant Mariner Card
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 15
+  fields:
+    title: Native American tribal document
+    validates_identity: True
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 16
+  fields:
+    title: Driver’s license issued by a Canadian government authority
+    validates_identity: True
+    validates_employment: False
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 17
+  fields:
+    title: A Social Security Account Number card (without restrictions).
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 18
+  fields:
+    title: Certification of Birth Abroad issued by the Department of State (Form FS-545)
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 19
+  fields:
+    title: Certification of Report of Birth issued by the Department of State (Form DS-1350)
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 18
+  fields:
+    title: U.S. Citizen ID Card (Form I-197)
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 19
+  fields:
+    title: Identification Card for Use of Resident Citizen in the United States (Form I-179)
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 20
+  fields:
+    title: Employment authorization document issued by the Department of Homeland Security
+    validates_identity: False
+    validates_employment: True
+    is_form: False
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"
+
+- model: api.Document
+  pk: 21
+  fields:
+    title: W4 - Employee’s Withholding Certificate
+    validates_identity: False
+    validates_employment: False
+    is_form: True
+    created_at: "2018-09-13T19:45:00Z"
+    updated_at: "2018-09-13T19:45:00Z"

@@ -4,6 +4,7 @@ from django.urls import reverse_lazy
 from mock import patch
 from io import BytesIO
 from django.test.client import MULTIPART_CONTENT
+from mixer.backend.django import mixer
 
 from api.models import EmployeeDocument, Employee
 from api.tests.mixins import WithMakeUser
@@ -34,8 +35,10 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.client.force_login(self.test_user_employee)
 
         with BytesIO(b'the-data') as f:
+            _type = mixer.blend('api.Document')
             payload = {
                 'document': f,
+                'document_type': _type.id
             }
             # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
             response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
@@ -46,10 +49,12 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
             f'It should return a success response: {str(response.content)}')
 
     @patch('cloudinary.uploader.upload')
-    def test_get_my_documents(self, mocked_uploader):
+    def test_get(self, mocked_uploader):
+
         document = {
             'document': 'http://a-valid.url/for-the-doc',
-            "employee_id": Employee.objects.all()[0].id
+            "employee_id": Employee.objects.all()[0].id,
+            "document_type": mixer.blend('api.Document')
         }
 
         EmployeeDocument.objects.create(**document)
@@ -60,3 +65,5 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.assertEquals(response.status_code, 200, response.content)
         self.assertEquals(len(json_response), 1, response.content)
         self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
+        self.assertEquals(json_response[0].get("employee"), document.get("employee_id"), response.content)
+        self.assertEquals(json_response[0].get("name"), document.get("name"), response.content)

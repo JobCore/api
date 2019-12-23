@@ -21,6 +21,7 @@ class IsEmployeeMixin:
             raise PermissionDenied("You don't seem to be a talent")
 
         self.employee = self.request.user.profile.employee
+        self.user = self.request.user
 
 
 class IsEmployerMixin:
@@ -31,6 +32,7 @@ class IsEmployerMixin:
             raise PermissionDenied("You don't seem to be an employer")
 
         self.employer = self.request.user.profile.employer
+        self.user = self.request.user
 
 
 class WithProfileView(HaveProfileMixin, APIView):

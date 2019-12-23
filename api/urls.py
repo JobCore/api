@@ -12,7 +12,8 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView
+    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
+    AppVersionView    
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
@@ -27,7 +28,7 @@ from api.views.employee_views import (
 )
 
 from api.views.documents_view import (
-    EmployeeDocumentAPI, EmployeeDocumentDetailAPI
+    EmployeeDocumentAPI, EmployeeDocumentDetailAPI, DocumentAPI
 )
 
 from api.views.employer_views import (
@@ -46,7 +47,9 @@ urlpatterns = [
     #
     # PUBLIC ENDPOINTS
     #
-
+    path('version/<str:version>', AppVersionView.as_view(), name="single-version"),
+    path('version', AppVersionView.as_view(), name="version"),
+    
     path('login', ObtainJSONWebToken.as_view(
         serializer_class=CustomJWTSerializer)),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),
@@ -83,10 +86,8 @@ urlpatterns = [
         EmployerView.as_view(),
         name="id-employers"),
 
-    path(
-        'profiles/me',
-        ProfileMeView.as_view(),
-        name="me-profiles"),
+    path('profiles/me', ProfileMeView.as_view(), name="me-profiles"),
+
     path(
         'profiles/me/image',
         ProfileMeImageView.as_view(),
@@ -151,10 +152,7 @@ urlpatterns = [
         'employers/me/image',
         EmployerMeImageView.as_view(),
         name="me-employers-image"),
-    path(
-        'employers/me/users',
-        EmployerMeUsersView.as_view(),
-        name="me-employer-users"),
+    path('employers/me/users', EmployerMeUsersView.as_view(),name="me-employer-users"),
     path(
         'employers/me/applications',
         ApplicantsView.as_view(),
@@ -342,6 +340,11 @@ urlpatterns = [
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
 
+    # DOCUMENTS
+    path('documents', DocumentAPI.as_view(), name="document"),
+    path('employees/me/documents/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
+    path('employees/me/documents', EmployeeDocumentAPI.as_view(), name="employee-document"),
+
     #
     # ADMIN USE ONLY
     #
@@ -351,27 +354,18 @@ urlpatterns = [
         EmployeeBadgesView.as_view(),
         name="admin-id-employees-badges"),
     # update the talent badges
-    path(
-        'positions',
-        PositionView.as_view(),
-        name="admin-get-positions"),
+    path('positions',PositionView.as_view(),name="admin-get-positions"),
     path(
         'positions/<int:id>',
         PositionView.as_view(),
         name="admin-id-positions"),
-    path(
-        'periods',
-        PayrollPeriodView.as_view(),
-        name="admin-get-periods"),
+    path('periods', PayrollPeriodView.as_view(), name="admin-get-periods"),
     path(
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
     path('bank-accounts/', BankAccountAPIView.as_view(), name='api-bank-accounts'),
     path('bank-accounts/<int:bank_account_id>', BankAccountDetailAPIView.as_view(), name='detail-api-bank-accounts'),
-    # DOCUMENTS
-    path('document/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
-    path('document/', EmployeeDocumentAPI.as_view(), name="employee-document"),
 
     ###
 
@@ -386,12 +380,11 @@ urlpatterns = [
     path('hook/create_default_availablity_blocks', DefaultAvailabilityHook.as_view()),
 
     # clocks out, deletes invites, deletes applications
-    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),  # every 5 min
+    path('hook/process_expired_shifts', ClockOutExpiredShifts.as_view(), name="hook-process-expired-shifts"),
+    # every 5 min
 
     # every hour, will generate payment periods, params:
     #   - employer: optional
     path('hook/generate_periods', GeneratePeriodsView.as_view(), name="hook-generate_periods"),
 
-    # path('employees/me/documents', EmployeeMeDocumentView.as_view(), name="me-documents"),
-    # path('employees/me/documents/<int:id>', EmployeeMeDocumentView.as_view(), name="me-documents"),
 ]

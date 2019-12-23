@@ -9,5 +9,7 @@ class Command(BaseCommand):
         #log = []
 
         hooks.process_expired_shifts()
+        self.stdout.write(self.style.SUCCESS("Successfully expired shifts and clockins"))
 
-        self.stdout.write(self.style.SUCCESS("Successfully expired everything"))
+        hooks.process_expired_documents()
+        self.stdout.write(self.style.SUCCESS("Successfully expired documents"))
