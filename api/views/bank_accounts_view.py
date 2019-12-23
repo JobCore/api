@@ -5,7 +5,7 @@ from api.views.general_views import log
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-
+from django.http import JsonResponse
 from django.db import transaction
 
 import plaid
@@ -70,7 +70,7 @@ class BankAccountAPIView(APIView):
                     log.error(f"Error creating the Bank Account: {e}")
                     raise ValueError(f"Error creating the Bank Account: {e}")
 
-        return Response(status=status.HTTP_201_CREATED)
+        return JsonResponse({"success": "created!"}, safe=False)
 
     def get(self, request):
         accounts = BankAccount.objects.filter(user_id=request.user.profile.id).order_by('id')
