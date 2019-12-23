@@ -9,6 +9,9 @@ from rest_framework.response import Response
 from django.db import transaction
 
 import plaid
+import logging
+
+log = logging.getLogger('api.views.bank_accounts_view')
 
 
 class BankAccountAPIView(APIView):
@@ -89,6 +92,18 @@ class BankAccountDetailAPIView(APIView):
         account = query_set.first()
         if account is None:
             return Response(status=404)
+
+        plaid_client = plaid.Client(
+            client_id=os.environ.get('PLAID_CLIENT_ID'),
+            secret=os.environ.get('PLAID_SECRET'),
+            public_key=os.environ.get('PLAID_PUBLIC_KEY'),
+            environment=os.environ.get('PLAID_ENV'))
+
+        try:
+            plaid_client.Item.remove(account.access_token)
+        except Exception as e:
+            log.info("Access token unsuable")
+
         try:
             query_set.delete()
         except Exception as e:
