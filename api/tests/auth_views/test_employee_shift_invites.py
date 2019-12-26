@@ -72,7 +72,7 @@ class EmployeeShiftInviteTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(
             response.status_code,
             200,
-            'It should return a success response')
+            'It should be 200 because in order to get the job invites you need to be log in.')
 
         response_json = response.json()
 

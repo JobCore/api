@@ -339,8 +339,10 @@ class Shift(models.Model):
     required_badges = models.ManyToManyField(
         Badge, blank=True
     )
-    employer = models.ForeignKey(
-        Employer, on_delete=models.CASCADE, blank=True)
+    
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
+
     status = models.CharField(
         max_length=9,
         choices=SHIFT_STATUS_CHOICES,

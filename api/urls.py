@@ -153,6 +153,7 @@ urlpatterns = [
         EmployerMeImageView.as_view(),
         name="me-employers-image"),
     path('employers/me/users', EmployerMeUsersView.as_view(),name="me-employer-users"),
+    path('employers/me/users/<int:profile_id>', EmployerMeUsersView.as_view(),name="me-employer-single-users"),
     path(
         'employers/me/applications',
         ApplicantsView.as_view(),
