@@ -191,8 +191,24 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         #     1,
         #     f'There should be two archived documents')
 
-    def test_default_get_employee_document_double_approve_same_type(self):
+    @patch('cloudinary.uploader.upload')
+    def test_default_get_employee_document_double_approve_same_type(self, mocked_uploader):
     # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
+        mocked_uploader.return_value = {
+            'secure_url': 'http://a-valid.url/for-the-doc'
+        }
+
+        url = reverse_lazy('api:employee-document')
+        self.client.force_login(self.test_user_employee)
+
+        with BytesIO(b'the-data') as f:
+            _type = mixer.blend('api.Document')
+            payload = {
+                'document': f,
+                'document_type': _type.id
+            }
+        response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+
         document = mixer.blend(
                 'api.Document',
                 title='employment'
