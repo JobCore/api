@@ -194,20 +194,6 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     @patch('cloudinary.uploader.upload')
     def test_default_get_employee_document_double_approve_same_type(self, mocked_uploader):
     # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
-        mocked_uploader.return_value = {
-            'secure_url': 'http://a-valid.url/for-the-doc'
-        }
-
-        url = reverse_lazy('api:employee-document')
-        self.client.force_login(self.test_user_employee)
-
-        with BytesIO(b'the-data') as f:
-            _type = mixer.blend('api.Document')
-            payload = {
-                'document': f,
-                'document_type': _type.id
-            }
-        response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
         document = mixer.blend(
                 'api.Document',
@@ -219,12 +205,22 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
             status="APPROVED",
             document_type = document     
         )
-        mixer.blend(
-            'api.EmployeeDocument',
-            employee=self.test_employee,
-            status="APPROVED",
-            document_type = document           
-        )
+
+        mocked_uploader.return_value = {
+            'secure_url': 'http://a-valid.url/for-the-doc'
+        }
+        url = reverse_lazy('api:employee-document')
+        self.client.force_login(self.test_user_employee)
+
+        with BytesIO(b'the-data') as f:
+        
+            payload = {
+                'document': f,
+                'document_type': document.id
+            }
+            # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
+            response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+
 
         url = reverse_lazy('api:employee-document')
         self.client.force_login(self.test_user_employee)

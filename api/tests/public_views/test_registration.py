@@ -351,20 +351,19 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-        print(response.content)
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, 201)
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_employer_register_business_name(self): 
+    def test_employer_register_business_name(self, mocked_requests): 
         payload = {
-            'business_name': "ixax bus"
-            'business_website': "website"
-            'about_business': "googeldokfaoskdso" 
-            'employer': None,
+            'business_name': "ixax bus",
+            'business_website': "website",
+            'about_business': "googeldokfaoskdso",
+            'employer': "",
             'email': "ixaxtav+prueba1@gmail.com",
             'account_type': "employer",
-            'username': "ixaxtav+prueba1@gmail.com",
+            'username': "test",
             'first_name': "Prueba",
             'last_name': "Pruebon",
             'password': "L12121212",
@@ -372,16 +371,15 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-        print(response.content)
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, 201)
 
     @patch('api.utils.email.requests')
     @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
-    def test_employer_register_random_ID(self): 
+    def test_employer_register_random_ID(self, mocked_requests): 
         payload = {
-            'business_name': "ixax bus"
-            'business_website': "website"
-            'about_business': "googeldokfaoskdso" 
+            'business_name': "ixax bus",
+            'business_website': "website",
+            'about_business': "googeldokfaoskdso",
             'employer': 3124214,
             'email': "ixaxtav+prueba1@gmail.com",
             'account_type': "employer",
@@ -393,5 +391,4 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-        print(response.content)
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, 400)

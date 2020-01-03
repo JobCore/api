@@ -157,28 +157,28 @@ class ResponseTime(TestCase, WithMakeUser, WithMakeShift):
 
     def test_expired_shift_update_response_time(self):
         position = mixer.blend('api.Position')
-            starting_at = timezone.now() + timedelta(days=1)
-            ending_at = starting_at + timedelta(hours=8)
-            (
-                self.test_user_employee,
-                self.test_employee,
-                self.test_profile_employee
-            ) = self._make_user(
-                'employee',
-                employexkwargs=dict(
-                    minimum_hourly_rate = 9,
-                    rating=5,
-                    maximum_job_distance_miles= 25,
-                    response_time = 30,
-                    total_invites = 5,
-                    positions=[position.id]
-                ),
-                userkwargs=dict(
-                    username='employee1',
-                    email='employee1@testdoma.in',
-                    is_active=True,
-                )
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(hours=8)
+        (
+            self.test_user_employee,
+            self.test_employee,
+            self.test_profile_employee
+        ) = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 9,
+                rating=5,
+                maximum_job_distance_miles= 25,
+                response_time = 30,
+                total_invites = 5,
+                positions=[position.id]
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
             )
+        )
 
         self.test_invite, _, __ = self._make_shift(
             shiftkwargs=dict(status='EXPIRED', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=15, minimum_allowed_rating = 0, 

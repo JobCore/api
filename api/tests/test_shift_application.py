@@ -53,9 +53,9 @@ class TestShiftApplication(TestCase, WithMakeUser, WithMakeShift):
     
         self.client.force_login(self.test_user_employer)
 
-    def test_employee_accepted_delete_other_jobs_with_the_same_time(self):
-        #Si a un employee lo aceptan en un trabajo deben eliminarse las otras aplicaciones con el mismo tiempo del trabajo aceptado. Deben recibir una notification de que han sido eliminada
-        #enhancement has not been made
+    # def test_employee_accepted_delete_other_jobs_with_the_same_time(self):
+    #     #Si a un employee lo aceptan en un trabajo deben eliminarse las otras aplicaciones con el mismo tiempo del trabajo aceptado. Deben recibir una notification de que han sido eliminada
+    #     #enhancement has not been made
         
 
     

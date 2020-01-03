@@ -167,9 +167,6 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
     # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
-    employer = EmployerGetSmallSerializer(read_only=True)
-    position = PositionGetSmallSerializer(read_only=True)
-    venue = VenueGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
@@ -199,7 +196,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         if clockins > 0:
             raise serializers.ValidationError(
                 'This shift cannot be updated because someone has already clock-in')
-
+        
         return data
 
     def update(self, shift, validated_data):

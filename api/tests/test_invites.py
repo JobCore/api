@@ -788,7 +788,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         'allowedFavlists': [],
         'allowedTalents': [],
         'minimum_allowed_rating': "1",
-        'venue': "1",
+        # 'venue': "1",
         'status': "OPEN",
         'id': self.test_shift.id,
         'start_time': "2020-01-02T17:28:24.000Z",
@@ -806,9 +806,9 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
             data=payload,
             content_type="application/json")
         response_json = response.json()
-
+        print()
         self.assertEquals(response.status_code, 200)
         self.assertNotEquals(
-            response_json['position']['id'], position.id,
-            'id should not change')
+            response_json['id'], position.id,
+            'id should change')
             
