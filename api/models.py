@@ -648,7 +648,8 @@ class PayrollPeriodPayment(models.Model):
         max_length=9,
         choices=PAYMENT_STATUS,
         default=PENDING)
-
+    approved_clockin_time = models.DateTimeField(blank=True, null=True)
+    approved_clockout_time= models.DateTimeField(blank=True, null=True)
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
