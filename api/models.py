@@ -160,7 +160,7 @@ class Employee(models.Model):
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     total_invites = models.IntegerField(blank=True, default=0)  # in minutes
 
-    # employment and deducations
+    # employment and deductions
     employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,blank=True)
     filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE,blank=True)
     allowances = models.IntegerField(blank=True, default=0)

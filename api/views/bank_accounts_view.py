@@ -31,8 +31,8 @@ class BankAccountAPIView(APIView):
         try:
             plaid_request = plaid_client.Item.public_token.exchange(plaid_link_public_token)
         except Exception as e:
-            log.error(f"Error exchanging the Token: {e}")
-            raise ValueError(f"Error exchanging the Token: {e}")
+            log.error(f"LOG:Error exchanging the Token: {str(e)}")
+            raise ValueError(f"Error exchanging the Token: {str(e)}")
 
         access_token = plaid_request['access_token']
         response = plaid_client.Auth.get(access_token)
