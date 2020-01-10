@@ -191,80 +191,80 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         #     1,
         #     f'There should be two archived documents')
 
-    @patch('cloudinary.uploader.upload')
-    def test_default_get_employee_document_double_approve_same_type(self, mocked_uploader):
-    # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
+    # @patch('cloudinary.uploader.upload')
+    # def test_default_get_employee_document_double_approve_same_type(self, mocked_uploader):
+    # # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
 
-        document = mixer.blend(
-                'api.Document',
-                title='employment'
-            )      
-        mixer.blend(
-            'api.EmployeeDocument',
-            employee=self.test_employee,
-            status="APPROVED",
-            document_type = document     
-        )
+    #     document = mixer.blend(
+    #             'api.Document',
+    #             title='employment'
+    #         )      
+    #     mixer.blend(
+    #         'api.EmployeeDocument',
+    #         employee=self.test_employee,
+    #         status="APPROVED",
+    #         document_type = document     
+    #     )
 
-        mocked_uploader.return_value = {
-            'secure_url': 'http://a-valid.url/for-the-doc'
-        }
-        url = reverse_lazy('api:employee-document')
-        self.client.force_login(self.test_user_employee)
+    #     mocked_uploader.return_value = {
+    #         'secure_url': 'http://a-valid.url/for-the-doc'
+    #     }
+    #     url = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee)
 
-        with BytesIO(b'the-data') as f:
+    #     with BytesIO(b'the-data') as f:
         
-            payload = {
-                'document': f,
-                'document_type': document.id
-            }
-            # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
-            response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+    #         payload = {
+    #             'document': f,
+    #             'document_type': document.id
+    #         }
+    #         # payload = self.client._encode_data(payload, MULTIPART_CONTENT)
+    #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
 
-        url = reverse_lazy('api:employee-document')
-        self.client.force_login(self.test_user_employee)
-        response = self.client.get(url, content_type='application/json')
-        json_response = response.json()
-        print(len(json_response))
-        self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
+    #     url = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee)
+    #     response = self.client.get(url, content_type='application/json')
+    #     json_response = response.json()
+    #     print(len(json_response))
+    #     self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
 
 
-    @patch('cloudinary.uploader.upload')
-    def test_verification_status_deductions(self, mocked_uploader):
-        (
-            self.test_user_employee2,
-            self.test_employee2,
-            self.test_profile_employee2
-        ) = self._make_user(
-            'employee',
-            userkwargs=dict(
-                username='employee2',
-                email='employee2@testdoma.in',
-                is_active=True,
-            ),
-            employexkwargs=dict(
-                employment_verification_status='APPROVED'
-            )
-        )
+    # @patch('cloudinary.uploader.upload')
+    # def test_verification_status_deductions(self, mocked_uploader):
+    #     (
+    #         self.test_user_employee2,
+    #         self.test_employee2,
+    #         self.test_profile_employee2
+    #     ) = self._make_user(
+    #         'employee',
+    #         userkwargs=dict(
+    #             username='employee2',
+    #             email='employee2@testdoma.in',
+    #             is_active=True,
+    #         ),
+    #         employexkwargs=dict(
+    #             employment_verification_status='APPROVED'
+    #         )
+    #     )
 
-        mocked_uploader.return_value = {
-            'secure_url': 'http://a-valid.url/for-the-doc'
-        }
+    #     mocked_uploader.return_value = {
+    #         'secure_url': 'http://a-valid.url/for-the-doc'
+    #     }
 
-        url = reverse_lazy('api:employee-document')
-        self.client.force_login(self.test_user_employee2)
+    #     url = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee2)
 
-        with BytesIO(b'the-data') as f:
-            _type = mixer.blend('api.Document')
-            payload = {
-                'document': f,
-                'document_type': _type.id
-            }
-            response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+    #     with BytesIO(b'the-data') as f:
+    #         _type = mixer.blend('api.Document')
+    #         payload = {
+    #             'document': f,
+    #             'document_type': _type.id
+    #         }
+    #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
-        self.assertEquals(
-            response.status_code,
-            201,
-            f'It should return a success response: {str(response.content)}')
+    #     self.assertEquals(
+    #         response.status_code,
+    #         201,
+    #         f'It should return a success response: {str(response.content)}')
    
