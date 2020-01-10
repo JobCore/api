@@ -310,6 +310,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     if last_processed_period is not None:
         log_debug('hooks','Last period generated until '+str(last_processed_period))
         last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(days=1), weekday, fallback_direction='forward')
+        last_period_ending_date = last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour)
         log_debug('hooks','Will start generating from '+str(last_period_ending_date))
     else:
         last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')

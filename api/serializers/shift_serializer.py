@@ -303,6 +303,10 @@ class ShiftDates(serializers.Serializer):
 
 
 class ShiftPostSerializer(serializers.ModelSerializer):
+    employees = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True
+    )
 
     class Meta:
         model = Shift
@@ -315,6 +319,11 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         shift.maximum_clockin_delta_minutes = shift.employer.maximum_clockin_delta_minutes
         shift.maximum_clockout_delay_minutes = shift.employer.maximum_clockout_delay_minutes
         shift.save()
+
+        # print(validated_data)
+        # if 'employees' in validated_data:
+        #     for employee in validated_data['employees']:
+        #         ShiftEmployee.objects.create(employee=employee, shift=shift)
 
         talents = []
         includeEmailNotification = False
