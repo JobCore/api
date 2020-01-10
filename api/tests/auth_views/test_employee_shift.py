@@ -120,7 +120,7 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
             self.assertEquals(len(response_json), 1)
 
-    def test_filters_part_two(self):
+    def test_filters_part_two(self, mocked_uploader):
 
         url = reverse_lazy('api:me-employees-shift')
 

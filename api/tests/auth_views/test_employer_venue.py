@@ -3,6 +3,8 @@ from mixer.backend.django import mixer
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
 from django.apps import apps
+from datetime import timedelta, datetime
+from django.utils import timezone
 
 Venue = apps.get_model('api', 'Venue')
 
@@ -220,6 +222,32 @@ class EmployerVenueTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.assertEquals(
             Venue.objects.filter(id=venue.id).count(), 0)
+
+    def test_delete_venue_change_status_to_delete(self):
+        position = mixer.blend('api.Position')
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(hours=8)    
+        self.test_invite, venue, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=15, minimum_allowed_rating = 0, 
+            ),
+            employer=self.test_employer
+            )
+
+        url = reverse_lazy('api:me-employer-id-venues', kwargs=dict(
+            id=venue.id
+            ))
+
+        self.client.force_login(self.test_user_employer)
+
+        response = self.client.delete(url, content_type="application/json")
+
+        self.assertEquals(Venue.objects.filter(status="DELETED").count(), 1)
+        self.assertEquals(
+            response.status_code,
+            204,
+            'It should return a success response')
+
+    
 
     def test_create_venue_nodata(self):
         """
