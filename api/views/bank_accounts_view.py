@@ -5,10 +5,13 @@ from api.views.general_views import log
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-
+from django.http import JsonResponse
 from django.db import transaction
 
 import plaid
+import logging
+
+log = logging.getLogger('api.views.bank_accounts_view')
 
 
 class BankAccountAPIView(APIView):
@@ -28,8 +31,8 @@ class BankAccountAPIView(APIView):
         try:
             plaid_request = plaid_client.Item.public_token.exchange(plaid_link_public_token)
         except Exception as e:
-            log.error(f"Error exchanging the Token: {e}")
-            raise ValueError(f"Error exchanging the Token: {e}")
+            log.error(f"LOG:Error exchanging the Token: {str(e)}")
+            raise ValueError(f"Error exchanging the Token: {str(e)}")
 
         access_token = plaid_request['access_token']
         response = plaid_client.Auth.get(access_token)
@@ -67,7 +70,7 @@ class BankAccountAPIView(APIView):
                     log.error(f"Error creating the Bank Account: {e}")
                     raise ValueError(f"Error creating the Bank Account: {e}")
 
-        return Response(status=status.HTTP_201_CREATED)
+        return JsonResponse({"success": "created!"}, safe=False)
 
     def get(self, request):
         accounts = BankAccount.objects.filter(user_id=request.user.profile.id).order_by('id')
@@ -89,9 +92,21 @@ class BankAccountDetailAPIView(APIView):
         account = query_set.first()
         if account is None:
             return Response(status=404)
+
+        plaid_client = plaid.Client(
+            client_id=os.environ.get('PLAID_CLIENT_ID'),
+            secret=os.environ.get('PLAID_SECRET'),
+            public_key=os.environ.get('PLAID_PUBLIC_KEY'),
+            environment=os.environ.get('PLAID_ENV'))
+
+        try:
+            plaid_client.Item.remove(account.access_token)
+        except Exception as e:
+            log.info("Access token unsuable")
+
         try:
             query_set.delete()
         except Exception as e:
             return Response({"detail": str(e)}, status=400)
 
-        return Response(status=202)
+        return Response({"detail": "OK"}, status=202)

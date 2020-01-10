@@ -176,16 +176,25 @@ def notify_jobcore_invite(invite, include_sms=False):
         "user_email": invite.email
     })
 
-    send_email_message("invite_to_jobcore", invite.email, {
-        "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
-        "EMAIL": invite.email,
-        "COMPANY": invite.sender.user.profile.employer.title,
-        "LINK": EMPLOYER_URL + "/invite?token=" + token,
-        "DATA": {"type": "invite", "id": invite.id}
-    })
+    if invite.employer is not None:
+        send_email_message("invite_to_jobcore_employer", invite.email, {
+            "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
+            "EMAIL": invite.email,
+            "COMPANY": invite.sender.user.profile.employer.title,
+            "LINK": EMPLOYER_URL + "/invite?token=" + token + "&employer="+str(invite.employer.id),
+            "DATA": {"type": "invite", "id": invite.id}
+        })
+    else:
+        send_email_message("invite_to_jobcore", invite.email, {
+            "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
+            "EMAIL": invite.email,
+            "COMPANY": invite.sender.user.profile.employer.title,
+            "LINK": EMPLOYER_URL + "/invite?token=" + token,
+            "DATA": {"type": "invite", "id": invite.id}
+        })
 
-    if include_sms:
-        send_sms("invite_to_jobcore", invite.phone_number)
+        if include_sms:
+            send_sms("invite_to_jobcore", invite.phone_number)
 
 
 def notify_invite_accepted(invite):

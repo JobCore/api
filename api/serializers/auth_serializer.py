@@ -86,10 +86,13 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 class UserRegisterSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     account_type = serializers.CharField(required=True, write_only=True)
+    
+    # these three are only added when creating a new company
+    business_name = serializers.CharField(required=False, write_only=True)
+    business_website = serializers.CharField(required=False, write_only=True)
+    about_business = serializers.CharField(required=False, write_only=True)
 
-    employer = serializers.PrimaryKeyRelatedField(
-        required=False, many=False, write_only=True,
-        queryset=Employer.objects.all())
+    employer = serializers.PrimaryKeyRelatedField(required=False, many=False, write_only=True,queryset=Employer.objects.all())
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
@@ -124,8 +127,14 @@ class UserRegisterSerializer(serializers.Serializer):
         if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
 
-            # if 'employer' not in data: 
-            #     raise serializers.ValidationError("You need to specify the user employer id")
+        # validate creation of new employer
+        if data['account_type'] == 'employer' and ('employer' not in data or data['employer'] is None):
+            if data['business_name'] is None:
+                raise serializers.ValidationError("You need to specify the business name or the employer id")
+            if data['business_website'] is None:
+                raise serializers.ValidationError("You need to specify the business website or the employer id")
+            if data['about_business'] is None:
+                raise serializers.ValidationError("You need to specify the business description or the employer id")
 
         return data
 
@@ -133,6 +142,9 @@ class UserRegisterSerializer(serializers.Serializer):
         account_type = validated_data.pop('account_type', None)
         employer = validated_data.pop('employer', None)
         city = validated_data.pop('city', None)
+        business_name = validated_data.pop('business_name', None)
+        business_website = validated_data.pop('business_website', None)
+        about_business = validated_data.pop('about_business', None)
         profile_city = validated_data.pop('profile_city', None)
 
         # @TODO: Use IP address to get the initial address,
@@ -144,7 +156,21 @@ class UserRegisterSerializer(serializers.Serializer):
         user.set_password(validated_data['password'])
         user.save()
 
+        # #if there is a previous invite as an employer
+        # previous_invite = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=False).last()
+        # if previous_invite is not None and account_type is None:
+        #     account_type = 'employer'
+        #     employer = previous_invite.employer
+
         if account_type == 'employer':
+            if employer is None:
+                args = {
+                    "title": business_name,
+                    "website": business_website,
+                    "bio": about_business,
+                }
+                employer = Employer.objects.create(**args)
+                
             Profile.objects.create(user=user, picture='', employer=employer)
 
         elif account_type == 'employee':
@@ -175,11 +201,9 @@ class UserRegisterSerializer(serializers.Serializer):
                     randint(1, 3)) + '.png', employee=emp, status=status,
                 profile_city_id=profile_city, city=city)
 
-            jobcore_invites = JobCoreInvite.objects.all().filter(
-                email=user.email)
+            jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=True)
 
-            auth_actions.create_shift_invites_from_jobcore_invites(
-                jobcore_invites, user.profile.employee)
+            auth_actions.create_shift_invites_from_jobcore_invites(jobcore_invites, user.profile.employee)
 
             jobcore_invites.update(status='ACCEPTED')
 

@@ -379,7 +379,7 @@ class ProfileMeImageView(APIView):
 
         result = cloudinary.uploader.upload(
             request.FILES['image'],
-            public_id='profile' + str(profile.id),
+            public_id=f'{str(profile.id)}/profile' + str(profile.id),
             crop='limit',
             width=450,
             height=450,
@@ -389,7 +389,7 @@ class ProfileMeImageView(APIView):
                 'radius': 100
             },
             ],
-            tags=['profile_picture']
+            tags=['profile_picture', 'profile' + str(profile.id)]
         )
 
         profile.picture = result['secure_url']
@@ -411,7 +411,7 @@ class PositionView(APIView):
             serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
-            positions = Position.objects.all()
+            positions = Position.objects.filter(status='ACTIVE')
             serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
@@ -445,7 +445,12 @@ class PositionView(APIView):
             return Response(validators.error_object(
                 'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        position.delete()
+        if position.shift_set.count() > 0 or position.employee_set.count() > 0:
+            position.status = 'DELETED'
+            position.save()
+        else:
+            position.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1015,6 +1020,21 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
 class AppVersionView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request):
-        current_version = AppVersion.objects.last()
-        return JsonResponse({"version": current_version.version}, safe=False)
+    def get(self, request, version=None):
+
+        if version:
+            try:
+                if version == 'last':
+                    app_version = AppVersion.objects.last()
+                else:
+                    app_version = AppVersion.objects.get(version=version)
+
+                serializer = other_serializer.AppVersionSerializer(app_version, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            except AppVersion.DoesNotExist:
+                return Response({"detail": "The app version was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        versions = AppVersion.objects.all()
+        serializer = other_serializer.AppVersionSerializer(versions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
