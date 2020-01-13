@@ -84,7 +84,6 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
         # 6 new choices
 
         shifts_to_do = [('status', status) for status, _ in shift_statuses]
-
         for field, value in shifts_to_do:
             shift, _, __ = self._make_shift(
                 shiftkwargs={
@@ -120,7 +119,7 @@ class EmployeeShiftTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
             self.assertEquals(len(response_json), 1)
 
-    def test_filters_part_two(self, mocked_uploader):
+    def test_filters_part_two(self):
 
         url = reverse_lazy('api:me-employees-shift')
 
