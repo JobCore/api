@@ -349,7 +349,7 @@ class ClockinsMeView(EmployeeView):
             request_data['longitude_in'] = utils.stringToDecimal(request_data['longitude_in'])
         if 'longitude_out' in request_data:
             request_data['longitude_out'] = utils.stringToDecimal(request_data['longitude_out'])
-
+        
         logger.debug('ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:
