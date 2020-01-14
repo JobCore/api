@@ -222,12 +222,13 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
 
-    #     url = reverse_lazy('api:employee-document')
-    #     self.client.force_login(self.test_user_employee)
-    #     response = self.client.get(url, content_type='application/json')
-    #     json_response = response.json()
-    #     print(len(json_response))
-    #     self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
+        url_get_document = reverse_lazy('api:employee-document')
+        self.client.force_login(self.test_user_employee)
+        response = self.client.get(url_get_document, content_type='application/json')
+        json_response = response.json()
+        print(json_response)
+        print(len(json_response))
+        self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
 
 
     # @patch('cloudinary.uploader.upload')
