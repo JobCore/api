@@ -558,16 +558,16 @@ class Clockin(models.Model):
         Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
     latitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+        max_digits=16, decimal_places=11, default=0)
 
     longitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+        max_digits=16, decimal_places=11, default=0)
 
     latitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+        max_digits=16, decimal_places=11, default=0)
 
     longitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+        max_digits=16, decimal_places=11, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
 

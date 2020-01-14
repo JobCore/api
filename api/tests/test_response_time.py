@@ -73,7 +73,6 @@ class ResponseTime(TestCase, WithMakeUser, WithMakeShift):
     #         status='PENDING',
     #     )
         
-<<<<<<< HEAD
         self.client.force_login(self.test_user_employee)
 
         urlAPPLY = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
@@ -95,29 +94,6 @@ class ResponseTime(TestCase, WithMakeUser, WithMakeShift):
             200,
             'It should return a success response, because the employee is applying')
         #new response time calculator
-=======
-    #     self.client.force_login(self.test_user_employee)
-
-    #     urlAPPLY = reverse_lazy('api:me-employees-get-jobinvites-apply', kwargs=dict(
-    #         id=self.test_invite.id,
-    #         # responded_at= responding_at,
-    #         action="APPLY"
-    #     )
-    #     )
-    #     responseAPPLY = self.client.put(
-    #         urlAPPLY,
-    #         content_type="application/json")
-
-    #     self.assertEqual(ShiftInvite.objects.filter(employee=self.test_employee, status__in=['APPLIED', 'REJECTED','EXPIRED']).count(), 1)
-    #     new_response_time = ((self.test_employee.response_time * self.test_employee.total_invites)+self.test_invite.responded_at)/(self.test_employee.total_invites + 1)
-
-    #     self.assertEquals(
-    #         responseAPPLY.status_code,
-    #         200,
-    #         'It should return a success response, because the employee is applying')
-    #     #new response time calculator
-    #     self.assertEquals(new_response_time, self.test_employee.response_time, "the new response time should be the same as the current resposne time because when a employee clicks apply or reject to a shift the response time must be updated")
->>>>>>> c9e2fd978b6e2942eab1234765717c49fcabbd81
 
     # def test_update_responsetime(self):
     #         position = mixer.blend('api.Position')
