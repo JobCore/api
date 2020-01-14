@@ -54,4 +54,4 @@ def nearest_weekday(d, weekday, fallback_direction='forward'):
 
 def stringToDecimal(value):
     value = str(value)
-    return Decimal(value.replace(",","."))
+    return round(Decimal(value.replace(",",".")),11)

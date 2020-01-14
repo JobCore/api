@@ -712,7 +712,7 @@ class EmployeeClockInTestSuite(TestCase, WithMakeUser, WithMakeShift):
         }
 
         response = self.client.post(url, data=payload)
-        #print(response.content)
+        print(response.content)
         self.assertEquals(response.status_code, 201)
 
 
