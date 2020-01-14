@@ -54,8 +54,9 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
-        print((json_response))
-        self.assertEquals(response.status_code, 200, response.content)
+       
+        self.assertEquals(response.status_code, 200, "Must be a 200 status code response")
+        self.assertEquals((json_response[0]['name']), "Untitled document", "If no title was given then it must have Untitled docuiment as a default title")
     def test_default_get_employee_document_ARCHIVED(self):
     # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
         mixer.blend(

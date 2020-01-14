@@ -45,6 +45,8 @@ from api.serializers import (
 from api.serializers import rating_serializer
 from api.utils.email import get_template_content
 
+from operator import itemgetter
+
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -621,7 +623,7 @@ class CatalogView(APIView):
             return Response(employees, status=status.HTTP_200_OK)
 
         elif catalog_type == 'positions':
-            positions = Position.objects.exclude()
+            positions = Position.objects.all().order_by("title")
             positions = map(
                 lambda emp: {
                     "label": emp["title"],
@@ -629,7 +631,9 @@ class CatalogView(APIView):
                 positions.values(
                     'title',
                     'id'))
-            return Response(positions, status=status.HTTP_200_OK)
+
+        
+            return Response(sorted_position, status=status.HTTP_200_OK)
 
         elif catalog_type == 'badges':
             badges = Badge.objects.exclude()
