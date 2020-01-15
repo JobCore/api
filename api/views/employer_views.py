@@ -800,14 +800,28 @@ class EmployeerRateView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
+        _all_serializers = []
+        request.data["employer"] = self.employer.id
+        if (isinstance(request.data, list)):
+            for employee in request.data:
+                for shift in request.data['shift']: 
+                    data["employee"] = employee['employee']['id']
+                    data["shift"] = shift
+                    data["rating"] = employee['rating']
+                    data["comments"] = employee['comments']
+                    serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                    if serializer.is_valid():
+                        _all_serializers.append(serializer)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            serializer = rating_serializer.RatingSerializer(
+                data=request.data, context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

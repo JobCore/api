@@ -413,7 +413,7 @@ class PositionView(APIView):
             serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
-            positions = Position.objects.filter(status='ACTIVE')
+            positions = Position.objects.filter(status='ACTIVE').order_by('title')
             serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
@@ -573,7 +573,31 @@ class RateView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        
+        _all_serializers = []
+        request.data["employer"] = self.employer.id
+        if (isinstance(request.data, list)):
+            for employee in request.data:
+                for shift in request.data['shift']: 
+                    data["employee"] = employee['employee']['id']
+                    data["shift"] = shift
+                    data["rating"] = employee['rating']
+                    data["comments"] = employee['comments']
+                    serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                    if serializer.is_valid():
+                        _all_serializers.append(serializer)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = rating_serializer.RatingSerializer(
+                data=request.data, context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
 
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
         serializer = rating_serializer.RatingSerializer(
             data=request.data, context={"request": request})
         if serializer.is_valid():
@@ -623,7 +647,7 @@ class CatalogView(APIView):
             return Response(employees, status=status.HTTP_200_OK)
 
         elif catalog_type == 'positions':
-            positions = Position.objects.all().order_by("title")
+            positions = Position.objects.exclude().order_by("title")
             positions = map(
                 lambda emp: {
                     "label": emp["title"],
@@ -633,10 +657,10 @@ class CatalogView(APIView):
                     'id'))
 
         
-            return Response(sorted_position, status=status.HTTP_200_OK)
+            return Response(positions, status=status.HTTP_200_OK)
 
         elif catalog_type == 'badges':
-            badges = Badge.objects.exclude()
+            badges = Badge.objects.exclude().order_by("title")
             badges = map(
                 lambda emp: {
                     "label": emp["title"],
