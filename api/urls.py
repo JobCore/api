@@ -2,6 +2,7 @@ from django.urls import include, path
 # from django.contrib.auth.views import PasswordResetConfirmView
 from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
+from api.views.deductions_view import DeductionAPIView, DeductionDetailAPIView
 
 from api.views.hooks import (
     DefaultAvailabilityHook, ClockOutExpiredShifts, GeneratePeriodsView,
@@ -13,7 +14,7 @@ from api.views.general_views import (
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
     PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
-    AppVersionView    
+    AppVersionView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
@@ -49,9 +50,8 @@ urlpatterns = [
     #
     path('version/<str:version>', AppVersionView.as_view(), name="single-version"),
     path('version', AppVersionView.as_view(), name="version"),
-    
-    path('login', ObtainJSONWebToken.as_view(
-        serializer_class=CustomJWTSerializer)),
+
+    path('login', ObtainJSONWebToken.as_view(serializer_class=CustomJWTSerializer)),
     path('user', include('django.contrib.auth.urls'), name="user-auth"),
     path(
         'user/password/reset',
@@ -77,10 +77,7 @@ urlpatterns = [
     path('cities', CityView.as_view(), name='get-cities'),
     path('cities/<int:id>', CityView.as_view(), name='id-cities'),
 
-    path(
-        'employers',
-        EmployerView.as_view(),
-        name="get-employers"),
+    path('employers', EmployerView.as_view(), name="get-employers"),
     path(
         'employers/<int:id>',
         EmployerView.as_view(),
@@ -148,12 +145,9 @@ urlpatterns = [
 
     path('employers/me', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),
-    path(
-        'employers/me/image',
-        EmployerMeImageView.as_view(),
-        name="me-employers-image"),
-    path('employers/me/users', EmployerMeUsersView.as_view(),name="me-employer-users"),
-    path('employers/me/users/<int:profile_id>', EmployerMeUsersView.as_view(),name="me-employer-single-users"),
+    path('employers/me/image', EmployerMeImageView.as_view(), name="me-employers-image"),
+    path('employers/me/users', EmployerMeUsersView.as_view(), name="me-employer-users"),
+    path('employers/me/users/<int:profile_id>', EmployerMeUsersView.as_view(), name="me-employer-single-users"),
     path(
         'employers/me/applications',
         ApplicantsView.as_view(),
@@ -262,6 +256,10 @@ urlpatterns = [
 
     path('employers/me/batch', EmployerBatchActions.as_view(), name="me-batch-actions"),
 
+    # Deductions
+    path('employers/me/deduction', DeductionAPIView.as_view(), name="me-employer-deduction"),
+    path('employers/me/deduction/<int:id>', DeductionDetailAPIView.as_view(), name="me-employer-single-deduction"),
+
     #
     # FOR THE TALENT
     #
@@ -330,10 +328,7 @@ urlpatterns = [
         name="me-employees-device"),
 
     # aliases from similar endpoints
-    path(
-        'employees/me/jobcore-invites',
-        JobCoreInviteView.as_view(),
-        name="me-employees-get-jcinvites"),
+    path('employees/me/jobcore-invites', JobCoreInviteView.as_view(), name="me-employees-get-jcinvites"),
     path(
         'employees/me/jobcore-invites/<int:id>',
         JobCoreInviteView.as_view(),
@@ -343,7 +338,8 @@ urlpatterns = [
 
     # DOCUMENTS
     path('documents', DocumentAPI.as_view(), name="document"),
-    path('employees/me/documents/<int:document_id>', EmployeeDocumentDetailAPI.as_view(), name="employee-document-detail"),
+    path('employees/me/documents/<int:document_id>', EmployeeDocumentDetailAPI.as_view(),
+         name="employee-document-detail"),
     path('employees/me/documents', EmployeeDocumentAPI.as_view(), name="employee-document"),
 
     #
@@ -355,7 +351,7 @@ urlpatterns = [
         EmployeeBadgesView.as_view(),
         name="admin-id-employees-badges"),
     # update the talent badges
-    path('positions',PositionView.as_view(),name="admin-get-positions"),
+    path('positions', PositionView.as_view(), name="admin-get-positions"),
     path(
         'positions/<int:id>',
         PositionView.as_view(),
@@ -365,6 +361,7 @@ urlpatterns = [
         'periods/<int:period_id>',
         PayrollPeriodView.as_view(),
         name="admin-get-periods"),
+
     path('bank-accounts/', BankAccountAPIView.as_view(), name='api-bank-accounts'),
     path('bank-accounts/<int:bank_account_id>', BankAccountDetailAPIView.as_view(), name='detail-api-bank-accounts'),
 

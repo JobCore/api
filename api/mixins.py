@@ -44,4 +44,7 @@ class EmployeeView(IsEmployeeMixin, WithProfileView):
 
 
 class EmployerView(IsEmployerMixin, WithProfileView):
+    """
+    View Super class that validates that a User is a valid Employer
+    """
     pass

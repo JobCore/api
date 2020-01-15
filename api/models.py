@@ -7,13 +7,14 @@ from api.utils.loggers import log_debug
 NOW = timezone.now()
 MIDNIGHT = NOW.replace(hour=0, minute=0, second=0)
 
-
 ACTIVE = 'ACTIVE'
 DELETED = 'DELETED'
 POSITION_STATUS = (
     (ACTIVE, 'Active'),
     (DELETED, 'Deleted'),
 )
+
+
 class Position(models.Model):
     picture = models.URLField(blank=True)
     title = models.TextField(max_length=100, blank=True)
@@ -22,7 +23,7 @@ class Position(models.Model):
     meta_keywords = models.TextField(max_length=250, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    status = models.CharField(max_length=9,choices=POSITION_STATUS,default=ACTIVE,blank=True)
+    status = models.CharField(max_length=9, choices=POSITION_STATUS, default=ACTIVE, blank=True)
 
     def __str__(self):
         return self.title
@@ -66,6 +67,7 @@ EMPLOYER_STATUS = (
     (APPROVED, 'Approved'),
 )
 
+
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
@@ -76,7 +78,7 @@ class Employer(models.Model):
         max_digits=2, decimal_places=1, default=0, blank=True)
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
-    status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED,blank=True)
+    status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED, blank=True)
     # talents on employer's favlist's will be automatically accepted
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
@@ -139,7 +141,6 @@ FILING_STATUS = (
 
 
 class Employee(models.Model):
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=8, blank=True)
@@ -156,13 +157,14 @@ class Employee(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
-    #reponse time calculation
+    # reponse time calculation
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     total_invites = models.IntegerField(blank=True, default=0)  # in minutes
 
-    # employment and deducations
-    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,blank=True)
-    filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE,blank=True)
+    # employment and deductions
+    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,
+                                                      blank=True)
+    filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
     allowances = models.IntegerField(blank=True, default=0)
     extra_withholding = models.FloatField(blank=True, default=0)
 
@@ -188,6 +190,7 @@ COMPANY_ROLES = (
     (SUPERVISOR, 'Supervisor'),
 )
 
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     picture = models.URLField(blank=True)
@@ -211,13 +214,13 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    
+
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True)
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
-    employer_role = models.CharField(max_length=25,choices=COMPANY_ROLES,default=ADMIN,blank=True)
+    employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
 
-    status = models.CharField(max_length=25,choices=PROFILE_STATUS,default=PENDING,blank=True)
+    status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 
     def __str__(self):
         return self.user.username
@@ -274,6 +277,8 @@ VENUE_STATUS = (
     (ACTIVE, 'Active'),
     (DELETED, 'Deleted'),
 )
+
+
 class Venue(models.Model):
     title = models.TextField(max_length=100, blank=True)
     employer = models.ForeignKey(
@@ -286,7 +291,7 @@ class Venue(models.Model):
     zip_code = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    status = models.CharField(max_length=9,choices=VENUE_STATUS,default=ACTIVE,blank=True)
+    status = models.CharField(max_length=9, choices=VENUE_STATUS, default=ACTIVE, blank=True)
 
     def __str__(self):
         return self.title
@@ -339,7 +344,7 @@ class Shift(models.Model):
     required_badges = models.ManyToManyField(
         Badge, blank=True
     )
-    
+
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, blank=True, null=True)
 
@@ -430,7 +435,6 @@ class ShiftInvite(models.Model):
             "%m/%d/%Y, %H:%M:%S") + " (" + self.status + ")"
 
 
-
 class UserToken(models.Model):
     token = models.TextField(max_length=255, blank=True)
     email = models.TextField(max_length=100, blank=True)
@@ -442,13 +446,14 @@ class UserToken(models.Model):
         return self.email + " " + self.token
 
 
-
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
 JOBCORE_INVITE_STATUS_CHOICES = (
     (PENDING, 'Pending'),
     (ACCEPTED, 'Accepted'),
 )
+
+
 class JobCoreInvite(models.Model):
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, blank=True)
@@ -736,3 +741,34 @@ class AppVersion(models.Model):
     force_update = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
+class PreDefinedDeduction(models.Model):
+    """
+    This models will contain the Deductions that need to be copied to the Employer Deductions when one is created.
+    This Pre defined deductions are copied to the Employer upon creation
+    """
+    PERCENTAGE_TYPE = 'PERCENTAGE'
+    AMOUNT_TYPE = 'AMOUNT'
+    TYPES = (
+        (PERCENTAGE_TYPE, PERCENTAGE_TYPE.lower()),
+        (AMOUNT_TYPE, AMOUNT_TYPE.lower()),
+    )
+    name = models.CharField(max_length=200, null=False, blank=False)
+    description = models.TextField()
+    type = models.CharField(max_length=200, null=False, blank=False, choices=TYPES, default=PERCENTAGE_TYPE)
+    value = models.FloatField(blank=False, null=False)
+
+
+class EmployerDeduction(models.Model):
+    """
+    Model for the deduction that each Employer wants to add to it's payments
+    """
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=200, null=False, blank=False)
+    description = models.TextField()
+    type = models.CharField(max_length=200, null=False, blank=False, choices=PreDefinedDeduction.TYPES,
+                            default=PreDefinedDeduction.PERCENTAGE_TYPE)
+    value = models.FloatField(blank=False, null=False)
+    # Attribute to block the deletion of a Deduction
+    lock = models.BooleanField(default=False, null=False, blank=True)
