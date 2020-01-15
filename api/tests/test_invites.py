@@ -8,9 +8,11 @@ from datetime import timedelta
 from django.apps import apps
 from api.utils import notifier
 from api.actions.employee_actions import create_default_availablity
+from django.test.client import MULTIPART_CONTENT
 
 AvailabilityBlock = apps.get_model('api', 'AvailabilityBlock')
 ShiftEmployee = apps.get_model('api', 'ShiftEmployee')
+Position = apps.get_model('api', 'Position')
 @override_settings(STATICFILES_STORAGE=None)
 class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """
@@ -375,6 +377,51 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(len(talents) > 0, True, 'Employee should receive invite from shift because shift.position is included in the employee positions')
 
 
+    def test_shifts_position_included_employee_position_delete(self):
+        # An employee cannot receive invites from shifts were shift.position is not included in employee.positions.
+        position = mixer.blend('api.Position')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift_position, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            employer=self.test_employer)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 9,
+                rating=5,
+                positions=[position.id],
+                stop_receiving_invites=False,
+                maximum_job_distance_miles= 15
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+        self.client.force_login(self.test_user_employer)
+
+        url = reverse_lazy('api:admin-id-positions', kwargs=dict(
+            id=position.id,
+        )
+        )
+        response = self.client.delete(
+            url,
+            content_type="application/json")
+        self.assertEquals(Position.objects.filter(status='DELETED').count(),1,"The status of the position must be DELETED since the employer delete  the position that had a shift")
+        self.assertEquals(
+            response.status_code,
+            204,
+            'It should return a success response, because the employee is applying')
+
     def test_shift_not_in_availability_block_allday(self):
         # An employee cannot receive invites from shifts that occur (shift.starting_at, shift.ending_at) outside of its availability blocks (employee.availabilit_block_set).
         position = mixer.blend('api.Position')
@@ -700,3 +747,68 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
             response.status_code,
             400,
             'Como ese employee ya trabaja para ese shift no se puede aplicar')
+
+    def test_update_position(self):
+        position = mixer.blend('api.Position')
+        position2 = mixer.blend('api.Position')
+
+        starting_at = timezone.now() + timedelta(days=1)
+        ending_at = starting_at + timedelta(minutes=90)
+
+        self.test_shift, _, __ = self._make_shift(
+            shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=15, minimum_allowed_rating = 3  ),
+            employer=self.test_employer)
+
+        self.test_user_employee, self.test_employee, _ = self._make_user(
+            'employee',
+            employexkwargs=dict(
+                minimum_hourly_rate = 10,
+                rating=1,
+                positions=[position.id],
+                stop_receiving_invites=False,
+            ),
+            userkwargs=dict(
+                username='employee1',
+                email='employee1@testdoma.in',
+                is_active=True,
+            )
+        )
+        payload = {
+        'position': position2.id,
+        'maximum_allowed_employees': "2",
+        'application_restriction': "ANYONE",
+        'minimum_hourly_rate': "12.0",
+        'starting_at': "2020-01-02T17:28:24.000Z",
+        'ending_at': "2020-01-02T18:00:00.000Z",
+        'employees': [],
+        'pending_invites': [],
+        'pending_jobcore_invites': [],
+        'candidates': [],
+        'allowed_from_list': [],
+        'allowedFavlists': [],
+        'allowedTalents': [],
+        'minimum_allowed_rating': "1",
+        # 'venue': "1",
+        'status': "OPEN",
+        'id': self.test_shift.id,
+        'start_time': "2020-01-02T17:28:24.000Z",
+        'finish_time': "2020-01-02T18:00:00.000Z",
+        'hide_warnings': True,
+        'has_sensitive_updates': True,
+        }
+        self.client.force_login(self.test_user_employer)
+
+        url = reverse_lazy('api:me-employer-id-shifts',
+                           kwargs=dict(id=self.test_shift.id))
+
+        response = self.client.put(
+            url,
+            data=payload,
+            content_type="application/json")
+        response_json = response.json()
+        print()
+        self.assertEquals(response.status_code, 200)
+        self.assertNotEquals(
+            response_json['id'], position.id,
+            'id should change')
+            

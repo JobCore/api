@@ -165,6 +165,18 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
         data = super(PayrollPeriodPaymentPostSerializer, self).validate(data)
 
+        if 'shift' not in data:
+            raise serializers.ValidationError('Missing shift on the Payment')
+
+        if 'regular_hours' not in data:
+            raise serializers.ValidationError('You need to specify how many regular_hours were worked')
+
+        if 'over_time' not in data:
+            raise serializers.ValidationError('You need to specify how many over_time was worked')
+
+        if 'breaktime_minutes' not in data:
+            raise serializers.ValidationError('You need to specify how many breaktime_minutes was worked')
+
         # previous_payment = PayrollPeriodPayment.objects.filter(employee__id=data['employee'].id, shift__id=data['shift'].id).first()
         # if previous_payment is not None:
         #     raise serializers.ValidationError('There is already a payment for this talent and shift')
@@ -298,6 +310,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     if last_processed_period is not None:
         log_debug('hooks','Last period generated until '+str(last_processed_period))
         last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(days=1), weekday, fallback_direction='forward')
+        last_period_ending_date = last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour)
         log_debug('hooks','Will start generating from '+str(last_period_ending_date))
     else:
         last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')
