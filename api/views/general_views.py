@@ -8,6 +8,7 @@ import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.search import SearchVector
 from django.db.models import Q, F
 from django.http import HttpResponse
 from django.utils import timezone
@@ -47,6 +48,7 @@ from api.utils.email import get_template_content
 
 from operator import itemgetter
 
+ 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -274,6 +276,7 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
                                   'profile__user__last_name__icontains'):
                         search_args.append(Q(**{query: term.lower()}))
 
+                print(search_args)
                 employees = employees.filter(
                     functools.reduce(operator.or_, search_args))
             else:
@@ -1020,6 +1023,7 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         elif qStatus:
             shifts = shifts.filter(~Q(status=qStatus))
 
+
         qUpcoming = request.GET.get('upcoming')
         if qUpcoming == 'true':
             shifts = shifts.filter(starting_at__gte=TODAY)
@@ -1033,7 +1037,19 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         if qEnd is not None and qEnd != '':
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
+    
 
+        qKeywords = request.GET.get('keywords')
+        if qKeywords:
+
+            search_args = []
+            for term in qKeywords.split():
+                for query in ('position__title__icontains',
+                                'position__title__icontains'):
+                    search_args.append(Q(**{query: term.lower()}))
+            shifts = shifts.filter(
+                functools.reduce(operator.or_, search_args))
+     
         shifts = shifts.order_by('-starting_at')
 
         paginator = HeaderLimitOffsetPagination()
