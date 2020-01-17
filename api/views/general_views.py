@@ -591,6 +591,7 @@ class RateView(APIView):
                         _all_serializers.append(serializer)
                     else:
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
         else:
             serializer = rating_serializer.RatingSerializer(
                 data=request.data, context={"request": request})
@@ -1037,6 +1038,10 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         if qEnd is not None and qEnd != '':
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
+
+        qLocation = request.GET.get('location')
+        if qLocation is not None and qLocation != '':
+            shifts = shifts.filter(venue__street_address=qLocation)
     
 
         qKeywords = request.GET.get('keywords')
