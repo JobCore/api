@@ -14,7 +14,7 @@ from api.utils.utils import nearest_weekday
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture',)
+        fields = ('picture','id')
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(read_only=True)
