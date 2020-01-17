@@ -2,7 +2,7 @@ from math import radians, cos, sin, asin, sqrt
 import datetime
 from django.utils.timezone import is_aware, make_aware
 from django.utils.dateparse import parse_datetime
-
+from decimal import Decimal
 
 def custom_index(array, compare_function):
     for i, v in enumerate(array):
@@ -51,3 +51,7 @@ def nearest_weekday(d, weekday, fallback_direction='forward'):
             days_ahead += 7
     new_date = d + datetime.timedelta(days_ahead)
     return new_date
+
+def stringToDecimal(value):
+    value = str(value)
+    return round(Decimal(value.replace(",",".")),11)
