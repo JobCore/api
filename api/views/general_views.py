@@ -577,40 +577,41 @@ class RateView(APIView):
 
     def post(self, request):
         
-        _all_serializers = []
-        request.data["employer"] = self.employer.id
         if (isinstance(request.data, list)):
-            for employee in request.data:
-                for shift in request.data['shift']: 
-                    data["employee"] = employee['employee']['id']
-                    data["shift"] = shift
-                    data["rating"] = employee['rating']
-                    data["comments"] = employee['comments']
-                    serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+            _all_serializers = []
+  
+            for rate in request.data:
+                for shift in rate['shifts']:
+                    data = {}
+                    data['employee'] = rate['employee']
+                    data['shift'] = shift
+                    data['comments'] = rate['comments']
+                    data['rating'] = rate['rating']
+                 
+                    serializer = rating_serializer.RatingSerializer( data=data, context={"request": request})
+
                     if serializer.is_valid():
-                        _all_serializers.append(serializer)
+                        return _all_serializers.append(serializer)
+                        
                     else:
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            data_to_send = []
+            for serializer in _all_serializers:
+                serializer.save()
+                data_to_send.append(serializer.data)
+            
+            return Response(data_to_send, status=status.HTTP_201_CREATED)
                 
         else:
             serializer = rating_serializer.RatingSerializer(
                 data=request.data, context={"request": request})
             if serializer.is_valid():
                 serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
-        if serializer.is_valid():
-            serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CatalogView(APIView):
