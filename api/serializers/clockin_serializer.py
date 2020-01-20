@@ -28,6 +28,8 @@ class ClockinSerializer(serializers.ModelSerializer):
                 "You need to be {} miles near {} to clock in/out. Right now you"
                 "are at {} miles".format(threshold, venue.title, distance)
             )
+        
+        return distance
 
     def _ensure_time_threshold(self, currentTime, start, threshold=0):
         '''

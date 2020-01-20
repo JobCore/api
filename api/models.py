@@ -557,17 +557,14 @@ class Clockin(models.Model):
     author = models.ForeignKey(
         Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
-    latitude_in = models.DecimalField(
-        max_digits=16, decimal_places=11, default=0)
 
-    longitude_in = models.DecimalField(
-        max_digits=16, decimal_places=11, default=0)
+    latitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    longitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    distance_in_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
-    latitude_out = models.DecimalField(
-        max_digits=16, decimal_places=11, default=0)
-
-    longitude_out = models.DecimalField(
-        max_digits=16, decimal_places=11, default=0)
+    latitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    longitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    distance_out_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
 
