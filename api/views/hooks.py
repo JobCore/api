@@ -6,6 +6,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 from django.db.models import F, Func, Count, Q
 
 from django.contrib.auth.models import User

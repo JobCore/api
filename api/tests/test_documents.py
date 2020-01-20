@@ -42,7 +42,20 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             ),
         )
- 
+    
+    def test_get_all_documents(self):
+        mixer.blend(
+            'api.EmployeeDocument',
+            employee=self.test_employee,
+            status="PENDING"
+        )
+
+        url = reverse_lazy('api:employee-document')
+        self.client.force_login(self.test_user_employee)
+        response = self.client.get(url, content_type='application/json')
+        json_response = response.json()
+        print((json_response))
+        self.assertEquals(response.status_code, 200, response.content)
     def test_default_get_employee_document_ARCHIVED(self):
     # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
         mixer.blend(
@@ -222,12 +235,13 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
 
-    #     url = reverse_lazy('api:employee-document')
-    #     self.client.force_login(self.test_user_employee)
-    #     response = self.client.get(url, content_type='application/json')
-    #     json_response = response.json()
-    #     print(len(json_response))
-    #     self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
+        # url_get_document = reverse_lazy('api:employee-document')
+        # self.client.force_login(self.test_user_employee)
+        # response = self.client.get(url_get_document, content_type='application/json')
+        # json_response = response.json()
+        # print(json_response)
+        # print(len(json_response))
+        # self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
 
 
     # @patch('cloudinary.uploader.upload')
