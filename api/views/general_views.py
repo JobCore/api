@@ -584,24 +584,28 @@ class RateView(APIView):
                 for shift in rate['shifts']:
                     data = {}
                     data['employee'] = rate['employee']
-                    data['shift'] = shift
+                    data['shift']  = shift
                     data['comments'] = rate['comments']
                     data['rating'] = rate['rating']
-                 
+                    # print(data)
                     serializer = rating_serializer.RatingSerializer( data=data, context={"request": request})
-
+                    # print(serializer)
                     if serializer.is_valid():
-                        return _all_serializers.append(serializer)
+                        # print('hola carnal')
+                        _all_serializers.append(serializer)
                         
                     else:
+                        # print('error brodel')
+                        # print(serializer.errors)
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            data_to_send = []
-            for serializer in _all_serializers:
-                serializer.save()
-                data_to_send.append(serializer.data)
             
-            return Response(data_to_send, status=status.HTTP_200_OK)
+            data_to_send = []
+            for item in _all_serializers:
+                item.save()
+                data_to_send.append(item.data)
+
+            resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
+            return Response(resp.initial_data, status=status.HTTP_200_OK)
                 
         else:
             serializer = rating_serializer.RatingSerializer(
