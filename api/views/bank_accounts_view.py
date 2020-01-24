@@ -109,4 +109,4 @@ class BankAccountDetailAPIView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=400)
 
-        return Response(status=202)
+        return Response({"detail": "OK"}, status=202)

@@ -8,6 +8,7 @@
     started_at: "2018-09-13T19:45:00Z"
     latitude_in: 25.744526
     longitude_in: -80.260033
+    distance_in_miles: 34.30
     ended_at: null
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
@@ -22,6 +23,7 @@
     started_at: "2018-09-13T15:45:00Z"
     latitude_in: 25.744526
     longitude_in: -80.260033
+    distance_in_miles: 22.12
     ended_at: null
     created_at: "2018-10-13T15:45:00Z"
     updated_at: "2018-10-13T19:45:00Z"
@@ -36,6 +38,7 @@
     started_at: "2019-09-10T19:45:00Z"
     latitude_in: 25.744526
     longitude_in: -80.260033
+    distance_in_miles: 2.34
     ended_at: null
     created_at: "2018-10-13T15:45:00Z"
     updated_at: "2018-10-13T19:45:00Z"
