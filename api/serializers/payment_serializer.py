@@ -14,7 +14,7 @@ from api.utils.utils import nearest_weekday
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture',)
+        fields = ('picture','id')
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(read_only=True)
@@ -219,9 +219,7 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
             print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
             params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
 
-        PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
-
-        return payment
+        return super().update(payment, params)
 
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):

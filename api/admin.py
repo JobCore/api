@@ -23,7 +23,20 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 admin.site.register(Employee, EmployeeAdmin)
 
-admin.site.register(Shift)
+class ShiftAdmin(admin.ModelAdmin):
+    # list_display = ('id',  'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
+    list_display = ('id', '_shift', '_position', 'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
+    search_fields = ('venue__title', 'position__title')
+    list_filter = ('status', 'position', 'venue')
+    list_per_page = 100
+
+    def _shift(self, obj):
+        return obj.venue.title
+
+    def _position(self, obj):
+        return obj.position.title
+
+admin.site.register(Shift, ShiftAdmin)
 
 
 class ShiftInviteAdmin(admin.ModelAdmin):
@@ -33,8 +46,6 @@ class ShiftInviteAdmin(admin.ModelAdmin):
         'shift__venue__title')
     list_filter = ('status',)
     list_per_page = 100
-
-
 admin.site.register(ShiftInvite, ShiftInviteAdmin)
 
 admin.site.register(Profile)
