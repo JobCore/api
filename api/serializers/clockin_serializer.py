@@ -143,6 +143,8 @@ class ClockinSerializer(serializers.ModelSerializer):
         clockin = super().create(validated_data)
 
         shift_lat, shift_lon = [clockin.shift.venue.latitude, clockin.shift.venue.longitude]
+        print("distance_in_miles: ")
+        print(str(validated_data))
         if 'latitude_in' in validated_data and validated_data['latitude_in'] > 0:
             clockin.distance_in_miles = haversine(validated_data['latitude_in'], validated_data['longitude_in'], shift_lat, shift_lon)
             clockin.save()
