@@ -492,7 +492,7 @@ class EmployerShiftView(EmployerView):
 
             qUnrated = request.GET.get('unrated')
             if qUnrated is not None and qUnrated == 'true':
-                shifts = shifts.filter(rate_set=None)
+                shifts = shifts.exclude(rating=None)
 
             qEmployeeNot = request.GET.get('employee_not')
             if qEmployeeNot is not None:

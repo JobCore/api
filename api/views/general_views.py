@@ -545,20 +545,23 @@ class RateView(APIView):
 
         qs_employer = request.GET.get('employer')
         qs_employee = request.GET.get('employee')
-        qs_shifts = request.GET.get('shifts')
- 
-        if qs_shifts:
-            shifts_lists = qs_shifts.split(',')
-            lookup['shift__in']=shifts_lists
-        return lookup
+
         if qs_employee:
             lookup = {'employee_id': qs_employee}
 
         if qs_employer:
             lookup = {'employer_id': qs_employer}
+
         qs_shift = request.GET.get('shift')
+
         if qs_shift:
             lookup['shift_id'] = qs_shift
+        return lookup
+        
+        qs_shifts = request.GET.get('shifts')
+        if qs_shifts:
+            shifts_lists = qs_shifts.split(',')
+            lookup['shift__in']=shifts_lists
         return lookup
 
     def get(self, request, id=False):
@@ -608,14 +611,14 @@ class RateView(APIView):
                 data_to_send.append(item.data)
 
             resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
-            return Response(resp.initial_data, status=status.HTTP_200_OK)
+            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
                 
         else:
             serializer = rating_serializer.RatingSerializer(
                 data=request.data, context={"request": request})
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
