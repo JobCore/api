@@ -143,10 +143,10 @@ class ClockinSerializer(serializers.ModelSerializer):
         clockin = super().create(validated_data)
 
         shift_lat, shift_lon = [clockin.shift.venue.latitude, clockin.shift.venue.longitude]
-        if 'latitude_in' in validated_data and validated_data['latitude_in'] > 0:
+        if 'latitude_in' in validated_data:
             clockin.distance_in_miles = haversine(validated_data['latitude_in'], validated_data['longitude_in'], shift_lat, shift_lon)
             clockin.save()
-        if 'latitude_out' in validated_data and validated_data['latitude_out'] > 0:
+        if 'latitude_out' in validated_data:
             clockin.distance_out_miles = haversine(validated_data['latitude_out'], validated_data['longitude_out'], shift_lat, shift_lon)
             clockin.save()
 
@@ -157,10 +157,10 @@ class ClockinSerializer(serializers.ModelSerializer):
         clockin = super().update(clockin, validated_data)
 
         shift_lat, shift_lon = [clockin.shift.venue.latitude, clockin.shift.venue.longitude]
-        if 'latitude_in' in validated_data and validated_data['latitude_in'] > 0:
+        if 'latitude_in' in validated_data:
             clockin.distance_in_miles = haversine(validated_data['latitude_in'], validated_data['longitude_in'], shift_lat, shift_lon)
             clockin.save()
-        if 'latitude_out' in validated_data and validated_data['latitude_out'] > 0:
+        if 'latitude_out' in validated_data:
             clockin.distance_out_miles = haversine(validated_data['latitude_out'], validated_data['longitude_out'], shift_lat, shift_lon)
             clockin.save()
 
