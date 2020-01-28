@@ -142,7 +142,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetBigSerializer(serializers.ModelSerializer):
+class ShiftGetBigListSerializer(serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     employees= EmployeeGetSmallSerializer(many=True, read_only=True)
@@ -167,9 +167,6 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     # starting_at = DatetimeFormatField(required=False)
     # ending_at = DatetimeFormatField(required=False)
     allowed_from_list = serializers.ListField(write_only=True, required=False)
-    employer = EmployerGetSmallSerializer(read_only=True)
-    position = PositionGetSmallSerializer(read_only=True)
-    venue = VenueGetSmallSerializer(read_only=True)
 
     class Meta:
         model = Shift
@@ -199,7 +196,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         if clockins > 0:
             raise serializers.ValidationError(
                 'This shift cannot be updated because someone has already clock-in')
-
+        
         return data
 
     def update(self, shift, validated_data):
@@ -306,6 +303,10 @@ class ShiftDates(serializers.Serializer):
 
 
 class ShiftPostSerializer(serializers.ModelSerializer):
+    employees = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True
+    )
 
     class Meta:
         model = Shift
@@ -318,6 +319,11 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         shift.maximum_clockin_delta_minutes = shift.employer.maximum_clockin_delta_minutes
         shift.maximum_clockout_delay_minutes = shift.employer.maximum_clockout_delay_minutes
         shift.save()
+
+        # print(validated_data)
+        # if 'employees' in validated_data:
+        #     for employee in validated_data['employees']:
+        #         ShiftEmployee.objects.create(employee=employee, shift=shift)
 
         talents = []
         includeEmailNotification = False
@@ -370,7 +376,12 @@ class ShiftGetBigSerializer(ShiftGetSerializer):
         return (obj.starting_at <= NOW + datetime.timedelta(minutes=clockin_delta) and obj.ending_at >= NOW - datetime.timedelta(minutes=clockout_delta))
 
     def _clockin_set(self, obj):
-        clockins = Clockin.objects.filter(shift__id=obj.id, employee_id=self.context["employee"])
+        clockins = []
+        if "employee" in self.context:
+            clockins = Clockin.objects.filter(shift__id=obj.id, employee_id=self.context["employee"])
+        else:
+            clockins = Clockin.objects.filter(shift__id=obj.id)
+            
         serializer = ClockinGetSmallSerializer(clockins, many=True)
         return serializer.data
 

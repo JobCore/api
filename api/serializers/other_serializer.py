@@ -2,12 +2,18 @@ from rest_framework import serializers
 from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
-   Badge, JobCoreInvite, Rate, Employer, Profile,
-   Shift, Employee, User, AvailabilityBlock, City,
-   # Document
+    Badge, JobCoreInvite, Rate, Employer, Profile,
+    Shift, Employee, User, AvailabilityBlock, City,
+    AppVersion,
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
+
+
+class AppVersionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppVersion
+        exclude = ()
 
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
@@ -95,8 +101,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
             if profile is not None:
-                raise serializers.ValidationError(
-                    "The user is already registered in jobcore")
+                raise serializers.ValidationError("The user is already registered in jobcore")
 
         try:
             sender = self.context['request'].user.profile.id
@@ -204,20 +209,22 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
         # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
-
+            # TODO: Duplicated code with line 273
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
                 starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
                 employee_id=self.context['request'].user.profile.id
             )
 
-            #if updating
+            # if updating
             if self.instance:
                 previous_ablock_in_week = previous_ablock_in_week.exclude(
                     id=self.instance.id)
 
             previous_ablock_in_week = previous_ablock_in_week.count()
             if previous_ablock_in_week > 0:
-                raise serializers.ValidationError('This employee has '+str(previous_ablock_in_week)+' day block(s) for '+days[str(django_start_week_day)]+' already')  # NOQA
+                raise serializers.ValidationError(
+                    'This employee has ' + str(previous_ablock_in_week) + ' day block(s) for ' + days[
+                        str(django_start_week_day)] + ' already')  # NOQA
 
         return data
 
@@ -270,7 +277,7 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
         # django_end_week_day = (start.isoweekday() % 7) + 1
 
         if data['recurrency_type'] == 'WEEKLY':
-
+            # TODO: Duplicated code with line 207
             previous_ablock_in_week = AvailabilityBlock.objects.filter(
                 starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
                 employee_id=self.context['request'].user.profile.id
@@ -288,4 +295,3 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
                         str(django_start_week_day)] + ' already')  # NOQA
 
         return data
-

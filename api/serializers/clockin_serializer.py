@@ -13,7 +13,7 @@ class ClockinSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ()
 
-    def _ensure_distance_threshold(self, currentPos, shift, threshold=0.1):
+    def _ensure_distance_threshold(self, currentPos, shift, threshold=0.2):
         venue = shift.venue
         talent_lat, talent_lon = currentPos
         shift_lat, shift_lon = [venue.latitude, venue.longitude]
@@ -28,6 +28,10 @@ class ClockinSerializer(serializers.ModelSerializer):
                 "You need to be {} miles near {} to clock in/out. Right now you"
                 "are at {} miles".format(threshold, venue.title, distance)
             )
+        elif distance > threshold:
+            return False
+        
+        return True
 
     def _ensure_time_threshold(self, currentTime, start, threshold=0):
         '''
@@ -133,6 +137,34 @@ class ClockinSerializer(serializers.ModelSerializer):
             self._validate_clockout(data)
 
         return data
+
+    def create(self, validated_data):
+
+        clockin = super().create(validated_data)
+
+        shift_lat, shift_lon = [clockin.shift.venue.latitude, clockin.shift.venue.longitude]
+        if 'latitude_in' in validated_data:
+            clockin.distance_in_miles = haversine(validated_data['latitude_in'], validated_data['longitude_in'], shift_lat, shift_lon)
+            clockin.save()
+        if 'latitude_out' in validated_data:
+            clockin.distance_out_miles = haversine(validated_data['latitude_out'], validated_data['longitude_out'], shift_lat, shift_lon)
+            clockin.save()
+
+        return clockin
+
+    def update(self, clockin, validated_data):
+
+        clockin = super().update(clockin, validated_data)
+
+        shift_lat, shift_lon = [clockin.shift.venue.latitude, clockin.shift.venue.longitude]
+        if 'latitude_in' in validated_data:
+            clockin.distance_in_miles = haversine(validated_data['latitude_in'], validated_data['longitude_in'], shift_lat, shift_lon)
+            clockin.save()
+        if 'latitude_out' in validated_data:
+            clockin.distance_out_miles = haversine(validated_data['latitude_out'], validated_data['longitude_out'], shift_lat, shift_lon)
+            clockin.save()
+
+        return clockin
 
 
 class ClockinGetSerializer(serializers.ModelSerializer):

@@ -14,7 +14,7 @@ from api.utils.utils import nearest_weekday
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture',)
+        fields = ('picture','id')
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(read_only=True)
@@ -165,6 +165,18 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
         data = super(PayrollPeriodPaymentPostSerializer, self).validate(data)
 
+        if 'shift' not in data:
+            raise serializers.ValidationError('Missing shift on the Payment')
+
+        if 'regular_hours' not in data:
+            raise serializers.ValidationError('You need to specify how many regular_hours were worked')
+
+        if 'over_time' not in data:
+            raise serializers.ValidationError('You need to specify how many over_time was worked')
+
+        if 'breaktime_minutes' not in data:
+            raise serializers.ValidationError('You need to specify how many breaktime_minutes was worked')
+
         # previous_payment = PayrollPeriodPayment.objects.filter(employee__id=data['employee'].id, shift__id=data['shift'].id).first()
         # if previous_payment is not None:
         #     raise serializers.ValidationError('There is already a payment for this talent and shift')
@@ -191,8 +203,11 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
 
         data = super(PayrollPeriodPaymentSerializer, self).validate(data)
 
+        if self.instance.payroll_period.status != 'OPEN':
+            raise serializers.ValidationError('This payroll period is not open for changes anymore')
+
         if 'status' not in data:
-            raise serializers.ValidationError('You need to specify the shift status')
+            raise serializers.ValidationError('You need to specify the status')
 
         return data
 
@@ -204,9 +219,7 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
             print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
             params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
 
-        PayrollPeriodPayment.objects.filter(pk=payment.id).update(**params)
-
-        return payment
+        return super().update(payment, params)
 
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):
@@ -295,6 +308,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     if last_processed_period is not None:
         log_debug('hooks','Last period generated until '+str(last_processed_period))
         last_period_ending_date = nearest_weekday(last_processed_period.ending_at - datetime.timedelta(days=1), weekday, fallback_direction='forward')
+        last_period_ending_date = last_period_ending_date.replace(hour=h_hour, minute=m_hour, second=s_hour)
         log_debug('hooks','Will start generating from '+str(last_period_ending_date))
     else:
         last_period_ending_date = nearest_weekday(employer.created_at, weekday, fallback_direction='backward')

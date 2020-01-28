@@ -130,10 +130,8 @@ def get_template_content(slug, data={}, formats=None):
 def get_template_info(slug):
     subjects = {
         "general": {"type": "utils", "subject": "Important message from JobCore"},
-        "invite_to_jobcore": {
-            "type": "employee",
-            "subject": "A job is waiting for you",
-        },
+        "invite_to_jobcore": { "type": "employee", "subject": "A job is waiting for you", },
+        "invite_to_jobcore_employer": { "type": "invite", "subject": "You have been invited to jobcore", },
         "email_validated": {"type": "views", "subject": "Your email has been validated"},
         "reset_password_form": {"type": "views", "subject": "Reset your password"},
         "registration": {"type": "registration", "subject": "Welcome to JobCore"},

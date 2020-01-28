@@ -23,7 +23,20 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 admin.site.register(Employee, EmployeeAdmin)
 
-admin.site.register(Shift)
+class ShiftAdmin(admin.ModelAdmin):
+    # list_display = ('id',  'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
+    list_display = ('id', '_shift', '_position', 'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
+    search_fields = ('venue__title', 'position__title')
+    list_filter = ('status', 'position', 'venue')
+    list_per_page = 100
+
+    def _shift(self, obj):
+        return obj.venue.title
+
+    def _position(self, obj):
+        return obj.position.title
+
+admin.site.register(Shift, ShiftAdmin)
 
 
 class ShiftInviteAdmin(admin.ModelAdmin):
@@ -33,8 +46,6 @@ class ShiftInviteAdmin(admin.ModelAdmin):
         'shift__venue__title')
     list_filter = ('status',)
     list_per_page = 100
-
-
 admin.site.register(ShiftInvite, ShiftInviteAdmin)
 
 admin.site.register(Profile)
@@ -50,10 +61,32 @@ admin.site.register(City)
 
 
 class ClockinAdmin(admin.ModelAdmin):
-    list_display = ('id', 'employee', 'started_at', 'ended_at', 'shift', 'author')
-    search_fields = ('employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name', 'author__user__last_name')
+    list_display = ('id', 'employee', 'started_at', 'ended_at', '_distance', 'shift', 'author')
+    search_fields = (
+        'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
+        'author__user__last_name')
     list_filter = ('status',)
     list_per_page = 100
+
+    def _distance(self, obj):
+        return "In: "+str(obj.distance_in_miles)+ " Out: "+str(obj.distance_out_miles)
+
+
+class EmployeeDocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'document', 'get_name', 'status', 'created_at', 'updated_at')
+    search_fields = (
+        'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
+    list_filter = ('status','document_type__validates_identity','document_type__validates_employment','document_type__is_form')
+    list_per_page = 100
+
+    def get_name(self, obj):
+        return obj.document_type.title if obj.document_type is not None else 'Missing document type'
+admin.site.register(EmployeeDocument, EmployeeDocumentAdmin)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'validates_identity', 'validates_employment', 'is_form')
+admin.site.register(Document, DocumentAdmin)
+
+
 
 
 admin.site.register(Clockin, ClockinAdmin)
@@ -62,6 +95,9 @@ admin.site.register(UserToken)
 admin.site.register(Notification)
 admin.site.register(JobCoreInvite)
 admin.site.register(BankAccount)
-admin.site.register(EmployeeDocument)
+
+class AppVersionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'version', 'force_update', 'created_at', 'updated_at')
+admin.site.register(AppVersion, AppVersionAdmin)
+
 admin.site.register(PaymentDeduction)
-# admin.site.register(City)

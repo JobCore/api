@@ -6,11 +6,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 from django.db.models import F, Func, Count, Q
 
 from django.contrib.auth.models import User
 from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite,
-                        Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position)
+                        Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position, EmployeeDocument)
 
 from api.actions import employee_actions
 from api.serializers import clockin_serializer, payment_serializer, shift_serializer
@@ -59,11 +63,12 @@ class GeneratePeriodsView(APIView):
                 return Response(validators.error_object(
                     'Employer found.'), status=status.HTTP_404_NOT_FOUND)
             periods = payment_serializer.generate_periods_and_payments(employer)
-
+            print(periods)
         else:
             log_debug("hooks",'GeneratePeriodsView:get: Looking for all employers periods')
             employers = Employer.objects.filter(payroll_period_starting_time__isnull=False)
             periods = []
+
             for employer in employers:
                 periods = periods + \
                     payment_serializer.generate_periods_and_payments(employer)
@@ -103,11 +108,13 @@ def process_expired_shifts():
         # if now > shift.ending_at + delta:
         clockins = Clockin.objects.filter(
             ended_at__isnull=True, 
+            status='PENDING',
             shift__maximum_clockout_delay_minutes__isnull=False, 
             shift__ending_at__lte= NOW - (timedelta(minutes=1) * F('shift__maximum_clockout_delay_minutes'))
         ).select_related('shift')
         for clockin in clockins:
             clockin.ended_at = clockin.shift.ending_at + timedelta(minutes=clockin.shift.maximum_clockout_delay_minutes)
+            clockin.automatically_closed = True
             clockin.save()
 
         # also expire the shift if its still open or filled but it has ended (ended_at + delay)
@@ -129,3 +136,18 @@ def process_expired_shifts():
         ShiftApplication.objects.filter(shift__status='EXPIRED').delete()
 
         return True
+
+
+def process_expired_documents():
+
+        NOW = utc.localize(datetime.now())
+        # if now > shift.ending_at + delta:
+        archived_documents = EmployeeDocument.objects.filter(expired_at__isnull=False, expired_at__lte= NOW).update(status='ARCHIVED')
+        
+        #delete documents from cloudnary
+        deleted_documents = EmployeeDocument.objects.filter(status='DELETED')
+        for doc in deleted_documents:
+            cloudinary.uploader.destroy(doc.public_id)
+            doc.delete()
+
+        return archived_documents

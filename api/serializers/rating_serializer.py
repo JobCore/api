@@ -31,7 +31,7 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = ('id', 'position', 'venue', 'employer')
+        fields = ('id', 'position', 'venue', 'employer', 'starting_at', 'ending_at')
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     user = UserGetTinySerializer(read_only=True)
