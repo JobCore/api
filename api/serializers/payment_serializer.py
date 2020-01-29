@@ -263,7 +263,7 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('first_name', 'last_name', 'total_regular_hours', 'total_over_time', 'gross_amount',
+        fields = ('id', 'first_name', 'last_name', 'total_regular_hours', 'total_over_time', 'gross_amount',
                   'payroll_period_id', 'total_deductions', 'deductions', 'net_amount')
 
     def get_deductions(self, instance):

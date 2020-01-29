@@ -688,6 +688,8 @@ class EmployeePayment(models.Model):
     net_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     total_deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     deductions = JSONField(blank=True, default=dict)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
 class PaymentDeduction(models.Model):
