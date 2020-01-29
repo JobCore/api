@@ -38,7 +38,8 @@ from api.views.employer_views import (
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
-    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
+    EmployerMeSubscriptionView
 )
 
 app_name = "api"
@@ -146,6 +147,7 @@ urlpatterns = [
     path('employers/me', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/image', EmployerMeImageView.as_view(), name="me-employers-image"),
+    path('employers/me/subscription', EmployerMeSubscriptionView.as_view(), name="me-employer-subscription"),
     path('employers/me/users', EmployerMeUsersView.as_view(), name="me-employer-users"),
     path('employers/me/users/<int:profile_id>', EmployerMeUsersView.as_view(), name="me-employer-single-users"),
     path(

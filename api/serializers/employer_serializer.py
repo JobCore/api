@@ -17,10 +17,18 @@ class EmployerGetSmallSerializer(serializers.ModelSerializer):
 
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeGetSmallSerializer(many=True)
+    active_subscription = serializers.SerializerMethodField()
 
     class Meta:
         model = Employer
-        exclude = ()
+        fields = ('title', 'picture', 'bio', 'website', 'bio', 'response_time', 'rating',
+            'total_ratings', 'badges', 'status', 'automatically_accept_from_favlists',
+            'payroll_period_starting_time', 'payroll_period_length', 'payroll_period_type',
+            'last_payment_period', 'maximum_clockin_delta_minutes', 
+            'maximum_clockout_delay_minutes', 'created_at', 'updated_at','active_subscription')
+
+    def get_active_subscription(self, employer):
+        return employer.employersubscription_set.filter(status='ACTIVE').first()
 
 
 class EmployerSerializer(serializers.ModelSerializer):
