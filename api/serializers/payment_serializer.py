@@ -7,8 +7,8 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
-from api.models import (Badge, Clockin, Employee, EmployeePayment, Employer,
-                        PayrollPeriod, PayrollPeriodPayment, Position, Profile,
+from api.models import (Badge, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
+                        PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
                         Shift, User, Venue)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
@@ -254,6 +254,36 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
                                            total_deductions=0, deductions=[],
                                            )
         return super().update(instance, validated_data)
+
+
+class EmployeePaymentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=30, source='employee.user.first_name')
+    last_name = serializers.CharField(max_length=150, source='employee.user.last_name')
+    deductions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeePayment
+        fields = ('first_name', 'last_name', 'total_regular_hours', 'total_over_time', 'gross_amount',
+                  'payroll_period_id', 'total_deductions', 'deductions', 'net_amount')
+
+    def get_deductions(self, instance):
+        self.context['total_deductions'] = 0
+        res_list = []
+        for deduction in itertools.chain(PreDefinedDeduction.objects.order_by('id'),
+                                         EmployerDeduction.objects.order_by('id')):
+            if deduction.type == PreDefinedDeduction.PERCENTAGE_TYPE:
+                amount = instance.gross_amount * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
+            else:
+                amount = decimal.Decimal('{:.2f}'.format(deduction.value))
+            self.context['total_deductions'] += amount
+            res_list.append({'name': deduction.name, 'amount': amount})
+        return res_list
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['total_deductions'] = self.context['total_deductions']
+        data['net_amount'] = instance.gross_amount - data['total_deductions']
+        return data
 
 
 def get_projected_payments(
