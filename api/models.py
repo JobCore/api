@@ -1,7 +1,9 @@
-from django.utils import timezone
-from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.db.models import Avg, Count
+from django.utils import timezone
+
 from api.utils.loggers import log_debug
 
 NOW = timezone.now()
@@ -666,6 +668,26 @@ class PayrollPeriodPayment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
+class EmployeePayment(models.Model):
+    PENDING = 'PENDING'
+    PAID = 'PAID'
+    STATUS_CHOICES = (
+        (PENDING, 'Pending'),
+        (PAID, 'Paid'),
+    )
+    payroll_period = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, related_name='employee_payments')
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name='employee_payments')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payments')
+    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default=PENDING)
+    total_regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_breaktime_minutes = models.IntegerField(blank=True, default=0)
+    gross_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    total_deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    deductions = JSONField(blank=True, default=dict)
 
 
 class PaymentDeduction(models.Model):
