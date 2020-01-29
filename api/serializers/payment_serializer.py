@@ -1,20 +1,27 @@
 import datetime
-import itertools
 import decimal
-from django.db.models import Q
+import itertools
+
+from django.db.models import Q, Sum
 from django.utils import timezone
+
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue
+
+from api.models import (Badge, Clockin, Employee, EmployeePayment, Employer,
+                        PayrollPeriod, PayrollPeriodPayment, Position, Profile,
+                        Shift, User, Venue)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 #
 # NESTED
 #
 
+
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('picture',)
+
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(read_only=True)
@@ -28,6 +35,7 @@ class PositionGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = ('title', 'id')
+
 
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,10 +66,12 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+
 class BadgeGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
         fields = ('title', 'id')
+
 
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
@@ -69,6 +79,7 @@ class EmployeeGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('user', 'id')
+
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
@@ -89,11 +100,13 @@ class ClockinGetSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ()
 
+
 class ClockinGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Clockin
         exclude = ('shift', 'employee')
+
 
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
     #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
@@ -154,6 +167,7 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
 class RoundingDecimalField(serializers.DecimalField):
     def validate_precision(self, value):
         return value
+
 
 class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
@@ -221,6 +235,25 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
             'ending_at': {'read_only': True},
             'starting_at': {'read_only': True}
         }
+
+    def update(self, instance, validated_data):
+        employer_id = instance.employer_id
+        for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id)\
+                .values('employee_id').annotate(total_regular_hours=Sum('regular_hours'),
+                                                total_over_time=Sum('over_time'),
+                                                gross_amount=Sum('total_amount'),
+                                                total_breaktime_minutes=Sum('breaktime_minutes'),
+                                                total_payment=Sum('total_amount')):
+            EmployeePayment.objects.create(payroll_period=instance,
+                                           employee_id=item['employee_id'],
+                                           employer_id=employer_id,
+                                           total_regular_hours=item['total_regular_hours'],
+                                           total_over_time=item['total_over_time'],
+                                           total_breaktime_minutes=item['total_breaktime_minutes'],
+                                           gross_amount=item['total_payment'],
+                                           total_deductions=0, deductions=[],
+                                           )
+        return super().update(instance, validated_data)
 
 
 def get_projected_payments(
