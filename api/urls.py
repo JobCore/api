@@ -14,7 +14,7 @@ from api.views.general_views import (
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
     PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
-    AppVersionView
+    AppVersionView, SubscriptionsView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
@@ -70,6 +70,9 @@ urlpatterns = [
 
     path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
     path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
+
+    path('subscriptions', SubscriptionsView.as_view(), name="get-subscription"),
+    path('subscriptions/<str:id>', SubscriptionsView.as_view(), name="get-all-subscriptions"),
 
     #
     # FOR EVERYONE LOGGED IN

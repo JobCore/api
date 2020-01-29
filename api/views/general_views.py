@@ -478,6 +478,25 @@ class CityView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class SubscriptionsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, id=None):
+        if (id):
+            try:
+                subscription = SubscriptionPlan.objects.get(pk=id)
+            except SubscriptionPlan.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = other_serializer.SubscriptionSerializer(subscription, many=False)
+
+        else:
+            subs = SubscriptionPlan.objects.all()
+            serializer = other_serializer.SubscriptionSerializer(subs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class BadgeView(APIView):
     def get(self, request, id=False):

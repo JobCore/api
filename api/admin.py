@@ -99,11 +99,18 @@ admin.site.register(AppVersion, AppVersionAdmin)
 
 admin.site.register(PaymentDeduction)
 
-# class EmployerSubscriptionAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'employer', 'subscription', 'status', 'due_at', 'mode')
-#     #search_fields = ('employer__title', 'subscription__title')
-#     #list_filter = ('status', 'subscription')
-#     list_per_page = 100
+class EmployerSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', '_employer', '_subscription', 'status', 'due_at', 'payment_mode')
+    search_fields = ('employer__title', 'subscription__title')
+    list_filter = ('status', 'subscription__unique_name')
+    list_per_page = 100
+
+    def _employer(self, obj):
+        return obj.employer.title
+
+    def _subscription(self, obj):
+        return obj.subscription.title
+
 admin.site.register(SubscriptionPlan)
-# admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
-admin.site.register(EmployerSubscription)
+admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
+# admin.site.register(EmployerSubscription)

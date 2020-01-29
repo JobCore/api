@@ -3,6 +3,7 @@ from api.models import Employer, Shift
 from datetime import datetime
 from django.utils import timezone
 from api.serializers.badge_serializers import BadgeGetSmallSerializer
+from api.serializers.other_serializer import SubscriptionSerializer
 
 #
 # MAIN
@@ -28,7 +29,12 @@ class EmployerGetSerializer(serializers.ModelSerializer):
             'maximum_clockout_delay_minutes', 'created_at', 'updated_at','active_subscription')
 
     def get_active_subscription(self, employer):
-        return employer.employersubscription_set.filter(status='ACTIVE').first()
+        _sub = employer.employersubscription_set.filter(status='ACTIVE').first()
+        if _sub is not None:
+            serializer = SubscriptionSerializer(_sub.subscription, many=False)
+            return serializer.data
+        else:
+            return None
 
 
 class EmployerSerializer(serializers.ModelSerializer):
