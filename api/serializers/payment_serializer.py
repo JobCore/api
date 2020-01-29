@@ -247,11 +247,11 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
             EmployeePayment.objects.create(payroll_period=instance,
                                            employee_id=item['employee_id'],
                                            employer_id=employer_id,
-                                           total_regular_hours=item['total_regular_hours'],
-                                           total_over_time=item['total_over_time'],
-                                           total_breaktime_minutes=item['total_breaktime_minutes'],
-                                           gross_amount=item['total_payment'],
-                                           total_deductions=0, deductions=[],
+                                           regular_hours=item['total_regular_hours'],
+                                           over_time=item['total_over_time'],
+                                           breaktime_minutes=item['total_breaktime_minutes'],
+                                           earnings=item['total_payment'],
+                                           deductions=0, deduction_list=[],
                                            )
         return super().update(instance, validated_data)
 
@@ -259,20 +259,20 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
 class EmployeePaymentSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=30, source='employee.user.first_name')
     last_name = serializers.CharField(max_length=150, source='employee.user.last_name')
-    deductions = serializers.SerializerMethodField()
+    deduction_list = serializers.SerializerMethodField()
 
     class Meta:
         model = EmployeePayment
-        fields = ('id', 'first_name', 'last_name', 'total_regular_hours', 'total_over_time', 'gross_amount',
-                  'payroll_period_id', 'total_deductions', 'deductions', 'net_amount')
+        fields = ('id', 'first_name', 'last_name', 'regular_hours', 'over_time', 'earnings',
+                  'payroll_period_id', 'deductions', 'deduction_list', 'amount')
 
-    def get_deductions(self, instance):
+    def get_deduction_list(self, instance):
         self.context['total_deductions'] = 0
         res_list = []
         for deduction in itertools.chain(PreDefinedDeduction.objects.order_by('id'),
                                          EmployerDeduction.objects.order_by('id')):
             if deduction.type == PreDefinedDeduction.PERCENTAGE_TYPE:
-                amount = instance.gross_amount * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
+                amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:
                 amount = decimal.Decimal('{:.2f}'.format(deduction.value))
             self.context['total_deductions'] += amount
@@ -281,8 +281,8 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['total_deductions'] = self.context['total_deductions']
-        data['net_amount'] = instance.gross_amount - data['total_deductions']
+        data['deductions'] = self.context['total_deductions']
+        data['amount'] = instance.earnings - data['deductions']
         return data
 
 

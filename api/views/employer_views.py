@@ -2,8 +2,6 @@ import cloudinary
 import cloudinary.api
 import cloudinary.uploader
 import datetime
-import decimal
-import itertools
 import logging
 
 from django.contrib.auth.models import User
@@ -16,8 +14,8 @@ from rest_framework.response import Response
 
 from api.mixins import EmployerView
 from api.models import (
-    Clockin, Employee, EmployeePayment, EmployerDeduction, FavoriteList,
-    PayrollPeriod, PayrollPeriodPayment, PreDefinedDeduction, Rate,
+    Clockin, Employee, EmployeePayment, FavoriteList,
+    PayrollPeriod, PayrollPeriodPayment, Rate,
     Shift, ShiftApplication, ShiftInvite, Venue,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
