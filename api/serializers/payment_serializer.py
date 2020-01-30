@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from rest_framework import serializers
 
-from api.models import (Badge, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
+from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
                         PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
                         Shift, User, Venue)
 from api.utils.loggers import log_debug
@@ -256,15 +256,40 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class BankAccountSmallSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BankAccount
+        fields = ('id', 'name', 'institution_name', 'account', 'account_id')
+
+
+class EmployerInfoPaymentSerializer(serializers.ModelSerializer):
+    """Serializer to get basic information of employer, including bank accounts"""
+    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+
+    class Meta:
+        model = Employer
+        fields = ('id', 'title', 'status', 'bank_accounts')
+
+
+class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=30, source='user.first_name')
+    last_name = serializers.CharField(max_length=150, source='user.last_name')
+    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+
+    class Meta:
+        model = Employee
+        fields = ('first_name', 'last_name', 'bank_accounts')
+
+
 class EmployeePaymentSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(max_length=30, source='employee.user.first_name')
-    last_name = serializers.CharField(max_length=150, source='employee.user.last_name')
+    employee = EmployeeInfoPaymentSerializer()
     deduction_list = serializers.SerializerMethodField()
 
     class Meta:
         model = EmployeePayment
-        fields = ('id', 'first_name', 'last_name', 'regular_hours', 'over_time', 'earnings',
-                  'payroll_period_id', 'deductions', 'deduction_list', 'amount')
+        fields = ('id', 'employee', 'regular_hours', 'over_time', 'earnings',
+                  'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'amount')
 
     def get_deduction_list(self, instance):
         self.context['total_deductions'] = 0
