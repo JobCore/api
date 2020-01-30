@@ -486,7 +486,7 @@ class Rate(models.Model):
     employer = models.ForeignKey(
         Employer, on_delete=models.CASCADE, blank=True, null=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, null=True)
-    comments = models.TextField()
+    comments = models.TextField(default="",blank=True)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
