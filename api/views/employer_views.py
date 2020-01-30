@@ -754,8 +754,8 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EmployerMeEmployeePaymentView(EmployerView):
-    """To handle total amounts for employee, including deductions"""
+class EmployerMeEmployeePaymentListView(EmployerView):
+    """To get total payment amounts for employee, including deductions"""
     def get_queryset(self, period_id=None):
         qs = EmployeePayment.objects.filter(employer_id=self.employer.id)
         if period_id is not None:
