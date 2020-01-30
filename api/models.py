@@ -671,16 +671,10 @@ class PayrollPeriodPayment(models.Model):
 
 
 class EmployeePayment(models.Model):
-    PENDING = 'PENDING'
-    PAID = 'PAID'
-    STATUS_CHOICES = (
-        (PENDING, 'Pending'),
-        (PAID, 'Paid'),
-    )
     payroll_period = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, related_name='employee_payments')
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name='employee_payments')
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payments')
-    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default=PENDING)
+    paid = models.BooleanField(blank=True, default=False)
     regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     breaktime_minutes = models.IntegerField(blank=True, default=0)
