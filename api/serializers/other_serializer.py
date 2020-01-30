@@ -103,8 +103,6 @@ class EmployerSubscriptionPost(serializers.ModelSerializer):
         else:
             params['due_at'] = NOW + relativedelta(months=1)
 
-        print(params)
-
         subs = super().create(params)
 
         return subs

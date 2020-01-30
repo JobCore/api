@@ -22,7 +22,7 @@ class EmployerGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employer
-        fields = ('title', 'picture', 'bio', 'website', 'bio', 'response_time', 'rating',
+        fields = ('id','title', 'picture', 'bio', 'website', 'bio', 'response_time', 'rating',
             'total_ratings', 'badges', 'status', 'automatically_accept_from_favlists',
             'payroll_period_starting_time', 'payroll_period_length', 'payroll_period_type',
             'last_payment_period', 'maximum_clockin_delta_minutes', 
