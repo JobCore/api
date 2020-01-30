@@ -76,10 +76,23 @@ class EmployerSubscriptionPost(serializers.ModelSerializer):
         model = EmployerSubscription
         exclude = ()
 
+    def validate(self, data):
+
+        if 'employer' not in data or data['employer'] is None or data['employer'].id == 0:
+            raise serializers.ValidationError('Invalid employer')
+
+        validated_data = super().validate(data)
+
+        current = EmployerSubscription.objects.filter(status='ACTIVE', employer=data['employer'].id).first()
+        if current is not None and current.subscription.id == data['subscription'].id:
+            raise serializers.ValidationError('That subscription is already active')
+
+        return validated_data
+
     def create(self, validated_data):
 
         NOW = timezone.now()
-        EmployerSubscription.objects.filter(status='ACTIVE').update(status='CANCELLED', updated_at=NOW)
+        EmployerSubscription.objects.filter(status='ACTIVE', employer=validated_data['employer'].id).update(status='CANCELLED', updated_at=NOW)
 
         params = validated_data.copy()
         if 'payment_mode' not in validated_data:
@@ -89,6 +102,8 @@ class EmployerSubscriptionPost(serializers.ModelSerializer):
             params['due_at'] = NOW +  + datetime.timedelta(years=1)
         else:
             params['due_at'] = NOW + relativedelta(months=1)
+
+        print(params)
 
         subs = super().create(params)
 

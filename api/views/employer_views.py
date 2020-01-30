@@ -371,20 +371,22 @@ class EmployerMeSubscriptionView(EmployerView):
         else:
             qs = qs.filter(status='ACTIVE')
 
-        serializer = other_serializer.SubscriptionPlan(qs, many=True)
+        serializer = other_serializer.SubscriptionSerializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
 
         request.data['employer'] = self.employer.id
-        serializer = other_serializer.EmployerSubscriptionPost(data=request.data)
+        serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
 
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
+        _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
+        return Response(_serializer.data, status=status.HTTP_201_CREATED)
 
 class FavListView(EmployerView):
     def get_queryset(self):
