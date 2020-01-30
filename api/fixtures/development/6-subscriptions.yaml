@@ -14,8 +14,27 @@
     unique_name: "silver"
     title: "Silver Plan"
     image_url: ""
-    price_month: 40.00
-    price_month: 100.00
+    price_month: 49.99
+    price_year: 499.99
+
+    feature_talent_search: true
+    feature_payroll_report: false
+    feature_smart_calendar: false
+    feature_trusted_talents: false
+    feature_ach_payments: false
+    feature_calculate_deductions: true
+    feature_quickbooks_integration: true
+
+    feature_max_clockins: 20
+    feature_max_invites: 10
+    feature_max_shifts: 0
+    feature_max_active_employees: 0
+    feature_max_favorite_list_size: 10
+
+    price_per_clockins: 0
+    price_per_invites: 2
+    price_per_shifts: 2
+    price_per_active_employees: 1
 
     created_at: "2019-09-13T19:45:00Z"
     updated_at: "2019-09-13T19:45:00Z"

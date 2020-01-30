@@ -493,6 +493,11 @@ class SubscriptionsView(APIView):
 
         else:
             subs = SubscriptionPlan.objects.all()
+
+            qsVisibility = request.GET.get('visibility')
+            if qsVisibility is None or qsVisibility != 'all':
+                subs = subs.filter(visible_to_users=True)
+
             serializer = other_serializer.SubscriptionSerializer(subs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

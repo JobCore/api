@@ -374,6 +374,18 @@ class EmployerMeSubscriptionView(EmployerView):
         serializer = other_serializer.SubscriptionPlan(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request):
+
+        request.data['employer'] = self.employer.id
+        serializer = other_serializer.EmployerSubscriptionPost(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 class FavListView(EmployerView):
     def get_queryset(self):
         return FavoriteList.objects.filter(employer_id=self.employer.id)

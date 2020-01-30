@@ -69,6 +69,7 @@ EMPLOYER_STATUS = (
 
 class SubscriptionPlan(models.Model):
     unique_name = models.CharField(max_length=25, unique=True)
+    visible_to_users = models.BooleanField(default=True)
     title = models.CharField(max_length=25, unique=True)
     image_url = models.TextField(max_length=255, blank=True)
 
