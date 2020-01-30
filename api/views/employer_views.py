@@ -523,6 +523,7 @@ class EmployerShiftView(EmployerView):
         request.data["employer"] = self.employer.id
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
+                
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
@@ -824,6 +825,7 @@ class EmployeerRateView(EmployerView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
 
 class EmployerBatchActions(EmployerView):
 
