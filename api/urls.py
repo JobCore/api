@@ -165,8 +165,8 @@ urlpatterns = [
          name="me-single-payroll-payments"),
     path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(),
          name="me-get-single-payroll-period"),
-    path('employers/me/employee-payment/<int:period_id>', EmployerMeEmployeePaymentView.as_view(),
-         name='me-get-employee-payment'),
+    path('employers/me/employee-payment-list/<int:period_id>', EmployerMeEmployeePaymentView.as_view(),
+         name='me-get-employee-payment-list'),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),
