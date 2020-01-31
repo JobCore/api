@@ -177,15 +177,20 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
             'starting_at',
             'ending_at',
             'venue',
+            'position',
             'minimum_hourly_rate',
             'status']
         for key in new_data:
             if key in sensitive_fields:
                 if old_data is None:
                     return True
-                elif old_data is not None and new_data[key] != old_data[key]:
-                    return True
-
+                elif old_data is not None:
+                    if key == 'position' and new_data[key].id != old_data[key].id:
+                        return True
+                    if key == 'venue' and new_data[key].id != old_data[key].id:
+                        return True
+                    elif new_data[key] != old_data[key]:
+                        return True
         return False
 
     def validate(self, data):
@@ -220,7 +225,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
             "position": old_shift.position,
             "status": old_shift.status,
             "minimum_hourly_rate": old_shift.minimum_hourly_rate,
-            "venue": old_shift.venue.title
+            "venue": old_shift.venue
         }
 
         # if some pending invites are coming from the front end I will have to send them
@@ -228,7 +233,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         if 'pending_invites' in validated_data:
             pending_invites = [talent['value'] for talent in validated_data['pending_invites']]
 
-        # before updating the shift I have to let the employees know that the
+        # before making the shift a draft or cancelled I have to let the employees know that the
         # shift is no longer available
         if 'status' in validated_data and validated_data['status'] in ['DRAFT', 'CANCELLED']:
             if old_data['status'] != 'DRAFT' or validated_data['status'] != 'DRAFT':

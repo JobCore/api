@@ -14,7 +14,8 @@ from api.models import (
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
-    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
+    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
+    EmployerSubscription, EMPLOYER_STATUS
 )
 
 from api.utils import validators
@@ -23,7 +24,7 @@ from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
-    profile_serializer
+    profile_serializer, other_serializer
 )
 
 from django.utils import timezone
@@ -357,6 +358,35 @@ class EmployerVenueView(EmployerView):
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class EmployerMeSubscriptionView(EmployerView):
+    def get_queryset(self):
+        return EmployerSubscription.objects.filter(employer_id=self.employer.id).order_by('-due_at')
+
+    def get(self, request, id=False):
+        qs = self.get_queryset()
+
+        qStatus = request.GET.get('status')
+        if validators.in_choices(qStatus, EMPLOYER_STATUS):
+            qs = qs.filter(status=qStatus)
+        else:
+            qs = qs.filter(status='ACTIVE')
+
+        serializer = other_serializer.SubscriptionSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+
+        request.data['employer'] = self.employer.id
+        serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
+        _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
+        return Response(_serializer.data, status=status.HTTP_201_CREATED)
 
 class FavListView(EmployerView):
     def get_queryset(self):

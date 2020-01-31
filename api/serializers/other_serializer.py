@@ -1,10 +1,14 @@
 from rest_framework import serializers
+import datetime
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
+
 from api.serializers import profile_serializer
 from api.utils import notifier
 from api.models import (
     Badge, JobCoreInvite, Rate, Employer, Profile,
     Shift, Employee, User, AvailabilityBlock, City,
-    AppVersion,
+    AppVersion, SubscriptionPlan, EmployerSubscription
 )
 
 from api.serializers.position_serializer import PositionSmallSerializer
@@ -15,6 +19,11 @@ class AppVersionSerializer(serializers.ModelSerializer):
         model = AppVersion
         exclude = ()
 
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        exclude = ()
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,6 +68,44 @@ class CitySerializer(serializers.ModelSerializer):
 
 # reset the employee badges
 
+        
+class EmployerSubscriptionPost(serializers.ModelSerializer):
+    due_at = serializers.DateTimeField(required=False)
+
+    class Meta:
+        model = EmployerSubscription
+        exclude = ()
+
+    def validate(self, data):
+
+        if 'employer' not in data or data['employer'] is None or data['employer'].id == 0:
+            raise serializers.ValidationError('Invalid employer')
+
+        validated_data = super().validate(data)
+
+        current = EmployerSubscription.objects.filter(status='ACTIVE', employer=data['employer'].id).first()
+        if current is not None and current.subscription.id == data['subscription'].id:
+            raise serializers.ValidationError('That subscription is already active')
+
+        return validated_data
+
+    def create(self, validated_data):
+
+        NOW = timezone.now()
+        EmployerSubscription.objects.filter(status='ACTIVE', employer=validated_data['employer'].id).update(status='CANCELLED', updated_at=NOW)
+
+        params = validated_data.copy()
+        if 'payment_mode' not in validated_data:
+            params['payment_mode'] = 'MONTHLY'
+
+        if params['payment_mode'] == 'YEARLY':
+            params['due_at'] = NOW +  + datetime.timedelta(years=1)
+        else:
+            params['due_at'] = NOW + relativedelta(months=1)
+
+        subs = super().create(params)
+
+        return subs
 
 class EmployeeBadgeSerializer(serializers.Serializer):
     badges = serializers.PrimaryKeyRelatedField(

@@ -478,6 +478,30 @@ class CityView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class SubscriptionsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, id=None):
+        if (id):
+            try:
+                subscription = SubscriptionPlan.objects.get(pk=id)
+            except SubscriptionPlan.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = other_serializer.SubscriptionSerializer(subscription, many=False)
+
+        else:
+            subs = SubscriptionPlan.objects.all()
+
+            qsVisibility = request.GET.get('visibility')
+            if qsVisibility is None or qsVisibility != 'all':
+                subs = subs.filter(visible_to_users=True)
+
+            serializer = other_serializer.SubscriptionSerializer(subs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class BadgeView(APIView):
     def get(self, request, id=False):
@@ -593,16 +617,15 @@ class RateView(APIView):
             serializer = rating_serializer.RatingSerializer( data=rate, context={"request": request})
             if serializer.is_valid():
                 _all_serializers.append(serializer) 
-            else:
+                 
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+                    # print(serializer)
         data_to_send = []
-   
         for item in _all_serializers:
             item.save()
             data_to_send.append(item.data)
-
-        if isinstance(request.data, list) is False:
+                        # print('error brodel')
+                        # print(serializer.errors)
             resp = rating_serializer.RatingSerializer( data=data_to_send[0], many=False)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
         else:
