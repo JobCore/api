@@ -615,21 +615,14 @@ class RateView(APIView):
         serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
         if serializer.is_valid():
             serializer.save()
+            if isinstance(request.data, list) is False:
+                resp = rating_serializer.RatingSerializer( data=serializer.data[0], many=False)
+                return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+            else:
+                resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
+                return Response(resp.initial_data, status=status.HTTP_201_CREATED)
         else: 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                                # print('error brodel')
-                        # print(serializer.errors)
-
-            
-atad
-
-
-
-                           
-
-            resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
-            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
-            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
 
 class CatalogView(APIView):
     def get(self, request, catalog_type):
