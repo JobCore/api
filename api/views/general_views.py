@@ -622,8 +622,11 @@ class RateView(APIView):
 
             
 atad
-            resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
-            return Response(resp.data, status=status.HTTP_201_CREATED)
+
+
+
+                           
+
             resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
