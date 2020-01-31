@@ -600,40 +600,33 @@ class RateView(APIView):
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
         else:
             lookup = self.build_lookup(request)
-            print(lookup)
             qs = qs.filter(**lookup)
             serializer = rating_serializer.RatingGetSerializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def post(self, request):
         
+    def post(self, request):
+
         _rates = []
         if isinstance(request.data, list) is False:
             _rates = [request.data]
         else: _rates = request.data
-        _all_serializers = []
-        for rate in _rates:
-            serializer = rating_serializer.RatingSerializer( data=rate, context={"request": request})
-            if serializer.is_valid():
-                _all_serializers.append(serializer) 
-                 
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-                    # print(serializer)
-        data_to_send = []
-        for item in _all_serializers:
-            item.save()
-            data_to_send.append(item.data)
-                        # print('error brodel')
+        
+        serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
+        if serializer.is_valid():
+            serializer.save()
+        else: 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                                # print('error brodel')
                         # print(serializer.errors)
-            resp = rating_serializer.RatingSerializer( data=data_to_send[0], many=False)
-            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
-        else:
-            resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
-            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
-                
 
-
+            
+atad
+            resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
+            return Response(resp.data, status=status.HTTP_201_CREATED)
+            resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
+            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
 
 class CatalogView(APIView):
     def get(self, request, catalog_type):
