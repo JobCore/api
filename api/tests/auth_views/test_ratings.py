@@ -296,6 +296,43 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(float(self.test_employee.rating), 4)
         self.assertEquals(self.test_employee.total_ratings, 1)
 
+    def test_post_rating_employer_with_no_comments(self):
+        """
+        Gets ratings
+        """
+
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        payload = {
+            'employee': self.test_employee.id,
+            'rating': 1,
+            'shift': self.test_shift.id,
+            'comments': ''
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        #print(response.content)
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response.')
+
+        response_json = response.json()
+
+        self.assertIn('comments', response_json)
+        self.assertIn('shift', response_json)
+        self.assertIn('id', response_json)
+        self.assertIn('rating', response_json)
+
+        self.test_employee.refresh_from_db()
+
+        self.assertEquals(float(self.test_employee.rating), 1)
+        self.assertEquals(self.test_employee.total_ratings, 1)
+
     def test_post_double_rating(self):
         """
         Gets ratings
