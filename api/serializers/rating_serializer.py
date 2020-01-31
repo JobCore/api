@@ -108,7 +108,6 @@ class RatingSerializer(serializers.ModelSerializer):
             except Rate.MultipleObjectsReturned:
                 raise serializers.ValidationError(
                     "You have already rated this employer for this shift")
-
         # if it is an employer rating a talent
         elif current_user.profile.employer_id is not None:
             if 'employer' in data and data['employer'] is not None:
@@ -131,16 +130,12 @@ class RatingSerializer(serializers.ModelSerializer):
                     shift=data["shift"].id,
                     employee=data["employee"].id)
                 raise serializers.ValidationError(
-                    "You have already rated this talent for this shift")
+                    "You have already rated "+data["employee"].user.first_name+" for this shift")
             except Rate.DoesNotExist:
                 pass
             except Rate.MultipleObjectsReturned:
                 raise serializers.ValidationError(
                     "You have already rated this talent for this shift")
-
-            # if 'comments' not in data or data['comments'] == '' or len(data['comments']) < 50:
-            #     raise serializers.ValidationError(
-            #         "The rating must have a comment of a least 50 characters")
 
         return data
 

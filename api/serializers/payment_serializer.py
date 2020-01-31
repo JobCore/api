@@ -364,12 +364,12 @@ def generate_periods_and_payments(employer, generate_since=None):
                 log_debug('hooks','Projected hours '+str(projected_hours))
                 overtime = 0
                 regular_hours = 0
-                if clocked_hours is not None and (clocked_hours > projected_hours):
-                    overtime = clocked_hours - projected_hours
-                    regular_hours = projected_hours
+                if clocked_hours is not None and (clocked_hours > 40):
+                    overtime = clocked_hours - 40
+                    regular_hours = 40
                 else:
-                    regular_hours = 0
-                    clocked_hours = 0
+                    regular_hours = clocked_hours
+                    overtime = 0
 
 
                 payment = PayrollPeriodPayment(
@@ -378,10 +378,10 @@ def generate_periods_and_payments(employer, generate_since=None):
                     employer=employer,
                     shift=clockin.shift,
                     clockin=clockin,
-                    regular_hours= 0 if regular_hours is None else regular_hours,
+                    regular_hours= regular_hours,
                     over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount=clockin.shift.minimum_hourly_rate * decimal.Decimal(clocked_hours),
+                    total_amount= (decimal.Decimal(regular_hours) * decimal.Decimal(clockin.shift.minimum_hourly_rate)) + (decimal.Decimal(overtime) * decimal.Decimal(1.5) * decimal.Decimal(clockin.shift.minimum_hourly_rate)),
                     splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()

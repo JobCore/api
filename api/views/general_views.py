@@ -617,16 +617,15 @@ class RateView(APIView):
             serializer = rating_serializer.RatingSerializer( data=rate, context={"request": request})
             if serializer.is_valid():
                 _all_serializers.append(serializer) 
-            else:
+                 
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+                    # print(serializer)
         data_to_send = []
-   
         for item in _all_serializers:
             item.save()
             data_to_send.append(item.data)
-
-        if isinstance(request.data, list) is False:
+                        # print('error brodel')
+                        # print(serializer.errors)
             resp = rating_serializer.RatingSerializer( data=data_to_send[0], many=False)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
         else:
