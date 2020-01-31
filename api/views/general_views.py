@@ -569,6 +569,8 @@ class RateView(APIView):
 
         qs_employer = request.GET.get('employer')
         qs_employee = request.GET.get('employee')
+        qs_shift = request.GET.get('shift')
+        qs_shifts = request.GET.get('shifts')
 
         if qs_employee:
             lookup = {'employee_id': qs_employee}
@@ -576,13 +578,11 @@ class RateView(APIView):
         if qs_employer:
             lookup = {'employer_id': qs_employer}
 
-        qs_shift = request.GET.get('shift')
 
-        if qs_shift:
+        if qs_shift: 
             lookup['shift_id'] = qs_shift
         return lookup
-        
-        qs_shifts = request.GET.get('shifts')
+
         if qs_shifts:
             shifts_lists = qs_shifts.split(',')
             lookup['shift__in']=shifts_lists
@@ -600,6 +600,7 @@ class RateView(APIView):
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
         else:
             lookup = self.build_lookup(request)
+            print(lookup)
             qs = qs.filter(**lookup)
             serializer = rating_serializer.RatingGetSerializer(qs, many=True)
 
@@ -607,44 +608,35 @@ class RateView(APIView):
 
     def post(self, request):
         
-        if (isinstance(request.data, list)):
-            _all_serializers = []
-  
-            for rate in request.data:
-                for shift in rate['shifts']:
-                    data = {}
-                    data['employee'] = rate['employee']
-                    data['shift']  = shift
-                    data['comments'] = rate['comments']
-                    data['rating'] = rate['rating']
-                    # print(data)
-                    serializer = rating_serializer.RatingSerializer( data=data, context={"request": request})
-                    # print(serializer)
-                    if serializer.is_valid():
-                        # print('hola carnal')
-                        _all_serializers.append(serializer)
-                        
-                    else:
-                        # print('error brodel')
-                        # print(serializer.errors)
-                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            data_to_send = []
-            for item in _all_serializers:
-                item.save()
-                data_to_send.append(item.data)
+        _rates = []
+      
+        if isinstance(request.data, list) is False:
+            _rates = [request.data]
+        else: _rates = request.data
+        _all_serializers = []
 
-            resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
-            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
-                
-        else:
-            serializer = rating_serializer.RatingSerializer(
-                data=request.data, context={"request": request})
+        for rate in _rates:
+            serializer = rating_serializer.RatingSerializer( data=rate, context={"request": request})
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                _all_serializers.append(serializer) 
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        data_to_send = []
+   
+        for item in _all_serializers:
+            item.save()
+            data_to_send.append(item.data)
+
+        if isinstance(request.data, list) is False:
+            resp = rating_serializer.RatingSerializer( data=data_to_send[0], many=False)
+            print(resp)
+            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+        else:
+            resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
+            print(resp)
+            return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+                
 
 
 
