@@ -210,10 +210,23 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         payload = [{
                 'employee': self.test_employee.id,
-                'shifts': [new_shift1.id,new_shift2.id,new_shift3.id],
+                'shift': new_shift1.id,
                 'rating': 3.5,
                 'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
-        }]
+        },
+        {
+                'employee': self.test_employee.id,
+                'shift': new_shift2.id,
+                'rating': 4.5,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        },
+        {
+                'employee': self.test_employee.id,
+                'shift': new_shift3.id,
+                'rating': 1.5,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        }
+        ]
         
         response = self.client.post(
             url,
