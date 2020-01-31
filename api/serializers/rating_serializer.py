@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Rate, Shift, Clockin, Venue, Employer, Profile, User
+from api.models import Rate, Shift, Clockin, Venue, Employer, Profile, User, PayrollPeriodPayment
 from django.db.models import Avg, Count
 from api.serializers.position_serializer import PositionSmallSerializer
 
@@ -120,16 +120,10 @@ class RatingSerializer(serializers.ModelSerializer):
                     'As an employer, you can only rate talents '
                     'that have work on your own shifts')
 
-            try:
-                # unused clockin
-                Clockin.objects.get(
-                    shift=data["shift"], employee=data["employee"].id)
-            except Clockin.DoesNotExist:
-                raise serializers.ValidationError(
-                    'This talent has not worked on this shift, '
-                    'no clockins have been found')
-            except Clockin.MultipleObjectsReturned:
-                pass
+            clockin = Clockin.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
+            payment = PayrollPeriodPayment.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
+            if clockin is None and payment is None:
+                raise serializers.ValidationError('This talent has not worked on this shift, no clockins have been found')
 
             try:
                 # unused rate
@@ -151,7 +145,6 @@ class RatingSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-
         rate = Rate(**validated_data)
         rate.save()
 

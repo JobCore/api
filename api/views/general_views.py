@@ -609,12 +609,10 @@ class RateView(APIView):
     def post(self, request):
         
         _rates = []
-      
         if isinstance(request.data, list) is False:
             _rates = [request.data]
         else: _rates = request.data
         _all_serializers = []
-
         for rate in _rates:
             serializer = rating_serializer.RatingSerializer( data=rate, context={"request": request})
             if serializer.is_valid():
@@ -630,11 +628,9 @@ class RateView(APIView):
 
         if isinstance(request.data, list) is False:
             resp = rating_serializer.RatingSerializer( data=data_to_send[0], many=False)
-            print(resp)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
         else:
             resp = rating_serializer.RatingSerializer( data=data_to_send, many=True)
-            print(resp)
             return Response(resp.initial_data, status=status.HTTP_201_CREATED)
                 
 
