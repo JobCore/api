@@ -1,7 +1,9 @@
-from django.utils import timezone
-from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.db.models import Avg, Count
+from django.utils import timezone
+
 from api.utils.loggers import log_debug
 
 NOW = timezone.now()
@@ -664,6 +666,22 @@ class PayrollPeriodPayment(models.Model):
     total_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
+class EmployeePayment(models.Model):
+    payroll_period = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, related_name='employee_payments')
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name='employee_payments')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payments')
+    paid = models.BooleanField(blank=True, default=False)
+    regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    breaktime_minutes = models.IntegerField(blank=True, default=0)
+    earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    deduction_list = JSONField(blank=True, default=list)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

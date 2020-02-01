@@ -1,37 +1,31 @@
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from django.db.models import Q
-from django.http import HttpRequest
-
-import requests
 import cloudinary
-import cloudinary.uploader
 import cloudinary.api
+import cloudinary.uploader
+import datetime
+import logging
 
 from django.contrib.auth.models import User
+from django.db.models import Q
+from django.utils import timezone
+
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+
+from api.mixins import EmployerView
 from api.models import (
-    Shift, ShiftApplication, Employee,
-    ShiftInvite, Venue, FavoriteList,
-    PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
+    Clockin, Employee, EmployeePayment, FavoriteList,
+    PayrollPeriod, PayrollPeriodPayment, Rate,
+    Shift, ShiftApplication, ShiftInvite, Venue,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
-
-from api.utils import validators
-
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
     profile_serializer
 )
-
-from django.utils import timezone
-import datetime
-import logging
-
-from api.mixins import EmployerView
-
+from api.utils import validators
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
@@ -51,6 +45,7 @@ class EmployerMeView(EmployerView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EmployerMeImageView(EmployerView):
 
@@ -733,9 +728,7 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             qs = self.get_queryset()
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
-
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(qs, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, payment_id=None):
@@ -759,6 +752,23 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmployerMeEmployeePaymentListView(EmployerView):
+    """To get total payment amounts for employee, including deductions"""
+    def get_queryset(self, period_id=None):
+        qs = EmployeePayment.objects.filter(employer_id=self.employer.id)
+        if period_id is not None:
+            qs = qs.filter(payroll_period_id=period_id)
+        return qs
+
+    def get(self, request, period_id):
+        ser_employer = payment_serializer.EmployerInfoPaymentSerializer(self.employer)
+        qs = self.get_queryset(period_id).order_by('id')
+        ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True)
+        return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
+                        status=status.HTTP_200_OK)
+
 
 class EmployeerRateView(EmployerView):
 
@@ -810,6 +820,7 @@ class EmployeerRateView(EmployerView):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class EmployerBatchActions(EmployerView):
 
     def post(self, request):
@@ -825,6 +836,7 @@ class EmployerBatchActions(EmployerView):
                     log.append("Updating "+entity+" ")
 
         return Response(log, status=status.HTTP_200_OK)
+
 
 class EmployerPaymentDeductionView(EmployerView):
     def get_queryset(self):
@@ -870,4 +882,3 @@ class EmployerPaymentDeductionView(EmployerView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
