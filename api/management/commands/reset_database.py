@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from api.models import (Employee, Shift, ShiftInvite, ShiftApplication, Clockin, Employer, AvailabilityBlock, FavoriteList, Venue, JobCoreInvite,
-                        Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position, User)
+                        Rate, FCMDevice, Notification, PayrollPeriod, PayrollPeriodPayment, Profile, Position, User, Document)
 
 class Command(BaseCommand):
     help = 'Resets the database and adds the default fixtures'

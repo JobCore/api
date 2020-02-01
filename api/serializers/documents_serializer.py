@@ -72,7 +72,7 @@ class EmployeeDocumentGetSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField('_name', read_only=True)
 
     def _name(self, object):
-        return object.document_type.title
+        return object.document_type.title if object.document_type is not None else "Untitled document"
 
     class Meta:
         model = EmployeeDocument

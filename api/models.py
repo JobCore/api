@@ -487,8 +487,7 @@ class Rate(models.Model):
         Employee, on_delete=models.CASCADE, blank=True, null=True)
     employer = models.ForeignKey(
         Employer, on_delete=models.CASCADE, blank=True, null=True)
-    shift = models.ForeignKey(
-        Shift, on_delete=models.CASCADE, blank=True, null=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, null=True)
     comments = models.TextField()
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
@@ -564,17 +563,14 @@ class Clockin(models.Model):
     author = models.ForeignKey(
         Profile, on_delete=models.CASCADE, blank=True, null=True)
     started_at = models.DateTimeField(blank=True)
-    latitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
 
-    longitude_in = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    latitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    longitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    distance_in_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
-    latitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
-
-    longitude_out = models.DecimalField(
-        max_digits=14, decimal_places=11, default=0)
+    latitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    longitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
+    distance_out_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
 
@@ -655,7 +651,8 @@ class PayrollPeriodPayment(models.Model):
         max_length=9,
         choices=PAYMENT_STATUS,
         default=PENDING)
-
+    approved_clockin_time = models.DateTimeField(blank=True, null=True)
+    approved_clockout_time= models.DateTimeField(blank=True, null=True)
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
