@@ -5,13 +5,12 @@ from django.test import TestCase
 from django.urls import reverse_lazy
 from django.utils import timezone
 
-from api.models import Clockin, PayrollPeriod, PayrollPeriodPayment
-from api.tests.mixins import WithMakeUser, WithMakeShift
+from api.models import Clockin, EmployeePayment, PayrollPeriod, PayrollPeriodPayment
 
 User = get_user_model()
 
 
-class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
+class PayrollPeriodTestSuite(TestCase):
     fixtures = ['development/0-catalog.yaml', 'development/1-users.yaml', 'development/2-favlists.yaml',
                 'development/3-shifts.yaml', 'development/4-clockins.yaml', 'development/5-document.yaml',
                 'development/5-payroll.yaml']
@@ -138,3 +137,26 @@ class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
         self.client.force_login(self.test_user_employer2)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404, response.content.decode())
+
+    def test_finalize_period(self):
+        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 2})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('id'), 2, response_json)
+        self.assertEqual(response_json.get('employer'), 1, response_json)
+        self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
+                         employee_payments + 1)
+
+    def test_fail_finalizing_period(self):
+        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        self.assertContains(response, 'There is a Payroll Payment with status PENDING in current period',
+                            status_code=400)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
+                         employee_payments)
