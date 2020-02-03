@@ -68,7 +68,13 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
-        self.assertEquals(response.json(), [], response.content)
+        self.assertEquals(response.json(),
+                          [{'id': 1, 'description': '', 'employer': 7, 'lock': True, 'name': 'Social Security',
+                            'type': 'PERCENTAGE', 'value': 5.0},
+                           {'id': 2, 'description': '', 'employer': 7, 'lock': True, 'name': 'Medicare',
+                            'type': 'PERCENTAGE', 'value': 5.0}
+                           ],
+                          response.content)
 
         data = {
             "employer_id": self.test_employer2.id,
@@ -78,10 +84,16 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         }
         EmployerDeduction.objects.create(**data)
 
-        # Still empty as I'm not the owner
+        # Only predefined deductions, because I'm not the owner
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
-        self.assertEquals(response.json(), [], response.content)
+        self.assertEquals(response.json(),
+                          [{'id': 1, 'description': '', 'employer': 7, 'lock': True, 'name': 'Social Security',
+                            'type': 'PERCENTAGE', 'value': 5.0},
+                           {'id': 2, 'description': '', 'employer': 7, 'lock': True, 'name': 'Medicare',
+                            'type': 'PERCENTAGE', 'value': 5.0}
+                           ],
+                          response.content)
 
         data = {
             "employer_id": self.test_employer.id,
@@ -94,8 +106,8 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
         results = response.json()
-        self.assertEquals(len(results), 1, response.content)
-        self.assertEquals(results[0].get("name"), 'Test Deduction', results)
+        self.assertEquals(len(results), 3, response.content)
+        self.assertEquals(results[2].get("name"), 'Test Deduction', results)
 
     def test_update(self):
         self.client.force_login(self.test_user_employer)
