@@ -19,6 +19,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
     def setUp(self):
         begin_date = timezone.now() - timedelta(days=21)
         self.test_user_employer = User.objects.get(id=1)
+        self.test_user_employer2 = User.objects.get(id=9)
         self.test_user_employee = User.objects.get(id=2)
 
         self.test_user_employer.profile.employer.payroll_period_starting_time = begin_date
@@ -46,11 +47,22 @@ class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
 
     def test_period_generation(self):
         url = reverse_lazy('api:hook-generate_periods')
-        self.client.force_login(self.test_user_employee)
+        self.client.force_login(self.test_user_employer)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.content.decode())
         self.assertEqual(PayrollPeriod.objects.count(), self.qty + 1)
         self.assertEqual(PayrollPeriodPayment.objects.count(), self.payroll_payment_qty + 2)
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1)
+        self.assertEqual(response_json[0].get('id'), 3, response_json)
+        self.assertIsNotNone(response_json[0].get('employer'), response_json)
+        self.assertIsNotNone(response_json[0].get('length'), response_json)
+        self.assertIsNotNone(response_json[0].get('length_type'), response_json)
+        self.assertIsNotNone(response_json[0].get('status'), response_json)
+        self.assertIsNotNone(response_json[0].get('starting_at'), response_json)
+        self.assertIsNotNone(response_json[0].get('ending_at'), response_json)
+        self.assertIsNotNone(response_json[0].get('payments'), response_json)
+        self.assertEqual(len(response_json[0].get('payments')), 2, response_json)
 
     def test_get_periods(self):
         url = reverse_lazy('api:admin-get-periods')
@@ -58,15 +70,15 @@ class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(len(response_json), 2)
+        self.assertEqual(len(response_json), 2, response_json)
         for period in response_json:
-            self.assertEqual(period.get('length'), 7)
-            self.assertEqual(period.get('length_type'), 'DAYS')
-            self.assertIn(period.get('id'), [1, 2])
-            self.assertIsNotNone(period.get('employer'))
-            self.assertIsNotNone(period.get('status'))
-            self.assertIsNotNone(period.get('starting_at'))
-            self.assertIsNotNone(period.get('ending_at'))
+            self.assertEqual(period.get('length'), 7, response_json)
+            self.assertEqual(period.get('length_type'), 'DAYS', response_json)
+            self.assertIn(period.get('id'), [1, 2], response_json)
+            self.assertIsNotNone(period.get('employer'), response_json)
+            self.assertIsNotNone(period.get('status'), response_json)
+            self.assertIsNotNone(period.get('starting_at'), response_json)
+            self.assertIsNotNone(period.get('ending_at'), response_json)
 
     def test_get_one_period(self):
         url = reverse_lazy('api:admin-get-periods', kwargs={'period_id': 1})
@@ -74,13 +86,55 @@ class PayrollPeriodTestSuite(TestCase, WithMakeShift, WithMakeUser):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(response_json.get('id'), 1)
-        self.assertEqual(response_json.get('length'), 7)
-        self.assertEqual(response_json.get('length_type'), 'DAYS')
-        self.assertDictEqual(response_json.get('employer'), {'id': 1,
-                                                             'picture': '',
-                                                             'rating': '0.0',
-                                                             'title': 'Fetes and Events',
-                                                             'total_ratings': 0}
+        self.assertEqual(response_json.get('id'), 1, response_json)
+        self.assertEqual(response_json.get('length'), 7, response_json)
+        self.assertEqual(response_json.get('length_type'), 'DAYS', response_json)
+        self.assertDictEqual(response_json.get('employer'),
+                             {'id': 1, 'picture': '', 'rating': '0.0',
+                              'title': 'Fetes and Events', 'total_ratings': 0},
+                             response_json
                              )
-        self.assertEqual(len(response_json.get('payments')), 1)
+        self.assertEqual(len(response_json.get('payments')), 1, response_json)
+
+    def test_get_my_periods(self):
+        url = reverse_lazy('api:me-get-payroll-period')
+        self.client.force_login(self.test_user_employer)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 2, response_json)
+        for period in response_json:
+            self.assertIn(period.get('id'), [1, 2], response_json)
+            self.assertIsNotNone(period.get('status'), response_json)
+            self.assertIsNotNone(period.get('starting_at'), response_json)
+            self.assertIsNotNone(period.get('ending_at'), response_json)
+            self.assertGreaterEqual(len(period.get('payments')), 1, response_json)
+
+    def test_get_my_periods2(self):
+        """Test for employer without registered periods"""
+        url = reverse_lazy('api:me-get-payroll-period')
+        self.client.force_login(self.test_user_employer2)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+    def test_get_my_period(self):
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('id'), 1, response_json)
+        self.assertIsNotNone(response_json.get('employer'), response_json)
+        self.assertIsNotNone(response_json.get('status'), response_json)
+        self.assertIsNotNone(response_json.get('starting_at'), response_json)
+        self.assertIsNotNone(response_json.get('ending_at'), response_json)
+        self.assertGreaterEqual(len(response_json.get('payments')), 1, response_json)
+
+    def test_get_another_employer_period(self):
+        """Try to get a PayrollPeriod belong to another employer"""
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        self.client.force_login(self.test_user_employer2)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404, response.content.decode())
