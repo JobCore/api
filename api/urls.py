@@ -160,7 +160,7 @@ urlpatterns = [
     #     EmployerPayrollPeriodView.as_view(),
     #     name="me-employer-periods"),
     path('employers/me/payroll-periods', EmployerMePayrollPeriodsView.as_view(), name="me-get-payroll-period"),
-    path('employers/me/payment', EmployerMePayrollPeriodPaymentView.as_view(), name="me-get-payroll-payments"),
+    path('employers/me/payment', EmployerMePayrollPeriodPaymentView.as_view(), name="me-get-payroll-payments-employer"),
     path('employers/me/payment/<int:payment_id>', EmployerMePayrollPeriodPaymentView.as_view(),
          name="me-single-payroll-payments"),
     path('employers/me/payroll-periods/<int:period_id>', EmployerMePayrollPeriodsView.as_view(),
@@ -385,6 +385,6 @@ urlpatterns = [
 
     # every hour, will generate payment periods, params:
     #   - employer: optional
-    path('hook/generate_periods', GeneratePeriodsView.as_view()),
+    path('hook/generate_periods', GeneratePeriodsView.as_view(), name="hook-generate_periods"),
 
 ]

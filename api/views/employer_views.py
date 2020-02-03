@@ -486,7 +486,7 @@ class EmployerShiftView(EmployerView):
                 shifts = shifts.filter(ending_at__lte=end)
 
             qUnrated = request.GET.get('unrated')
-            if qUnrated == 'true':
+            if qUnrated is not None and qUnrated == 'true':
                 shifts = shifts.filter(rate_set=None)
 
             qEmployeeNot = request.GET.get('employee_not')
@@ -559,7 +559,8 @@ class EmployerShiftView(EmployerView):
             # if posponed=true it will not  save, just validate
             if posponed != 'true':
                 serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                # return_serializer = shift_serializer.ShiftGetSerializer(serializer.instance, many=False)
+            return Response(shift_serializer.ShiftGetSerializer(serializer.instance, many=False).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):

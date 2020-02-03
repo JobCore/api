@@ -8,7 +8,7 @@ from api.models import SHIFT_INVITE_STATUS_CHOICES, PAYMENT_STATUS
 from api.utils.notifier import (
     notify_shift_candidate_update
 )
-from api.utils import validators
+from api.utils import validators, utils
 from api.serializers import (
     clockin_serializer, notification_serializer, payment_serializer,
     shift_serializer, employee_serializer, other_serializer,
@@ -341,6 +341,15 @@ class ClockinsMeView(EmployeeView):
         request_data['employee'] = self.employee.id
         request_data['author'] = self.employee.user.profile.id
 
+        if 'latitude_in' in request_data:
+            request_data['latitude_in'] = utils.stringToDecimal(request_data['latitude_in'])
+        if 'latitude_out' in request_data:
+            request_data['latitude_out'] = utils.stringToDecimal(request_data['latitude_out'])
+        if 'longitude_in' in request_data:
+            request_data['longitude_in'] = utils.stringToDecimal(request_data['longitude_in'])
+        if 'longitude_out' in request_data:
+            request_data['longitude_out'] = utils.stringToDecimal(request_data['longitude_out'])
+        
         logger.debug('ClockinsMeView:post: {request_data}')
 
         if 'started_at' not in request_data and 'ended_at' not in request_data:

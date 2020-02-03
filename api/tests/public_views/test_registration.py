@@ -216,7 +216,7 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
         }
 
         response = self.client.post(self.REGISTRATION_URL, data=payload)
-
+        print(response.content)
         self.assertEquals(response.status_code, 201)
 
         # Once the registration is activated again we have re-enable this commented code
@@ -331,3 +331,64 @@ class RegistrationTestSuite(TestCase, WithMakeUser):
             mocked_requests.post.called,
             False,
             'It should have called requests.post to send mail')
+
+    @patch('api.utils.email.requests')
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
+    def test_employer_register_with_id(self, mocked_requests):
+        """
+        Wrong account type
+        """
+
+        payload = {
+            'employer': self.employer.id,
+            'email': "ixaxtav+prueba1@gmail.com",
+            'account_type': "employer",
+            'username': "ixaxtav+prueba1@gmail.com",
+            'first_name': "Prueba",
+            'last_name': "Pruebon",
+            'password': "L12121212",
+            'phone': "(233) 231 - 23121"
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+    @patch('api.utils.email.requests')
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
+    def test_employer_register_business_name(self, mocked_requests): 
+        payload = {
+            'business_name': "ixax bus",
+            'business_website': "website",
+            'about_business': "googeldokfaoskdso",
+            'employer': "",
+            'email': "ixaxtav+prueba1@gmail.com",
+            'account_type': "employer",
+            'username': "test",
+            'first_name': "Prueba",
+            'last_name': "Pruebon",
+            'password': "L12121212",
+            'phone': "(233) 231 - 23121"
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 201)
+
+    @patch('api.utils.email.requests')
+    @override_settings(EMAIL_NOTIFICATIONS_ENABLED=True)
+    def test_employer_register_random_ID(self, mocked_requests): 
+        payload = {
+            'business_name': "ixax bus",
+            'business_website': "website",
+            'about_business': "googeldokfaoskdso",
+            'employer': 3124214,
+            'email': "ixaxtav+prueba1@gmail.com",
+            'account_type': "employer",
+            'username': "ixaxtav+prueba1@gmail.com",
+            'first_name': "Prueba",
+            'last_name': "Pruebon",
+            'password': "L12121212",
+            'phone': "(233) 231 - 23121"
+        }
+
+        response = self.client.post(self.REGISTRATION_URL, data=payload)
+        self.assertEquals(response.status_code, 400)

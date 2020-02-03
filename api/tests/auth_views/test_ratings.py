@@ -480,3 +480,72 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             response.status_code,
             400,
             'It should return an error response')
+
+
+
+
+    def test_update_rating_totalrating_when_rate(self):
+        position = mixer.blend('api.Position')
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employee)
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 3,
+            'shift': self.test_shift.id,
+            'comments': 'good employer'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response')
+
+        response_json = response.json()
+        
+        self.assertIn('rating', response_json)
+
+        self.test_employer.refresh_from_db()
+
+        self.assertEquals(float(self.test_employer.rating), 3)
+        self.assertEquals(self.test_employer.total_ratings, 1)
+
+        new_shift, _, __ = self._make_shift(
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+
+        mixer.blend(
+            'api.Clockin',
+            employee=self.test_employee,
+            shift=new_shift,
+            author=self.test_profile_employee,
+            status='APPROVED'
+        )
+
+        payload = {
+            'employer': self.test_employer.id,
+            'rating': 2,
+            'shift': new_shift.id,
+            'comments': 'Lorem ipsum dolor sit amet'
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response')
+
+        response_json = response.json()
+
+        self.assertIn('rating', response_json)
+
+        self.test_employer.refresh_from_db()
+
+        self.assertEquals(float(self.test_employer.rating), 2.5)
+        self.assertEquals(self.test_employer.total_ratings, 2)
