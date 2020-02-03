@@ -15,8 +15,9 @@ log = logging.getLogger('api.views.deductions_view')
 
 class DeductionAPIView(EmployerView):
     def post(self, request):
-        request.data['employer'] = request.user.profile.employer_id
-        serializer = DeductionSerializer(data=request.data)
+        data = request.data.copy()
+        data['employer'] = request.user.profile.employer_id
+        serializer = DeductionSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -25,7 +26,8 @@ class DeductionAPIView(EmployerView):
 
     def get(self, request):
         deducts1 = PreDefinedDeduction.objects.annotate(lock=Value(True, output_field=BooleanField()),
-                                                        employer=Value(1, output_field=IntegerField())).order_by('id')
+                                                        employer=Value(self.employer.id, output_field=IntegerField()))\
+            .order_by('id')
         deducts2 = EmployerDeduction.objects.filter(employer_id=self.employer.id).order_by('id')
         deductions_data = DeductionSerializer(deducts1, many=True).data + DeductionSerializer(deducts2, many=True).data
         return Response(deductions_data, status=status.HTTP_200_OK)
