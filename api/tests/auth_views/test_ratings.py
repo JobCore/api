@@ -448,6 +448,36 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             400,
             'It should return an error response')
 
+    def test_get_ratings_filter_employee_with_shift_null(self):
+        """
+        Gets ratings
+        """
+        position = mixer.blend('api.Position')
+        new_shift, *_ = self._make_shift(
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+
+        mixer.blend(
+            'api.Rate',
+            sender=self.test_profile_employee,
+            shift=None,
+            employer=self.test_employer,
+        )
+
+
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        response = self.client.get(
+            url,
+            data=dict(employee=self.test_employee.id),
+            content_type="application/json")
+
+        self.assertEquals(
+            response.status_code,
+            400,
+            'It should return a success response')
+
+       
     def test_get_ratings_filter_employee(self):
         """
         Gets ratings
@@ -459,22 +489,10 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         mixer.blend(
             'api.Rate',
             sender=self.test_profile_employee,
-            shift=self.test_shift,
-            employer=self.test_employer,
-        )
-        mixer.blend(
-            'api.Rate',
-            sender=self.test_profile_employee,
-            shift=new_shift,
+            shift=None,
             employer=self.test_employer,
         )
 
-        mixer.blend(
-            'api.Rate',
-            sender=self.test_profile_employer,
-            shift=self.test_shift,
-            employee=self.test_employee,
-        )
 
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
