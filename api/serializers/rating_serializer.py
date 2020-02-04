@@ -114,7 +114,7 @@ class RatingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Only talents can rate employers')
 
-            if data["shift"].employer.id != current_user.profile.employer.id:
+            if data['shift'] is None or data["shift"].employer.id != current_user.profile.employer.id:
                 raise serializers.ValidationError(
                     'As an employer, you can only rate talents '
                     'that have work on your own shifts')
