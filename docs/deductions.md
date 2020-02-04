@@ -8,18 +8,39 @@
 
 **Auth required** : YES
 
-**Permissions required** : Authenticated User
+**Permissions required** : Authenticated User, User should be an Employer
 
-## Request Params
-
+#### Request Params:
 
 | key                   | Example Value      | Required?     | Observations         |
 | --------------------  | -----------------  | ------------- | -------------------- |
 | name                  |  "Test Deduction"  |     Yes       |                      |
 | value                 |  10.0              |     Yes       | Float Value          |
 | type                  |   "PERCENTAGE"     |     No        |PERCENTAGE or AMOUNT, default to PERCENTAGE  |
-| description           |  "Some Description"|     No        |                      |
+| description           |  "Some Description"|     Yes       |                      |
 
+
+#### Example
+
+http://localhost:5000/api/employers/me/deduction
+
+#### Success Response
+
+**Code** : `201 Created`
+
+**Content examples**
+
+```json
+{
+    "id": 1,
+    "name": "Test Deduction",
+    "value": 10.0,
+    "type": "PERCENTAGE",
+    "description": "Some Description",
+    "lock": false,
+    "employer": 1
+}
+```
 
 
 ## List my  deductions
@@ -30,32 +51,36 @@
 
 **Auth required** : YES
 
-**Permissions required** : Authenticated User
+**Permissions required** : Authenticated User, User should be an Employer
 
-## Example:
+#### Example
 
 http://localhost:5000/api/employers/me/deduction
 
-## Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
 **Content examples**
 
-
 ```json
 [
     {
-        "name": " name",
-        "value": 123,
+        "id": 1,
+        "name": "Deduction1",
+        "value": 12.3,
         "type": "PERCENTAGE",
-        "description": "Somne Description",
+        "description": "Some Description",
+        "lock": false,
+        "employer": 1
     }
             ...
 ]
 ```
 
-## Notes
+#### Notes
+
+- Deduction list include predefined deductions (**PreDefinedDeduction** model)
 
 
 ## Delete Deduction
@@ -66,22 +91,25 @@ http://localhost:5000/api/employers/me/deduction
 
 **Auth required** : YES
 
-**Permissions required** : Authenticated User
+**Permissions required** : Authenticated User, User should be an Employer
 
-## Example:
+#### Example
 
 http://localhost:5000/api/employers/me/deduction/1
 
-## Success Response
+#### Success Response
 
-**Code** : `202 OK`
+**Code** : `202 Accepted`
 
 **Content examples**
 
+```json
+{"detail": "Object Deleted"}
+```
 
-## Notes
+#### Notes
 
-- You must
+- You must be the owner of the deduction, and the deduction must be locked = False
 
 
 ## Update Deduction
@@ -92,30 +120,41 @@ http://localhost:5000/api/employers/me/deduction/1
 
 **Auth required** : YES
 
-**Permissions required** : Authenticated User
+**Permissions required** : Authenticated User, User should be an Employer
 
-## Example:
+#### Example:
 
 http://localhost:5000/api/employers/me/deduction/1
 
 
-## Request Params
+#### Request Params
 
 
-| key                   | Example Value      | Required?     | Observations         |
-| --------------------  | -----------------  | ------------- | -------------------- |
-| name                  |  "Test Deduction"  |     Yes       |                      |
-| value                 |  10.0              |     Yes       | Float Value          |
-| description           |  "Some Description"|     No        |                      |
+| key                   | Example Value         | Required?     | Observations         |
+| --------------------  | --------------------  | ------------- | -------------------- |
+| name                  |  "My Test Deduction"  |     No        |                      |
+| value                 |  12.5                 |     No        | Float Value          |
+| description           |  "Some Description"   |     No        |                      |
 
 
-## Success Response
+#### Success Response
 
-**Code** : `202 OK`
+**Code** : `200 OK`
 
 **Content examples**
 
+```json
+{
+    "id": 1,
+    "name": "My Test Deduction",
+    "value": 12.5,
+    "type": "PERCENTAGE",
+    "description": "Some Description",
+    "lock": false,
+    "employer": 1
+}
+```
 
-## Notes
+#### Notes
 
 - You must be the owner of the deduction, and the deduction must be locked = False
