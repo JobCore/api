@@ -319,3 +319,4 @@ http://localhost:5000/api/employers/me/payroll-periods/3
 - You must be the owner of the PayrollPeriod to update.
 - There will be created instances of EmployeePayment, using PayrollPeriodPayment instances with APPROVED status 
 and belong to indicated PayrollPeriod and related Employer. 
+- Even if OPEN value is send in status parameter, the period is set to FINALIZED.
