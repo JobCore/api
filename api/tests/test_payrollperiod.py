@@ -53,15 +53,18 @@ class PayrollPeriodTestSuite(TestCase):
         self.assertEqual(PayrollPeriodPayment.objects.count(), self.payroll_payment_qty + 2)
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
-        self.assertEqual(response_json[0].get('id'), 3, response_json)
-        self.assertIsNotNone(response_json[0].get('employer'), response_json)
-        self.assertIsNotNone(response_json[0].get('length'), response_json)
-        self.assertIsNotNone(response_json[0].get('length_type'), response_json)
-        self.assertIsNotNone(response_json[0].get('status'), response_json)
-        self.assertIsNotNone(response_json[0].get('starting_at'), response_json)
-        self.assertIsNotNone(response_json[0].get('ending_at'), response_json)
-        self.assertIsNotNone(response_json[0].get('payments'), response_json)
-        self.assertEqual(len(response_json[0].get('payments')), 2, response_json)
+        obj = response_json[0]
+        self.assertIsInstance(obj.get('id'), int, response_json)
+        self.assertEqual(obj.get('length'), 7, response_json)
+        self.assertEqual(obj.get('length_type'), "DAYS", response_json)
+        self.assertDictEqual(obj.get('employer'),
+                             {'id': 1, 'picture': '', 'rating': '0.0', 'title': 'Fetes and Events', 'total_ratings': 0},
+                             response_json)
+        self.assertEqual(obj.get('status'), "OPEN", response_json)
+        self.assertIsNotNone(obj.get('starting_at'), response_json)
+        self.assertIsNotNone(obj.get('ending_at'), response_json)
+        self.assertIsInstance(obj.get('payments'), list, response_json)
+        self.assertEqual(len(obj.get('payments')), 2, response_json)
 
     def test_get_periods(self):
         url = reverse_lazy('api:admin-get-periods')
@@ -74,8 +77,11 @@ class PayrollPeriodTestSuite(TestCase):
             self.assertEqual(period.get('length'), 7, response_json)
             self.assertEqual(period.get('length_type'), 'DAYS', response_json)
             self.assertIn(period.get('id'), [1, 2], response_json)
-            self.assertIsNotNone(period.get('employer'), response_json)
-            self.assertIsNotNone(period.get('status'), response_json)
+            self.assertDictEqual(period.get('employer'),
+                                 {'id': 1, 'title': 'Fetes and Events', 'picture': '',
+                                  'rating': '0.0', 'total_ratings': 0},
+                                 response_json)
+            self.assertEqual(period.get('status'), "OPEN", response_json)
             self.assertIsNotNone(period.get('starting_at'), response_json)
             self.assertIsNotNone(period.get('ending_at'), response_json)
 
@@ -104,7 +110,7 @@ class PayrollPeriodTestSuite(TestCase):
         self.assertEqual(len(response_json), 2, response_json)
         for period in response_json:
             self.assertIn(period.get('id'), [1, 2], response_json)
-            self.assertIsNotNone(period.get('status'), response_json)
+            self.assertEqual(period.get('status'), "OPEN", response_json)
             self.assertIsNotNone(period.get('starting_at'), response_json)
             self.assertIsNotNone(period.get('ending_at'), response_json)
             self.assertGreaterEqual(len(period.get('payments')), 1, response_json)
@@ -125,8 +131,11 @@ class PayrollPeriodTestSuite(TestCase):
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
         self.assertEqual(response_json.get('id'), 1, response_json)
-        self.assertIsNotNone(response_json.get('employer'), response_json)
-        self.assertIsNotNone(response_json.get('status'), response_json)
+        self.assertDictEqual(response_json.get('employer'),
+                             {'id': 1, 'picture': '', 'rating': '0.0',
+                              'title': 'Fetes and Events', 'total_ratings': 0},
+                             response_json)
+        self.assertEqual(response_json.get('status'), "OPEN", response_json)
         self.assertIsNotNone(response_json.get('starting_at'), response_json)
         self.assertIsNotNone(response_json.get('ending_at'), response_json)
         self.assertGreaterEqual(len(response_json.get('payments')), 1, response_json)
@@ -152,6 +161,7 @@ class PayrollPeriodTestSuite(TestCase):
                          employee_payments + 1)
 
     def test_fail_finalizing_period(self):
+        """Try to finalize a PayrollPeriod which contains a PayrollPayment with PENDING status"""
         employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
         url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
         self.client.force_login(self.test_user_employer)
