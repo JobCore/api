@@ -521,14 +521,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
                 shifts = shifts.filter(ending_at__lte=end)
 
-            # qCount = request.GET.get('count')
-            # if qCount is not None and qCount != '':
-            #     shifts = shifts.filter(
-            #     status="COMPLETED").count()
-                
-            #     serializer = shift_serializer.ShiftGetSmallSerializer(shifts, many=True)
-            #     return Response(serializer.data, status=status.HTTP_200_OK) 
-
             qUnrated = request.GET.get('unrated')
             if qUnrated is not None and qUnrated == 'true':
                 shifts = shifts.exclude(rating=None)
