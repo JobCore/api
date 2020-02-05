@@ -693,11 +693,23 @@ class EmployerMePayrollPeriodsView(EmployerView):
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            periods = PayrollPeriod.objects.prefetch_related('payment_set').filter(employer_id=self.employer.id).order_by('-starting_at')
-            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            periods = PayrollPeriod.objects.filter(employer_id=self.employer.id)
+
+            qStart = request.GET.get('start')
+            if qStart is not None and qStart != '':
+                start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+                periods = periods.filter(starting_at__gte=start)
+
+            qEnd = request.GET.get('end')
+            if qEnd is not None and qEnd != '':
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                periods = periods.filter(ending_at__lte=end)
+
+            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, period_id=None):
 
