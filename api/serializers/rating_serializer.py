@@ -114,15 +114,16 @@ class RatingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Only talents can rate employers')
 
-            if data["shift"].employer.id != current_user.profile.employer.id:
+            if data['shift'] is None or data["shift"].employer.id != current_user.profile.employer.id:
                 raise serializers.ValidationError(
                     'As an employer, you can only rate talents '
                     'that have work on your own shifts')
 
             clockin = Clockin.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
-            payment = PayrollPeriodPayment.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
-            if clockin is None and payment is None:
-                raise serializers.ValidationError('This talent has not worked on this shift, no clockins have been found')
+            if clockin is None:
+                payment = PayrollPeriodPayment.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
+                if payment is None:
+                    raise serializers.ValidationError('This talent has not worked on this shift, no clockins have been found')
 
             try:
                 # unused rate
