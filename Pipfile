@@ -68,7 +68,7 @@ plaid-python = "==3.4.0"
 pre-commit = "*"
 
 [requires]
-python_version = "3.7.4"
+python_version = "3.7.6"
 
 [scripts]
 fake="python manage.py migrate --fake api 0043_auto_20191106_2036"
