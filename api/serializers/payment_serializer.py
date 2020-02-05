@@ -97,7 +97,6 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
 
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
     #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
-    payments = serializers.SerializerMethodField()
     class Meta:
         model = PayrollPeriod
         fields = (
@@ -105,12 +104,8 @@ class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
             'status',
             'starting_at',
             'ending_at',
-            'payments'
+            'total_payments'
         )
-
-    def get_payments(self, instance):
-        _payments = instance.payments.all().order_by('shift__starting_at')
-        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 #
 # MAIN
