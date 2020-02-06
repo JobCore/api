@@ -1,8 +1,11 @@
-from math import radians, cos, sin, asin, sqrt
 import datetime
-from django.utils.timezone import is_aware, make_aware
-from django.utils.dateparse import parse_datetime
+import json
 from decimal import Decimal
+from math import radians, cos, sin, asin, sqrt
+
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import is_aware, make_aware
+
 
 def custom_index(array, compare_function):
     for i, v in enumerate(array):
@@ -42,6 +45,7 @@ def get_aware_datetime(date_str):
         ret = make_aware(ret)
     return ret
 
+
 def nearest_weekday(d, weekday, fallback_direction='forward'):
     days_ahead = weekday - d.weekday()
     if days_ahead <= 0: # Target day already happened this week
@@ -52,6 +56,16 @@ def nearest_weekday(d, weekday, fallback_direction='forward'):
     new_date = d + datetime.timedelta(days_ahead)
     return new_date
 
+
 def stringToDecimal(value):
     value = str(value)
     return round(Decimal(value.replace(",",".")),11)
+
+
+class DecimalEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        else:
+            return super().default(obj)
