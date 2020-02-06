@@ -139,6 +139,7 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'starting_at',
             'ending_at',
             'created_at',
+            'total_payments',
             'payments')
 
     def get_payments(self, instance):
@@ -344,6 +345,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                 shift__employer__id=employer.id
             )
             log_debug('hooks','Creating a new period for '+employer.title+' from '+str(period.starting_at)+' to '+str(period.ending_at)+ " -> "+str(len(all_clockins))+' clockins')
+            total_payments = 0
             for clockin in all_clockins:
                 # the payment needs to be inside the payment period
                 starting_time = clockin.started_at if clockin.started_at > period.starting_at else period.starting_at
@@ -380,7 +382,10 @@ def generate_periods_and_payments(employer, generate_since=None):
                     splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
+                total_payments = total_payments + 1
 
+            period.total_payments = total_payments
+            period.save()
             generated_periods.append(period)
 
         except Exception as e:
