@@ -2,9 +2,11 @@ import cloudinary
 import cloudinary.api
 import cloudinary.uploader
 import datetime
+import json
 import logging
 
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -14,10 +16,10 @@ from rest_framework.response import Response
 
 from api.mixins import EmployerView
 from api.models import (
-    Clockin, Employee, EmployeePayment, FavoriteList,
-    PayrollPeriod, PayrollPeriodPayment, Rate,
+    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
+    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
     Shift, ShiftApplication, ShiftInvite, Venue,
-    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
+    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
 )
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
@@ -26,6 +28,7 @@ from api.serializers import (
     profile_serializer
 )
 from api.utils import validators
+from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
@@ -769,6 +772,70 @@ class EmployerMeEmployeePaymentListView(EmployerView):
         ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True)
         return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
                         status=status.HTTP_200_OK)
+
+
+class EmployerMeEmployeePaymentView(EmployerView):
+    """To handle a single EmployeePayment instance"""
+
+    def post(self, request, employee_payment_id):
+        try:
+            employee_payment = EmployeePayment.objects.get(id=employee_payment_id)
+        except EmployeePayment.DoesNotExist:
+            return Response({'error': 'There is not exist the employee payment'}, status=status.HTTP_400_BAD_REQUEST)
+        if employee_payment.paid:
+            return Response({'error': 'The selected employee payment can not be paid'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        context_data = {'employee_payment': employee_payment,
+                        'employer_user': employee_payment.employer.profile_set.last().user,
+                        'employee_user': employee_payment.employee.profile_set.last().user}
+        serializer = payment_serializer.EmployeePaymentDataSerializer(data=request.data, context=context_data)
+        if serializer.is_valid():
+            emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment)
+            employee_payment.deductions = emp_pay_ser.data['deductions']
+            employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
+                                                                    cls=DecimalEncoder))
+            employee_payment.amount = emp_pay_ser.data['amount']
+            with transaction.atomic():
+                employee_payment.save()
+                if serializer.validated_data['payment_type'] in [PaymentTransaction.ELECT_TRANSF,
+                                                                 PaymentTransaction.FAKE]:
+                    # make the payment using Stripe service
+                    sender_bank_acc = BankAccount.objects.get(
+                        id=serializer.validated_data['payment_data']['employer_bank_account_id'])
+                    receiver_bank_acc = BankAccount.objects.get(
+                        id=serializer.validated_data['payment_data']['employee_bank_account_id'])
+                    if serializer.validated_data['payment_type'] == PaymentTransaction.FAKE:
+                        transaction_id = 'ABC123'
+                    else:
+                        pass     # Here goes Request to Stripe or Plaid, returning a transaction_id or similar
+                    payment_t = PaymentTransaction.objects.create(
+                        amount=employee_payment.amount,
+                        sender_user=context_data['employer_user'],
+                        receiver_user=context_data['employee_user'],
+                        payment_type=serializer.validated_data['payment_type'],
+                        payment_data={"service_name": "Stripe",
+                                      "sender_stripe_token": sender_bank_acc.stripe_token,
+                                      "receiver_stripe_token": receiver_bank_acc.stripe_token,
+                                      "transaction_id": transaction_id
+                                      },
+                    )
+                else:
+                    payment_t = PaymentTransaction.objects.create(amount=employee_payment.amount,
+                                                                  sender_user=context_data['employer_user'],
+                                                                  receiver_user=context_data['employee_user'],
+                                                                  )
+                # set status for related entries as paid
+                employee_payment.payment_transaction = payment_t
+                employee_payment.paid = True
+                employee_payment.save()
+                PayrollPeriodPayment.objects.filter(payroll_period=employee_payment.payroll_period,
+                                                    employee=employee_payment.employee,
+                                                    employer=employee_payment.employer,
+                                                    status=APPROVED).update(status=PAID)
+                employee_payment.payroll_period.set_paid()
+            return Response({'message': 'success'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmployeerRateView(EmployerView):

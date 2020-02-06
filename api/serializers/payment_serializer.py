@@ -8,7 +8,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
-                        PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
+                        PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
                         Shift, User, Venue, APPROVED, PENDING)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
@@ -329,6 +329,28 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
         data['deductions'] = self.context['total_deductions']
         data['amount'] = instance.earnings - data['deductions']
         return data
+
+
+class EmployeePaymentDataSerializer(serializers.Serializer):
+    """Serializer to check received data in order to paid"""
+    payment_type = serializers.ChoiceField(choices=PaymentTransaction.PAYMENT_TYPES)
+    payment_data = serializers.JSONField()
+
+    def validate_payment_data(self, dict_value):
+        if self.initial_data.get('payment_type') in [PaymentTransaction.ELECT_TRANSF, PaymentTransaction.FAKE]:
+            try:
+                BankAccount.objects.get(id=dict_value.get('employer_bank_account_id'),
+                                        user=self.context['employer_user'].profile)
+            except BankAccount.DoesNotExist:
+                raise serializers.ValidationError('Wrong employer bank account')
+            try:
+                BankAccount.objects.get(id=dict_value.get('employee_bank_account_id'),
+                                        user=self.context['employee_user'].profile)
+            except BankAccount.DoesNotExist:
+                raise serializers.ValidationError('Wrong employee bank account')
+            return dict_value
+        else:
+            return dict_value
 
 
 def get_projected_payments(
