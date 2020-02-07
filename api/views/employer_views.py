@@ -501,8 +501,11 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             else:
                 shifts = shifts.exclude(status='CANCELLED')
 
-            if qStatus is "FILLED": 
-                shifts = shifts.exclude(status='DRAFT').filter(Q(ending_at__gte=TODAY) | Q(maximum_allowed_employees= len(employees)))
+            qFilled= request.GET.get('filled')
+            if qFilled == 'true':
+                logger.debug("ppapipapipapipapipapipapipapipapipapipapipapipapipapiapi")
+
+                # shifts = shifts.annotate(total_employees=Count('employees')).filter(total_employees__lte=F('maximum_allowed_employees'))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -514,6 +517,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
                 shifts = shifts.filter(starting_at__gte=TODAY)
+                logger.debug('papipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapi')
 
             qStart = request.GET.get('start')
             if qStart is not None and qStart != '':
