@@ -67,6 +67,38 @@ EMPLOYER_STATUS = (
     (APPROVED, 'Approved'),
 )
 
+class SubscriptionPlan(models.Model):
+    unique_name = models.CharField(max_length=25, unique=True)
+    visible_to_users = models.BooleanField(default=True)
+    title = models.CharField(max_length=25, unique=True)
+    image_url = models.TextField(max_length=255, blank=True)
+
+    feature_talent_search = models.BooleanField(default=True)
+    feature_payroll_report = models.BooleanField(default=True)
+    feature_smart_calendar = models.BooleanField(default=True)
+    feature_trusted_talents = models.BooleanField(default=True)
+    feature_ach_payments = models.BooleanField(default=True)
+    feature_calculate_deductions = models.BooleanField(default=True)
+    feature_quickbooks_integration = models.BooleanField(default=True)
+
+    feature_max_clockins = models.IntegerField(blank=True, default=999999999)
+    feature_max_invites = models.IntegerField(blank=True, default=9999999)
+    feature_max_shifts = models.IntegerField(blank=True, default=9999999)
+    feature_max_active_employees = models.IntegerField(blank=True, default=9999999)
+    feature_max_favorite_list_size = models.IntegerField(blank=True, default=9999999)
+
+    price_month = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
+    price_year = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
+    price_per_clockins = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    price_per_invites = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    price_per_shifts = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+    price_per_active_employees = models.DecimalField(max_digits=4, decimal_places=2, default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.title + " (" + self.unique_name + "), " + str(self.price_month)
 
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
@@ -79,6 +111,7 @@ class Employer(models.Model):
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
     status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED, blank=True)
+
     # talents on employer's favlist's will be automatically accepted
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
@@ -112,6 +145,33 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+ACTIVE = 'ACTIVE'
+EXPIRED = 'EXPIRED'
+CANCELLED = 'CANCELLED'
+SUBSCRIPTION_STATUS = (
+    (ACTIVE, 'Active'),
+    (EXPIRED, 'Expired'),
+    (CANCELLED, 'Cancelled'),
+)
+
+MONTHLY = 'MONTHLY'
+YEARLY = 'YEARLY'
+SUBSCRIPTION_MODE = (
+    (MONTHLY, 'Monthly'),
+    (YEARLY, 'Yearly'),
+)
+class EmployerSubscription(models.Model):
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
+    subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE, blank=True)
+    status = models.CharField(max_length=25, choices=SUBSCRIPTION_STATUS, default=ACTIVE, blank=True)
+    payment_mode = models.CharField(max_length=9,choices=SUBSCRIPTION_MODE,default=MONTHLY,blank=True)
+    due_at = models.DateTimeField()
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.employer.title + " for " + self.subscription.title + ": " + self.status + " until " + str(self.due_at)
 
 PENDING = 'PENDING'
 NOT_APPROVED = 'NOT_APPROVED'
@@ -202,7 +262,7 @@ class Profile(models.Model):
     street_address = models.CharField(max_length=250, blank=True)
     country = models.CharField(max_length=30, blank=True)
     city = models.CharField(max_length=30, blank=True, null=True)
-    profile_city = models.ForeignKey(City, null=True, on_delete=models.CASCADE)
+    profile_city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
     state = models.CharField(max_length=30, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(
@@ -486,7 +546,7 @@ class Rate(models.Model):
     employer = models.ForeignKey(
         Employer, on_delete=models.CASCADE, blank=True, null=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, blank=True, null=True)
-    comments = models.TextField()
+    comments = models.TextField(default="",blank=True)
     rating = models.DecimalField(
         max_digits=2, decimal_places=1, default=0, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -564,11 +624,11 @@ class Clockin(models.Model):
 
     latitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
     longitude_in = models.DecimalField(max_digits=16, decimal_places=11, default=0)
-    distance_in_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    distance_in_miles = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 
     latitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
     longitude_out = models.DecimalField(max_digits=16, decimal_places=11, default=0)
-    distance_out_miles = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    distance_out_miles = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 
     ended_at = models.DateTimeField(blank=True, null=True)
 
@@ -612,6 +672,8 @@ class PayrollPeriod(models.Model):
 
     starting_at = models.DateTimeField(blank=False)
     ending_at = models.DateTimeField(blank=False)
+
+    total_payments = models.IntegerField(blank=True, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)

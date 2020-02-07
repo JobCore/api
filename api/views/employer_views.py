@@ -14,7 +14,8 @@ from api.models import (
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
-    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES
+    SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
+    EmployerSubscription, EMPLOYER_STATUS
 )
 
 from api.utils import validators
@@ -23,7 +24,7 @@ from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
-    profile_serializer
+    profile_serializer, other_serializer
 )
 
 from django.utils import timezone
@@ -357,6 +358,35 @@ class EmployerVenueView(EmployerView):
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class EmployerMeSubscriptionView(EmployerView):
+    def get_queryset(self):
+        return EmployerSubscription.objects.filter(employer_id=self.employer.id).order_by('-due_at')
+
+    def get(self, request, id=False):
+        qs = self.get_queryset()
+
+        qStatus = request.GET.get('status')
+        if validators.in_choices(qStatus, EMPLOYER_STATUS):
+            qs = qs.filter(status=qStatus)
+        else:
+            qs = qs.filter(status='ACTIVE')
+
+        serializer = other_serializer.SubscriptionSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+
+        request.data['employer'] = self.employer.id
+        serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
+        _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
+        return Response(_serializer.data, status=status.HTTP_201_CREATED)
 
 class FavListView(EmployerView):
     def get_queryset(self):
@@ -456,7 +486,7 @@ class EmployerShiftView(EmployerView):
         else:
             TODAY = datetime.datetime.now(tz=timezone.utc)
 
-            shifts = Shift.objects.filter(
+            shifts = Shift.objects.select_related('venue', 'position').filter(
                 employer__id=self.employer.id)
 
             qStatus = request.GET.get('status')
@@ -492,7 +522,7 @@ class EmployerShiftView(EmployerView):
 
             qUnrated = request.GET.get('unrated')
             if qUnrated is not None and qUnrated == 'true':
-                shifts = shifts.filter(rate_set=None)
+                shifts = shifts.exclude(rating=None)
 
             qEmployeeNot = request.GET.get('employee_not')
             if qEmployeeNot is not None:
@@ -523,6 +553,7 @@ class EmployerShiftView(EmployerView):
         request.data["employer"] = self.employer.id
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
+                
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
@@ -652,26 +683,33 @@ class EmployerClockinsMeView(EmployerView):
 
 
 class EmployerMePayrollPeriodsView(EmployerView):
-    def get_queryset(self):
-        return PayrollPeriod.objects.filter(employer_id=self.employer.id)
-
-    def fetch_one(self, id):
-        return self.get_queryset().filter(id=id).first()
 
     def get(self, request, period_id=None):
 
         if period_id is not None:
-            period = self.fetch_one(period_id)
+            period = PayrollPeriod.objects.filter(id=period_id).first()
             if period is None:
                 return Response(
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            periods = self.get_queryset().order_by('-starting_at')
-            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            periods = PayrollPeriod.objects.filter(employer_id=self.employer.id)
+
+            qStart = request.GET.get('start')
+            if qStart is not None and qStart != '':
+                start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+                periods = periods.filter(starting_at__gte=start)
+
+            qEnd = request.GET.get('end')
+            if qEnd is not None and qEnd != '':
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                periods = periods.filter(ending_at__lte=end)
+
+            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, period_id=None):
 
@@ -824,6 +862,7 @@ class EmployeerRateView(EmployerView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
 
 class EmployerBatchActions(EmployerView):
 
