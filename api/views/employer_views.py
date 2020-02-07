@@ -497,8 +497,12 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             elif qStatus:
                 status_list = qStatus.split(",")
                 shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+
             else:
                 shifts = shifts.exclude(status='CANCELLED')
+
+            if qStatus is "FILLED": 
+                shifts = shifts.exclude(status='DRAFT').filter(Q(ending_at__gte=TODAY) | Q(maximum_allowed_employees= len(employees)))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -552,7 +556,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
             if page is not None:
                 serializer = defaultSerializer(page, many=True)
-                serializer = shift_serializer.ShiftGetPublicTinySerializer(page, many=True)
                 return paginator.get_paginated_response(serializer.data)
             else:
                 return Response(serializer.data, status=status.HTTP_200_OK)
