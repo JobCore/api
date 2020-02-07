@@ -135,6 +135,8 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
         exclude = (
             'maximum_clockin_delta_minutes',
             'maximum_clockout_delay_minutes',
+            'maximum_allowed_employees',
+            'candidates',
             'minimum_allowed_rating',
             'allowed_from_list',
             'required_badges',
