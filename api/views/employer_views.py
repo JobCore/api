@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Count, F
 from django.http import HttpRequest
 
 import requests
@@ -503,9 +503,8 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
             qFilled= request.GET.get('filled')
             if qFilled == 'true':
-                logger.debug("ppapipapipapipapipapipapipapipapipapipapipapipapipapiapi")
-
-                # shifts = shifts.annotate(total_employees=Count('employees')).filter(total_employees__lte=F('maximum_allowed_employees'))
+                print("FILLED FILLED FILLED FILLED")
+                shifts = shifts.annotate(total_employees=Count('employees')).filter(total_employees__lte=F('maximum_allowed_employees'))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -517,7 +516,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
                 shifts = shifts.filter(starting_at__gte=TODAY)
-                logger.debug('papipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapipapi')
 
             qStart = request.GET.get('start')
             if qStart is not None and qStart != '':
