@@ -517,7 +517,7 @@ class EmployerShiftView(EmployerView):
 
             qEnd = request.GET.get('end')
             if qEnd is not None and qEnd != '':
-                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 shifts = shifts.filter(ending_at__lte=end)
 
             qUnrated = request.GET.get('unrated')
@@ -705,7 +705,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
 
             qEnd = request.GET.get('end')
             if qEnd is not None and qEnd != '':
-                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 periods = periods.filter(ending_at__lte=end)
 
             serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
