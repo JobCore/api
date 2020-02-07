@@ -673,6 +673,8 @@ class PayrollPeriod(models.Model):
     starting_at = models.DateTimeField(blank=False)
     ending_at = models.DateTimeField(blank=False)
 
+    total_payments = models.IntegerField(blank=True, default=0)
+
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

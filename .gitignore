@@ -20,6 +20,9 @@ db.dump
 # Byte-compiled / optimized / DLL files
 *.py[cod]
 *$py.class
+core.pip.*
+core.python.*
+core.python3.*
 
 # C extensions
 *.so

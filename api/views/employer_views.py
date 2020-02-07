@@ -487,7 +487,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
         else:
             TODAY = datetime.datetime.now(tz=timezone.utc)
 
-            shifts = Shift.objects.filter(
+            shifts = Shift.objects.select_related('venue', 'position').filter(
                 employer__id=self.employer.id)
 
             qStatus = request.GET.get('status')
@@ -698,21 +698,17 @@ class EmployerClockinsMeView(EmployerView):
 
 
 class EmployerMePayrollPeriodsView(EmployerView):
-    def get_queryset(self):
-        return PayrollPeriod.objects.filter(employer_id=self.employer.id)
-
-    def fetch_one(self, id):
-        return self.get_queryset().filter(id=id).first()
 
     def get(self, request, period_id=None):
 
         if period_id is not None:
-            period = self.fetch_one(period_id)
+            period = PayrollPeriod.objects.filter(id=period_id).first()
             if period is None:
                 return Response(
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
 
             periods = PayrollPeriod.objects.filter(employer_id=self.employer.id)
