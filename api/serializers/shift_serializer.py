@@ -95,16 +95,13 @@ class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = (
-            'maximum_allowed_employees',
             'minimum_allowed_rating',
             'maximum_clockin_delta_minutes',
             'maximum_clockout_delay_minutes',
             'allowed_from_list',
             'required_badges',
-            'candidates',
             'created_at',
             'employer',
-            'employees',
             'rating',
             'application_restriction',
             'updated_at')
