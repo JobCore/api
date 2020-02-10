@@ -572,38 +572,22 @@ class RateView(APIView):
         qs_shift = request.GET.get('shift')
         qs_shifts = request.GET.get('shifts')
 
-<<<<<<< HEAD
-        qs_shift = request.GET.get('shift')
-      
-=======
->>>>>>> 31a3fbb563d4d04a96cd98c48516b7e17db030a4
+
         if qs_employee:
             lookup = {'employee_id': qs_employee}
 
         if qs_employer:
             lookup = {'employer_id': qs_employer}
 
-<<<<<<< HEAD
-        
-        # if qs_shifts:
-        #     lookup['shift_id'] = rates.filter(shift_id__in=[int(shift) for shift in shifts_lists])
-=======
 
         if qs_shift: 
             lookup['shift_id'] = qs_shift
         return lookup
->>>>>>> 31a3fbb563d4d04a96cd98c48516b7e17db030a4
 
         if qs_shifts:
             shifts_lists = qs_shifts.split(',')
             lookup['shift__in']=shifts_lists
-<<<<<<< HEAD
-        return lookup
 
-        if qs_shift:
-            lookup['shift_id'] = qs_shift
-=======
->>>>>>> 31a3fbb563d4d04a96cd98c48516b7e17db030a4
         return lookup
 
     def get(self, request, id=False):
