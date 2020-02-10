@@ -503,7 +503,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
             qFilled= request.GET.get('filled')
             if qFilled == 'true':
-                print("FILLED FILLED FILLED FILLED")
                 shifts = shifts.annotate(total_employees=Count('employees')).filter(total_employees__lte=F('maximum_allowed_employees'))
 
             qStatus = request.GET.get('not_status')
