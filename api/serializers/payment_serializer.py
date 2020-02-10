@@ -1,20 +1,27 @@
 import datetime
-import itertools
 import decimal
-from django.db.models import Q
+import itertools
+
+from django.db.models import Q, Sum
 from django.utils import timezone
+
 from rest_framework import serializers
-from api.models import Clockin, Employer, Shift, Position, Employee, PayrollPeriod, PayrollPeriodPayment, User, Badge, Profile, Venue
+
+from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
+                        PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
+                        Shift, User, Venue, APPROVED, PENDING)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 #
 # NESTED
 #
 
+
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ('picture','id')
+
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
     profile = ProfileGetSmallSerializer(read_only=True)
@@ -28,6 +35,7 @@ class PositionGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
         fields = ('title', 'id')
+
 
 class VenueGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,10 +66,12 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+
 class BadgeGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
         fields = ('title', 'id')
+
 
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
@@ -69,6 +79,7 @@ class EmployeeGetTinySerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ('user', 'id')
+
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
@@ -89,11 +100,13 @@ class ClockinGetSerializer(serializers.ModelSerializer):
         model = Clockin
         exclude = ()
 
+
 class ClockinGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Clockin
         exclude = ('shift', 'employee')
+
 
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
     #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
@@ -150,6 +163,7 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
 class RoundingDecimalField(serializers.DecimalField):
     def validate_precision(self, value):
         return value
+
 
 class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
@@ -227,6 +241,112 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
             'ending_at': {'read_only': True},
             'starting_at': {'read_only': True}
         }
+
+    def update(self, instance, validated_data):
+        employer_id = instance.employer_id
+        for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
+                                                        status=APPROVED).values('employee_id')\
+                .annotate(total_regular_hours=Sum('regular_hours'),
+                          total_over_time=Sum('over_time'),
+                          gross_amount=Sum('total_amount'),
+                          total_breaktime_minutes=Sum('breaktime_minutes'),
+                          total_payment=Sum('total_amount')):
+            # get_or_create is used to maintain idempotence
+            EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                  employee_id=item['employee_id'],
+                                                  employer_id=employer_id,
+                                                  regular_hours=item['total_regular_hours'],
+                                                  over_time=item['total_over_time'],
+                                                  breaktime_minutes=item['total_breaktime_minutes'],
+                                                  earnings=item['total_payment'],
+                                                  )
+        return super().update(instance, validated_data)
+
+    def validate(self, data):
+        # don't allow to set period as FINALIZED if there is a payrollpayment with status PENDING
+        if self.context['request'].method == 'PUT':
+            if PayrollPeriodPayment.objects.filter(payroll_period_id=self.instance.id,
+                                                   employer_id=self.instance.employer_id,
+                                                   status=PENDING).exists():
+                raise serializers.ValidationError('There is a Payroll Payment with status PENDING in current period')
+        return super().validate(data)
+
+
+class BankAccountSmallSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BankAccount
+        fields = ('id', 'name', 'institution_name', 'account', 'account_id')
+
+
+class EmployerInfoPaymentSerializer(serializers.ModelSerializer):
+    """Serializer to get basic information of employer, including bank accounts"""
+    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+
+    class Meta:
+        model = Employer
+        fields = ('id', 'title', 'status', 'bank_accounts')
+
+
+class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=30, source='user.first_name')
+    last_name = serializers.CharField(max_length=150, source='user.last_name')
+    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+
+    class Meta:
+        model = Employee
+        fields = ('first_name', 'last_name', 'bank_accounts')
+
+
+class EmployeePaymentSerializer(serializers.ModelSerializer):
+    employee = EmployeeInfoPaymentSerializer()
+    deduction_list = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeePayment
+        fields = ('id', 'employee', 'regular_hours', 'over_time', 'earnings',
+                  'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'amount')
+
+    def get_deduction_list(self, instance):
+        self.context['total_deductions'] = 0
+        res_list = []
+        for deduction in itertools.chain(PreDefinedDeduction.objects.order_by('id'),
+                                         EmployerDeduction.objects.order_by('id')):
+            if deduction.type == PreDefinedDeduction.PERCENTAGE_TYPE:
+                amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
+            else:
+                amount = decimal.Decimal('{:.2f}'.format(deduction.value))
+            self.context['total_deductions'] += amount
+            res_list.append({'name': deduction.name, 'amount': amount})
+        return res_list
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['deductions'] = self.context['total_deductions']
+        data['amount'] = instance.earnings - data['deductions']
+        return data
+
+
+class EmployeePaymentDataSerializer(serializers.Serializer):
+    """Serializer to check received data in order to paid"""
+    payment_type = serializers.ChoiceField(choices=PaymentTransaction.PAYMENT_TYPES)
+    payment_data = serializers.JSONField()
+
+    def validate_payment_data(self, dict_value):
+        if self.initial_data.get('payment_type') in [PaymentTransaction.ELECT_TRANSF, PaymentTransaction.FAKE]:
+            try:
+                BankAccount.objects.get(id=dict_value.get('employer_bank_account_id'),
+                                        user=self.context['employer_user'].profile)
+            except BankAccount.DoesNotExist:
+                raise serializers.ValidationError('Wrong employer bank account')
+            try:
+                BankAccount.objects.get(id=dict_value.get('employee_bank_account_id'),
+                                        user=self.context['employee_user'].profile)
+            except BankAccount.DoesNotExist:
+                raise serializers.ValidationError('Wrong employee bank account')
+            return dict_value
+        else:
+            return dict_value
 
 
 def get_projected_payments(

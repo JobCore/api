@@ -6,11 +6,27 @@ from django.http import HttpRequest
 
 import requests
 import cloudinary
-import cloudinary.uploader
 import cloudinary.api
+import cloudinary.uploader
+import datetime
+import json
+import logging
 
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+
+from api.mixins import EmployerView
 from api.models import (
+    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
+    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
+    Shift, ShiftApplication, ShiftInvite, Venue,
+    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
@@ -27,13 +43,8 @@ from api.serializers import (
     employee_serializer, clockin_serializer, rating_serializer,
     profile_serializer, other_serializer
 )
-
-from django.utils import timezone
-import datetime
-import logging
-
-from api.mixins import EmployerView
-
+from api.utils import validators
+from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
@@ -53,6 +64,7 @@ class EmployerMeView(EmployerView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EmployerMeImageView(EmployerView):
 
@@ -549,7 +561,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
             paginator = HeaderLimitOffsetPagination()
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
-            
+
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
 
             qSerializer = request.GET.get('serializer')
@@ -562,7 +574,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             else:
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
-            
+
 
     def post(self, request):
 
@@ -570,7 +582,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
         request.data["employer"] = self.employer.id
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
-                
+
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
@@ -704,7 +716,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
     def get(self, request, period_id=None):
 
         if period_id is not None:
-            period = PayrollPeriod.objects.filter(id=period_id).first()
+            period = PayrollPeriod.objects.filter(id=period_id, employer_id=self.employer.id).first()
             if period is None:
                 return Response(
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
@@ -733,7 +745,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
         if 'status' not in request.data:
             return Response(validators.error_object('You need to specify the status'),status=status.HTTP_404_NOT_FOUND)
 
-        period = self.fetch_one(period_id)
+        period = PayrollPeriod.objects.filter(id=period_id, employer_id=self.employer.id).first()
         if period is None:
             return Response(validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
@@ -789,9 +801,7 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             qs = self.get_queryset()
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
-
             serializer = payment_serializer.PayrollPeriodPaymentGetSerializer(qs, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, payment_id=None):
@@ -815,6 +825,87 @@ class EmployerMePayrollPeriodPaymentView(EmployerView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmployerMeEmployeePaymentListView(EmployerView):
+    """To get total payment amounts for employee, including deductions"""
+    def get_queryset(self, period_id=None):
+        qs = EmployeePayment.objects.filter(employer_id=self.employer.id)
+        if period_id is not None:
+            qs = qs.filter(payroll_period_id=period_id)
+        return qs
+
+    def get(self, request, period_id):
+        ser_employer = payment_serializer.EmployerInfoPaymentSerializer(self.employer)
+        qs = self.get_queryset(period_id).order_by('id')
+        ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True)
+        return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
+                        status=status.HTTP_200_OK)
+
+
+class EmployerMeEmployeePaymentView(EmployerView):
+    """To handle a single EmployeePayment instance"""
+
+    def post(self, request, employee_payment_id):
+        try:
+            employee_payment = EmployeePayment.objects.get(id=employee_payment_id)
+        except EmployeePayment.DoesNotExist:
+            return Response({'error': 'There is not exist the employee payment'}, status=status.HTTP_400_BAD_REQUEST)
+        if employee_payment.paid:
+            return Response({'error': 'The selected employee payment can not be paid'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        context_data = {'employee_payment': employee_payment,
+                        'employer_user': employee_payment.employer.profile_set.last().user,
+                        'employee_user': employee_payment.employee.profile_set.last().user}
+        serializer = payment_serializer.EmployeePaymentDataSerializer(data=request.data, context=context_data)
+        if serializer.is_valid():
+            emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment)
+            employee_payment.deductions = emp_pay_ser.data['deductions']
+            employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
+                                                                    cls=DecimalEncoder))
+            employee_payment.amount = emp_pay_ser.data['amount']
+            with transaction.atomic():
+                employee_payment.save()
+                if serializer.validated_data['payment_type'] in [PaymentTransaction.ELECT_TRANSF,
+                                                                 PaymentTransaction.FAKE]:
+                    # make the payment using Stripe service
+                    sender_bank_acc = BankAccount.objects.get(
+                        id=serializer.validated_data['payment_data']['employer_bank_account_id'])
+                    receiver_bank_acc = BankAccount.objects.get(
+                        id=serializer.validated_data['payment_data']['employee_bank_account_id'])
+                    if serializer.validated_data['payment_type'] == PaymentTransaction.FAKE:
+                        transaction_id = 'ABC123'
+                    else:
+                        pass     # Here goes Request to Stripe or Plaid, returning a transaction_id or similar
+                    payment_t = PaymentTransaction.objects.create(
+                        amount=employee_payment.amount,
+                        sender_user=context_data['employer_user'],
+                        receiver_user=context_data['employee_user'],
+                        payment_type=serializer.validated_data['payment_type'],
+                        payment_data={"service_name": "Stripe",
+                                      "sender_stripe_token": sender_bank_acc.stripe_token,
+                                      "receiver_stripe_token": receiver_bank_acc.stripe_token,
+                                      "transaction_id": transaction_id
+                                      },
+                    )
+                else:
+                    payment_t = PaymentTransaction.objects.create(amount=employee_payment.amount,
+                                                                  sender_user=context_data['employer_user'],
+                                                                  receiver_user=context_data['employee_user'],
+                                                                  )
+                # set status for related entries as paid
+                employee_payment.payment_transaction = payment_t
+                employee_payment.paid = True
+                employee_payment.save()
+                PayrollPeriodPayment.objects.filter(payroll_period=employee_payment.payroll_period,
+                                                    employee=employee_payment.employee,
+                                                    employer=employee_payment.employer,
+                                                    status=APPROVED).update(status=PAID)
+                employee_payment.payroll_period.set_paid()
+            return Response({'message': 'success'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class EmployeerRateView(EmployerView):
 
@@ -859,7 +950,7 @@ class EmployeerRateView(EmployerView):
         request.data["employer"] = self.employer.id
         if (isinstance(request.data, list)):
             for employee in request.data:
-                for shift in request.data['shift']: 
+                for shift in request.data['shift']:
                     data["employee"] = employee['employee']['id']
                     data["shift"] = shift
                     data["rating"] = employee['rating']
@@ -879,7 +970,8 @@ class EmployeerRateView(EmployerView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
+
 
 class EmployerBatchActions(EmployerView):
 
@@ -896,6 +988,7 @@ class EmployerBatchActions(EmployerView):
                     log.append("Updating "+entity+" ")
 
         return Response(log, status=status.HTTP_200_OK)
+
 
 class EmployerPaymentDeductionView(EmployerView):
     def get_queryset(self):
@@ -941,4 +1034,3 @@ class EmployerPaymentDeductionView(EmployerView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-

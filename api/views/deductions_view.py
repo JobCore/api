@@ -1,17 +1,23 @@
-from api.mixins import EmployerView
-from api.models import EmployerDeduction
-from api.serializers.deductions_serializer import DeductionSerializer
-from api.views.general_views import log
-from rest_framework import status
-from rest_framework.response import Response
 import logging
+
+from django.db.models import BooleanField, IntegerField, Value
+
+from rest_framework import status
+from rest_framework.generics import ListAPIView
+from rest_framework.response import Response
+
+from api.mixins import EmployerView
+from api.models import EmployerDeduction, PreDefinedDeduction
+from api.serializers.deductions_serializer import DeductionSerializer
 
 log = logging.getLogger('api.views.deductions_view')
 
 
 class DeductionAPIView(EmployerView):
     def post(self, request):
-        serializer = DeductionSerializer(data=request.data)
+        data = request.data.copy()
+        data['employer'] = request.user.profile.employer_id
+        serializer = DeductionSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -19,11 +25,15 @@ class DeductionAPIView(EmployerView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        accounts = EmployerDeduction.objects.filter(employer_id=self.employer.id).order_by('id')
-        return Response(DeductionSerializer(accounts, many=True).data, status=status.HTTP_200_OK)
+        deducts1 = PreDefinedDeduction.objects.annotate(lock=Value(True, output_field=BooleanField()),
+                                                        employer=Value(self.employer.id, output_field=IntegerField()))\
+            .order_by('id')
+        deducts2 = EmployerDeduction.objects.filter(employer_id=self.employer.id).order_by('id')
+        deductions_data = DeductionSerializer(deducts1, many=True).data + DeductionSerializer(deducts2, many=True).data
+        return Response(deductions_data, status=status.HTTP_200_OK)
 
 
-class DeductionDetailAPIView(EmployerView):
+class DeductionDetailAPIView(ListAPIView, EmployerView):
     def delete(self, request, id):
         queryset = EmployerDeduction.objects.filter(id=id)
         deduction = queryset.first()

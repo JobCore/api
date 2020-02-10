@@ -40,6 +40,29 @@
     created_at: "2018-09-13T19:45:00Z"
     updated_at: "2018-09-13T19:45:00Z"
 
+- model: auth.User
+  pk: 9
+  fields:
+    first_name: Francisco
+    last_name: Perez
+    email: a+employer3@jobcore.co
+    username: a+employer3@jobcore.co
+    password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
+- model: api.employer
+  pk: 2
+  fields:
+    title: "My Events"
+    website: "https://myevents.com"
+    bio: "Catering company"
+    created_at: "2018-09-24T22:16:00Z"
+    updated_at: "2018-09-24T22:16:00Z"
+- model: api.profile
+  pk: 9
+  fields:
+    user: 9
+    employer: 2
+    created_at: "2018-09-24T22:17:00Z"
+    updated_at: "2018-09-24T19:17:00Z"
 
 
 - model: auth.User

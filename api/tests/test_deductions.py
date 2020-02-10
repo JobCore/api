@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse_lazy
 from django.test.client import MULTIPART_CONTENT
 
-from api.models import EmployerDeduction
+from api.models import EmployerDeduction, Employer
 from api.tests.mixins import WithMakeUser
 
 
@@ -61,6 +61,14 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
 
         response = self.client.post(url, data)
         self.assertEquals(response.status_code, 201, response.content)
+        response_json = response.json()
+        self.assertEqual(EmployerDeduction.objects.count(), 1, response_json)
+        self.assertIsInstance(response_json.pop('id'), int, response_json)
+        self.assertDictEqual(response_json,
+                             {"name": data['name'], "description": data['description'],
+                              "type": "PERCENTAGE", "value": data['value'], "lock": False,
+                              "employer": data['employer']},
+                             response_json)
 
     def test_get(self):
         url = reverse_lazy('api:me-employer-deduction')
@@ -68,7 +76,16 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
-        self.assertEquals(response.json(), [], response.content)
+        response_json = response.json()
+        self.assertEqual(len(response_json), 2, response_json)
+        for item in response_json:
+            self.assertIsInstance(item.get('id'), int, item)
+            self.assertIsInstance(item.get('name'), str, item)
+            self.assertEqual(item.get('employer'), self.test_user_employer.profile.employer.id, item)
+            self.assertTrue(item.get('lock'), item)
+            self.assertIsInstance(item.get('type'), str, item)
+            self.assertIsInstance(item.get('value'), float, item)
+            self.assertIsInstance(item.get('description'), str, item)
 
         data = {
             "employer_id": self.test_employer2.id,
@@ -78,10 +95,11 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         }
         EmployerDeduction.objects.create(**data)
 
-        # Still empty as I'm not the owner
+        # Only predefined deductions, because I'm not the owner
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
-        self.assertEquals(response.json(), [], response.content)
+        response_json = response.json()
+        self.assertEqual(len(response_json), 2, response_json)
 
         data = {
             "employer_id": self.test_employer.id,
@@ -93,9 +111,12 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
 
         response = self.client.get(url)
         self.assertEquals(response.status_code, 200, response.content)
-        results = response.json()
-        self.assertEquals(len(results), 1, response.content)
-        self.assertEquals(results[0].get("name"), 'Test Deduction', results)
+        response_json = response.json()
+        self.assertEquals(len(response_json), 3, response_json)
+        self.assertEquals(response_json[2].get("name"), data['name'], response_json)
+        self.assertEquals(response_json[2].get("description"), data['description'], response_json)
+        self.assertEquals(response_json[2].get("value"), data['value'], response_json)
+        self.assertEquals(response_json[2].get("employer"), data['employer_id'], response_json)
 
     def test_update(self):
         self.client.force_login(self.test_user_employer)
@@ -117,9 +138,9 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         response = self.client.put(url, new_data, content_type='application/json')
         self.assertEquals(response.status_code, 200, response.content)
         results = response.json()
-        self.assertEquals(results.get("name"), 'New Test Deduction', results)
-        self.assertEquals(results.get("description"), 'New Test Description', results)
-        self.assertEquals(results.get("value"), 25.0, results)
+        self.assertEquals(results.get("name"), new_data['name'], results)
+        self.assertEquals(results.get("description"), new_data['description'], results)
+        self.assertEquals(results.get("value"), new_data['value'], results)
 
     def test_delete(self):
         self.client.force_login(self.test_user_employer)
@@ -132,7 +153,8 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         }
         original_deduction = EmployerDeduction.objects.create(**data)
 
+        self.assertEquals(EmployerDeduction.objects.count(), 1, EmployerDeduction.objects.all())
         url = reverse_lazy('api:me-employer-single-deduction', kwargs=dict(id=original_deduction.id))
         response = self.client.delete(url)
         self.assertEquals(response.status_code, 202, response.content)
-        self.assertEquals(EmployerDeduction.objects.all().count(), 0, EmployerDeduction.objects.all())
+        self.assertEquals(EmployerDeduction.objects.count(), 0, EmployerDeduction.objects.all())
