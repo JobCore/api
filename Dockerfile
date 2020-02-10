@@ -1,4 +1,4 @@
-FROM python:3.7.4-buster
+FROM python:3.8.1-buster
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
 WORKDIR /code
