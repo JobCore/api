@@ -68,7 +68,7 @@ plaid-python = "==3.4.0"
 black = "*"
 
 [requires]
-python_version = "3.8.1"
+python_version = "3.7.4"
 
 [scripts]
 fake = "python manage.py migrate --fake api 0043_auto_20191106_2036"
