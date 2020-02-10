@@ -48,7 +48,7 @@ pytest-env = "==0.6.2"
 python-dateutil = "==2.7.2"
 pytz = "==2018.3"
 requests = "==2.20.0"
-six = "==1.11.0"
+six = "==1.14.0"
 text-unidecode = "==1.2"
 uritemplate = "==3.0.0"
 urllib3 = "==1.22"
@@ -68,7 +68,7 @@ plaid-python = "==3.4.0"
 black = "*"
 
 [requires]
-python_version = "3.7.4"
+python_version = "3.8.0"
 
 [scripts]
 fake = "python manage.py migrate --fake api 0043_auto_20191106_2036"
