@@ -572,6 +572,7 @@ class RateView(APIView):
         qs_shift = request.GET.get('shift')
         qs_shifts = request.GET.get('shifts')
 
+
         if qs_employee:
             lookup = {'employee_id': qs_employee}
 
@@ -586,6 +587,7 @@ class RateView(APIView):
         if qs_shifts:
             shifts_lists = qs_shifts.split(',')
             lookup['shift__in']=shifts_lists
+
         return lookup
 
     def get(self, request, id=False):
