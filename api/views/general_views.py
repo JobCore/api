@@ -707,15 +707,15 @@ class PayrollShiftsView(APIView, HeaderLimitOffsetPagination):
             clockins = Clockin.objects.filter(status=qStatus)
 
         qShift = request.GET.get('shift')
-        if qShift is not None and qShift is not '':
+        if qShift is not None and qShift != '':
             clockins = clockins.filter(shift=qShift)
         else:
             qEnded_at = request.GET.get('ending_at')
-            if qEnded_at is not None and qEnded_at is not '':
+            if qEnded_at is not None and qEnded_at != '':
                 clockins = clockins.filter(ended_at__lte=qEnded_at)
 
             qStarted_at = request.GET.get('starting_at')
-            if qStarted_at is not None and qStarted_at is not '':
+            if qStarted_at is not None and qStarted_at != '':
                 clockins = clockins.filter(started_at__gte=qStarted_at)
 
         payrolDic = {}
