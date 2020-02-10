@@ -711,7 +711,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
     def get(self, request, period_id=None):
 
         if period_id is not None:
-            period = PayrollPeriod.objects.filter(id=period_id).first()
+            period = PayrollPeriod.objects.filter(id=period_id, employer_id=self.employer.id).first()
             if period is None:
                 return Response(
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
@@ -740,7 +740,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
         if 'status' not in request.data:
             return Response(validators.error_object('You need to specify the status'),status=status.HTTP_404_NOT_FOUND)
 
-        period = self.fetch_one(period_id)
+        period = PayrollPeriod.objects.filter(id=period_id, employer_id=self.employer.id).first()
         if period is None:
             return Response(validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
