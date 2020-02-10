@@ -193,7 +193,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50,
     'EXCEPTION_HANDLER': 'api.utils.validators.post_exception_handler',
 }
-
 # CORS Settings
 CORS_ORIGIN_ALLOW_ALL = True
 # TODO: Replace localhost with correct Url

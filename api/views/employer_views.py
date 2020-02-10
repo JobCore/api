@@ -19,6 +19,7 @@ from api.models import (
 )
 
 from api.utils import validators
+from api.pagination import HeaderLimitOffsetPagination
 
 from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
@@ -471,7 +472,7 @@ class FavListEmployeeView(EmployerView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EmployerShiftView(EmployerView):
+class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
     def get(self, request, id=False):
 
         if (id):
@@ -517,7 +518,7 @@ class EmployerShiftView(EmployerView):
 
             qEnd = request.GET.get('end')
             if qEnd is not None and qEnd != '':
-                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 shifts = shifts.filter(ending_at__lte=end)
 
             qUnrated = request.GET.get('unrated')
@@ -539,13 +540,24 @@ class EmployerShiftView(EmployerView):
                 emp_list = qCandidateNot.split(',')
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
+
+            paginator = HeaderLimitOffsetPagination()
+            page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
+            
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
+
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
                 defaultSerializer = shift_serializer.ShiftGetBigListSerializer
 
-            serializer = defaultSerializer(shifts.order_by('-starting_at'), many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            if page is not None:
+                serializer = defaultSerializer(page, many=True)
+                serializer = shift_serializer.ShiftGetPublicTinySerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            
 
     def post(self, request):
 
@@ -705,7 +717,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
 
             qEnd = request.GET.get('end')
             if qEnd is not None and qEnd != '':
-                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 periods = periods.filter(ending_at__lte=end)
 
             serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
