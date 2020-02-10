@@ -520,11 +520,13 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             qStart = request.GET.get('start')
             if qStart is not None and qStart != '':
                 start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+                print(start)
                 shifts = shifts.filter(starting_at__gte=start)
 
             qEnd = request.GET.get('end')
             if qEnd is not None and qEnd != '':
                 end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
+                print(end)
                 shifts = shifts.filter(ending_at__lte=end)
 
             qUnrated = request.GET.get('unrated')
