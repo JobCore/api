@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from api.utils import notifier
-from api.models import Rate, Shift, Clockin, Venue, Employer, Profile, User
+from api.models import Rate, Shift, Clockin, Venue, Employer, Profile, User, PayrollPeriodPayment
 from django.db.models import Avg, Count
 from api.serializers.position_serializer import PositionSmallSerializer
 
@@ -108,28 +108,22 @@ class RatingSerializer(serializers.ModelSerializer):
             except Rate.MultipleObjectsReturned:
                 raise serializers.ValidationError(
                     "You have already rated this employer for this shift")
-
         # if it is an employer rating a talent
         elif current_user.profile.employer_id is not None:
             if 'employer' in data and data['employer'] is not None:
                 raise serializers.ValidationError(
                     'Only talents can rate employers')
 
-            if data["shift"].employer.id != current_user.profile.employer.id:
+            if data['shift'] is None or data["shift"].employer.id != current_user.profile.employer.id:
                 raise serializers.ValidationError(
                     'As an employer, you can only rate talents '
                     'that have work on your own shifts')
 
-            try:
-                # unused clockin
-                Clockin.objects.get(
-                    shift=data["shift"], employee=data["employee"].id)
-            except Clockin.DoesNotExist:
-                raise serializers.ValidationError(
-                    'This talent has not worked on this shift, '
-                    'no clockins have been found')
-            except Clockin.MultipleObjectsReturned:
-                pass
+            clockin = Clockin.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
+            if clockin is None:
+                payment = PayrollPeriodPayment.objects.filter(shift=data["shift"], employee=data["employee"].id).first()
+                if payment is None:
+                    raise serializers.ValidationError('This talent has not worked on this shift, no clockins have been found')
 
             try:
                 # unused rate
@@ -137,21 +131,16 @@ class RatingSerializer(serializers.ModelSerializer):
                     shift=data["shift"].id,
                     employee=data["employee"].id)
                 raise serializers.ValidationError(
-                    "You have already rated this talent for this shift")
+                    "You have already rated "+data["employee"].user.first_name+" for this shift")
             except Rate.DoesNotExist:
                 pass
             except Rate.MultipleObjectsReturned:
                 raise serializers.ValidationError(
                     "You have already rated this talent for this shift")
 
-            if 'comments' not in data or data['comments'] == '' or len(data['comments']) < 50:
-                raise serializers.ValidationError(
-                    "The rating must have a comment of a least 50 characters")
-
         return data
 
     def create(self, validated_data):
-
         rate = Rate(**validated_data)
         rate.save()
 

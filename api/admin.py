@@ -7,12 +7,15 @@ class AppVersionAdmin(admin.ModelAdmin):
 
 
 class ClockinAdmin(admin.ModelAdmin):
-    list_display = ('id', 'employee', 'started_at', 'ended_at', 'shift', 'author')
+    list_display = ('id', 'employee', 'started_at', 'ended_at', '_distance', 'shift', 'author')
     search_fields = (
         'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
         'author__user__last_name')
     list_filter = ('status',)
     list_per_page = 100
+
+    def _distance(self, obj):
+        return "In: "+str(obj.distance_in_miles)+ " Out: "+str(obj.distance_out_miles)
 
 
 class DocumentAdmin(admin.ModelAdmin):
@@ -39,16 +42,33 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
     list_display = ('id', 'document', 'get_name', 'status', 'created_at', 'updated_at')
     search_fields = (
         'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
-    list_filter = ('status','document_type__validates_identity','document_type__validates_employment','document_type__is_form')
+    list_filter = (
+    'status', 'document_type__validates_identity', 'document_type__validates_employment', 'document_type__is_form')
     list_per_page = 100
 
     def get_name(self, obj):
         return obj.document_type.title if obj.document_type is not None else 'Missing document type'
 
 
+class ShiftAdmin(admin.ModelAdmin):
+    # list_display = ('id',  'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
+    list_display = (
+    'id', '_shift', '_position', 'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees',
+    'minimum_hourly_rate', 'status')
+    search_fields = ('venue__title', 'position__title')
+    list_filter = ('status', 'position', 'venue')
+    list_per_page = 100
+
+    def _shift(self, obj):
+        return obj.venue.title
+
+    def _position(self, obj):
+        return obj.position.title
+
+
 class PreDefinedDeductionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'type', 'value', )
-    ordering = ('id', )
+    list_display = ('id', 'name', 'type', 'value',)
+    ordering = ('id',)
 
 
 class ShiftInviteAdmin(admin.ModelAdmin):
@@ -80,7 +100,23 @@ admin.site.register(Position)
 admin.site.register(PreDefinedDeduction, PreDefinedDeductionAdmin)
 admin.site.register(Profile)
 admin.site.register(Rate)
-admin.site.register(Shift)
+admin.site.register(Shift, ShiftAdmin)
 admin.site.register(ShiftInvite, ShiftInviteAdmin)
 admin.site.register(UserToken)
 admin.site.register(Venue)
+
+class EmployerSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', '_employer', '_subscription', 'status', 'due_at', 'payment_mode')
+    search_fields = ('employer__title', 'subscription__title')
+    list_filter = ('status', 'subscription__unique_name')
+    list_per_page = 100
+
+    def _employer(self, obj):
+        return obj.employer.title
+
+    def _subscription(self, obj):
+        return obj.subscription.title
+
+admin.site.register(SubscriptionPlan)
+admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
+# admin.site.register(EmployerSubscription)

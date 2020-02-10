@@ -63,7 +63,6 @@ class GeneratePeriodsView(APIView):
                 return Response(validators.error_object(
                     'Employer found.'), status=status.HTTP_404_NOT_FOUND)
             periods = payment_serializer.generate_periods_and_payments(employer)
-            print(periods)
         else:
             log_debug("hooks",'GeneratePeriodsView:get: Looking for all employers periods')
             employers = Employer.objects.filter(payroll_period_starting_time__isnull=False)

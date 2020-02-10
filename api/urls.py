@@ -14,7 +14,7 @@ from api.views.general_views import (
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
     PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
-    AppVersionView
+    AppVersionView, SubscriptionsView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
 
@@ -40,6 +40,8 @@ from api.views.employer_views import (
     EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
+    EmployerMeSubscriptionView
 )
 
 app_name = "api"
@@ -70,6 +72,9 @@ urlpatterns = [
 
     path('onboarding/views/<str:view_slug>', OnboardingView.as_view(), name="get-single-onboarding"),
     path('onboarding/views', OnboardingView.as_view(), name="get-all-oboarding"),
+
+    path('subscriptions', SubscriptionsView.as_view(), name="get-subscription"),
+    path('subscriptions/<str:id>', SubscriptionsView.as_view(), name="get-all-subscriptions"),
 
     #
     # FOR EVERYONE LOGGED IN
@@ -147,6 +152,7 @@ urlpatterns = [
     path('employers/me', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/image', EmployerMeImageView.as_view(), name="me-employers-image"),
+    path('employers/me/subscription', EmployerMeSubscriptionView.as_view(), name="me-employer-subscription"),
     path('employers/me/users', EmployerMeUsersView.as_view(), name="me-employer-users"),
     path('employers/me/users/<int:profile_id>', EmployerMeUsersView.as_view(), name="me-employer-single-users"),
     path(

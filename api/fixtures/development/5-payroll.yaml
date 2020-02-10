@@ -7,6 +7,8 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 34.30
+    distance_out_miles: 34.30
     status: "PENDING"
     started_at: "2019-09-13T20:20:00Z"
     ended_at: "2019-09-13T23:45:00Z"
@@ -23,6 +25,8 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 24.30
+    distance_out_miles: 14.30
     status: "PENDING"
     started_at: "2019-09-10T20:20:00Z"
     ended_at: "2019-09-10T23:45:00Z"
@@ -38,6 +42,8 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 13.93
+    distance_out_miles: 31.4
     status: "PENDING"
     started_at: "2019-09-05T20:20:00Z"
     ended_at: "2019-09-05T23:45:00Z"
@@ -57,6 +63,8 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 69.06
+    distance_out_miles: 12.10
     status: "PENDING"
     started_at: "2019-09-13T20:10:00Z"
     ended_at: "2019-09-13T23:35:00Z"
@@ -73,12 +81,15 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 15.30
+    distance_out_miles: 38.30
     status: "PENDING"
     started_at: "2019-09-10T20:15:00Z"
     ended_at: "2019-09-10T23:55:00Z"
 
     created_at: "2019-09-13T19:45:00Z"
     updated_at: "2019-09-13T19:45:00Z"
+
 - model: api.Clockin
   pk: 6
   fields:
@@ -88,6 +99,8 @@
     longitude_in: -80.260033
     latitude_out: 25.744526
     longitude_out: -80.260033
+    distance_in_miles: 24.30
+    distance_out_miles: 74.30
     status: "PENDING"
     started_at: "2019-09-05T20:10:00Z"
     ended_at: "2019-09-05T23:47:00Z"

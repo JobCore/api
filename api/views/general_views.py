@@ -8,6 +8,7 @@ import cloudinary.uploader
 import cloudinary.api
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.search import SearchVector
 from django.db.models import Q, F
 from django.http import HttpResponse
 from django.utils import timezone
@@ -45,6 +46,9 @@ from api.serializers import (
 from api.serializers import rating_serializer
 from api.utils.email import get_template_content
 
+from operator import itemgetter
+
+ 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
@@ -272,6 +276,7 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
                                   'profile__user__last_name__icontains'):
                         search_args.append(Q(**{query: term.lower()}))
 
+                print(search_args)
                 employees = employees.filter(
                     functools.reduce(operator.or_, search_args))
             else:
@@ -411,7 +416,7 @@ class PositionView(APIView):
             serializer = position_serializer.PositionSerializer(
                 position, many=False)
         else:
-            positions = Position.objects.filter(status='ACTIVE')
+            positions = Position.objects.filter(status='ACTIVE').order_by('title')
             serializer = position_serializer.PositionSerializer(
                 positions, many=True)
 
@@ -470,6 +475,30 @@ class CityView(APIView):
         else:
             cities = City.objects.all()
             serializer = other_serializer.CitySerializer(cities, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SubscriptionsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, id=None):
+        if (id):
+            try:
+                subscription = SubscriptionPlan.objects.get(pk=id)
+            except SubscriptionPlan.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = other_serializer.SubscriptionSerializer(subscription, many=False)
+
+        else:
+            subs = SubscriptionPlan.objects.all()
+
+            qsVisibility = request.GET.get('visibility')
+            if qsVisibility is None or qsVisibility != 'all':
+                subs = subs.filter(visible_to_users=True)
+
+            serializer = other_serializer.SubscriptionSerializer(subs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -540,6 +569,8 @@ class RateView(APIView):
 
         qs_employer = request.GET.get('employer')
         qs_employee = request.GET.get('employee')
+        qs_shift = request.GET.get('shift')
+        qs_shifts = request.GET.get('shifts')
 
         if qs_employee:
             lookup = {'employee_id': qs_employee}
@@ -547,10 +578,14 @@ class RateView(APIView):
         if qs_employer:
             lookup = {'employer_id': qs_employer}
 
-        qs_shift = request.GET.get('shift')
 
-        if qs_shift:
+        if qs_shift: 
             lookup['shift_id'] = qs_shift
+        return lookup
+
+        if qs_shifts:
+            shifts_lists = qs_shifts.split(',')
+            lookup['shift__in']=shifts_lists
         return lookup
 
     def get(self, request, id=False):
@@ -569,19 +604,25 @@ class RateView(APIView):
             serializer = rating_serializer.RatingGetSerializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+        
     def post(self, request):
 
-        serializer = rating_serializer.RatingSerializer(
-            data=request.data, context={"request": request})
+        _rates = []
+        if isinstance(request.data, list) is False:
+            _rates = [request.data]
+        else: _rates = request.data
+        
+        serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
         if serializer.is_valid():
             serializer.save()
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+            if isinstance(request.data, list) is False:
+                resp = rating_serializer.RatingSerializer( data=serializer.data[0], many=False)
+                return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+            else:
+                resp = rating_serializer.RatingSerializer( data=serializer.data, many=True)
+                return Response(resp.initial_data, status=status.HTTP_201_CREATED)
+        else: 
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CatalogView(APIView):
     def get(self, request, catalog_type):
@@ -621,7 +662,7 @@ class CatalogView(APIView):
             return Response(employees, status=status.HTTP_200_OK)
 
         elif catalog_type == 'positions':
-            positions = Position.objects.exclude()
+            positions = Position.objects.exclude().order_by("title")
             positions = map(
                 lambda emp: {
                     "label": emp["title"],
@@ -629,10 +670,12 @@ class CatalogView(APIView):
                 positions.values(
                     'title',
                     'id'))
+
+        
             return Response(positions, status=status.HTTP_200_OK)
 
         elif catalog_type == 'badges':
-            badges = Badge.objects.exclude()
+            badges = Badge.objects.exclude().order_by("title")
             badges = map(
                 lambda emp: {
                     "label": emp["title"],
@@ -992,6 +1035,7 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
         elif qStatus:
             shifts = shifts.filter(~Q(status=qStatus))
 
+
         qUpcoming = request.GET.get('upcoming')
         if qUpcoming == 'true':
             shifts = shifts.filter(starting_at__gte=TODAY)
@@ -1006,6 +1050,22 @@ class PublicShiftView(APIView, HeaderLimitOffsetPagination):
             end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT))
             shifts = shifts.filter(ending_at__lte=end)
 
+        qLocation = request.GET.get('location')
+        if qLocation is not None and qLocation != '':
+            shifts = shifts.filter(venue__street_address=qLocation)
+    
+
+        qKeywords = request.GET.get('keywords')
+        if qKeywords:
+
+            search_args = []
+            for term in qKeywords.split():
+                for query in ('position__title__icontains',
+                                'position__title__icontains'):
+                    search_args.append(Q(**{query: term.lower()}))
+            shifts = shifts.filter(
+                functools.reduce(operator.or_, search_args))
+     
         shifts = shifts.order_by('-starting_at')
 
         paginator = HeaderLimitOffsetPagination()

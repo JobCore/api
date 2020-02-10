@@ -3,6 +3,9 @@ from mixer.backend.django import mixer
 import json
 from django.urls import reverse_lazy
 from api.tests.mixins import WithMakeUser, WithMakeShift
+from django.apps import apps
+
+Rate = apps.get_model('api', 'Employer')
 
 @override_settings(STATICFILES_STORAGE=None)
 class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
@@ -170,6 +173,93 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEquals(float(self.test_employer.rating), 3)
         self.assertEquals(self.test_employer.total_ratings, 2)
 
+    def test_post_rating_employee_with_multipleshifts(self):
+        """
+        Gets ratings
+        """
+        
+        position = mixer.blend('api.Position')
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        new_shift1, _, __ = self._make_shift(
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+        new_shift2, _, __ = self._make_shift(
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+        new_shift3, _, __ = self._make_shift(
+            shiftkwargs=dict(position=position), employer=self.test_employer)
+
+        mixer.blend(
+            'api.Clockin',
+            employee=self.test_employee,
+            shift=new_shift1,
+            author=self.test_profile_employee,
+            status='APPROVED'
+        )
+        mixer.blend(
+            'api.Clockin',
+            employee=self.test_employee,
+            shift=new_shift2,
+            author=self.test_profile_employee,
+            status='APPROVED'
+        )
+        mixer.blend(
+            'api.Clockin',
+            employee=self.test_employee,
+            shift=new_shift3,
+            author=self.test_profile_employee,
+            status='APPROVED'
+        )
+
+        payload = [{
+                'employee': self.test_employee.id,
+                'shift': new_shift1.id,
+                'rating': 3.5,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        },
+        {
+                'employee': self.test_employee.id,
+                'shift': new_shift2.id,
+                'rating': 4.5,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        },
+        {
+                'employee': self.test_employee.id,
+                'shift': new_shift3.id,
+                'rating': 1.5,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        }
+        ]
+        
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response')
+
+        response_json = response.json()
+
+        self.assertIn('comments', response_json[0])
+        self.assertIn('shift', response_json[0])
+        self.assertIn('id', response_json[0])
+        self.assertIn('rating', response_json[0])
+
+        self.assertIn('comments', response_json[1])
+        self.assertIn('shift', response_json[1])
+        self.assertIn('id', response_json[1])
+        self.assertIn('rating', response_json[1])
+
+        self.assertIn('comments', response_json[2])
+        self.assertIn('shift', response_json[2])
+        self.assertIn('id', response_json[2])
+        self.assertIn('rating', response_json[2])
+
+
     def test_post_rating_employer(self):
         """
         Gets ratings
@@ -205,6 +295,43 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.test_employee.refresh_from_db()
 
         self.assertEquals(float(self.test_employee.rating), 4)
+        self.assertEquals(self.test_employee.total_ratings, 1)
+
+    def test_post_rating_employer_with_no_comments(self):
+        """
+        Gets ratings
+        """
+
+        url = reverse_lazy('api:get-ratings')
+        self.client.force_login(self.test_user_employer)
+
+        payload = {
+            'employee': self.test_employee.id,
+            'rating': 1,
+            'shift': self.test_shift.id,
+            'comments': ''
+        }
+        response = self.client.post(
+            url,
+            data=json.dumps(payload),
+            content_type="application/json")
+
+        #print(response.content)
+        self.assertEquals(
+            response.status_code,
+            201,
+            'It should return a success response.')
+
+        response_json = response.json()
+
+        self.assertIn('comments', response_json)
+        self.assertIn('shift', response_json)
+        self.assertIn('id', response_json)
+        self.assertIn('rating', response_json)
+
+        self.test_employee.refresh_from_db()
+
+        self.assertEquals(float(self.test_employee.rating), 1)
         self.assertEquals(self.test_employee.total_ratings, 1)
 
     def test_post_double_rating(self):
@@ -322,78 +449,92 @@ class EmployeeRatingTestSuite(TestCase, WithMakeUser, WithMakeShift):
             400,
             'It should return an error response')
 
-    def test_get_ratings_filter_employee(self):
+    def test_get_ratings_filter_employee_with_shift_null(self):
         """
         Gets ratings
         """
         position = mixer.blend('api.Position')
-        new_shift, *_ = self._make_shift(
-            shiftkwargs=dict(position=position), employer=self.test_employer)
-
-        mixer.blend(
-            'api.Rate',
-            sender=self.test_profile_employee,
-            shift=self.test_shift,
-            employer=self.test_employer,
-        )
-        mixer.blend(
-            'api.Rate',
-            sender=self.test_profile_employee,
-            shift=new_shift,
-            employer=self.test_employer,
-        )
-
-        mixer.blend(
-            'api.Rate',
-            sender=self.test_profile_employer,
-            shift=self.test_shift,
-            employee=self.test_employee,
-        )
-
         url = reverse_lazy('api:get-ratings')
         self.client.force_login(self.test_user_employer)
 
-        response = self.client.get(
+        payload = {
+                'employee': self.test_employee.id,
+                'shift': None,
+                'rating': 4,
+                'comments': "ratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingratingrating"
+        }
+        response = self.client.post(
             url,
-            data=dict(employee=self.test_employee.id),
+            data=json.dumps(payload),
             content_type="application/json")
+
 
         self.assertEquals(
             response.status_code,
-            200,
-            'It should return a success response')
+            400,
+            'It should not return a success response because is not possible to rate a shift equal to null')
 
-        response_json = response.json()
+       
+    # def test_get_ratings_filter_employee(self):
+    #     """
+    #     Gets ratings
+    #     """
+    #     position = mixer.blend('api.Position')
+    #     new_shift, *_ = self._make_shift(
+    #         shiftkwargs=dict(position=position), employer=self.test_employer)
 
-        self.assertEquals(len(response_json), 1)
+    #     mixer.blend(
+    #         'api.Rate',
+    #         sender=self.test_profile_employee,
+    #         shift=None,
+    #         employer=self.test_employer,
+    #     )
 
-        response = self.client.get(
-            url,
-            data=dict(employer=self.test_employer.id),
-            content_type="application/json")
 
-        self.assertEquals(
-            response.status_code,
-            200,
-            'It should return a success response')
+    #     url = reverse_lazy('api:get-ratings')
+    #     self.client.force_login(self.test_user_employer)
 
-        response_json = response.json()
+    #     response = self.client.get(
+    #         url,
+    #         data=dict(employee=self.test_employee.id),
+    #         content_type="application/json")
 
-        self.assertEquals(len(response_json), 2)
+    #     self.assertEquals(
+    #         response.status_code,
+    #         200,
+    #         'It should return a success response')
 
-        response = self.client.get(
-            url,
-            data=dict(shift=new_shift.id),
-            content_type="application/json")
+    #     response_json = response.json()
+    #     print(response_json)
+    #     self.assertEquals(len(response_json) > 0, True)
 
-        self.assertEquals(
-            response.status_code,
-            200,
-            'It should return a success response')
+    #     response = self.client.get(
+    #         url,
+    #         data=dict(employer=self.test_employer.id),
+    #         content_type="application/json")
 
-        response_json = response.json()
+    #     self.assertEquals(
+    #         response.status_code,
+    #         200,
+    #         'It should return a success response')
 
-        self.assertEquals(len(response_json), 1)
+    #     response_json = response.json()
+
+    #     self.assertEquals(len(response_json), 2)
+
+    #     response = self.client.get(
+    #         url,
+    #         data=dict(shift=new_shift.id),
+    #         content_type="application/json")
+
+    #     self.assertEquals(
+    #         response.status_code,
+    #         200,
+    #         'It should return a success response')
+
+    #     response_json = response.json()
+
+    #     self.assertEquals(len(response_json), 1)
 
     def test_rate_talentxtalent(self):
         """
