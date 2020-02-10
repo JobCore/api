@@ -113,7 +113,7 @@ class PayrollPeriodTestSuite(TestCase):
             self.assertEqual(period.get('status'), "OPEN", response_json)
             self.assertIsNotNone(period.get('starting_at'), response_json)
             self.assertIsNotNone(period.get('ending_at'), response_json)
-            self.assertGreaterEqual(len(period.get('payments')), 1, response_json)
+            self.assertGreaterEqual(period.get('total_payments'), 1, response_json)
 
     def test_get_my_periods2(self):
         """Test for employer without registered periods"""
