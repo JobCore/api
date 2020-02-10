@@ -1,7 +1,9 @@
-from django.utils import timezone
-from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.db.models import Avg, Count
+from django.utils import timezone
+
 from api.utils.loggers import log_debug
 
 NOW = timezone.now()
@@ -681,6 +683,17 @@ class PayrollPeriod(models.Model):
     def __str__(self):
         return "From " + str(self.starting_at) + " to " + str(self.ending_at)
 
+    def set_paid(self):
+        """Set period as PAID if there is not a pending PayrollPeriodPayment"""
+        set_as_paid = True
+        for payment in self.payments.all():
+            if payment.status == PENDING or payment.status == APPROVED:
+                set_as_paid = False
+                break
+        if set_as_paid:
+            self.status = PAID
+            self.save()
+
 
 PENDING = 'PENDING'
 PAID = 'PAID'
@@ -727,6 +740,24 @@ class PayrollPeriodPayment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 
+class EmployeePayment(models.Model):
+    payroll_period = models.ForeignKey(PayrollPeriod, on_delete=models.PROTECT, related_name='employee_payments')
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name='employee_payments')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payments')
+    paid = models.BooleanField(blank=True, default=False)
+    regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    breaktime_minutes = models.IntegerField(blank=True, default=0)
+    earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    deduction_list = JSONField(blank=True, default=list)
+    payment_transaction = models.OneToOneField('PaymentTransaction', on_delete=models.SET_NULL, blank=True, null=True,
+                                               related_name='employee_payment')
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+
 class PaymentDeduction(models.Model):
     employer = models.ForeignKey(Employer, related_name='deductions', on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
@@ -752,6 +783,24 @@ class BankAccount(models.Model):
     wire_routing = models.CharField(max_length=200, null=True, blank=True)
     institution_name = models.CharField(max_length=200, null=True, blank=True)
     stripe_token = models.CharField(max_length=200, null=True, blank=True)
+
+
+class PaymentTransaction(models.Model):
+    """Record details about a payment transaction"""
+    CHECK = 'CHECK'
+    ELECT_TRANSF = 'ELECTRONIC TRANSFERENCE'
+    FAKE = 'FAKE'   # to fake an electronic transfer
+    PAYMENT_TYPES = (
+        (CHECK, 'Check'),
+        (ELECT_TRANSF, 'Electronic Transference'),
+        (FAKE, 'Fake Electronic Transference'),
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_type = models.CharField(max_length=100, choices=PAYMENT_TYPES)
+    payment_data = JSONField(blank=True, default=dict)
+    sender_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_payments')
+    receiver_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_payments')
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Document(models.Model):

@@ -56,6 +56,9 @@
   "stack": "heroku-18",
   "environments": {
     "production": {
+        "scripts": {
+            "test": "pipenv run tests"
+        },
         "env": {
             "ROLLBAR_ENDPOINT": {
                 "required": true
