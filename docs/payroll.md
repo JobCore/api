@@ -56,9 +56,6 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
 
 ## Proceed with payment of an employee in a period 
 
-
-
-
 **URL** : `/api/employers/me/employee-payment/<employee_payment_id>`
 
 **Method** : `POST`
