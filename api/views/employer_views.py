@@ -557,7 +557,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 emp_list = qCandidateNot.split(',')
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
-
             paginator = HeaderLimitOffsetPagination()
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
 
@@ -566,7 +565,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
                 defaultSerializer = shift_serializer.ShiftGetBigListSerializer
-
             if page is not None:
                 serializer = defaultSerializer(page, many=True)
                 return paginator.get_paginated_response(serializer.data)
