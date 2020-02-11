@@ -51,13 +51,13 @@
   },
   "name": "api",
   "scripts": {
-      "postdeploy": "pipenv run migrate"
+      "postdeploy": "python manage.py migrate"
   },
   "stack": "heroku-18",
   "environments": {
     "production": {
         "scripts": {
-            "test": "pipenv run tests"
+            "test": "pytest"
         },
         "env": {
             "ROLLBAR_ENDPOINT": {
@@ -80,14 +80,14 @@
     "test": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
-            "test": "pipenv run tests"
+            "test": "pytest"
         }
     },
     "review": {
         "addons": ["heroku-postgresql:in-dyno"],
         "scripts": {
-            "test": "pipenv run tests",
-            "postdeploy": "pipenv run migrate && pipenv run seed"
+            "test": "pytest",
+            "postdeploy": "python manage.py migrate"
         }
     }
   }
