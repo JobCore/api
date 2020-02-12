@@ -46,6 +46,12 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
         return obj.document_type.title if obj.document_type is not None else 'Missing document type'
 
 
+class EmployeePaymentAdmin(admin.ModelAdmin):
+    list_display = ('employer', 'payroll_period', 'employee', 'paid', )
+    list_filter = ('payroll_period', 'paid')
+    list_per_page = 100
+
+
 class PreDefinedDeductionAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'type', 'value', )
     ordering = ('id', )
@@ -68,6 +74,7 @@ admin.site.register(City)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(Employee, EmployeeAdmin)
 admin.site.register(EmployeeDocument, EmployeeDocumentAdmin)
+admin.site.register(EmployeePayment, EmployeePaymentAdmin)
 admin.site.register(Employer)
 admin.site.register(FavoriteList)
 admin.site.register(FCMDevice)
