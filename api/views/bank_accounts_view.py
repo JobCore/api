@@ -59,42 +59,56 @@ class BankAccountAPIView(APIView):
                 except Exception as e:
                     log.error(f"Error creating the Stripe Token: {e}")
                     raise ValueError(f"Error creating the Stripe Tokens: {e}")
-                try:
-                    # create account or customer in Stripe and add bank_account
-                    if request.user.profile.employer:
-                        # get existing stripe_customer_id or create Customer
-                        last_bank_account = request.user.profile.bank_accounts.filter(stripe_customer_id__isnull=False).last()
-                        if last_bank_account:
-                            stripe_customer_id = last_bank_account.stripe_customer_id
-                        else:
+
+                # create account or customer in Stripe and add bank_account
+                if request.user.profile.employer:
+                    # get existing stripe_customer_id or create Customer
+                    last_bank_account = request.user.profile.bank_accounts.filter(stripe_customer_id__isnull=False).last()
+                    if last_bank_account:
+                        stripe_customer_id = last_bank_account.stripe_customer_id
+                    else:
+                        try:
                             stripe_customer = stripe.Customer.create(email=request.user.email,
                                                                      name=request.user.profile.employer.title)
-                            stripe_customer_id = stripe_customer.id
+                        except Exception as e:
+                            return Response({'details': 'Error creating Customer with Stripe: ' + str(e)},
+                                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        stripe_customer_id = stripe_customer.id
+                    try:
                         stripe_bank_account = stripe.Customer.create_source(stripe_customer_id, source=bank_account_token)
-                        stripe_bank_account_id = stripe_bank_account.id
-                        stripe_account_id = ''
-                    else:
-                        tos_accept_date = timezone.now()
-                        individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name}
-                        if request.user.profile.birth_date:
-                            individual_data['dob'] = {'year': request.user.profile.birth_date.year,
-                                                      'month': request.user.profile.birth_date.month,
-                                                      'day': request.user.profile.birth_date.day}
+                    except Exception as e:
+                        return Response({'details': 'Error creating Source with Stripe: ' + str(e)},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    stripe_bank_account_id = stripe_bank_account.id
+                    stripe_account_id = ''
+                else:
+                    tos_accept_date = timezone.now()
+                    individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name}
+                    if request.user.profile.birth_date:
+                        individual_data['dob'] = {'year': request.user.profile.birth_date.year,
+                                                  'month': request.user.profile.birth_date.month,
+                                                  'day': request.user.profile.birth_date.day}
+                    try:
                         stripe_account = stripe.Account.create(type="custom", country="US", email=request.user.email,
                                                                requested_capabilities=["transfers"],
                                                                business_type="individual",
                                                                tos_acceptance={'date': round(tos_accept_date.timestamp()),
                                                                                'ip': '127.0.0.1'},
                                                                individual=individual_data,
-                                                               business_profile={'url': 'http://127.0.0.1'})
-                        stripe_account_id = stripe_account.id
+                                                               business_profile={'url': 'http://127.0.0.1'}
+                                                               )
+                    except Exception as e:
+                        return Response({'details': 'Error creating Account with Stripe: ' + str(e)},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    stripe_account_id = stripe_account.id
+                    try:
                         bank_account = stripe.Account.create_external_account(stripe_account_id,
                                                                               external_account=bank_account_token)
-                        stripe_bank_account_id = bank_account.id
-                        stripe_customer_id = ''
-                except Exception as e:
-                    return Response({'details': 'Error with Stripe: ' + str(e)},
-                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    except Exception as e:
+                        return Response({'details': 'Error creating external account with Stripe: ' + str(e)},
+                                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    stripe_bank_account_id = bank_account.id
+                    stripe_customer_id = ''
                 try:
                     BankAccount.objects.create(
                         user=request.user.profile,
