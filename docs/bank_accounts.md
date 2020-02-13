@@ -8,7 +8,7 @@
 
 **Auth required** : YES
 
-**Permissions required** : Authenticated User
+**Permissions required** : Authenticated User, User should be an Employer or Employee
 
 ## Request Params
 

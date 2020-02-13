@@ -71,7 +71,7 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
 | payment_type    |  "ELECTRONIC TRANSFERENCE"        |     Yes       | CHECK, ELECTRONIC TRANSFERENCE, FAKE  |
 |                 |                                   |               | FAKE imitate a real electronic transference |
 | payment_data    |  {"employer_bank_account_id": 3   |     Yes       | Dict, can be empty                    |
-|                 |   "employee_bank_account_id": 7}  |               | For ELECTRONIC TRANSFERENCE type,     |
+|                 |   "employee_bank_account_id": 7}  |               | For ELECTRONIC TRANSFERENCE and FAKE types,     |
 |                 |                                   |               | employer_bank_account_id and          |
 |                 |                                   |               | employee_bank_account_id              |
 |                 |                                   |               | keys are required                     |
