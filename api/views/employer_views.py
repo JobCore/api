@@ -11,8 +11,11 @@ import cloudinary.uploader
 import datetime
 import json
 import logging
+import stripe
+import os
 
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -48,6 +51,7 @@ from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
+stripe.api_key = os.environ.get('STRIPE_SECRET')
 
 
 class EmployerMeView(EmployerView):
@@ -876,15 +880,24 @@ class EmployerMeEmployeePaymentView(EmployerView):
                     if serializer.validated_data['payment_type'] == PaymentTransaction.FAKE:
                         transaction_id = 'ABC123'
                     else:
-                        pass     # Here goes Request to Stripe or Plaid, returning a transaction_id or similar
+                        try:
+                            charge = stripe.Charge.create(amount=50, currency='usd',
+                                                          customer=sender_bank_acc.stripe_customer_id,
+                                                          source=sender_bank_acc.stripe_bankaccount_id,
+                                                          transfer_data={'destination': receiver_bank_acc.stripe_account_id}
+                                                          )
+                        except Exception as e:
+                            return Response({'details': 'Error with Stripe: ' + str(e)},
+                                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        transaction_id = charge.id
                     payment_t = PaymentTransaction.objects.create(
                         amount=employee_payment.amount,
                         sender_user=context_data['employer_user'],
                         receiver_user=context_data['employee_user'],
                         payment_type=serializer.validated_data['payment_type'],
                         payment_data={"service_name": "Stripe",
-                                      "sender_stripe_token": sender_bank_acc.stripe_token,
-                                      "receiver_stripe_token": receiver_bank_acc.stripe_token,
+                                      "sender_stripe_token": sender_bank_acc.stripe_bankaccount_id,
+                                      "receiver_stripe_token": receiver_bank_acc.stripe_bankaccount_id,
                                       "transaction_id": transaction_id
                                       },
                     )
@@ -970,7 +983,6 @@ class EmployeerRateView(EmployerView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 class EmployerBatchActions(EmployerView):
