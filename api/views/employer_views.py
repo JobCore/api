@@ -881,7 +881,8 @@ class EmployerMeEmployeePaymentView(EmployerView):
                         transaction_id = 'ABC123'
                     else:
                         try:
-                            charge = stripe.Charge.create(amount=50, currency='usd',
+                            charge = stripe.Charge.create(amount='{:.0f}'.format(employee_payment.amount * 100),
+                                                          currency='usd',
                                                           customer=sender_bank_acc.stripe_customer_id,
                                                           source=sender_bank_acc.stripe_bankaccount_id,
                                                           transfer_data={'destination': receiver_bank_acc.stripe_account_id}
