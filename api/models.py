@@ -782,7 +782,9 @@ class BankAccount(models.Model):
     routing = models.CharField(max_length=200, null=True, blank=True)
     wire_routing = models.CharField(max_length=200, null=True, blank=True)
     institution_name = models.CharField(max_length=200, null=True, blank=True)
-    stripe_token = models.CharField(max_length=200, null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=100, blank=True)
+    stripe_account_id = models.CharField(max_length=100, blank=True)
+    stripe_bankaccount_id = models.CharField(max_length=200, blank=True)
 
 
 class PaymentTransaction(models.Model):
