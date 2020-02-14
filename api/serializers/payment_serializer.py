@@ -360,14 +360,11 @@ class EmployeePaymentDatesSerializer(serializers.Serializer):
 
     def validate_period_id(self, value):
         try:
-            period = PayrollPeriod.objects.get(id=value)
+            period = PayrollPeriod.objects.get(id=value, employer_id=self.context['employer_id'])
         except PayrollPeriod.DoesNotExist:
             raise serializers.ValidationError('There is not PayrollPeriod')
         else:
-            if period.employer.id != self.context['employer_id']:
-                raise serializers.ValidationError('You are not able to access this PayrollPeriod')
-            else:
-                return value
+            return value
 
 
 class EmployeePaymentReportSerializer(serializers.ModelSerializer):

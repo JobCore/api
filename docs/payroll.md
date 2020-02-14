@@ -99,7 +99,7 @@ http://localhost:5000/api/employers/me/employee-payment/3
 - A registry in **PaymentTransaction** model is created, related **PayrrolPeriodPayment** and **PayrollPeriod** registries are set as PAID.
 
 
-## Get a list of EmployeePayment data for instances with paid status and belong to current employer 
+## Get a list of EmployeePayment instances with paid status and belong to current employer
 
 **URL** : `/api/employers/me/employee-payment/report`
 
@@ -150,7 +150,7 @@ http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-0
 an error about not existence of PayrollPeriod is returned
 
 
-## Get a list of deductions related to a paid EmployeePayment 
+## Get a list of data deductions related to a paid EmployeePayment and belong to current employer
 
 **URL** : `/api/employers/me/employee-payment/deduction-report`
 

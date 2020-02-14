@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from mixer.backend.django import mixer
-import pytest
+
 from django.apps import apps
 from django.test import TestCase, override_settings
 from django.urls import reverse_lazy
@@ -435,7 +435,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
 
     def test_employee_payment_deduction_report_start_date(self):
-        """Get list of deductions related to paid employee payments, providing start_date paremeter"""
+        """Get list of deductions related to paid employee payments, providing start_date parameter"""
         self.client.force_login(self.test_user_employer)
         start_date = timezone.now() - timedelta(days=5)
         url = reverse_lazy('api:me-get-employee-payment-deduction-report') \
