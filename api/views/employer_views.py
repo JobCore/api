@@ -1063,13 +1063,12 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
         if period_id:
             qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period_id=period_id)
         elif start_date or end_date:
-            qs_periods = PayrollPeriod.objects.filter(employer=self.employer)
-            if start_date:
-                qs_periods = qs_periods.filter(starting_at__date__gte=start_date)
-            if end_date:
-                qs_periods = qs_periods.filter(ending_at__date__lte=end_date)
-            qs_periods = qs_periods.values_list('id', flat=True)
+            qs_periods = PayrollPeriod.objects.filter(employer=self.employer).values_list('id', flat=True)
             qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period__in=qs_periods)
+            if start_date:
+                qs = qs.filter(payment_transaction__created_at__date__gte=start_date)
+            if end_date:
+                qs = qs.filter(payment_transaction__created_at__date__lte=end_date)
         else:
             qs = EmployeePayment.objects.filter(employer=self.employer, paid=True)
         ser = payment_serializer.EmployeePaymentReportSerializer(qs, many=True)
