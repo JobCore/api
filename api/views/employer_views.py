@@ -1080,7 +1080,8 @@ class EmployerMeEmployeePaymentDeductionReportView(EmployerView):
 
     def get(self, request, employee_payment_id):
         try:
-            employee_payment = EmployeePayment.objects.get(id=employee_payment_id, paid=True)
+            employee_payment = EmployeePayment.objects.get(id=employee_payment_id, employer_id=self.employer.id,
+                                                           paid=True)
         except EmployeePayment.DoesNotExist:
             return Response({'details': 'There is not EmployeePayment'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(employee_payment.deduction_list, status=status.HTTP_200_OK)
