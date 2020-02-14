@@ -120,6 +120,7 @@ http://localhost:5000/api/employers/me/employee-payment/3
 #### Example
 
 http://localhost:5000/api/employers/me/employee-payment/report?period_id=1
+http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-01-28
 
 #### Success Response
 
@@ -129,15 +130,17 @@ http://localhost:5000/api/employers/me/employee-payment/report?period_id=1
 
 ```json
 [
-    {
-        "employee": "Lennon, John",
-        "earnings": "150.00",
-        "deductions": "37.80",
-        "amount": "112.20",
-        "payment_date": "2020-02-13",
-        "payment_source": "ELECTRONIC TRANSFERENCE",
-        "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00"
-    }
+  {
+    "employee": "Lennon, John",
+    "earnings": "150.00",
+    "deductions": "37.80",
+    "amount": "112.20",
+    "payment_date": "2020-02-13",
+    "payment_source": "ELECTRONIC TRANSFERENCE",
+    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
+    "payroll_period_id": 1
+  },
+  ...
 ]
 ```
 
@@ -149,7 +152,7 @@ an error about not existence of PayrollPeriod is returned
 
 ## Get a list of deductions related to a paid EmployeePayment 
 
-**URL** : `/api/employers/me/employee-payment/deduction-report/<employee_payment_id>`
+**URL** : `/api/employers/me/employee-payment/deduction-report`
 
 **Method** : `GET`
 
@@ -158,11 +161,17 @@ an error about not existence of PayrollPeriod is returned
 **Permissions required** : Authenticated User, User should be an Employer
 
 #### Request Params:
-Any
+
+| key           | Example Value           | Required?     | Observations                                  |
+| ------------  | ----------------------  | ------------- | --------------------------------------------- |
+| period_id     |  1                      |     No        | This parameter has precedence over others     |
+| start_date    |  2020-01-15             |     No        |                                               |
+| end_date      |  2020-01-31             |     No        |                                               |
 
 #### Example
 
-http://localhost:5000/api/employers/me/employee-payment/deduction-report/2
+http://localhost:5000/api/employers/me/employee-payment/deduction-report?period=1
+http://localhost:5000/api/employers/me/employee-payment/deduction-report?start_date=2020-01-28
 
 #### Success Response
 
@@ -172,22 +181,29 @@ http://localhost:5000/api/employers/me/employee-payment/deduction-report/2
 
 ```json
 [
-    {
-        "name": "Social Security",
-        "amount": "7.5000"
-    },
-    {
-        "name": "Medicare",
-        "amount": "7.5000"
-    },
-    {
-        "name": "Deduc2",
-        "amount": "22.8000"
-    }
+  {
+    "employee": "Lennon, John",
+    "deduction_amount": "37.80",
+    "deduction_list": [
+        {
+          "name": "Social Security",
+          "amount": "7.5000"
+        },
+        {
+          "name": "Medicare",
+          "amount": "7.5000"
+        },
+        ...
+    ],
+    "payment_date": "2020-02-13",
+    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
+    "payroll_period_id": 1
+  },
+  ...
 ]
 ```
 
 #### Notes
 
-- If `employee_payment_id` reference an EmployeePayment which don't belong to authenticated user(employer), 
-an error about not existence of EmployeePayment is returned
+- If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
+an error about not existence of PayrollPeriod is returned

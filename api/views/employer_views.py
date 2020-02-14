@@ -1051,15 +1051,11 @@ class EmployerPaymentDeductionView(EmployerView):
 
 class EmployerMeEmployeePaymentReportView(EmployerView):
 
-    def get(self, request):
-        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
-                                                                       context={'employer_id': self.employer.id}
-                                                                       )
-        if not ser_params.is_valid():
-            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
-        start_date = ser_params.data.get('start_date')
-        end_date = ser_params.data.get('end_date')
-        period_id = ser_params.data.get('period_id')
+    def get_queryset(self, params):
+        """Method to return required EmployeePayment queryset, based on provided parameters"""
+        start_date = params.get('start_date')
+        end_date = params.get('end_date')
+        period_id = params.get('period_id')
         if period_id:
             qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period_id=period_id)
         elif start_date or end_date:
@@ -1071,16 +1067,25 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
                 qs = qs.filter(payment_transaction__created_at__date__lte=end_date)
         else:
             qs = EmployeePayment.objects.filter(employer=self.employer, paid=True)
-        ser = payment_serializer.EmployeePaymentReportSerializer(qs, many=True)
+        return qs
+
+    def get(self, request):
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+                                                                       context={'employer_id': self.employer.id}
+                                                                       )
+        if not ser_params.is_valid():
+            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = payment_serializer.EmployeePaymentReportSerializer(self.get_queryset(ser_params.data), many=True)
         return Response(ser.data, status=status.HTTP_200_OK)
 
 
-class EmployerMeEmployeePaymentDeductionReportView(EmployerView):
+class EmployerMeEmployeePaymentDeductionReportView(EmployerMeEmployeePaymentReportView):
 
-    def get(self, request, employee_payment_id):
-        try:
-            employee_payment = EmployeePayment.objects.get(id=employee_payment_id, employer_id=self.employer.id,
-                                                           paid=True)
-        except EmployeePayment.DoesNotExist:
-            return Response({'details': 'There is not EmployeePayment'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(employee_payment.deduction_list, status=status.HTTP_200_OK)
+    def get(self, request):
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+                                                                       context={'employer_id': self.employer.id}
+                                                                       )
+        if not ser_params.is_valid():
+            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = payment_serializer.EmployeePaymentDeductionReportSerializer(self.get_queryset(ser_params.data), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)

@@ -178,8 +178,7 @@ urlpatterns = [
          name='me-get-employee-payment'),
     path('employers/me/employee-payment/report', EmployerMeEmployeePaymentReportView.as_view(),
          name='me-get-employee-payment-report'),
-    path('employers/me/employee-payment/deduction-report/<int:employee_payment_id>',
-         EmployerMeEmployeePaymentDeductionReportView.as_view(),
+    path('employers/me/employee-payment/deduction-report', EmployerMeEmployeePaymentDeductionReportView.as_view(),
          name='me-get-employee-payment-deduction-report'),
     # path(
     #      'employees/<int:id>/applications',

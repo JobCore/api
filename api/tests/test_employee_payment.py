@@ -69,11 +69,14 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
                                                'receiver_stripe_token': self.test_acc_employee.stripe_bankaccount_id}
                                  )
         self.emp_pay1 = mixer.blend('api.EmployeePayment', employer_id=self.test_employer.id,
-                                    employee_id=self.test_employee.id, payroll_period_id=self.test_period3.id, paid=True,
+                                    employee_id=self.test_employee.id, payroll_period_id=self.test_period3.id,
+                                    paid=True, deduction_list=[{"name": "Social Security", "amount": "7.5000",
+                                                                "name": "Medicare", "amount": "7.5000"}],
                                     payment_transaction_id=py_transac.id, amount=py_transac.amount)
         self.emp_pay2 = mixer.blend('api.EmployeePayment', employer_id=self.test_employer.id,
                                     employee_id=self.test_employee2.id, payroll_period_id=self.test_period3.id,
-                                    paid=False,
+                                    paid=False, deduction_list=[{"name": "Social Security", "amount": "7.5000",
+                                                                 "name": "Medicare", "amount": "7.5000"}],
                                     payment_transaction_id=None)
 
     def test_get(self):
@@ -293,6 +296,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
         self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
         self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
         self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
 
     def test_employee_payment_report_start_date(self):
@@ -310,6 +314,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
         self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
         self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
         self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
 
     def test_employee_payment_report_start_date2(self):
@@ -337,6 +342,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
         self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
         self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
         self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
 
     def test_employee_payment_report_end_date2(self):
@@ -364,6 +370,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
         self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
         self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
         self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
 
     def test_employee_payment_report_period2(self):
@@ -398,6 +405,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
         self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
         self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
         self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
 
     def test_employee_payment_report_wrong_start_date(self):
@@ -406,3 +414,6 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         url = reverse_lazy('api:me-get-employee-payment-report') + '?start_date=24-15-400'
         response = self.client.get(url)
         self.assertContains(response, 'start_date', status_code=400)
+
+    # def test_employee_payment_deduction(self):
+    #     pass

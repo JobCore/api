@@ -378,7 +378,8 @@ class EmployeePaymentReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date', 'payment_source', 'payroll_period')
+        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date',
+                  'payment_source', 'payroll_period', 'payroll_period_id')
 
     def get_employee(self, instance):
         user = instance.employee.user
@@ -398,6 +399,15 @@ class EmployeePaymentReportSerializer(serializers.ModelSerializer):
 
     def get_payroll_period(self, instance):
         return str(instance.payroll_period)
+
+
+class EmployeePaymentDeductionReportSerializer(EmployeePaymentReportSerializer):
+    deduction_amount = serializers.DecimalField(max_digits=10, decimal_places=2, source='deductions')
+
+    class Meta:
+        model = EmployeePayment
+        fields = ('employee', 'deduction_amount', 'deduction_list',
+                  'payment_date', 'payroll_period', 'payroll_period_id')
 
 
 def get_projected_payments(
