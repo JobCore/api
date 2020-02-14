@@ -97,3 +97,97 @@ http://localhost:5000/api/employers/me/employee-payment/3
 - Bank account Ids are provided via endpoint `api/employers/me/employee-payment-list/<period_id>`.
 - Values for `amount`, `deductions` and `deduction_list` fields are updated. 
 - A registry in **PaymentTransaction** model is created, related **PayrrolPeriodPayment** and **PayrollPeriod** registries are set as PAID.
+
+
+## Get a list of EmployeePayment data for instances with paid status and belong to current employer 
+
+**URL** : `/api/employers/me/employee-payment/report`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Permissions required** : Authenticated User, User should be an Employer
+
+#### Request Params:
+
+| key           | Example Value           | Required?     | Observations                                  |
+| ------------  | ----------------------  | ------------- | --------------------------------------------- |
+| period_id     |  1                      |     No        | This parameter has precedence over others     |
+| start_date    |  2020-01-15             |     No        |                                               |
+| end_date      |  2020-01-31             |     No        |                                               |
+
+#### Example
+
+http://localhost:5000/api/employers/me/employee-payment/report?period_id=1
+
+#### Success Response
+
+**Code** : `200 OK`
+
+**Content examples**
+
+```json
+[
+    {
+        "employee": "Lennon, John",
+        "earnings": "150.00",
+        "deductions": "37.80",
+        "amount": "112.20",
+        "payment_date": "2020-02-13",
+        "payment_source": "ELECTRONIC TRANSFERENCE",
+        "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00"
+    }
+]
+```
+
+#### Notes
+
+- If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
+an error about not existence of PayrollPeriod is returned
+
+
+## Get a list of deductions related to a paid EmployeePayment 
+
+**URL** : `/api/employers/me/employee-payment/deduction-report/<employee_payment_id>`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Permissions required** : Authenticated User, User should be an Employer
+
+#### Request Params:
+Any
+
+#### Example
+
+http://localhost:5000/api/employers/me/employee-payment/deduction-report/2
+
+#### Success Response
+
+**Code** : `200 OK`
+
+**Content examples**
+
+```json
+[
+    {
+        "name": "Social Security",
+        "amount": "7.5000"
+    },
+    {
+        "name": "Medicare",
+        "amount": "7.5000"
+    },
+    {
+        "name": "Deduc2",
+        "amount": "22.8000"
+    }
+]
+```
+
+#### Notes
+
+- If `employee_payment_id` reference an EmployeePayment which don't belong to authenticated user(employer), 
+an error about not existence of EmployeePayment is returned
