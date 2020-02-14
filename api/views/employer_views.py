@@ -1047,3 +1047,40 @@ class EmployerPaymentDeductionView(EmployerView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class EmployerMeEmployeePaymentReportView(EmployerView):
+
+    def get(self, request):
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+                                                                       context={'employer_id': self.employer.id}
+                                                                       )
+        if not ser_params.is_valid():
+            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
+        start_date = ser_params.data.get('start_date')
+        end_date = ser_params.data.get('end_date')
+        period_id = ser_params.data.get('period_id')
+        if period_id:
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period_id=period_id)
+        elif start_date or end_date:
+            qs_periods = PayrollPeriod.objects.filter(employer=self.employer)
+            if start_date:
+                qs_periods = qs_periods.filter(starting_at__date__gte=start_date)
+            if end_date:
+                qs_periods = qs_periods.filter(ending_at__date__lte=end_date)
+            qs_periods = qs_periods.values_list('id', flat=True)
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period__in=qs_periods)
+        else:
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True)
+        ser = payment_serializer.EmployeePaymentReportSerializer(qs, many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+
+class EmployerMeEmployeePaymentDeductionReportView(EmployerView):
+
+    def get(self, request, employee_payment_id):
+        try:
+            employee_payment = EmployeePayment.objects.get(id=employee_payment_id, paid=True)
+        except EmployeePayment.DoesNotExist:
+            return Response({'details': 'There is not EmployeePayment'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(employee_payment.deduction_list, status=status.HTTP_200_OK)

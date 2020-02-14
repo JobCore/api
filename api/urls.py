@@ -41,7 +41,7 @@ from api.views.employer_views import (
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
-    EmployerMeSubscriptionView
+    EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView,
 )
 
 app_name = "api"
@@ -176,6 +176,11 @@ urlpatterns = [
          name='me-get-employee-payment-list'),
     path('employers/me/employee-payment/<int:employee_payment_id>', EmployerMeEmployeePaymentView.as_view(),
          name='me-get-employee-payment'),
+    path('employers/me/employee-payment/report', EmployerMeEmployeePaymentReportView.as_view(),
+         name='me-get-employee-payment-report'),
+    path('employers/me/employee-payment/deduction-report/<int:employee_payment_id>',
+         EmployerMeEmployeePaymentDeductionReportView.as_view(),
+         name='me-get-employee-payment-deduction-report'),
     # path(
     #      'employees/<int:id>/applications',
     #      EmployeeApplicationsView.as_view(),

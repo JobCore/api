@@ -12,6 +12,9 @@ from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, 
                         Shift, User, Venue, APPROVED, PENDING)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
+
+DATE_FORMAT = '%Y-%m-%d'
+
 #
 # NESTED
 #
@@ -347,6 +350,54 @@ class EmployeePaymentDataSerializer(serializers.Serializer):
             return dict_value
         else:
             return dict_value
+
+
+class EmployeePaymentDatesSerializer(serializers.Serializer):
+    """To verify parameters for searching"""
+    start_date = serializers.DateField(format=DATE_FORMAT, required=False)
+    end_date = serializers.DateField(format=DATE_FORMAT, required=False)
+    period_id = serializers.IntegerField(required=False)
+
+    def validate_period_id(self, value):
+        try:
+            period = PayrollPeriod.objects.get(id=value)
+        except PayrollPeriod.DoesNotExist:
+            raise serializers.ValidationError('There is not PayrollPeriod')
+        else:
+            if period.employer.id != self.context['employer_id']:
+                raise serializers.ValidationError('You are not able to access this PayrollPeriod')
+            else:
+                return value
+
+
+class EmployeePaymentReportSerializer(serializers.ModelSerializer):
+    employee = serializers.SerializerMethodField()
+    payment_date = serializers.DateTimeField(format=DATE_FORMAT, source='payment_transaction.created_at')
+    payment_source = serializers.SerializerMethodField()
+    payroll_period = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmployeePayment
+        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date', 'payment_source', 'payroll_period')
+
+    def get_employee(self, instance):
+        user = instance.employee.user
+        return '{}, {}'.format(user.last_name, user.first_name)
+
+    def get_payment_source(self, instance):
+        data = instance.payment_transaction.payment_data
+        try:
+            bank_account = BankAccount.objects.get(stripe_bankaccount_id=data.get('sender_stripe_token'))
+        except BankAccount.DoesNotExist:
+            return instance.payment_transaction.payment_type
+        else:
+            if bank_account.institution_name:
+                return bank_account.institution_name
+            else:
+                return instance.payment_transaction.payment_type
+
+    def get_payroll_period(self, instance):
+        return str(instance.payroll_period)
 
 
 def get_projected_payments(
