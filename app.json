@@ -55,43 +55,39 @@
   "stack": "heroku-18",
   "environments": {
     "production": {
-      "scripts": {
-        "test": "python manage.py test"
-      },
-      "env": {
-        "ROLLBAR_ENDPOINT": {
-          "required": true
+        "scripts": {
+            "test": "pytest"
         },
-        "ROLLBAR_POST_ACCESS_TOKEN": {
-          "required": true
-        },
-        "FIREBASE_KEY": {
-          "required": true
-        },
-        "MAILGUN_API_KEY": {
-          "required": true
-        },
-        "MAILGUN_FROM": {
-          "required": true
+        "env": {
+            "ROLLBAR_ENDPOINT": {
+                "required": true
+            },
+            "ROLLBAR_POST_ACCESS_TOKEN": {
+                "required": true
+            },
+            "FIREBASE_KEY": {
+                "required": true
+            },
+            "MAILGUN_API_KEY": {
+                "required": true
+            },
+            "MAILGUN_FROM": {
+                "required": true
+            }
         }
-      }
     },
     "test": {
-      "addons": [
-        "heroku-postgresql:in-dyno"
-      ],
-      "scripts": {
-        "test": "python manage.py test"
-      }
+        "addons": ["heroku-postgresql:in-dyno"],
+        "scripts": {
+            "test": "pytest"
+        }
     },
     "review": {
-      "addons": [
-        "heroku-postgresql:in-dyno"
-      ],
-      "scripts": {
-        "test": "python manage.py test",
-        "postdeploy": "python manage.py migrate && python manage.py seed development"
-      }
+        "addons": ["heroku-postgresql:in-dyno"],
+        "scripts": {
+            "test": "pytest",
+            "postdeploy": "python manage.py migrate"
+        }
     }
   }
 }
