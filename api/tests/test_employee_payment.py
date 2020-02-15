@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 from mixer.backend.django import mixer
 
 from django.apps import apps
@@ -39,7 +40,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.test_acc1_employer = mixer.blend('api.BankAccount', user=self.test_profile_employer)
         self.test_acc2_employer = mixer.blend('api.BankAccount', user=self.test_profile_employer)
 
-        begin_date = timezone.now() - timedelta(days=14)
+        begin_date = timezone.now() - timedelta(days=49)
         begin_date = datetime(begin_date.year, begin_date.month, begin_date.day, 0, 0, 0)
         self.test_period = self._make_period(self.test_employer, begin_date)
         _, shift, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
@@ -55,6 +56,28 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
                                               period=self.test_period2, mykwargs={"status": "APPROVED"},
                                               relatedkwargs={'shift': shift})
+
+        # for employee payment report and deductions report
+        begin_date = begin_date + timedelta(days=7)
+        self.test_period3 = self._make_period(self.test_employer, begin_date)
+        py_transac = mixer.blend('api.PaymentTransaction',
+                                 payment_type=PaymentTransaction.ELECT_TRANSF,
+                                 sender_user_id=self.test_user_employer.id,
+                                 receiver_user_id=self.test_user_employee.id,
+                                 payment_data={'service_name': 'Stripe',
+                                               'sender_stripe_token': self.test_acc1_employer.stripe_bankaccount_id,
+                                               'receiver_stripe_token': self.test_acc_employee.stripe_bankaccount_id}
+                                 )
+        self.emp_pay1 = mixer.blend('api.EmployeePayment', employer_id=self.test_employer.id,
+                                    employee_id=self.test_employee.id, payroll_period_id=self.test_period3.id,
+                                    paid=True, deduction_list=[{"name": "Social Security", "amount": "7.5000"},
+                                                               {"name": "Medicare", "amount": "7.5000"}],
+                                    payment_transaction_id=py_transac.id, amount=py_transac.amount)
+        self.emp_pay2 = mixer.blend('api.EmployeePayment', employer_id=self.test_employer.id,
+                                    employee_id=self.test_employee2.id, payroll_period_id=self.test_period3.id,
+                                    paid=False, deduction_list=[{"name": "Social Security", "amount": "7.5000"},
+                                                                {"name": "Medicare", "amount": "7.5000"}],
+                                    payment_transaction_id=None)
 
     def test_get(self):
         """Test to get a list of employee payments for selected period"""
@@ -258,3 +281,263 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
         self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "PAID",
                          "Period should be PAID because there is not pending employee payments")
+
+    def test_employee_payment_report(self):
+        """Get a list of paid employee payments, without provide search parameters"""
+        self.client.force_login(self.test_user_employer)
+        url = reverse_lazy('api:me-get-employee-payment-report')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        self.assertIsInstance(response_json[0].get('employee'), str, response_json)
+        self.assertIsNotNone(response_json[0].get('earnings'), response_json)
+        self.assertIsNotNone(response_json[0].get('deductions'), response_json)
+        self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
+        self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
+        self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
+        self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
+
+    def test_employee_payment_report_start_date(self):
+        """Get a list of paid employee payments, providing start_date parameter"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() - timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?start_date=' + start_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        self.assertIsInstance(response_json[0].get('employee'), str, response_json)
+        self.assertIsNotNone(response_json[0].get('earnings'), response_json)
+        self.assertIsNotNone(response_json[0].get('deductions'), response_json)
+        self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
+        self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
+        self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
+        self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
+
+    def test_employee_payment_report_start_date2(self):
+        """Get a list of paid employee payments, providing start_date parameter; result is empty"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() + timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?start_date=' + start_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+    def test_employee_payment_report_end_date(self):
+        """Get a list of paid employee payments, providing end_date parameter"""
+        self.client.force_login(self.test_user_employer)
+        end_date = timezone.now()
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?end_date=' + end_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        self.assertIsInstance(response_json[0].get('employee'), str, response_json)
+        self.assertIsNotNone(response_json[0].get('earnings'), response_json)
+        self.assertIsNotNone(response_json[0].get('deductions'), response_json)
+        self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
+        self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
+        self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
+        self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
+
+    def test_employee_payment_report_end_date2(self):
+        """Get a list of paid employee payments, providing end_date parameter; result is empty"""
+        self.client.force_login(self.test_user_employer)
+        end_date = timezone.now() - timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?end_date=' + end_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+    def test_employee_payment_report_period(self):
+        """Get a list of paid employee payments, providing period_id parameter"""
+        self.client.force_login(self.test_user_employer)
+        period_id = self.test_period3.id
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?period_id=' + str(period_id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        self.assertIsInstance(response_json[0].get('employee'), str, response_json)
+        self.assertIsNotNone(response_json[0].get('earnings'), response_json)
+        self.assertIsNotNone(response_json[0].get('deductions'), response_json)
+        self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
+        self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
+        self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
+        self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
+
+    def test_employee_payment_report_period2(self):
+        """Get a list of paid employee payments, providing period_id parameter; empty and error results"""
+        self.client.force_login(self.test_user_employer)
+
+        another_period = self._make_period(self.test_employer, self.test_period3.ending_at)
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?period_id=' + str(another_period.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?period_id=555'
+        response = self.client.get(url)
+        self.assertContains(response, 'period_id', status_code=400)
+
+    def test_employee_payment_report_start_date_period(self):
+        """Get a list of paid employee payments, providing start_date and period_id parameters"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() + timedelta(days=5)
+        period_id = self.test_period3.id
+        url = reverse_lazy('api:me-get-employee-payment-report') \
+            + '?period_id={}&start_date={}'.format(str(period_id), start_date.strftime('%Y-%m-%d'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        self.assertIsInstance(response_json[0].get('employee'), str, response_json)
+        self.assertIsNotNone(response_json[0].get('earnings'), response_json)
+        self.assertIsNotNone(response_json[0].get('deductions'), response_json)
+        self.assertIsNotNone(response_json[0].get('payment_date'), response_json)
+        self.assertIsInstance(response_json[0].get('payment_source'), str, response_json)
+        self.assertIsInstance(response_json[0].get('payroll_period'), str, response_json)
+        self.assertEqual(response_json[0].get('payroll_period_id'), self.test_period3.id, response_json)
+        self.assertEqual(Decimal(response_json[0].get('amount')), self.emp_pay1.amount, response_json)
+
+    def test_employee_payment_report_wrong_start_date(self):
+        """Get a list of paid employee payments, providing a wrong start_date"""
+        self.client.force_login(self.test_user_employer)
+        url = reverse_lazy('api:me-get-employee-payment-report') + '?start_date=24-15-400'
+        response = self.client.get(url)
+        self.assertContains(response, 'start_date', status_code=400)
+
+    def test_employee_payment_deduction_report(self):
+        """Get list of deductions related to paid employee payments"""
+        self.client.force_login(self.test_user_employer)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        item = response_json[0]
+        self.assertIsInstance(Decimal(item.get('deduction_amount')), Decimal, item)
+        self.assertIsInstance(item.get('deduction_list'), list, item)
+        self.assertEqual(len(item.get('deduction_list')), 2, item)
+        self.assertIsInstance(item.get('deduction_list')[0].get('name'), str, item)
+        self.assertIsNotNone(item.get('deduction_list')[0].get('amount'), item)
+        self.assertIsInstance(item.get('employee'), str, item)
+        self.assertIsNotNone(item.get('payment_date'), item)
+        self.assertIsInstance(item.get('payroll_period'), str, item)
+        self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
+
+    def test_employee_payment_deduction_report_start_date(self):
+        """Get list of deductions related to paid employee payments, providing start_date parameter"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() - timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') \
+            + '?start_date=' + start_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        item = response_json[0]
+        self.assertIsInstance(Decimal(item.get('deduction_amount')), Decimal, item)
+        self.assertIsInstance(item.get('deduction_list'), list, item)
+        self.assertEqual(len(item.get('deduction_list')), 2, item)
+        self.assertIsInstance(item.get('deduction_list')[0].get('name'), str, item)
+        self.assertIsNotNone(item.get('deduction_list')[0].get('amount'), item)
+        self.assertIsInstance(item.get('employee'), str, item)
+        self.assertIsNotNone(item.get('payment_date'), item)
+        self.assertIsInstance(item.get('payroll_period'), str, item)
+        self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
+
+    def test_employee_payment_deduction_report_start_date2(self):
+        """Get list of deductions related to paid employee payments, providing start_date parameter; result is empty"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() + timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') \
+            + '?start_date=' + start_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+    def test_employee_payment_deduction_report_end_date(self):
+        """Get list of deductions related to paid employee payments, providing end_date parameter"""
+        self.client.force_login(self.test_user_employer)
+        end_date = timezone.now()
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') \
+            + '?end_date=' + end_date.strftime('%Y-%m-%d')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        item = response_json[0]
+        self.assertIsInstance(Decimal(item.get('deduction_amount')), Decimal, item)
+        self.assertIsInstance(item.get('deduction_list'), list, item)
+        self.assertEqual(len(item.get('deduction_list')), 2, item)
+        self.assertIsInstance(item.get('deduction_list')[0].get('name'), str, item)
+        self.assertIsNotNone(item.get('deduction_list')[0].get('amount'), item)
+        self.assertIsInstance(item.get('employee'), str, item)
+        self.assertIsNotNone(item.get('payment_date'), item)
+        self.assertIsInstance(item.get('payroll_period'), str, item)
+        self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
+
+    def test_employee_payment_deduction_report_period(self):
+        """Get list of deductions related to paid employee payments, providing period_id parameter"""
+        self.client.force_login(self.test_user_employer)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') + '?period_id=' + str(self.test_period3.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        item = response_json[0]
+        self.assertIsInstance(Decimal(item.get('deduction_amount')), Decimal, item)
+        self.assertIsInstance(item.get('deduction_list'), list, item)
+        self.assertEqual(len(item.get('deduction_list')), 2, item)
+        self.assertIsInstance(item.get('deduction_list')[0].get('name'), str, item)
+        self.assertIsNotNone(item.get('deduction_list')[0].get('amount'), item)
+        self.assertIsInstance(item.get('employee'), str, item)
+        self.assertIsNotNone(item.get('payment_date'), item)
+        self.assertIsInstance(item.get('payroll_period'), str, item)
+        self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
+
+    def test_employee_payment_deduction_report_period2(self):
+        """Get list of deductions related to paid employee payments, providing period_id parameter; empty and error as result"""
+        self.client.force_login(self.test_user_employer)
+
+        another_period = self._make_period(self.test_employer, self.test_period3.ending_at)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') + '?period_id=' + str(another_period.id)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 0, response_json)
+
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') + '?period_id=555'
+        response = self.client.get(url)
+        self.assertContains(response, 'period_id', status_code=400)
+
+    def test_employee_payment_deduction_report_start_date_period(self):
+        """Get list of deductions related to paid employee payments, providing start_date and period_id parameters"""
+        self.client.force_login(self.test_user_employer)
+        start_date = timezone.now() + timedelta(days=5)
+        url = reverse_lazy('api:me-get-employee-payment-deduction-report') \
+            + '?period_id={}&start_date={}'.format(self.test_period3.id, start_date.strftime('%Y-%m-%d'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(len(response_json), 1, response_json)
+        item = response_json[0]
+        self.assertIsInstance(Decimal(item.get('deduction_amount')), Decimal, item)
+        self.assertIsInstance(item.get('deduction_list'), list, item)
+        self.assertEqual(len(item.get('deduction_list')), 2, item)
+        self.assertIsInstance(item.get('deduction_list')[0].get('name'), str, item)
+        self.assertIsNotNone(item.get('deduction_list')[0].get('amount'), item)
+        self.assertIsInstance(item.get('employee'), str, item)
+        self.assertIsNotNone(item.get('payment_date'), item)
+        self.assertIsInstance(item.get('payroll_period'), str, item)
+        self.assertEqual(item.get('payroll_period_id'), self.test_period3.id, item)
