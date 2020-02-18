@@ -152,6 +152,7 @@ http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-0
 
 - If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
 an error about not existence of PayrollPeriod is returned
+- API can handle null value in GET parameters without problem 
 
 
 ## Get a list of data deductions related to a paid EmployeePayment and belong to current employer
@@ -215,3 +216,4 @@ http://localhost:5000/api/employers/me/employee-payment/deduction-report?start_d
 
 - If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
 an error about not existence of PayrollPeriod is returned
+- API can handle null value in GET parameters without problem
