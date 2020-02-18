@@ -137,8 +137,12 @@ http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-0
     "amount": "112.20",
     "payment_date": "2020-02-13",
     "payment_source": "ELECTRONIC TRANSFERENCE",
-    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
-    "payroll_period_id": 1
+    "payroll_period": 
+      {
+        "id": 1,
+        "starting_at": "2019-02-09T00:00:00Z",
+        "ending_at": "2019-02-16T00:00:00Z"
+      },
   },
   ...
 ]
@@ -196,8 +200,12 @@ http://localhost:5000/api/employers/me/employee-payment/deduction-report?start_d
         ...
     ],
     "payment_date": "2020-02-13",
-    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
-    "payroll_period_id": 1
+    "payroll_period": 
+      {
+        "id": 1,
+        "starting_at": "2019-02-09T00:00:00Z",
+        "ending_at": "2019-02-16T00:00:00Z"
+      },
   },
   ...
 ]
