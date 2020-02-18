@@ -1,7 +1,9 @@
+import pytz
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 from mixer.backend.django import mixer
 
+from django.conf import settings
 from django.utils import timezone
 
 
@@ -74,13 +76,13 @@ class WithMakePayrollPeriod:
                 end_dt = start_dt + timedelta(days=elapse_value)
             else:
                 end_dt = start_dt + relativedelta(months=elapse_value)
-            end_dt = datetime(end_dt.year, end_dt.month, end_dt.day, 23, 59, 59)
+            end_dt = datetime(end_dt.year, end_dt.month, end_dt.day, 23, 59, 59, tzinfo=pytz.timezone(settings.TIME_ZONE))
         else:
             if elapse_unit == 'DAYS':
                 start_dt = end_dt - timedelta(days=elapse_value)
             else:
                 start_dt = end_dt - relativedelta(months=elapse_value)
-            start_dt = datetime(start_dt.year, start_dt.month, start_dt.day, 0, 0, 0)
+            start_dt = datetime(start_dt.year, start_dt.month, start_dt.day, 0, 0, 0, tzinfo=pytz.timezone(settings.TIME_ZONE))
         return start_dt, end_dt
 
     def _make_period(self, employer, starting_at=None, ending_at=None, periodkwargs=None):
