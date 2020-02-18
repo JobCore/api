@@ -358,6 +358,13 @@ class EmployeePaymentDatesSerializer(serializers.Serializer):
     end_date = serializers.DateField(format=DATE_FORMAT, required=False)
     period_id = serializers.IntegerField(required=False)
 
+    def to_internal_value(self, data):
+        new_data = data.copy()
+        for key in data.keys():
+            if new_data[key] == 'null':
+                new_data.pop(key)
+        return super().to_internal_value(new_data)
+
     def validate_period_id(self, value):
         try:
             period = PayrollPeriod.objects.get(id=value, employer_id=self.context['employer_id'])
