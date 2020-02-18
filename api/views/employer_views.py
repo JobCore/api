@@ -51,7 +51,7 @@ from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
-stripe.api_key = os.environ.get('STRIPE_SECRET')
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 
 class EmployerMeView(EmployerView):
