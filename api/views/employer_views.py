@@ -11,8 +11,11 @@ import cloudinary.uploader
 import datetime
 import json
 import logging
+import stripe
+import os
 
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -48,6 +51,7 @@ from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 
 class EmployerMeView(EmployerView):
@@ -873,15 +877,25 @@ class EmployerMeEmployeePaymentView(EmployerView):
                     if serializer.validated_data['payment_type'] == PaymentTransaction.FAKE:
                         transaction_id = 'ABC123'
                     else:
-                        pass     # Here goes Request to Stripe or Plaid, returning a transaction_id or similar
+                        try:
+                            charge = stripe.Charge.create(amount='{:.0f}'.format(employee_payment.amount * 100),
+                                                          currency='usd',
+                                                          customer=sender_bank_acc.stripe_customer_id,
+                                                          source=sender_bank_acc.stripe_bankaccount_id,
+                                                          transfer_data={'destination': receiver_bank_acc.stripe_account_id}
+                                                          )
+                        except Exception as e:
+                            return Response({'details': 'Error with Stripe: ' + str(e)},
+                                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                        transaction_id = charge.id
                     payment_t = PaymentTransaction.objects.create(
                         amount=employee_payment.amount,
                         sender_user=context_data['employer_user'],
                         receiver_user=context_data['employee_user'],
                         payment_type=serializer.validated_data['payment_type'],
                         payment_data={"service_name": "Stripe",
-                                      "sender_stripe_token": sender_bank_acc.stripe_token,
-                                      "receiver_stripe_token": receiver_bank_acc.stripe_token,
+                                      "sender_stripe_token": sender_bank_acc.stripe_bankaccount_id,
+                                      "receiver_stripe_token": receiver_bank_acc.stripe_bankaccount_id,
                                       "transaction_id": transaction_id
                                       },
                     )
@@ -969,7 +983,6 @@ class EmployeerRateView(EmployerView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-
 class EmployerBatchActions(EmployerView):
 
     def post(self, request):
@@ -1031,3 +1044,45 @@ class EmployerPaymentDeductionView(EmployerView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class EmployerMeEmployeePaymentReportView(EmployerView):
+
+    def get_queryset(self, params):
+        """Method to return required EmployeePayment queryset, based on provided parameters"""
+        start_date = params.get('start_date')
+        end_date = params.get('end_date')
+        period_id = params.get('period_id')
+        if period_id:
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period_id=period_id)
+        elif start_date or end_date:
+            qs_periods = PayrollPeriod.objects.filter(employer=self.employer).values_list('id', flat=True)
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True, payroll_period__in=qs_periods)
+            if start_date:
+                qs = qs.filter(payment_transaction__created_at__date__gte=start_date)
+            if end_date:
+                qs = qs.filter(payment_transaction__created_at__date__lte=end_date)
+        else:
+            qs = EmployeePayment.objects.filter(employer=self.employer, paid=True)
+        return qs
+
+    def get(self, request):
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+                                                                       context={'employer_id': self.employer.id}
+                                                                       )
+        if not ser_params.is_valid():
+            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = payment_serializer.EmployeePaymentReportSerializer(self.get_queryset(ser_params.data), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
+
+
+class EmployerMeEmployeePaymentDeductionReportView(EmployerMeEmployeePaymentReportView):
+
+    def get(self, request):
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+                                                                       context={'employer_id': self.employer.id}
+                                                                       )
+        if not ser_params.is_valid():
+            return Response(ser_params.errors, status=status.HTTP_400_BAD_REQUEST)
+        ser = payment_serializer.EmployeePaymentDeductionReportSerializer(self.get_queryset(ser_params.data), many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)

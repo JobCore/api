@@ -1,4 +1,3 @@
-
 {
   "addons": [
     "heroku-postgresql",
@@ -51,7 +50,7 @@
   },
   "name": "api",
   "scripts": {
-      "postdeploy": "python manage.py migrate"
+    "postdeploy": "python manage.py migrate"
   },
   "stack": "heroku-18",
   "environments": {

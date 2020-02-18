@@ -56,9 +56,6 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
 
 ## Proceed with payment of an employee in a period 
 
-
-
-
 **URL** : `/api/employers/me/employee-payment/<employee_payment_id>`
 
 **Method** : `POST`
@@ -74,7 +71,7 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
 | payment_type    |  "ELECTRONIC TRANSFERENCE"        |     Yes       | CHECK, ELECTRONIC TRANSFERENCE, FAKE  |
 |                 |                                   |               | FAKE imitate a real electronic transference |
 | payment_data    |  {"employer_bank_account_id": 3   |     Yes       | Dict, can be empty                    |
-|                 |   "employee_bank_account_id": 7}  |               | For ELECTRONIC TRANSFERENCE type,     |
+|                 |   "employee_bank_account_id": 7}  |               | For ELECTRONIC TRANSFERENCE and FAKE types,     |
 |                 |                                   |               | employer_bank_account_id and          |
 |                 |                                   |               | employee_bank_account_id              |
 |                 |                                   |               | keys are required                     |
@@ -100,3 +97,113 @@ http://localhost:5000/api/employers/me/employee-payment/3
 - Bank account Ids are provided via endpoint `api/employers/me/employee-payment-list/<period_id>`.
 - Values for `amount`, `deductions` and `deduction_list` fields are updated. 
 - A registry in **PaymentTransaction** model is created, related **PayrrolPeriodPayment** and **PayrollPeriod** registries are set as PAID.
+
+
+## Get a list of EmployeePayment instances with paid status and belong to current employer
+
+**URL** : `/api/employers/me/employee-payment/report`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Permissions required** : Authenticated User, User should be an Employer
+
+#### Request Params:
+
+| key           | Example Value           | Required?     | Observations                                  |
+| ------------  | ----------------------  | ------------- | --------------------------------------------- |
+| period_id     |  1                      |     No        | This parameter has precedence over others     |
+| start_date    |  2020-01-15             |     No        |                                               |
+| end_date      |  2020-01-31             |     No        |                                               |
+
+#### Example
+
+http://localhost:5000/api/employers/me/employee-payment/report?period_id=1
+http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-01-28
+
+#### Success Response
+
+**Code** : `200 OK`
+
+**Content examples**
+
+```json
+[
+  {
+    "employee": "Lennon, John",
+    "earnings": "150.00",
+    "deductions": "37.80",
+    "amount": "112.20",
+    "payment_date": "2020-02-13",
+    "payment_source": "ELECTRONIC TRANSFERENCE",
+    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
+    "payroll_period_id": 1
+  },
+  ...
+]
+```
+
+#### Notes
+
+- If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
+an error about not existence of PayrollPeriod is returned
+
+
+## Get a list of data deductions related to a paid EmployeePayment and belong to current employer
+
+**URL** : `/api/employers/me/employee-payment/deduction-report`
+
+**Method** : `GET`
+
+**Auth required** : Yes
+
+**Permissions required** : Authenticated User, User should be an Employer
+
+#### Request Params:
+
+| key           | Example Value           | Required?     | Observations                                  |
+| ------------  | ----------------------  | ------------- | --------------------------------------------- |
+| period_id     |  1                      |     No        | This parameter has precedence over others     |
+| start_date    |  2020-01-15             |     No        |                                               |
+| end_date      |  2020-01-31             |     No        |                                               |
+
+#### Example
+
+http://localhost:5000/api/employers/me/employee-payment/deduction-report?period=1
+http://localhost:5000/api/employers/me/employee-payment/deduction-report?start_date=2020-01-28
+
+#### Success Response
+
+**Code** : `200 OK`
+
+**Content examples**
+
+```json
+[
+  {
+    "employee": "Lennon, John",
+    "deduction_amount": "37.80",
+    "deduction_list": [
+        {
+          "name": "Social Security",
+          "amount": "7.5000"
+        },
+        {
+          "name": "Medicare",
+          "amount": "7.5000"
+        },
+        ...
+    ],
+    "payment_date": "2020-02-13",
+    "payroll_period": "From 2019-02-09 00:00:00+00:00 to 2019-02-15 23:59:59+00:00",
+    "payroll_period_id": 1
+  },
+  ...
+]
+```
+
+#### Notes
+
+- If `period_id` reference a PayrollPeriod which don't belong to authenticated user(employer), 
+an error about not existence of PayrollPeriod is returned
