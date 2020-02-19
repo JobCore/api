@@ -358,6 +358,13 @@ class EmployeePaymentDatesSerializer(serializers.Serializer):
     end_date = serializers.DateField(format=DATE_FORMAT, required=False)
     period_id = serializers.IntegerField(required=False)
 
+    def to_internal_value(self, data):
+        new_data = data.copy()
+        for key in data.keys():
+            if new_data[key] == 'null':
+                new_data.pop(key)
+        return super().to_internal_value(new_data)
+
     def validate_period_id(self, value):
         try:
             period = PayrollPeriod.objects.get(id=value, employer_id=self.context['employer_id'])
@@ -368,15 +375,19 @@ class EmployeePaymentDatesSerializer(serializers.Serializer):
 
 
 class EmployeePaymentReportSerializer(serializers.ModelSerializer):
+    class CustomPayrollPeriodSerializer(PayrollPeriodSerializer):
+        class Meta:
+            model = PayrollPeriod
+            fields = ('id', 'starting_at', 'ending_at')
+
     employee = serializers.SerializerMethodField()
     payment_date = serializers.DateTimeField(format=DATE_FORMAT, source='payment_transaction.created_at')
     payment_source = serializers.SerializerMethodField()
-    payroll_period = serializers.SerializerMethodField()
+    payroll_period = CustomPayrollPeriodSerializer()
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date',
-                  'payment_source', 'payroll_period', 'payroll_period_id')
+        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date', 'payment_source', 'payroll_period')
 
     def get_employee(self, instance):
         user = instance.employee.user
@@ -394,17 +405,13 @@ class EmployeePaymentReportSerializer(serializers.ModelSerializer):
             else:
                 return instance.payment_transaction.payment_type
 
-    def get_payroll_period(self, instance):
-        return str(instance.payroll_period)
-
 
 class EmployeePaymentDeductionReportSerializer(EmployeePaymentReportSerializer):
     deduction_amount = serializers.DecimalField(max_digits=10, decimal_places=2, source='deductions')
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'deduction_amount', 'deduction_list',
-                  'payment_date', 'payroll_period', 'payroll_period_id')
+        fields = ('employee', 'deduction_amount', 'deduction_list', 'payment_date', 'payroll_period')
 
 
 def get_projected_payments(

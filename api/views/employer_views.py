@@ -1067,7 +1067,7 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
         return qs
 
     def get(self, request):
-        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.query_params,
                                                                        context={'employer_id': self.employer.id}
                                                                        )
         if not ser_params.is_valid():
@@ -1079,7 +1079,7 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
 class EmployerMeEmployeePaymentDeductionReportView(EmployerMeEmployeePaymentReportView):
 
     def get(self, request):
-        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.GET,
+        ser_params = payment_serializer.EmployeePaymentDatesSerializer(data=request.query_params,
                                                                        context={'employer_id': self.employer.id}
                                                                        )
         if not ser_params.is_valid():
