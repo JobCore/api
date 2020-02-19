@@ -69,23 +69,14 @@ class ProfileSerializer(serializers.ModelSerializer):
         """
         return round(value, 6)
 
-    # def validate(self, validated_data):
+    def validate_birth_date(self, value):
+        """Check that birth_date is not null (can't be set as None)"""
+        if not value:
+            raise serializers.ValidationError("Birth date can't be set as Null")
+        return value
 
-    #     print("34534534")
-    #     if "latitude" in validated_data:
-    #         validated_data["latitude"] = round(validated_data["latitude"], 6)
-    #     if "longitude" in validated_data:
-    #         validated_data["longitude"] = round(validated_data["longitude"], 6)
-
-    #     ##data = super(ProfileSerializer, self).validate(data)
-    #     return data
-
-    # def update(self, instance, validated_data):
-    #     if "latitude" in validated_data:
-    #         validated_data["latitude"] = round(validated_data["latitude"], 6)
-    #     if "longitude" in validated_data:
-    #         validated_data["longitude"] = round(validated_data["latitude"], 6)
-
-    #     instance = super(UserSerializer, self).update(instance, validated_data)
-
-    #     return instance
+    def validate_last_4dig_ssn(self, value):
+        """Check that last_4dig_ssn is not null (can't be set as None)"""
+        if not value:
+            raise serializers.ValidationError("Last 4 digits ssn can't be set as Null")
+        return value
