@@ -129,6 +129,36 @@ class ProfileTestSuite(TestCase, WithMakeUser):
         self.assertEquals(profile.user.last_name, payload.get("last_name"))
         self.assertEquals(profile.bio, payload.get("bio"))
 
+    def test_update_birth_date(self):
+        payload = {'birth_date': '1990-05-21'}
+        url = reverse_lazy('api:me-profiles')
+
+        profile = Profile.objects.get(pk=self.test_profile.id)
+        self.assertIsNone(profile.birth_date, 'Should be None, not {}'.format(profile.birth_date))
+
+        self.client.force_login(self.test_user_employee)
+        response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
+        self.assertEquals(response.status_code, 200, response.content)
+
+        profile = Profile.objects.get(pk=self.test_profile.id)
+        self.assertEquals(profile.birth_date.strftime('%Y-%m-%d'), payload.get("birth_date"))
+
+    def test_update_birth_date_none(self):
+        payload = {'birth_date': None}
+        url = reverse_lazy('api:me-profiles')
+
+        self.client.force_login(self.test_user_employee)
+        response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
+        self.assertContains(response, 'birth_date', status_code=400)
+
+    def test_update_last_4dig_ssn_none(self):
+        payload = {'last_4dig_ssn': None}
+        url = reverse_lazy('api:me-profiles')
+
+        self.client.force_login(self.test_user_employee)
+        response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
+        self.assertContains(response, 'last_4dig_ssn', status_code=400)
+
     def test_lat_lon_1(self):
         """
         Round Lat/lon to 6 decimal places
