@@ -11,7 +11,7 @@ class ClockinAdmin(admin.ModelAdmin):
     search_fields = (
         'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
         'author__user__last_name')
-    list_filter = ('status',)
+    list_filter = ('status', 'employee', )
     list_per_page = 100
 
     def _distance(self, obj):
