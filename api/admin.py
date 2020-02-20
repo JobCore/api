@@ -7,15 +7,17 @@ class AppVersionAdmin(admin.ModelAdmin):
 
 
 class ClockinAdmin(admin.ModelAdmin):
-    list_display = ('id', 'employee', 'started_at', 'ended_at', '_distance', 'shift', 'author')
+    list_display = (
+    'id', 'employee', 'started_at', 'ended_at', '_distance', 'shift', 'author', 'latitude_in', 'longitude_in',
+    'latitude_out', 'longitude_out')
     search_fields = (
         'employee__user__first_name', 'employee__user__last_name', 'employee__user__email', 'author__user__first_name',
         'author__user__last_name')
-    list_filter = ('status', 'employee', )
+    list_filter = ('status', 'employee',)
     list_per_page = 100
 
     def _distance(self, obj):
-        return "In: "+str(obj.distance_in_miles)+ " Out: "+str(obj.distance_out_miles)
+        return "In: " + str(obj.distance_in_miles) + " Out: " + str(obj.distance_out_miles)
 
 
 class DocumentAdmin(admin.ModelAdmin):
@@ -43,7 +45,7 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
     search_fields = (
         'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
     list_filter = (
-    'status', 'document_type__validates_identity', 'document_type__validates_employment', 'document_type__is_form')
+        'status', 'document_type__validates_identity', 'document_type__validates_employment', 'document_type__is_form')
     list_per_page = 100
 
     def get_name(self, obj):
@@ -51,17 +53,16 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
 
 
 class EmployeePaymentAdmin(admin.ModelAdmin):
-    list_display = ('employer', 'payroll_period', 'employee', 'paid', )
+    list_display = ('employer', 'payroll_period', 'employee', 'paid',)
     list_filter = ('payroll_period', 'paid')
     list_per_page = 100
-
 
 
 class ShiftAdmin(admin.ModelAdmin):
     # list_display = ('id',  'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees', 'minimum_hourly_rate', 'status')
     list_display = (
-    'id', '_shift', '_position', 'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees',
-    'minimum_hourly_rate', 'status')
+        'id', '_shift', '_position', 'starting_at', 'ending_at', 'application_restriction', 'maximum_allowed_employees',
+        'minimum_hourly_rate', 'status')
     search_fields = ('venue__title', 'position__title')
     list_filter = ('status', 'position', 'venue')
     list_per_page = 100
@@ -71,6 +72,7 @@ class ShiftAdmin(admin.ModelAdmin):
 
     def _position(self, obj):
         return obj.position.title
+
 
 class PreDefinedDeductionAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'type', 'value',)
@@ -113,6 +115,7 @@ admin.site.register(ShiftInvite, ShiftInviteAdmin)
 admin.site.register(UserToken)
 admin.site.register(Venue)
 
+
 class EmployerSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', '_employer', '_subscription', 'status', 'due_at', 'payment_mode')
     search_fields = ('employer__title', 'subscription__title')
@@ -124,6 +127,7 @@ class EmployerSubscriptionAdmin(admin.ModelAdmin):
 
     def _subscription(self, obj):
         return obj.subscription.title
+
 
 admin.site.register(SubscriptionPlan)
 admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
