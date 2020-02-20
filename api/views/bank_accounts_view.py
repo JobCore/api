@@ -91,11 +91,11 @@ class BankAccountAPIView(APIView):
                     stripe_account_id = ''
                 else:
                     tos_accept_date = timezone.now()
-                    individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name}
-                    if request.user.profile.birth_date:
-                        individual_data['dob'] = {'year': request.user.profile.birth_date.year,
-                                                  'month': request.user.profile.birth_date.month,
-                                                  'day': request.user.profile.birth_date.day}
+                    individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name,
+                                       'dob': {'year': request.user.profile.birth_date.year,
+                                               'month': request.user.profile.birth_date.month,
+                                               'day': request.user.profile.birth_date.day},
+                                       'ssn_last_4': request.user.profile.last_4dig_ssn}
                     try:
                         stripe_account = stripe.Account.create(type="custom", country="US", email=request.user.email,
                                                                requested_capabilities=["transfers"],
