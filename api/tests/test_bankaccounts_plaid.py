@@ -38,7 +38,12 @@ class BankAccountTestSuite(TestCase, WithMakeUser):
         read_dotenv()
         self.test_user_employee, self.test_employee, self.test_profile_employee = self._make_user(
             'employee',
-            userkwargs={'username': 'employee1', 'email': 'employee1@testdoma.in', 'is_active': True}
+            userkwargs={'username': 'employee1', 'email': 'employee1@testdoma.in', 'is_active': True},
+            profilekwargs={'birth_date': '1990-11-23', 'last_4dig_ssn': '1234'},
+        )
+        self.test_user_employee2, self.test_employee2, self.test_profile_employee2 = self._make_user(
+            'employee',
+            userkwargs={'username': 'employee2', 'email': 'employee2@testdoma.in', 'is_active': True},
         )
         self.test_user_employer, self.test_employer, self.test_profile_employer = self._make_user(
             'employer',
@@ -68,6 +73,29 @@ class BankAccountTestSuite(TestCase, WithMakeUser):
         response = self.client.post(url, data, content_type="application/json")
         accounts_len = BankAccount.objects.all().count()
         self.assertEqual(accounts_len > 0, True, response.content)
+
+    @patch('plaid.api.item.PublicToken.exchange', return_value={'access_token': ''})
+    def test_register_account_employee_missing_birth_date(self, mocked_plaid_item):
+        self.client.force_login(self.test_user_employee2)
+        data = {
+            "public_token": "public-development-397dd0e2-e48d-41c3-b022-9f392cf44bc6",
+        }
+        url = reverse_lazy('api:api-bank-accounts')
+        response = self.client.post(url, data, content_type="application/json")
+        self.assertContains(response, 'Birth date', status_code=400)
+
+    @patch('plaid.api.item.PublicToken.exchange', return_value={'access_token': ''})
+    def test_register_account_employee_missing_last_4dig_ssn(self, mocked_plaid_item):
+        self.test_profile_employee2.birth_date = '1990-05-14'
+        self.test_profile_employee2.last_4dig_ssn = ''
+        self.test_profile_employee2.save()
+        self.client.force_login(self.test_user_employee2)
+        data = {
+            "public_token": "public-development-397dd0e2-e48d-41c3-b022-9f392cf44bc6",
+        }
+        url = reverse_lazy('api:api-bank-accounts')
+        response = self.client.post(url, data, content_type="application/json")
+        self.assertContains(response, 'Last 4 digits ssn', status_code=400)
 
     @patch('plaid.api.item.PublicToken.exchange', return_value={'access_token': '1234'})
     @patch('plaid.api.auth.Auth.get',

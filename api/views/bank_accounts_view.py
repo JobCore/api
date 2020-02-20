@@ -22,10 +22,13 @@ class BankAccountAPIView(APIView):
         # verify requirements for stripe process
         if not request.user.profile.employer and not request.user.profile.employee:
             return Response({'details': "User must be an employer or employee"}, status=status.HTTP_400_BAD_REQUEST)
-        if not request.user.profile.birth_date:
-            return Response({'details': "Birth date value is missing in profile"})
-        if not request.user.profile.last_4_dig_ssn:
-            return Response({'details': "Last 4 digits ssn value is missing in profile"})
+        elif request.user.profile.employee:
+            if not request.user.profile.birth_date:
+                return Response({'details': "Birth date value is missing in profile"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if not request.user.profile.last_4dig_ssn:
+                return Response({'details': "Last 4 digits ssn value is missing in profile"},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         plaid_client = plaid.Client(
             client_id=os.environ.get('PLAID_CLIENT_ID'),
