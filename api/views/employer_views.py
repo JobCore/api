@@ -490,10 +490,9 @@ class FavListEmployeeView(EmployerView):
 
 class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
     def get(self, request, id=False):
-
-        if (id):
+        if id:
             try:
-                shift = Shift.objects.get(id=id, employer__id=self.employer.id)
+                shift = Shift.objects.get(id=id, employer_id=self.employer.id)
             except Shift.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
@@ -501,10 +500,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            TODAY = datetime.datetime.now(tz=timezone.utc)
-
-            shifts = Shift.objects.select_related('venue', 'position').filter(
-                employer__id=self.employer.id)
+            shifts = Shift.objects.filter(employer_id=self.employer.id)
 
             qStatus = request.GET.get('status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -513,13 +509,14 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             elif qStatus:
                 status_list = qStatus.split(",")
                 shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
-
             else:
                 shifts = shifts.exclude(status='CANCELLED')
 
-            qFilled= request.GET.get('filled')
+            qFilled = request.GET.get('filled')
             if qFilled == 'true':
-                shifts = shifts.annotate(total_employees=Count('employees')).filter(total_employees__lte=F('maximum_allowed_employees'))
+                shifts = shifts.annotate(total_employees=Count('employees')).filter(
+                    total_employees=F('maximum_allowed_employees')
+                )
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -528,6 +525,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             elif qStatus:
                 shifts = shifts.filter(~Q(status=qStatus))
 
+            TODAY = datetime.datetime.now(tz=timezone.utc)
             qUpcoming = request.GET.get('upcoming')
             if qUpcoming == 'true':
                 shifts = shifts.filter(starting_at__gte=TODAY)
@@ -561,21 +559,21 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 emp_list = qCandidateNot.split(',')
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
+            shifts = shifts.select_related('venue', 'position')
+
             paginator = HeaderLimitOffsetPagination()
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
 
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
-
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
                 defaultSerializer = shift_serializer.ShiftGetBigListSerializer
+
             if page is not None:
                 serializer = defaultSerializer(page, many=True)
                 return paginator.get_paginated_response(serializer.data)
             else:
                 return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
     def post(self, request):
 
