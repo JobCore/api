@@ -30,6 +30,8 @@
 | birth_date      |  "1990-05-21"                                |     No        |                      |
 | phone_number    |  "+1-202-555-0139"                           |     No        |                      |
 | last_4dig_ssn   |  "1234"                                      |     No        |                      |
+| first_name      |  "John"                                      |     No        |                      |
+| last_name       |  "Wayne"                                     |     No        |                      |
 
 #### Example
 
@@ -72,6 +74,9 @@ http://localhost:5000/api/profiles/me
     "employee":6
 }
 ```
+
+#### Notes
+- `email` can't be updated via this endpoint; any received value is ignored.
 
 
 ## Get profile

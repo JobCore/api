@@ -72,11 +72,18 @@ class ProfileSerializer(serializers.ModelSerializer):
     def validate_birth_date(self, value):
         """Check that birth_date is not null (can't be set as None)"""
         if not value:
-            raise serializers.ValidationError("Birth date can't be set as Null")
+            raise serializers.ValidationError("Null value is not valid")
         return value
 
     def validate_last_4dig_ssn(self, value):
         """Check that last_4dig_ssn is not null (can't be set as None)"""
         if not value:
-            raise serializers.ValidationError("Last 4 digits ssn can't be set as Null")
+            raise serializers.ValidationError("Null value is not valid")
+        elif len(value) != 4:
+            raise serializers.ValidationError("Value should have 4 characters")
+        else:
+            try:
+                int(value)
+            except ValueError:
+                raise serializers.ValidationError("Wrong value. Only digits are allowed.")
         return value

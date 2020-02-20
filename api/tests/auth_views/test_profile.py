@@ -159,6 +159,14 @@ class ProfileTestSuite(TestCase, WithMakeUser):
         response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
         self.assertContains(response, 'last_4dig_ssn', status_code=400)
 
+    def test_update_wrong_last_4dig_ssn(self):
+        payload = {'last_4dig_ssn': 'abcd'}
+        url = reverse_lazy('api:me-profiles')
+
+        self.client.force_login(self.test_user_employee)
+        response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
+        self.assertContains(response, 'last_4dig_ssn', status_code=400)
+
     def test_lat_lon_1(self):
         """
         Round Lat/lon to 6 decimal places
