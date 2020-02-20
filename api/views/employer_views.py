@@ -560,7 +560,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
 
             shifts = shifts.select_related('venue', 'position')
-
             paginator = HeaderLimitOffsetPagination()
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
 
