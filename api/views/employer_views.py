@@ -523,7 +523,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 return Response(validators.error_object(
                     "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
             elif qStatus:
-                shifts = shifts.filter(~Q(status=qStatus))
+                shifts = shifts.filter(~Q(status=qStatus.upper()))
 
             TODAY = datetime.datetime.now(tz=timezone.utc)
             qUpcoming = request.GET.get('upcoming')
