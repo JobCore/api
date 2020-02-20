@@ -274,6 +274,7 @@ class Profile(models.Model):
 
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
+    last_4dig_ssn = models.CharField(max_length=4, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

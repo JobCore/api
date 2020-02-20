@@ -19,9 +19,17 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 class BankAccountAPIView(APIView):
     def post(self, request):
-        # verify requirement for stripe process
+        # verify requirements for stripe process
         if not request.user.profile.employer and not request.user.profile.employee:
             return Response({'details': "User must be an employer or employee"}, status=status.HTTP_400_BAD_REQUEST)
+        elif request.user.profile.employee:
+            if not request.user.profile.birth_date:
+                return Response({'details': "Birth date value is missing in profile"},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if not request.user.profile.last_4dig_ssn:
+                return Response({'details': "Last 4 digits ssn value is missing in profile"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
         plaid_client = plaid.Client(
             client_id=os.environ.get('PLAID_CLIENT_ID'),
             secret=os.environ.get('PLAID_SECRET'),
@@ -83,11 +91,11 @@ class BankAccountAPIView(APIView):
                     stripe_account_id = ''
                 else:
                     tos_accept_date = timezone.now()
-                    individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name}
-                    if request.user.profile.birth_date:
-                        individual_data['dob'] = {'year': request.user.profile.birth_date.year,
-                                                  'month': request.user.profile.birth_date.month,
-                                                  'day': request.user.profile.birth_date.day}
+                    individual_data = {'first_name': request.user.first_name, 'last_name': request.user.last_name,
+                                       'dob': {'year': request.user.profile.birth_date.year,
+                                               'month': request.user.profile.birth_date.month,
+                                               'day': request.user.profile.birth_date.day},
+                                       'ssn_last_4': request.user.profile.last_4dig_ssn}
                     try:
                         stripe_account = stripe.Account.create(type="custom", country="US", email=request.user.email,
                                                                requested_capabilities=["transfers"],

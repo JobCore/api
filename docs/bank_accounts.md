@@ -10,30 +10,32 @@
 
 **Permissions required** : Authenticated User, User should be an Employer or Employee
 
-## Request Params
+#### Request Params
 
+| key                   | Example Value                                          | Required?     |
+| --------------------  | -----------------------------------------------------  | ------------- |
+| public_token          |  "public-sandbox-b8f386fc-c730-46a7-bd08-efe6afeb9922" |     Yes       |
 
-| key                   | Example Value | Required?     |
-| --------------------  | ------------  | ------------- |
-| public_token          |  "" |     Yes       |
-
-
-## Example:
+#### Example:
 
 http://localhost:5000/api/bank-accounts
 
-## Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
 **Content examples**
 
-
 ```json
-
+{
+    "success": "created!"
+}
 ```
 
-## Notes
+#### Notes
+
+- For employee, his profile must have birth_date and last_4dig_ssn values.
+
 
 ## List my bank accounts
 
@@ -45,25 +47,23 @@ http://localhost:5000/api/bank-accounts
 
 **Permissions required** : Authenticated User
 
-## Example:
+#### Example:
 
 http://localhost:5000/api/bank-accounts
 
-## Success Response
+#### Success Response
 
 **Code** : `200 OK`
 
 **Content examples**
 
-
 ```json
 [
     {
-        "name": " name",
-        "id": 123,
-    }
-            ...
+        "name": "Plaid Saving",
+        "institution_name": "Wells Fargo",
+        "id": 1,
+    },
+    ...
 ]
 ```
-
-## Notes
