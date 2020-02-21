@@ -97,6 +97,7 @@ http://localhost:5000/api/employers/me/employee-payment/3
 - Bank account Ids are provided via endpoint `api/employers/me/employee-payment-list/<period_id>`.
 - Values for `amount`, `deductions` and `deduction_list` fields are updated. 
 - A registry in **PaymentTransaction** model is created, related **PayrrolPeriodPayment** and **PayrollPeriod** registries are set as PAID.
+- Related PayrollPeriod is set as PAID.
 
 
 ## Get a list of EmployeePayment instances with paid status and belong to current employer
