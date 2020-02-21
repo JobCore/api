@@ -1,50 +1,106 @@
-from datetime import timedelta
+import pytz
+from datetime import datetime, timedelta
+from mixer.backend.django import mixer
 
+from django.apps import apps
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse_lazy
 from django.utils import timezone
 
-from api.models import Clockin, EmployeePayment, PayrollPeriod, PayrollPeriodPayment
+from api.tests.mixins import WithMakePayrollPeriod, WithMakePayrollPeriodPayment, WithMakeUser
 
 User = get_user_model()
+EmployeePayment = apps.get_model('api', 'EmployeePayment')
+PayrollPeriod = apps.get_model('api', 'PayrollPeriod')
+PayrollPeriodPayment = apps.get_model('api', 'PayrollPeriodPayment')
 
 
-class PayrollPeriodTestSuite(TestCase):
-    fixtures = ['development/0-catalog.yaml', 'development/1-users.yaml', 'development/2-favlists.yaml',
-                'development/3-shifts.yaml', 'development/4-clockins.yaml', 'development/5-document.yaml',
-                'development/5-payroll.yaml']
+class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, WithMakePayrollPeriodPayment):
 
     def setUp(self):
-        begin_date = timezone.now() - timedelta(days=21)
-        self.test_user_employer = User.objects.get(id=1)
-        self.test_user_employer2 = User.objects.get(id=9)
-        self.test_user_employee = User.objects.get(id=2)
+        self.test_user_employee, self.test_employee, self.test_profile_employee = self._make_user(
+            'employee',
+            userkwargs={"username": "employee1", "email": "employee1@testdoma.in", "is_active": True},
+            employexkwargs={"ratings": 0, "total_ratings": 0}
+        )
+        self.test_user_employee2, self.test_employee2, self.test_profile_employee2 = self._make_user(
+            'employee',
+            userkwargs={"username": "employee2", "email": "employee2@testdoma.in", "is_active": True},
+            employexkwargs={"ratings": 0, "total_ratings": 0}
+        )
+        self.test_user_employer, self.test_employer, self.test_profile_employer = self._make_user(
+            'employer',
+            userkwargs={"username": 'employer1', "email": 'employer@testdoma.in', "is_active": True},
+            employexkwargs={"maximum_clockin_delta_minutes": 15, "maximum_clockout_delay_minutes": 15,
+                            "rating": 0, "total_ratings": 0}
+        )
+        self.test_user_employer2, self.test_employer2, self.test_profile_employer2 = self._make_user(
+            'employer',
+            userkwargs={"username": 'employer2', "email": 'employer2@testdoma.in', "is_active": True},
+            employexkwargs={"maximum_clockin_delta_minutes": 15, "maximum_clockout_delay_minutes": 15,
+                            "rating": 0, "total_ratings": 0}
+        )
 
-        self.test_user_employer.profile.employer.payroll_period_starting_time = begin_date
-        self.test_user_employer.profile.employer.save()
+        begin_date = timezone.now() - timedelta(days=21)
+        begin_date = datetime(begin_date.year, begin_date.month, begin_date.day, 0, 0, 0,
+                              tzinfo=pytz.timezone(settings.TIME_ZONE))
+        self.test_period = self._make_period(self.test_employer, begin_date)
+        self.test_employer.payroll_period_starting_time = begin_date
+        self.test_employer.save()
+        _, shift, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
+                                                  period=self.test_period, mykwargs={"status": "APPROVED"})
+        _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
+                                              period=self.test_period, mykwargs={"status": "APPROVED"},
+                                              relatedkwargs={'shift': shift})
+        _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
+                                              period=self.test_period, mykwargs={"status": "APPROVED"})
+
+        begin_date = begin_date + timedelta(days=7)
+        self.test_period2 = self._make_period(self.test_employer, begin_date)
+        _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
+                                              period=self.test_period2, mykwargs={"status": "APPROVED"},
+                                              relatedkwargs={'shift': shift})
+
+        begin_date2 = begin_date - timedelta(days=35)
+        self.test_period3 = self._make_period(self.test_employer, begin_date2)
+        _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
+                                              period=self.test_period3, mykwargs={"status": "PENDING"},
+                                              relatedkwargs={'shift': shift})
+        
+
+        # begin_date = timezone.now() - timedelta(days=21)
+        # self.test_user_employer.profile.employer.payroll_period_starting_time = begin_date
+        # self.test_user_employer.profile.employer.save()
         # update existing data to ensure creation of a single period
-        start_date = begin_date
-        end_data = start_date + timedelta(days=7)
-        PayrollPeriod.objects.filter(id=1).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
-                                                  ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
-        start_date = begin_date + timedelta(days=7)
-        end_data = start_date + timedelta(days=7)
-        PayrollPeriod.objects.filter(id=2).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
-                                                  ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
+        # start_date = begin_date
+        # end_data = start_date + timedelta(days=7)
+        # PayrollPeriod.objects.filter(id=1).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
+        #                                           ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
+        #
+        # start_date = begin_date + timedelta(days=7)
+        # end_data = start_date + timedelta(days=7)
+        # PayrollPeriod.objects.filter(id=2).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
+        #                                           ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
         # update date and time from clockin registries, for usage in PayrollPeriod creation
-        clockin_date = end_data + timedelta(days=2)
-        Clockin.objects.filter(id=2).update(started_at=clockin_date.strftime('%Y-%m-%dT20:20:00Z'),
-                                            ended_at=clockin_date.strftime('%Y-%m-%dT23:45:00Z'),
-                                            status="APPROVED")
+        clockin_date = begin_date + timedelta(days=9)
+        mixer.blend('api.Clockin',
+                    started_at=clockin_date.strftime('%Y-%m-%dT20:20:00Z'),
+                    ended_at=clockin_date.strftime('%Y-%m-%dT23:45:00Z'),
+                    shift=shift,
+                    status="APPROVED")
         clockin_date = clockin_date + timedelta(days=1)
-        Clockin.objects.filter(id=3).update(started_at=clockin_date.strftime('%Y-%m-%dT20:20:00Z'),
-                                            ended_at=clockin_date.strftime('%Y-%m-%dT23:45:00Z'),
-                                            status="APPROVED")
+        mixer.blend('api.Clockin',
+                    started_at=clockin_date.strftime('%Y-%m-%dT20:20:00Z'),
+                    ended_at=clockin_date.strftime('%Y-%m-%dT23:45:00Z'),
+                    shift=shift,
+                    status="APPROVED")
         self.qty = PayrollPeriod.objects.count()
         self.payroll_payment_qty = PayrollPeriodPayment.objects.count()
 
     def test_period_generation(self):
+        """Test creation of a payroll period, with creation of related PayrollPeriodPayment registries"""
         url = reverse_lazy('api:hook-generate_periods')
         self.client.force_login(self.test_user_employer)
         response = self.client.get(url)
@@ -57,9 +113,8 @@ class PayrollPeriodTestSuite(TestCase):
         self.assertIsInstance(obj.get('id'), int, response_json)
         self.assertEqual(obj.get('length'), 7, response_json)
         self.assertEqual(obj.get('length_type'), "DAYS", response_json)
-        self.assertDictEqual(obj.get('employer'),
-                             {'id': 1, 'picture': '', 'rating': '0.0', 'title': 'Fetes and Events', 'total_ratings': 0},
-                             response_json)
+        self.assertIsInstance(obj.get('employer'), dict, response_json)
+        self.assertEqual(obj.get('employer').get('title'), self.test_employer.title, response_json)
         self.assertEqual(obj.get('status'), "OPEN", response_json)
         self.assertIsNotNone(obj.get('starting_at'), response_json)
         self.assertIsNotNone(obj.get('ending_at'), response_json)
@@ -72,34 +127,32 @@ class PayrollPeriodTestSuite(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(len(response_json), 2, response_json)
+        self.assertEqual(len(response_json), 3, response_json)
         for period in response_json:
-            self.assertEqual(period.get('length'), 7, response_json)
-            self.assertEqual(period.get('length_type'), 'DAYS', response_json)
-            self.assertIn(period.get('id'), [1, 2], response_json)
-            self.assertDictEqual(period.get('employer'),
-                                 {'id': 1, 'title': 'Fetes and Events', 'picture': '',
-                                  'rating': '0.0', 'total_ratings': 0},
-                                 response_json)
-            self.assertEqual(period.get('status'), "OPEN", response_json)
-            self.assertIsNotNone(period.get('starting_at'), response_json)
-            self.assertIsNotNone(period.get('ending_at'), response_json)
+            self.assertEqual(period.get('length'), 7, period)
+            self.assertEqual(period.get('length_type'), 'DAYS', period)
+            self.assertIsInstance(period.get('employer'), dict, period)
+            self.assertIn(period.get('employer').get('id'), [self.test_employer.id, self.test_employer2.id], period)
+            self.assertEqual(period.get('status'), "OPEN", period)
+            self.assertIsNotNone(period.get('starting_at'), period)
+            self.assertIsNotNone(period.get('ending_at'), period)
 
     def test_get_one_period(self):
-        url = reverse_lazy('api:admin-get-periods', kwargs={'period_id': 1})
+        """Test get data about a period, login with employee credentials"""
+        url = reverse_lazy('api:admin-get-periods', kwargs={'period_id': self.test_period.id})
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(response_json.get('id'), 1, response_json)
-        self.assertEqual(response_json.get('length'), 7, response_json)
-        self.assertEqual(response_json.get('length_type'), 'DAYS', response_json)
-        self.assertDictEqual(response_json.get('employer'),
-                             {'id': 1, 'picture': '', 'rating': '0.0',
-                              'title': 'Fetes and Events', 'total_ratings': 0},
-                             response_json
-                             )
-        self.assertEqual(len(response_json.get('payments')), 1, response_json)
+        self.assertEqual(response_json.get('id'), self.test_period.id, response_json)
+        self.assertEqual(response_json.get('length'), self.test_period.length, response_json)
+        self.assertEqual(response_json.get('length_type'), self.test_period.length_type, response_json)
+        self.assertIsInstance(response_json.get('employer'), dict, response_json)
+        self.assertEqual(response_json.get('employer').get('id'), self.test_employer.id, response_json)
+        self.assertEqual(response_json.get('employer').get('title'), self.test_employer.title, response_json)
+        self.assertEqual(response_json.get('employer').get('picture'), self.test_employer.picture, response_json)
+        self.assertIsInstance(response_json.get('payments'), list, response_json)
+        self.assertEqual(len(response_json.get('payments')), 3, response_json)
 
     def test_get_my_periods(self):
         url = reverse_lazy('api:me-get-payroll-period')
@@ -107,13 +160,12 @@ class PayrollPeriodTestSuite(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(len(response_json), 2, response_json)
+        self.assertEqual(len(response_json), 3, response_json)
         for period in response_json:
-            self.assertIn(period.get('id'), [1, 2], response_json)
-            self.assertEqual(period.get('status'), "OPEN", response_json)
-            self.assertIsNotNone(period.get('starting_at'), response_json)
-            self.assertIsNotNone(period.get('ending_at'), response_json)
-            self.assertGreaterEqual(period.get('total_payments'), 1, response_json)
+            self.assertIn(period.get('id'), [self.test_period.id, self.test_period2.id, self.test_period3.id], period)
+            self.assertEqual(period.get('status'), "OPEN", period)
+            self.assertIsNotNone(period.get('starting_at'), period)
+            self.assertIsNotNone(period.get('ending_at'), period)
 
     def test_get_my_periods2(self):
         """Test for employer without registered periods"""
@@ -125,37 +177,38 @@ class PayrollPeriodTestSuite(TestCase):
         self.assertEqual(len(response_json), 0, response_json)
 
     def test_get_my_period(self):
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
         self.client.force_login(self.test_user_employer)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(response_json.get('id'), 1, response_json)
-        self.assertDictEqual(response_json.get('employer'),
-                             {'id': 1, 'picture': '', 'rating': '0.0',
-                              'title': 'Fetes and Events', 'total_ratings': 0},
-                             response_json)
+        self.assertEqual(response_json.get('id'), self.test_period.id, response_json)
+        self.assertIsInstance(response_json.get('employer'), dict, response_json)
+        self.assertEqual(response_json.get('employer').get('id'), self.test_employer.id, response_json)
+        self.assertEqual(response_json.get('employer').get('picture'), self.test_employer.picture, response_json)
+        self.assertEqual(response_json.get('employer').get('title'), self.test_employer.title, response_json)
         self.assertEqual(response_json.get('status'), "OPEN", response_json)
         self.assertIsNotNone(response_json.get('starting_at'), response_json)
         self.assertIsNotNone(response_json.get('ending_at'), response_json)
-        self.assertGreaterEqual(len(response_json.get('payments')), 1, response_json)
+        self.assertIsInstance(response_json.get('payments'), list, response_json)
+        self.assertEqual(len(response_json.get('payments')), 3, response_json)
 
     def test_get_another_employer_period(self):
         """Try to get a PayrollPeriod belong to another employer"""
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
         self.client.force_login(self.test_user_employer2)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404, response.content.decode())
 
     def test_finalize_period(self):
         employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 2})
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period2.id})
         self.client.force_login(self.test_user_employer)
         response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(response_json.get('id'), 2, response_json)
-        self.assertEqual(response_json.get('employer'), 1, response_json)
+        self.assertEqual(response_json.get('id'), self.test_period2.id, response_json)
+        self.assertEqual(response_json.get('employer'), self.test_employer.id, response_json)
         self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
         self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
                          employee_payments + 1)
@@ -163,10 +216,45 @@ class PayrollPeriodTestSuite(TestCase):
     def test_fail_finalizing_period(self):
         """Try to finalize a PayrollPeriod which contains a PayrollPayment with PENDING status"""
         employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': 1})
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period3.id})
         self.client.force_login(self.test_user_employer)
         response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
         self.assertContains(response, 'There is a Payroll Payment with status PENDING in current period',
                             status_code=400)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
+                         employee_payments)
+
+    def test_fail_finalizing_period2(self):
+        """Try to finalize a PayrollPeriod which has PAID status"""
+        # get the period here and set as PAID
+        period = PayrollPeriod.objects.get(id=self.test_period.id)
+        prev_status = period.status
+        period.status = 'PAID'
+        period.save()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': period.id})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        period.status = prev_status
+        period.save()
+        self.assertContains(response, 'This period has a payment done and can not be changed',
+                            status_code=400)
+
+    def test_finalize_and_open_period(self):
+        """Test that a period can be change from OPEN to FINALIZED status and vice versa"""
+        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period2.id})
+        self.client.force_login(self.test_user_employer)
+        # change from OPEN to FINALIZE
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
+                         employee_payments + 1)
+        # change from FINALIZE to OPEN
+        response = self.client.put(url, data={'status': 'OPEN'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('status'), 'OPEN', response_json)
         self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
                          employee_payments)
