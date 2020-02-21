@@ -917,7 +917,8 @@ class EmployerMeEmployeePaymentView(EmployerView):
                                                     employee=employee_payment.employee,
                                                     employer=employee_payment.employer,
                                                     status=APPROVED).update(status=PAID)
-                employee_payment.payroll_period.set_paid()
+                employee_payment.payroll_period.status = PAID
+                employee_payment.payroll_period.save()
             return Response({'message': 'success'}, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
