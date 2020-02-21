@@ -32,7 +32,7 @@ from api.models import (
     APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
-    PayrollPeriod, Rate, Clockin, PayrollPeriodPayment,
+    PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
     EmployerSubscription, EMPLOYER_STATUS
 )
@@ -742,32 +742,37 @@ class EmployerMePayrollPeriodsView(EmployerView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, period_id=None):
-
+        """This method supposed that only three status are available to PayrollPeriod: OPEN, FINALIZED, PAID"""
         if 'status' not in request.data:
-            return Response(validators.error_object('You need to specify the status'),status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('You need to specify the status'), status=status.HTTP_404_NOT_FOUND)
+        new_status = request.data.get('status')
+        if not validators.in_value_choices(new_status, PERIOD_STATUS):
+            return Response({'details': 'Wrong status value was provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         period = PayrollPeriod.objects.filter(id=period_id, employer_id=self.employer.id).first()
         if period is None:
-            return Response(validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
+            return Response(validators.error_object('The payroll period was not found'),
+                            status=status.HTTP_404_NOT_FOUND)
 
-        new_statuses = {
-            'FINALIZED': 'FINALIZED',
-            'OPEN': 'FINALIZED',
-        }
-        data = {
-            "status": new_statuses[request.data['status']]
-        }
-
-        periodSerializer = payment_serializer.PayrollPeriodSerializer(
-            period,
-            data=data,
-            many=False,
-            context={"request": request}
-        )
-        if periodSerializer.is_valid():
-            periodSerializer.save()
+        if period.status == PAID:
+            return Response({'details': 'This period has a payment done and can not be changed'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        elif period.status == new_status:
+            periodSerializer = payment_serializer.PayrollPeriodSerializer(period, many=False,
+                                                                          context={"request": request})
             return Response(periodSerializer.data, status=status.HTTP_200_OK)
-        return Response(periodSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            periodSerializer = payment_serializer.PayrollPeriodSerializer(
+                period,
+                data={'status': new_status},
+                many=False,
+                context={"request": request}
+            )
+            if periodSerializer.is_valid():
+                periodSerializer.save()
+                return Response(periodSerializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(periodSerializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmployerMePayrollPeriodPaymentView(EmployerView):

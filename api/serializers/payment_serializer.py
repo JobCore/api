@@ -9,7 +9,7 @@ from rest_framework import serializers
 
 from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
                         PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
-                        Shift, User, Venue, APPROVED, PENDING)
+                        Shift, User, Venue, APPROVED, PENDING, OPEN, FINALIZED)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 
@@ -247,22 +247,27 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         employer_id = instance.employer_id
-        for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
-                                                        status=APPROVED).values('employee_id')\
-                .annotate(total_regular_hours=Sum('regular_hours'),
-                          total_over_time=Sum('over_time'),
-                          gross_amount=Sum('total_amount'),
-                          total_breaktime_minutes=Sum('breaktime_minutes'),
-                          total_payment=Sum('total_amount')):
-            # get_or_create is used to maintain idempotence
-            EmployeePayment.objects.get_or_create(payroll_period=instance,
-                                                  employee_id=item['employee_id'],
-                                                  employer_id=employer_id,
-                                                  regular_hours=item['total_regular_hours'],
-                                                  over_time=item['total_over_time'],
-                                                  breaktime_minutes=item['total_breaktime_minutes'],
-                                                  earnings=item['total_payment'],
-                                                  )
+        if validated_data.get('status') == FINALIZED:
+            # Create EmployeePayment registries to summarize related data from PayrollPeriodPayment
+            for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
+                                                            status=APPROVED).values('employee_id')\
+                    .annotate(total_regular_hours=Sum('regular_hours'),
+                              total_over_time=Sum('over_time'),
+                              gross_amount=Sum('total_amount'),
+                              total_breaktime_minutes=Sum('breaktime_minutes'),
+                              total_payment=Sum('total_amount')):
+                # get_or_create is used to maintain idempotence
+                EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                      employee_id=item['employee_id'],
+                                                      employer_id=employer_id,
+                                                      regular_hours=item['total_regular_hours'],
+                                                      over_time=item['total_over_time'],
+                                                      breaktime_minutes=item['total_breaktime_minutes'],
+                                                      earnings=item['total_payment'],
+                                                      )
+        elif validated_data.get('status') == OPEN:
+            # Delete existing EmployeePayment registries for current period
+            EmployeePayment.objects.filter(payroll_period=instance, employer_id=employer_id).delete()
         return super().update(instance, validated_data)
 
     def validate(self, data):
