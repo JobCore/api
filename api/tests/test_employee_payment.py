@@ -143,7 +143,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
                                     content_type='application/json')
         self.assertEqual(response.status_code, 200, response.content.decode())
         self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "FINALIZED",
+        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "PAID",
                          "Period should be FINALIZED because there is a pending employee payment")
         self.assertEqual(PaymentTransaction.objects.count(), payment_transactions_qty + 1,
                          "Should be exist one PaymentTransaction additional")
@@ -224,67 +224,6 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
                                      "payment_data": {"key1": 1, "key2": 2}},
                                     content_type='application/json')
         self.assertContains(response, 'payment_data', status_code=400, msg_prefix='ERROR_DATA')
-
-    def test_make_payment_period_paid(self):
-        """Verify that PayrollPeriod is marked as PAID. PayrollPeriod with a single PayrollPeriodPayment instance"""
-        self.client.force_login(self.test_user_employer)
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={"period_id": self.test_period2.id})
-        response = self.client.put(url, {"status": "FINALIZED"}, content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        employee_payment = EmployeePayment.objects.get(payroll_period=self.test_period2,
-                                                       employer=self.test_employer,
-                                                       employee=self.test_employee)
-        self.assertFalse(employee_payment.paid)
-
-        url = reverse_lazy('api:me-get-employee-payment', kwargs={"employee_payment_id": employee_payment.id})
-        response = self.client.post(url,
-                                    {"payment_type": "FAKE",
-                                     "payment_data": {"employer_bank_account_id": self.test_acc1_employer.id,
-                                                      "employee_bank_account_id": self.test_acc_employee.id}},
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period2.id).status, "PAID",
-                         "Period should be PAID because there is not pending employee payments")
-
-    def test_make_payment_period_paid2(self):
-        """Verify that PayrollPeriod is marked as PAID. PayrollPeriod with a two PayrollPeriodPayment instances"""
-        self.client.force_login(self.test_user_employer)
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={"period_id": self.test_period.id})
-        response = self.client.put(url, {"status": "FINALIZED"}, content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        employee_payment = EmployeePayment.objects.get(payroll_period=self.test_period,
-                                                       employer=self.test_employer,
-                                                       employee=self.test_employee)
-        self.assertFalse(employee_payment.paid)
-
-        url = reverse_lazy('api:me-get-employee-payment', kwargs={"employee_payment_id": employee_payment.id})
-        response = self.client.post(url,
-                                    {"payment_type": "FAKE",
-                                     "payment_data": {"employer_bank_account_id": self.test_acc1_employer.id,
-                                                      "employee_bank_account_id": self.test_acc_employee.id}},
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "FINALIZED",
-                         "Period should be FINALIZED because there is a pending employee payment")
-
-        employee_payment = EmployeePayment.objects.get(payroll_period=self.test_period,
-                                                       employer=self.test_employer,
-                                                       employee=self.test_employee2)
-        self.assertFalse(employee_payment.paid)
-        bank_account_employee2 = mixer.blend('api.BankAccount', user=self.test_profile_employee2)
-
-        url = reverse_lazy('api:me-get-employee-payment', kwargs={"employee_payment_id": employee_payment.id})
-        response = self.client.post(url,
-                                    {"payment_type": "FAKE",
-                                     "payment_data": {"employer_bank_account_id": self.test_acc1_employer.id,
-                                                      "employee_bank_account_id": bank_account_employee2.id}},
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "PAID",
-                         "Period should be PAID because there is not pending employee payments")
 
     def test_employee_payment_report(self):
         """Get a list of paid employee payments, without provide search parameters"""

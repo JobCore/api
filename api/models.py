@@ -684,17 +684,6 @@ class PayrollPeriod(models.Model):
     def __str__(self):
         return "From " + str(self.starting_at) + " to " + str(self.ending_at)
 
-    def set_paid(self):
-        """Set period as PAID if there is not a pending PayrollPeriodPayment"""
-        set_as_paid = True
-        for payment in self.payments.all():
-            if payment.status == PENDING or payment.status == APPROVED:
-                set_as_paid = False
-                break
-        if set_as_paid:
-            self.status = PAID
-            self.save()
-
 
 PENDING = 'PENDING'
 PAID = 'PAID'

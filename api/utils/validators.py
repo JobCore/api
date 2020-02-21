@@ -10,6 +10,17 @@ def in_choices(choice, CHOICES):
             is_present = True
     return is_present
 
+
+def in_value_choices(choice, CHOICES):
+    """Indicates if choice is present as value in CHOICES"""
+    is_present = False
+    for value, description in CHOICES:
+        if value == choice:
+            is_present = True
+            break
+    return is_present
+
+
 def error_object(msg, data=None):
     return {
         "details": msg

@@ -286,9 +286,9 @@ http://localhost:5000/api/employers/me/payroll-periods/3
 
 #### Request Params:
 
-| key          | Example Value      | Required?     | Observations           |
-| -----------  | -----------------  | ------------- | ---------------------- |
-| status       | FINALIZED          |     Yes       |                        |
+| key          | Example Value      | Required?     | Observations                   |
+| -----------  | -----------------  | ------------- | ------------------------------ |
+| status       | FINALIZED          |     Yes       | values: OPEN, FINALIZED        |
 
 #### Example
 
@@ -317,7 +317,7 @@ http://localhost:5000/api/employers/me/payroll-periods/3
 #### Notes
 
 - You must be the owner of the PayrollPeriod to update.
-- Must be no PayrollPeriodPayment with status PENDING, otherwise, an error will be raised, because period can't be set as FINALIZED.
+- In order to set a PayrollPeriod as FINALIZED, must be no PayrollPeriodPayment with status PENDING, otherwise, an error will be raised.
 - There will be created instances of EmployeePayment, using PayrollPeriodPayment instances with APPROVED status 
 and belong to indicated PayrollPeriod and related Employer. 
-- Even if OPEN value is send in status parameter, the period is set to FINALIZED.
+- If OPEN value is send in status parameter, related EmployeePayment instances will be deleted.
