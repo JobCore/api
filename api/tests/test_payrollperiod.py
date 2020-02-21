@@ -68,21 +68,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
                                               period=self.test_period3, mykwargs={"status": "PENDING"},
                                               relatedkwargs={'shift': shift})
-        
 
-        # begin_date = timezone.now() - timedelta(days=21)
-        # self.test_user_employer.profile.employer.payroll_period_starting_time = begin_date
-        # self.test_user_employer.profile.employer.save()
-        # update existing data to ensure creation of a single period
-        # start_date = begin_date
-        # end_data = start_date + timedelta(days=7)
-        # PayrollPeriod.objects.filter(id=1).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
-        #                                           ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
-        #
-        # start_date = begin_date + timedelta(days=7)
-        # end_data = start_date + timedelta(days=7)
-        # PayrollPeriod.objects.filter(id=2).update(starting_at=start_date.strftime('%Y-%m-%d') + 'T00:00:00Z',
-        #                                           ending_at=end_data.strftime('%Y-%m-%d') + 'T23:59:59Z')
         # update date and time from clockin registries, for usage in PayrollPeriod creation
         clockin_date = begin_date + timedelta(days=9)
         mixer.blend('api.Clockin',
@@ -212,6 +198,23 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
         self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
                          employee_payments + 1)
+
+    def test_update_status_period(self):
+        prev_status = self.test_period.status
+        self.test_period.status = 'FINALIZED'
+        self.test_period.save()
+        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('id'), self.test_period.id, response_json)
+        self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
+                         employee_payments)
+        self.test_period.status = prev_status
+        self.test_period.save()
 
     def test_fail_finalizing_period(self):
         """Try to finalize a PayrollPeriod which contains a PayrollPayment with PENDING status"""
