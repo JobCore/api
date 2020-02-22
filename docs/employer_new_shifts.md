@@ -1,8 +1,8 @@
-# Shifts related to Employer
+# Shifts related to Employer (alternative endpoints)
 
 ## Get a list of shifts related to current Employer
 
-**URL** : `/api/employers/me/shifts`
+**URL** : `/api/employers/me/new-shifts`
 
 **Method** : `GET`
 
@@ -30,7 +30,7 @@ Note: parameters listed in order of precedence
 
 #### Example
 
-http://localhost:5000/api/employers/me/shifts?not_status=expired&start=2020-01-01
+http://localhost:5000/api/employers/me/new-shifts?not_status=expired&start=2020-01-01
 
 #### Success Response
 
@@ -161,7 +161,7 @@ or the following when **serializer=big** is provided
 
 ## Get data of shift related to current Employer
 
-**URL** : `/api/employers/me/shifts/<id>`
+**URL** : `/api/employers/me/new-shifts/<id>`
 
 **Method** : `GET`
 
@@ -175,7 +175,7 @@ Any
 
 #### Example
 
-http://localhost:5000/api/employers/me/shifts/4
+http://localhost:5000/api/employers/me/new-shifts/4
 
 #### Success Response
 
