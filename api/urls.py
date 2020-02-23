@@ -37,7 +37,7 @@ from api.views.employer_views import (
     EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
-    EmployerShiftEmployeesView, EmployerShiftView, EmployerBatchActions,
+    EmployerShiftEmployeesView, EmployerShiftView, EmployerShiftNewView, EmployerBatchActions,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
@@ -246,6 +246,15 @@ urlpatterns = [
         'employers/me/shifts/<int:id>',
         EmployerShiftView.as_view(),
         name="me-employer-id-shifts"),
+
+    path(
+        'employers/me/new-shifts',
+        EmployerShiftNewView.as_view(),
+        name="me-employer-get-new-shifts"),
+    path(
+        'employers/me/new-shifts/<int:id>',
+        EmployerShiftNewView.as_view(),
+        name="me-employer-id-new-shifts"),
 
     # aliases from similar methods
     path(

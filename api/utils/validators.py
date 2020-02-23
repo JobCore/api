@@ -21,6 +21,18 @@ def in_value_choices(choice, CHOICES):
     return is_present
 
 
+def list_in_value_choices(value_list, choices):
+    """Indicates if all values in value_list are present as value in CHOICES"""
+    assert isinstance(value_list, list)
+    set_choices = {value for value, description in choices}
+    is_present = True
+    for value in value_list:
+        if value not in set_choices:
+            is_present = False
+            break
+    return is_present
+
+
 def error_object(msg, data=None):
     return {
         "details": msg

@@ -640,6 +640,152 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class EmployerShiftNewView(EmployerView, HeaderLimitOffsetPagination):
+    def get(self, request, id=None):
+        if id:
+            try:
+                shift = Shift.objects.get(id=id, employer_id=self.employer.id)
+            except Shift.DoesNotExist:
+                return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+            serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            shifts = Shift.objects.filter(employer_id=self.employer.id)
+
+            qStatus = request.GET.get('status')
+            if qStatus is None:
+                shifts = shifts.exclude(status='CANCELLED')
+            else:
+                status_list = list(map(lambda s: s.upper(), qStatus.split(",")))
+                if not validators.list_in_value_choices(status_list, SHIFT_STATUS_CHOICES):
+                    return Response(validators.error_object(
+                        "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+                if status_list:
+                    shifts = shifts.filter(status__in=status_list)
+
+            qFilled = request.GET.get('filled')
+            if qFilled == 'true':
+                shifts = shifts.annotate(total_employees=Count('employees')).filter(
+                    total_employees=F('maximum_allowed_employees')
+                )
+
+            qStatus = request.GET.get('not_status')
+            if qStatus is not None:
+                qStatus = qStatus.upper()
+                if not validators.in_value_choices(qStatus, SHIFT_STATUS_CHOICES):
+                    return Response(validators.error_object(
+                        "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    shifts = shifts.filter(~Q(status=qStatus))
+
+            TODAY = datetime.datetime.now(tz=timezone.utc)
+            qUpcoming = request.GET.get('upcoming')
+            if qUpcoming == 'true':
+                shifts = shifts.filter(starting_at__gte=TODAY)
+
+            qStart = request.GET.get('start')
+            if qStart is not None and qStart != '':
+                start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
+                shifts = shifts.filter(starting_at__gte=start)
+
+            qEnd = request.GET.get('end')
+            if qEnd is not None and qEnd != '':
+                end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
+                shifts = shifts.filter(ending_at__lte=end)
+
+            qUnrated = request.GET.get('unrated')
+            if qUnrated is not None and qUnrated == 'true':
+                shifts = shifts.exclude(rating=None)
+
+            qEmployeeNot = request.GET.get('employee_not')
+            if qEmployeeNot is not None:
+                emp_list = qEmployeeNot.split(',')
+                shifts = shifts.exclude(employees__in=[int(emp) for emp in emp_list])
+
+            qEmployee = request.GET.get('employee')
+            if qEmployee is not None:
+                emp_list = qEmployee.split(',')
+                shifts = shifts.filter(employees__in=[int(emp) for emp in emp_list])
+
+            qCandidateNot = request.GET.get('candidate_not')
+            if qCandidateNot is not None:
+                emp_list = qCandidateNot.split(',')
+                shifts = shifts.exclude(candidates__in=[int(emp) for emp in emp_list])
+
+            shifts = shifts.select_related('venue', 'position')
+            paginator = HeaderLimitOffsetPagination()
+            page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
+
+            defaultSerializer = shift_serializer.ShiftGetSmallSerializer
+            qSerializer = request.GET.get('serializer')
+            if qSerializer is not None and qSerializer == "big":
+                defaultSerializer = shift_serializer.ShiftGetBigListSerializer
+
+            if page is not None:
+                serializer = defaultSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response({'details': 'Wrong page value: None'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        _all_serializers = []
+        request.data["employer"] = self.employer.id
+        if 'multiple_dates' in request.data:
+            for date in request.data['multiple_dates']:
+                shift_date = dict(date)
+                data = dict(request.data)
+                data["starting_at"] = shift_date['starting_at']
+                data["ending_at"] = shift_date['ending_at']
+                data.pop('multiple_dates', None)
+                serializer = shift_serializer.ShiftPostSerializer( data=data, context={"request": request})
+                if serializer.is_valid():
+                    _all_serializers.append(serializer)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = shift_serializer.ShiftPostSerializer(data=request.data, context={"request": request})
+            if serializer.is_valid():
+                _all_serializers.append(serializer)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        _shifts = []
+        for s in _all_serializers:
+            s.save()
+            return_serializer = shift_serializer.ShiftGetSerializer(s.instance, many=False)
+            _shifts.append(return_serializer.data)
+
+        return Response(_shifts, status=status.HTTP_201_CREATED)
+
+    def put(self, request, id):
+        try:
+            shift = Shift.objects.get(id=id, employer__id=self.employer.id)
+        except Shift.DoesNotExist:
+            return Response({"detail": "This shift was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = shift_serializer.ShiftUpdateSerializer(shift, data=request.data, context={"request": request})
+        posponed = request.GET.get('posponed')
+        if serializer.is_valid():
+            # if posponed=true it will not  save, just validate
+            if posponed != 'true':
+                serializer.save()
+            return Response(shift_serializer.ShiftGetSerializer(serializer.instance, many=False).data,
+                            status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            shift = Shift.objects.get(id=id, employer__id=self.employer.id)
+        except Shift.DoesNotExist:
+            return Response(
+                {"detail": "This shift was not found, talk to the employer for any more details about what happened."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        shift.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class EmployerShiftCandidatesView(EmployerView):
     def put(self, request, id):
         try:
