@@ -826,13 +826,13 @@ class EmployeeDocument(models.Model):
 
     public_id = models.CharField(max_length=80, null=True)
 
-    rejected_reason = models.CharField(max_length=255, null=True)
+    rejected_reason = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=8, choices=DOCUMENT_STATUS, default=PENDING)
     expired_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
-    document_type = models.ForeignKey(Document, null=True, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    document_type = models.ForeignKey(Document, on_delete=models.CASCADE)
 
 
 class AppVersion(models.Model):
