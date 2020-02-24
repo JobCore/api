@@ -4,6 +4,11 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def delete_employeedocuments(apps, schema_editor):
+    EmployeeDocument = apps.get_model('api', 'EmployeeDocument')
+    EmployeeDocument.objects.filter(document_type__isnull=True).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(delete_employeedocuments),
         migrations.AlterField(
             model_name='employeedocument',
             name='document_type',
