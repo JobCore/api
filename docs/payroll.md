@@ -39,7 +39,8 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
                                         "bank_accounts": [{"id": 1, "name": "EmployerBankAcc", 
                                         "institution_name": "Bank of America", "account": "personal", "account_id": "1234567890123"}]
                                         }, 
-                  "regular_hours": "3.00", "over_time": "2.00", "earnings": "150.00", "deductions": 37.8, "amount": 112.2,
+                  "regular_hours": "3.00", "over_time": "2.00", 
+                  "earnings": "150.00", "deductions": 37.8, "taxes": 4.15, "amount": 108.05,
                   "paid": false, "payroll_period": 1, 
                   "deduction_list": [{"name": "Social Security", "amount": 7.5}, {"name": "Medicare", "amount": 7.5}, 
                                      {"name": "DeductionTest", "amount": 22.8}]
@@ -51,7 +52,7 @@ http://localhost:5000/api/employers/me/employee-payment-list/1
 
 #### Notes
 
-- Deduction values are calculate on fly.
+- Deduction and taxes values are calculate on fly.
 
 
 ## Proceed with payment of an employee in a period 
@@ -95,7 +96,7 @@ http://localhost:5000/api/employers/me/employee-payment/3
 #### Notes
 
 - Bank account Ids are provided via endpoint `api/employers/me/employee-payment-list/<period_id>`.
-- Values for `amount`, `deductions` and `deduction_list` fields are updated. 
+- Values for `amount`, `taxes`, `deductions` and `deduction_list` fields are updated. 
 - A registry in **PaymentTransaction** model is created, related **PayrrolPeriodPayment** and **PayrollPeriod** registries are set as PAID.
 - Related PayrollPeriod is set as PAID.
 
@@ -135,7 +136,8 @@ http://localhost:5000/api/employers/me/employee-payment/report?start_date=2020-0
     "employee": "Lennon, John",
     "earnings": "150.00",
     "deductions": "37.80",
-    "amount": "112.20",
+    "taxes": "4.15",
+    "amount": "108.05",
     "payment_date": "2020-02-13",
     "payment_source": "ELECTRONIC TRANSFERENCE",
     "payroll_period": 
