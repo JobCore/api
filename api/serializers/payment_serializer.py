@@ -9,7 +9,7 @@ from rest_framework import serializers
 
 from api.models import (Badge, BankAccount, Clockin, Employee, EmployeePayment, Employer, EmployerDeduction,
                         PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Position, PreDefinedDeduction, Profile,
-                        Shift, User, Venue, APPROVED, PENDING, OPEN, FINALIZED)
+                        Shift, User, Venue, APPROVED, PENDING, OPEN, FINALIZED, DAYS, MONTHS)
 from api.utils.loggers import log_debug
 from api.utils.utils import nearest_weekday
 
@@ -309,11 +309,12 @@ class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
 class EmployeePaymentSerializer(serializers.ModelSerializer):
     employee = EmployeeInfoPaymentSerializer()
     deduction_list = serializers.SerializerMethodField()
+    taxes = serializers.SerializerMethodField()
 
     class Meta:
         model = EmployeePayment
         fields = ('id', 'employee', 'regular_hours', 'over_time', 'earnings',
-                  'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'amount')
+                  'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'taxes', 'amount')
 
     def get_deduction_list(self, instance):
         self.context['total_deductions'] = 0
@@ -328,10 +329,25 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
             res_list.append({'name': deduction.name, 'amount': amount})
         return res_list
 
+    def get_taxes(self, instance):
+        if instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 7:
+            period_quantity = 52
+            wage_amount = instance.earnings
+        elif instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 14:
+            period_quantity = 26
+            wage_amount = instance.earnings
+        elif instance.payroll_period.length_type == DAYS:
+            period_quantity = 260
+            wage_amount = instance.earnings
+        else:
+            period_quantity = 12 / instance.payroll_period.length
+            wage_amount = instance.earnings
+        return instance.employee.calculate_tax_amount(wage_amount, period_quantity)
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['deductions'] = self.context['total_deductions']
-        data['amount'] = instance.earnings - data['deductions']
+        data['amount'] = instance.earnings - data['deductions'] - data['taxes']
         return data
 
 
@@ -392,7 +408,8 @@ class EmployeePaymentReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'earnings', 'deductions', 'amount', 'payment_date', 'payment_source', 'payroll_period')
+        fields = ('employee', 'earnings', 'deductions', 'taxes', 'amount',
+                  'payment_date', 'payment_source', 'payroll_period')
 
     def get_employee(self, instance):
         user = instance.employee.user
