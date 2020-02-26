@@ -316,10 +316,10 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
                   'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'amount')
 
     def get_deduction_list(self, instance):
+        qs_emp_deduc = EmployerDeduction.objects.filter(employer_id=self.context['employer_id'])
         self.context['total_deductions'] = 0
         res_list = []
-        for deduction in itertools.chain(PreDefinedDeduction.objects.order_by('id'),
-                                         EmployerDeduction.objects.order_by('id')):
+        for deduction in itertools.chain(PreDefinedDeduction.objects.order_by('id'), qs_emp_deduc.order_by('id')):
             if deduction.type == PreDefinedDeduction.PERCENTAGE_TYPE:
                 amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:

@@ -987,7 +987,8 @@ class EmployerMeEmployeePaymentListView(EmployerView):
     def get(self, request, period_id):
         ser_employer = payment_serializer.EmployerInfoPaymentSerializer(self.employer)
         qs = self.get_queryset(period_id).order_by('id')
-        ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True)
+        ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True,
+                                                                    context={'employer_id': self.employer.id})
         return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
                         status=status.HTTP_200_OK)
 
@@ -1008,7 +1009,8 @@ class EmployerMeEmployeePaymentView(EmployerView):
                         'employee_user': employee_payment.employee.profile_set.last().user}
         serializer = payment_serializer.EmployeePaymentDataSerializer(data=request.data, context=context_data)
         if serializer.is_valid():
-            emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment)
+            emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment,
+                                                                       context={'employer_id': self.employer.id})
             employee_payment.deductions = emp_pay_ser.data['deductions']
             employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
                                                                     cls=DecimalEncoder))
