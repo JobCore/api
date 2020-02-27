@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -228,10 +230,26 @@ class Employee(models.Model):
                                                       blank=True)
     filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
     allowances = models.IntegerField(blank=True, default=0)
-    extra_withholding = models.FloatField(blank=True, default=0)
+    step2c_checked = models.BooleanField(blank=True, default=False)
+    dependants_deduction = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    other_income = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    additional_deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    extra_withholding = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name + "(" + self.user.email + ")"
+
+    def calculate_tax_amount(self, period_wage, period_quantity):
+        from api.utils.taxes_functions import get_tentative_withholding
+        adjusted_wage = period_wage * period_quantity + self.other_income - self.additional_deductions
+        if adjusted_wage < 0:
+            adjusted_wage = Decimal('0.00')
+        tentative_withholding = get_tentative_withholding(adjusted_wage, self.filing_status, self.step2c_checked)
+        annual_withholding = tentative_withholding - self.dependants_deduction
+        if annual_withholding < 0:
+            annual_withholding = Decimal('0.00')
+        annual_withholding += self.extra_withholding
+        return round(Decimal(annual_withholding / period_quantity), 2)
 
 
 ACTIVE = 'ACTIVE'
@@ -742,6 +760,7 @@ class EmployeePayment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
     deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     deduction_list = JSONField(blank=True, default=list)
+    taxes = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     payment_transaction = models.OneToOneField('PaymentTransaction', on_delete=models.SET_NULL, blank=True, null=True,
                                                related_name='employee_payment')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

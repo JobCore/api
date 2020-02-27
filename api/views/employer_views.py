@@ -1014,6 +1014,7 @@ class EmployerMeEmployeePaymentView(EmployerView):
             employee_payment.deductions = emp_pay_ser.data['deductions']
             employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
                                                                     cls=DecimalEncoder))
+            employee_payment.taxes = emp_pay_ser.data['taxes']
             employee_payment.amount = emp_pay_ser.data['amount']
             with transaction.atomic():
                 employee_payment.save()
