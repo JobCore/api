@@ -232,8 +232,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         url = reverse_lazy('api:me-get-payroll-payments-employer')
         response = self.client.post(url, data=payload)
         response_json = response.json()
-        print(response_json)
-        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin overtime")
+        self.assertEquals(response.status_code, 200, response_json)
 
     def test_create_payment_without_breaktime_minutes(self):
 
@@ -294,7 +293,6 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             'regular_hours':6.25,
-            'over_time':10,
             'hourly_rate':8,
             'total_amount':55,
             
