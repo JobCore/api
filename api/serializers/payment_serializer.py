@@ -184,8 +184,8 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
         if 'regular_hours' not in data:
             raise serializers.ValidationError('You need to specify how many regular_hours were worked')
 
-        if 'over_time' not in data:
-            raise serializers.ValidationError('You need to specify how many over_time was worked')
+        if 'over_time' in data:
+            raise serializers.ValidationError('You should not specify any over_time value')
 
         if 'breaktime_minutes' not in data:
             raise serializers.ValidationError('You need to specify how many breaktime_minutes was worked')
@@ -200,7 +200,9 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
 
         params = validated_data.copy()
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
-        params['total_amount'] = params['hourly_rate'] * (decimal.Decimal(params['regular_hours']) + decimal.Decimal(params['over_time']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+        regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
+        breaktime_hours = round(decimal.Decimal(params['breaktime_minutes'] / 60), 2)
+        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours - breaktime_hours)), 2)
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
 
         return payment
@@ -229,8 +231,10 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         params = validated_data.copy()
 
         if 'regular_hours' in params:
-            print("Summing: "+str(params['regular_hours'])+" + "+str(params['breaktime_minutes'] / 60))
-            params['total_amount'] = payment.hourly_rate * (decimal.Decimal(params['regular_hours']) - decimal.Decimal(params['breaktime_minutes'] / 60))
+            regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
+            breaktime_hours = round(decimal.Decimal(params['breaktime_minutes'] / 60), 2)
+            print("Summing: {} + {} ".format(regular_hours, breaktime_hours))
+            params['total_amount'] = round(payment.hourly_rate * (regular_hours - breaktime_hours), 2)
 
         return super().update(payment, params)
 
@@ -252,19 +256,33 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
             for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
                                                             status=APPROVED).values('employee_id')\
                     .annotate(total_regular_hours=Sum('regular_hours'),
-                              total_over_time=Sum('over_time'),
-                              gross_amount=Sum('total_amount'),
                               total_breaktime_minutes=Sum('breaktime_minutes'),
                               total_payment=Sum('total_amount')):
-                # get_or_create is used to maintain idempotence
-                EmployeePayment.objects.get_or_create(payroll_period=instance,
-                                                      employee_id=item['employee_id'],
-                                                      employer_id=employer_id,
-                                                      regular_hours=item['total_regular_hours'],
-                                                      over_time=item['total_over_time'],
-                                                      breaktime_minutes=item['total_breaktime_minutes'],
-                                                      earnings=item['total_payment'],
-                                                      )
+                if item['total_regular_hours'] > 40:
+                    item_ref = PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id,
+                                                                   employee_id=item['employee_id'],
+                                                                   employer_id=employer_id,
+                                                                   status=APPROVED).last()
+                    overtime_earning = round(item_ref.hourly_rate * (item['total_regular_hours'] - 40) * decimal.Decimal('0.5'),
+                                             2)
+                    # get_or_create is used to maintain idempotence
+                    EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                          employee_id=item['employee_id'],
+                                                          employer_id=employer_id,
+                                                          regular_hours=40,
+                                                          over_time=item['total_regular_hours'] - 40,
+                                                          breaktime_minutes=item['total_breaktime_minutes'],
+                                                          earnings=item['total_payment'] + overtime_earning,
+                                                          )
+                else:
+                    # get_or_create is used to maintain idempotence
+                    EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                          employee_id=item['employee_id'],
+                                                          employer_id=employer_id,
+                                                          regular_hours=item['total_regular_hours'],
+                                                          breaktime_minutes=item['total_breaktime_minutes'],
+                                                          earnings=item['total_payment'],
+                                                          )
         elif validated_data.get('status') == OPEN:
             # Delete existing EmployeePayment registries for current period
             EmployeePayment.objects.filter(payroll_period=instance, employer_id=employer_id).delete()
@@ -566,14 +584,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                 projected_hours = (projected_ending_time - projected_starting_time).total_seconds() / 3600
 
                 log_debug('hooks','Projected hours '+str(projected_hours))
-                overtime = 0
-                regular_hours = 0
-                if clocked_hours is not None and (clocked_hours > 40):
-                    overtime = clocked_hours - 40
-                    regular_hours = 40
-                else:
-                    regular_hours = clocked_hours
-                    overtime = 0
+                regular_hours = round(decimal.Decimal(clocked_hours), 2)
 
 
                 payment = PayrollPeriodPayment(
@@ -583,9 +594,8 @@ def generate_periods_and_payments(employer, generate_since=None):
                     shift=clockin.shift,
                     clockin=clockin,
                     regular_hours= regular_hours,
-                    over_time=overtime,
                     hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount= (decimal.Decimal(regular_hours) * decimal.Decimal(clockin.shift.minimum_hourly_rate)) + (decimal.Decimal(overtime) * decimal.Decimal(1.5) * decimal.Decimal(clockin.shift.minimum_hourly_rate)),
+                    total_amount= round(regular_hours * clockin.shift.minimum_hourly_rate, 2),
                     splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
                 )
                 payment.save()
