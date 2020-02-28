@@ -6,6 +6,7 @@ from api.models import SHIFT_STATUS_CHOICES
 from django.utils import timezone
 from datetime import timedelta, datetime
 from django.apps import apps
+from decimal import Decimal
 import pytz
 
 
@@ -158,7 +159,6 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             'regular_hours':8,
-            'over_time':5,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -191,7 +191,6 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             # 'regular_hours':, # no regular hours
-            'over_time':5,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -255,8 +254,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'splited_payment': True,
             'status':'PENDING',
             # 'breaktime_minutes':5,
-            'regular_hours': 6, 
-            'over_time':5,
+            'regular_hours': 6,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -265,7 +263,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         response = self.client.post(url, data=payload)
         response_json = response.json()
         print(response_json)
-        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin overtime")
+        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin breaktime minutes")
 
     def test_two_day_shift_payment(self):
 
@@ -353,4 +351,41 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         # self.assertEquals(
         #     updated_employer.payroll_period_starting_time > today, True, "Next starting period time must be next week")
 
-        
+    def test_create_payment_verify_amounts(self):
+        """Create a PayrollPaymentEmployer with wrong total_amount value, then verify returned total_amount"""
+        test_shift, _, __ = self._make_shift(
+            shiftkwargs={'status': 'OPEN', 'starting_at': timezone.now(),
+                         'ending_at': timezone.now() + timedelta(hours=8), 'minimum_hourly_rate': 15,
+                         'minimum_allowed_rating': 0, 'maximum_clockin_delta_minutes': 15,
+                         'maximum_clockout_delay_minutes': 15, 'maximum_allowed_employees': 5,
+                         'employees': self.test_employee},
+            employer=self.test_employer)
+        test_period = mixer.blend('api.PayrollPeriod', employer=self.test_employer)
+
+        payload = {
+            'payroll_period': test_period.id,
+            'employee': self.test_employee.id,
+            'employer': self.test_employer.id,
+            'shift': test_shift.id,
+            'splited_payment': True,
+            'status': 'PENDING',
+            'breaktime_minutes': 5,
+            'regular_hours': 8,
+            'hourly_rate': 10,
+            'total_amount': 13,
+        }
+        url = reverse_lazy('api:me-get-payroll-payments-employer')
+        response = self.client.post(url, data=payload)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('breaktime_minutes'), 5, response_json)
+        self.assertEqual(Decimal(response_json.get('regular_hours')), Decimal(payload.get('regular_hours')), response_json)
+        self.assertEqual(Decimal(response_json.get('over_time')), Decimal('0.00'), response_json)
+        self.assertIsNotNone(response_json.get('hourly_rate'), response_json)
+        self.assertIsNotNone(response_json.get('total_amount'), response_json)
+        limit_minimum_amount = round((Decimal(payload.get('regular_hours')) - 1) * Decimal(response_json.get('hourly_rate')),
+                                     2)
+        limit_maximum_amount = round(Decimal(payload.get('regular_hours')) * Decimal(response_json.get('hourly_rate')),
+                                     2)
+        self.assertGreaterEqual(Decimal(response_json.get('total_amount')), limit_minimum_amount, response_json)
+        self.assertLessEqual(Decimal(response_json.get('total_amount')), limit_maximum_amount, response_json)

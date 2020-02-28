@@ -1,5 +1,6 @@
 import pytz
 from datetime import datetime, timedelta
+from decimal import Decimal
 from mixer.backend.django import mixer
 
 from django.apps import apps
@@ -50,12 +51,18 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.test_employer.payroll_period_starting_time = begin_date
         self.test_employer.save()
         _, shift, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
-                                                  period=self.test_period, mykwargs={"status": "APPROVED"})
+                                                  period=self.test_period,
+                                                  mykwargs={"status": "APPROVED", "regular_hours": 18, "over_time": 0,
+                                                            "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 360})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
-                                              period=self.test_period, mykwargs={"status": "APPROVED"},
+                                              period=self.test_period,
+                                              mykwargs={"status": "APPROVED", "regular_hours": 30, "over_time": 0,
+                                                        "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 600},
                                               relatedkwargs={'shift': shift})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
-                                              period=self.test_period, mykwargs={"status": "APPROVED"})
+                                              period=self.test_period,
+                                              mykwargs={"status": "APPROVED", "regular_hours": 15, "over_time": 0,
+                                                        "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 300})
 
         begin_date = begin_date + timedelta(days=7)
         self.test_period2 = self._make_period(self.test_employer, begin_date)
@@ -187,19 +194,44 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.assertEqual(response.status_code, 404, response.content.decode())
 
     def test_finalize_period(self):
-        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period2.id})
+        """Test finalize period, verifying amounts"""
+        employee_payments_qty = EmployeePayment.objects.filter(employer=self.test_employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
         self.client.force_login(self.test_user_employer)
         response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
-        self.assertEqual(response_json.get('id'), self.test_period2.id, response_json)
+        self.assertEqual(response_json.get('id'), self.test_period.id, response_json)
         self.assertEqual(response_json.get('employer'), self.test_employer.id, response_json)
         self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
-        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
-                         employee_payments + 1)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_employer).count(), employee_payments_qty + 2)
+        # verify amounts, with no over_time
+        employee_payment = EmployeePayment.objects.get(employer_id=self.test_employer.id,
+                                                       employee_id=self.test_employee2.id,
+                                                       payroll_period_id=self.test_period.id)
+        self.assertEqual(employee_payment.earnings, Decimal('300.00'), employee_payment.earnings)
+
+    def test_finalize_period_overtime(self):
+        """Test finalize period, verifying amounts with data that generate over_time"""
+        employee_payments_qty = EmployeePayment.objects.filter(employer=self.test_employer).count()
+        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
+        self.client.force_login(self.test_user_employer)
+        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        response_json = response.json()
+        self.assertEqual(response_json.get('id'), self.test_period.id, response_json)
+        self.assertEqual(response_json.get('employer'), self.test_employer.id, response_json)
+        self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_employer).count(), employee_payments_qty + 2)
+        # verify amounts, with over_time
+        employee_payment = EmployeePayment.objects.get(employer_id=self.test_employer.id,
+                                                       employee_id=self.test_employee.id,
+                                                       payroll_period_id=self.test_period.id)
+        self.assertEqual(employee_payment.earnings, Decimal('360.00') + Decimal('600.00') + Decimal('80.00'),
+                         employee_payment.earnings)
 
     def test_update_status_period(self):
+        """Test trying to update status to same value (that period already has)"""
         prev_status = self.test_period.status
         self.test_period.status = 'FINALIZED'
         self.test_period.save()
