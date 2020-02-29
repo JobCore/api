@@ -52,16 +52,16 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.test_employer.save()
         _, shift, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
                                                   period=self.test_period,
-                                                  mykwargs={"status": "APPROVED", "regular_hours": 18, "over_time": 0,
-                                                            "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 360})
+                                                  mykwargs={"status": "APPROVED", "regular_hours": 10, "over_time": 8,
+                                                            "breaktime_minutes": 15, "hourly_rate": 20, "total_amount": 355})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
                                               period=self.test_period,
-                                              mykwargs={"status": "APPROVED", "regular_hours": 30, "over_time": 0,
-                                                        "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 600},
+                                              mykwargs={"status": "APPROVED", "regular_hours": 25, "over_time": 5,
+                                                        "breaktime_minutes": 15, "hourly_rate": 20, "total_amount": 595},
                                               relatedkwargs={'shift': shift})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
                                               period=self.test_period,
-                                              mykwargs={"status": "APPROVED", "regular_hours": 15, "over_time": 0,
+                                              mykwargs={"status": "APPROVED", "regular_hours": 12, "over_time": 3,
                                                         "breaktime_minutes": 0, "hourly_rate": 20, "total_amount": 300})
 
         begin_date = begin_date + timedelta(days=7)
@@ -227,7 +227,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         employee_payment = EmployeePayment.objects.get(employer_id=self.test_employer.id,
                                                        employee_id=self.test_employee.id,
                                                        payroll_period_id=self.test_period.id)
-        self.assertEqual(employee_payment.earnings, Decimal('360.00') + Decimal('600.00') + Decimal('80.00'),
+        self.assertEqual(employee_payment.earnings, Decimal('355.00') + Decimal('595.00') + Decimal('75.00'),
                          employee_payment.earnings)
 
     def test_update_status_period(self):

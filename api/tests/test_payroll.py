@@ -159,6 +159,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             'regular_hours':8,
+            'over_time':5,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -191,6 +192,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             # 'regular_hours':, # no regular hours
+            'over_time':5,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -231,7 +233,8 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         url = reverse_lazy('api:me-get-payroll-payments-employer')
         response = self.client.post(url, data=payload)
         response_json = response.json()
-        self.assertEquals(response.status_code, 200, response_json)
+        print(response_json)
+        self.assertEquals(response.status_code, 400, "No se debe hacer payment sin overtime")
 
     def test_create_payment_without_breaktime_minutes(self):
 
@@ -255,6 +258,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             # 'breaktime_minutes':5,
             'regular_hours': 6,
+            'over_time':5,
             'hourly_rate':10,
             'total_amount':80,
             
@@ -291,6 +295,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status':'PENDING',
             'breaktime_minutes':5,
             'regular_hours':6.25,
+            'over_time':10,
             'hourly_rate':8,
             'total_amount':55,
             
@@ -371,6 +376,7 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'status': 'PENDING',
             'breaktime_minutes': 5,
             'regular_hours': 8,
+            'over_time': 2,
             'hourly_rate': 10,
             'total_amount': 13,
         }
@@ -380,12 +386,14 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         response_json = response.json()
         self.assertEqual(response_json.get('breaktime_minutes'), 5, response_json)
         self.assertEqual(Decimal(response_json.get('regular_hours')), Decimal(payload.get('regular_hours')), response_json)
-        self.assertEqual(Decimal(response_json.get('over_time')), Decimal('0.00'), response_json)
+        self.assertEqual(Decimal(response_json.get('over_time')), Decimal(payload.get('over_time')), response_json)
         self.assertIsNotNone(response_json.get('hourly_rate'), response_json)
         self.assertIsNotNone(response_json.get('total_amount'), response_json)
-        limit_minimum_amount = round((Decimal(payload.get('regular_hours')) - 1) * Decimal(response_json.get('hourly_rate')),
+        limit_minimum_amount = round(Decimal(payload.get('regular_hours') + payload.get('over_time') - 1)
+                                     * Decimal(response_json.get('hourly_rate')),
                                      2)
-        limit_maximum_amount = round(Decimal(payload.get('regular_hours')) * Decimal(response_json.get('hourly_rate')),
+        limit_maximum_amount = round(Decimal(payload.get('regular_hours') + payload.get('regular_hours'))
+                                     * Decimal(response_json.get('hourly_rate')),
                                      2)
         self.assertGreaterEqual(Decimal(response_json.get('total_amount')), limit_minimum_amount, response_json)
         self.assertLessEqual(Decimal(response_json.get('total_amount')), limit_maximum_amount, response_json)
