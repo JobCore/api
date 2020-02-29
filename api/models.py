@@ -755,6 +755,7 @@ class EmployeePayment(models.Model):
     paid = models.BooleanField(blank=True, default=False)
     regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    legal_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # plus 40 hours/week
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
