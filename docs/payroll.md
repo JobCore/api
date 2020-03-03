@@ -203,6 +203,7 @@ http://localhost:5000/api/employers/me/employee-payment/deduction-report?start_d
         },
         ...
     ],
+    "taxes": "2.50",
     "payment_date": "2020-02-13",
     "payroll_period": 
       {

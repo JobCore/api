@@ -458,7 +458,7 @@ class EmployeePaymentDeductionReportSerializer(EmployeePaymentReportSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'deduction_amount', 'deduction_list', 'payment_date', 'payroll_period')
+        fields = ('employee', 'deduction_amount', 'deduction_list', 'payment_date', 'payroll_period', 'taxes')
 
 
 def get_projected_payments(
