@@ -386,7 +386,7 @@ class EmployeePaymentDataSerializer(serializers.Serializer):
         if self.initial_data.get('payment_type') in [PaymentTransaction.ELECT_TRANSF, PaymentTransaction.FAKE]:
             try:
                 BankAccount.objects.get(id=dict_value.get('employer_bank_account_id'),
-                                        user=self.context['employer_user'].profile)
+                                        user__in=self.context['employer'].profile_set.all())
             except BankAccount.DoesNotExist:
                 raise serializers.ValidationError('Wrong employer bank account')
             try:

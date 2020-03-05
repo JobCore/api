@@ -1005,6 +1005,7 @@ class EmployerMeEmployeePaymentView(EmployerView):
             return Response({'error': 'The selected employee payment can not be paid'},
                             status=status.HTTP_400_BAD_REQUEST)
         context_data = {'employee_payment': employee_payment,
+                        'employer': employee_payment.employer,
                         'employer_user': employee_payment.employer.profile_set.last().user,
                         'employee_user': employee_payment.employee.profile_set.last().user}
         serializer = payment_serializer.EmployeePaymentDataSerializer(data=request.data, context=context_data)
