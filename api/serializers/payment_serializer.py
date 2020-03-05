@@ -314,7 +314,8 @@ class BankAccountSmallSerializer(serializers.ModelSerializer):
 
 class EmployerInfoPaymentSerializer(serializers.ModelSerializer):
     """Serializer to get basic information of employer, including bank accounts"""
-    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+    # bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+    bank_accounts = BankAccountSmallSerializer(source='get_bank_accounts', many=True)
 
     class Meta:
         model = Employer
