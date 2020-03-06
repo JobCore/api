@@ -137,7 +137,11 @@ class BankAccountAPIView(APIView):
         return JsonResponse({"success": "created!"}, safe=False)
 
     def get(self, request):
-        accounts = BankAccount.objects.filter(user_id=request.user.profile.id).order_by('id')
+        if request.user.profile.employer:
+            user_list = request.user.profile.employer.profile_set.all()
+        else:
+            user_list = [request.user.profile, ]
+        accounts = BankAccount.objects.filter(user__in=user_list).order_by('id')
         json_accounts = []
         for acc in accounts:
             acc_obj = {

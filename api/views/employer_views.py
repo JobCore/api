@@ -1042,7 +1042,7 @@ class EmployerMeEmployeePaymentView(EmployerView):
                         transaction_id = charge.id
                     payment_t = PaymentTransaction.objects.create(
                         amount=employee_payment.amount,
-                        sender_user=context_data['employer_user'],
+                        sender_user=sender_bank_acc.user.user,
                         receiver_user=context_data['employee_user'],
                         payment_type=serializer.validated_data['payment_type'],
                         payment_data={"service_name": "Stripe",
