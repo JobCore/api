@@ -50,6 +50,11 @@ class BankAccountTestSuite(TestCase, WithMakeUser):
             userkwargs={'username': 'employer1', 'email': 'employer@testdoma.in', 'is_active': True},
             employexkwargs={'rating': 0, 'created_at': timezone.now()}
         )
+        self.test_user_employer_otro, self.test_employer_otro, self.test_profile_employer_otro = self._make_user(
+            'employer',
+            userkwargs={'username': 'employer_otro', 'email': 'employer_otro@testdoma.in', 'is_active': True},
+            employexkwargs={'rating': 0, 'created_at': timezone.now()}
+        )
 
     @patch('plaid.api.item.PublicToken.exchange', return_value={'access_token': '1234'})
     @patch('plaid.api.auth.Auth.get',
@@ -125,25 +130,41 @@ class BankAccountTestSuite(TestCase, WithMakeUser):
             "user_id": self.test_profile_employer.id,
             "name": 'Bank of America Checking',
             "account_id": 'ACCOUNT_IDC',
-            "account": '1234512345',
-            "routing": '12345123456',
+            "account": '12345123451',
+            "routing": '123451234561',
             "wire_routing": '123451234567',
         })
         BankAccount.objects.create(**{
             "user_id": self.test_profile_employer.id,
             "name": 'Bank of America Savings',
             "account_id": 'ACCOUNT_IDS',
-            "account": '1234512345',
-            "routing": '12345123456',
+            "account": '12345123452',
+            "routing": '123451234562',
             "wire_routing": '123451234567',
         })
+
+        # create bank account for same employer with another profile
+        self.test_profile_employer_otro.employer = self.test_employer
+        self.test_profile_employer_otro.save()
+        BankAccount.objects.create(**{
+            "user_id": self.test_profile_employer_otro.id,
+            "name": 'Bank of America Other',
+            "account_id": 'ACCOUNT_IDS',
+            "account": '12345123453',
+            "routing": '123451234563',
+            "wire_routing": '123451234567',
+        })
+
         self.client.force_login(self.test_user_employer)
         url = reverse_lazy('api:api-bank-accounts')
         response = self.client.get(url, content_type="application/json")
-        accounts_len = BankAccount.objects.all().count()
+        self.assertEqual(response.status_code, 200, response.content.decode())
         json_response = response.json()
-        self.assertEqual(accounts_len, len(json_response), response.content)
-        self.assertEqual('Bank of America Checking', json_response[0].get("name"), response.content)
+        self.assertEqual(len(json_response), 3, json_response)
+        for bank_account in json_response:
+            self.assertIn(bank_account.get("name"),
+                          ["Bank of America Checking", "Bank of America Savings", "Bank of America Other"],
+                          bank_account)
 
     def test_delete_bank_accounts(self):
         account = BankAccount.objects.create(**{
