@@ -67,3 +67,7 @@ http://localhost:5000/api/bank-accounts
     ...
 ]
 ```
+
+#### Notes
+
+- Get a list of bank accounts for all profiles related to employer or logged user 
