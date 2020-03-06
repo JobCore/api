@@ -53,11 +53,11 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         _, shift, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
                                                   period=self.test_period,
                                                   mykwargs={"status": "APPROVED", "regular_hours": 10, "over_time": 8,
-                                                            "breaktime_minutes": 15, "hourly_rate": 20, "total_amount": 355})
+                                                            "breaktime_minutes": 15, "hourly_rate": 20, "total_amount": 360})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee,
                                               period=self.test_period,
                                               mykwargs={"status": "APPROVED", "regular_hours": 25, "over_time": 5,
-                                                        "breaktime_minutes": 15, "hourly_rate": 20, "total_amount": 595},
+                                                        "breaktime_minutes": 15, "hourly_rate": 15, "total_amount": 450},
                                               relatedkwargs={'shift': shift})
         _, _, _, _ = self._make_periodpayment(employer=self.test_employer, employee=self.test_employee2,
                                               period=self.test_period,
@@ -211,7 +211,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
                                                        payroll_period_id=self.test_period.id)
         self.assertEqual(employee_payment.earnings, Decimal('300.00'), employee_payment.earnings)
 
-    def test_finalize_period_overtime(self):
+    def test_finalize_period_overtime(self):   # THIS
         """Test finalize period, verifying amounts with data that generate over_time"""
         employee_payments_qty = EmployeePayment.objects.filter(employer=self.test_employer).count()
         url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
@@ -227,7 +227,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         employee_payment = EmployeePayment.objects.get(employer_id=self.test_employer.id,
                                                        employee_id=self.test_employee.id,
                                                        payroll_period_id=self.test_period.id)
-        self.assertEqual(employee_payment.earnings, Decimal('355.00') + Decimal('595.00') + Decimal('75.00'),
+        self.assertEqual(employee_payment.earnings, Decimal('360.00') + Decimal('450.00') + Decimal('60.00'),
                          employee_payment.earnings)
 
     def test_update_status_period(self):
@@ -276,7 +276,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
 
     def test_finalize_and_open_period(self):
         """Test that a period can be change from OPEN to FINALIZED status and vice versa"""
-        employee_payments = EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count()
+        employee_payments_qty = EmployeePayment.objects.filter(employer=self.test_employer).count()
         url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period2.id})
         self.client.force_login(self.test_user_employer)
         # change from OPEN to FINALIZE
@@ -284,12 +284,10 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
         self.assertEqual(response_json.get('status'), 'FINALIZED', response_json)
-        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
-                         employee_payments + 1)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_employer).count(), employee_payments_qty + 1)
         # change from FINALIZE to OPEN
         response = self.client.put(url, data={'status': 'OPEN'}, content_type='application/json')
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
         self.assertEqual(response_json.get('status'), 'OPEN', response_json)
-        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
-                         employee_payments)
+        self.assertEqual(EmployeePayment.objects.filter(employer=self.test_employer).count(), employee_payments_qty)
