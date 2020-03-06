@@ -745,7 +745,7 @@ class PayrollPeriodPayment(models.Model):
     approved_clockout_time= models.DateTimeField(blank=True, null=True)
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=2, default=0, blank=True)   # This value has breaktime deducted already
     over_time = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
     hourly_rate = models.DecimalField(
@@ -762,7 +762,7 @@ class EmployeePayment(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, related_name='employee_payments')
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payments')
     paid = models.BooleanField(blank=True, default=False)
-    regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
+    regular_hours = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # This value has breaktime deducted already
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     legal_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # plus 40 hours/week
     breaktime_minutes = models.IntegerField(blank=True, default=0)

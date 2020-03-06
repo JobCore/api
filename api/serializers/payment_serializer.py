@@ -197,15 +197,12 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-
         params = validated_data.copy()
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
         regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
         over_time = round(decimal.Decimal(params['over_time']), 2)
-        breaktime_hours = round(decimal.Decimal(params['breaktime_minutes'] / 60), 2)
-        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours + over_time - breaktime_hours)), 2)
+        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours + over_time)), 2)
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
-
         return payment
 
 
@@ -228,16 +225,14 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, payment, validated_data):
-
         params = validated_data.copy()
-
-        if 'regular_hours' in params:
-            regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
-            over_time = round(decimal.Decimal(params['over_time']), 2)
-            breaktime_hours = round(decimal.Decimal(params['breaktime_minutes'] / 60), 2)
-            print("Summing: {} + {} ".format(regular_hours, breaktime_hours))
-            params['total_amount'] = round(payment.hourly_rate * (regular_hours + over_time - breaktime_hours), 2)
-
+        params_keys = dict.fromkeys(params, 1)
+        if params_keys.get('regular_hours') or params_keys.get('over_time'):
+            regular_hours = round(decimal.Decimal(params['regular_hours']), 2) if params_keys.get('regular_hours') else payment.regular_hours
+            over_time = round(decimal.Decimal(params['over_time']), 2) if params_keys.get('over_time') else payment.over_time
+            params['total_amount'] = round(payment.hourly_rate * (regular_hours + over_time), 2)
+        elif params_keys.get('total_amount'):
+            params['total_amount'] = payment.total_amount
         return super().update(payment, params)
 
 
@@ -252,44 +247,58 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
         }
 
     def update(self, instance, validated_data):
+        """Note: To calculate gross_amount:
+            (regular_hours + over_time) * hourly_rate; breaktime was deducted in regular_hours already"""
         employer_id = instance.employer_id
         if validated_data.get('status') == FINALIZED:
             # Create EmployeePayment registries to summarize related data from PayrollPeriodPayment
-            for item in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
-                                                            status=APPROVED).values('employee_id')\
-                    .annotate(total_regular_hours=Sum('regular_hours'),
-                              total_over_time=Sum('over_time'),
-                              total_breaktime_minutes=Sum('breaktime_minutes'),
-                              gross_amount=Sum('total_amount')):
-                total_hours = item['total_regular_hours'] + item['total_over_time'] \
-                              - (decimal.Decimal(item['total_breaktime_minutes']) / 60)
-                total_hours = round(decimal.Decimal(total_hours), 2)
-                if total_hours > decimal.Decimal('40.00'):
-                    item_ref = PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id,
-                                                                   employee_id=item['employee_id'],
-                                                                   employer_id=employer_id,
-                                                                   status=APPROVED).last()
-                    overtime_earning = round(item_ref.hourly_rate * (total_hours - 40) * decimal.Decimal('0.5'), 2)
-                    # get_or_create is used to maintain idempotence
-                    EmployeePayment.objects.get_or_create(payroll_period=instance,
-                                                          employee_id=item['employee_id'],
-                                                          employer_id=employer_id,
-                                                          regular_hours=item['total_regular_hours'],
-                                                          over_time=item['total_over_time'],
-                                                          legal_over_time=total_hours - 40,
-                                                          breaktime_minutes=item['total_breaktime_minutes'],
-                                                          earnings=item['gross_amount'] + overtime_earning,
-                                                          )
-                else:
-                    # get_or_create is used to maintain idempotence
-                    EmployeePayment.objects.get_or_create(payroll_period=instance,
-                                                          employee_id=item['employee_id'],
-                                                          employer_id=employer_id,
-                                                          regular_hours=item['total_regular_hours'],
-                                                          over_time=item['total_over_time'],
-                                                          breaktime_minutes=item['total_breaktime_minutes'],
-                                                          earnings=item['gross_amount'],
-                                                          )
+            total_regular_hours = total_over_time = total_breaktime_minutes = gross_amount = 0
+            prev_employee_id = legal_overtime_hours = overtime_earnings = 0
+            for ppp in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
+                                                           status=APPROVED).order_by('employee_id', 'id'):
+                if ppp.employee.id != prev_employee_id:
+                    if prev_employee_id:   # to avoid if value is 0 (fake initial value)
+                        # get_or_create is used to maintain idempotence
+                        EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                              employee_id=prev_employee_id,
+                                                              employer_id=employer_id,
+                                                              regular_hours=total_regular_hours,
+                                                              over_time=total_over_time,
+                                                              legal_over_time=legal_overtime_hours,
+                                                              breaktime_minutes=total_breaktime_minutes,
+                                                              earnings=gross_amount + overtime_earnings,
+                                                              )
+                        total_regular_hours = total_over_time = total_breaktime_minutes = gross_amount = 0
+                        legal_overtime_hours = overtime_earnings = 0
+                    prev_employee_id = ppp.employee.id
+
+                if (total_regular_hours + total_over_time) >= decimal.Decimal('40.00'):
+                    legal_overtime_hours += ppp.regular_hours + ppp.over_time
+                    overtime_earnings += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate
+                                                               * decimal.Decimal('0.5')), 2)
+                elif (total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time) > decimal.Decimal('40.00'):
+                    overtime_hours = total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time - 40
+                    legal_overtime_hours += overtime_hours
+                    overtime_earnings += round(decimal.Decimal(overtime_hours * ppp.hourly_rate
+                                                               * decimal.Decimal('0.5')), 2)
+
+                total_regular_hours += ppp.regular_hours
+                total_over_time += ppp.over_time
+                total_breaktime_minutes += ppp.breaktime_minutes
+                gross_amount += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate), 2)
+
+            # get_or_create is used to maintain idempotence
+            if prev_employee_id:   # to avoid if value is 0 (fake initial value)
+                EmployeePayment.objects.get_or_create(payroll_period=instance,
+                                                      employee_id=prev_employee_id,
+                                                      employer_id=employer_id,
+                                                      regular_hours=total_regular_hours,
+                                                      over_time=total_over_time,
+                                                      legal_over_time=legal_overtime_hours,
+                                                      breaktime_minutes=total_breaktime_minutes,
+                                                      earnings=gross_amount + overtime_earnings,
+                                                      )
+
         elif validated_data.get('status') == OPEN:
             # Delete existing EmployeePayment registries for current period
             EmployeePayment.objects.filter(payroll_period=instance, employer_id=employer_id).delete()
