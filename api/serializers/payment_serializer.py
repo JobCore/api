@@ -314,7 +314,8 @@ class BankAccountSmallSerializer(serializers.ModelSerializer):
 
 class EmployerInfoPaymentSerializer(serializers.ModelSerializer):
     """Serializer to get basic information of employer, including bank accounts"""
-    bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+    # bank_accounts = BankAccountSmallSerializer(source='profile_set.last.bank_accounts', many=True)
+    bank_accounts = BankAccountSmallSerializer(source='get_bank_accounts', many=True)
 
     class Meta:
         model = Employer
@@ -385,7 +386,7 @@ class EmployeePaymentDataSerializer(serializers.Serializer):
         if self.initial_data.get('payment_type') in [PaymentTransaction.ELECT_TRANSF, PaymentTransaction.FAKE]:
             try:
                 BankAccount.objects.get(id=dict_value.get('employer_bank_account_id'),
-                                        user=self.context['employer_user'].profile)
+                                        user__in=self.context['employer'].profile_set.all())
             except BankAccount.DoesNotExist:
                 raise serializers.ValidationError('Wrong employer bank account')
             try:

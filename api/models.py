@@ -149,6 +149,15 @@ class Employer(models.Model):
     def __str__(self):
         return self.title
 
+    def get_bank_accounts(self):
+        """Get bank accounts of all profiles related to this Employer"""
+        bank_account_list = []
+        for profile in self.profile_set.all():
+            for bank_account in profile.bank_accounts.all():
+                bank_account_list.append(bank_account)
+        return bank_account_list
+
+
 ACTIVE = 'ACTIVE'
 EXPIRED = 'EXPIRED'
 CANCELLED = 'CANCELLED'
