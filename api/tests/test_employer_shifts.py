@@ -1,3 +1,4 @@
+from mock import patch
 from unittest import expectedFailure
 
 from django.test import TestCase
@@ -37,7 +38,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.shift_open_ids = [self.shift.id, shift.id]
         self.all_shift_ids = [self.shift.id, shift.id]
         shift, _, _ = self._make_shift(self.test_employer,
-                                       shiftkwargs={'status': 'FILLED', 'maximum_allowed_employees': 2})
+                                       shiftkwargs={'status': 'FILLED', 'maximum_allowed_employees': 0})
         self.shift_filled_ids = [shift.id]
         self.all_shift_ids.append(shift.id)
         shift, _, _ = self._make_shift(self.test_employer,
@@ -61,11 +62,9 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         shift, _, _ = self._make_shift(self.test_employer,
                                        shiftkwargs={'status': 'OPEN', 'maximum_allowed_employees': 2})
-        self.shift_open_ids.append(shift.id)
         self.all_shift_ids.append(shift.id)
-        shift.employees.add(self.test_employee)
-        shift.employees.add(self.test_employee2)
-        self.shift_fill_ids = [shift.id]
+        self.shift_open_ids.append(shift.id)
+        self.shift_to_fill = shift.id
 
     def test_get_my_shifts(self):
         url = reverse_lazy('api:me-employer-get-shifts')
@@ -127,21 +126,64 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakeShift):
             self.assertIsInstance(shift.get('employees'), list, shift)
             self.assertIsInstance(shift.get('candidates'), list, shift)
 
-    def test_get_my_shift_fill_condition(self):
-        url = reverse_lazy('api:me-employer-get-shifts') + '?filled=true'
+    def test_get_my_shift_filled_condition(self):
+        """Test get my shifts with FILLED status"""
         self.client.force_login(self.test_user_employer)
+
+        url = reverse_lazy('api:me-employer-update-shift-employees', kwargs={'id': self.shift_to_fill})
+        response = self.client.put(url,
+                                   content_type='application/json',
+                                   data={"employees": [self.test_employee.id, self.test_employee2.id]}
+                                   )
+        self.assertEqual(response.status_code, 200, response.content.decode())
+
+        url = reverse_lazy('api:me-employer-get-shifts') + '?filled=true'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         response_json = response.json()
         self.assertIsInstance(response_json, list, response_json)
-        self.assertEqual(len(response_json), 1, response_json)
+        self.assertEqual(len(response_json), 2, response_json)
         for shift in response_json:
-            self.assertIn(shift.get('id'), self.shift_fill_ids, shift)
+            self.assertIn(shift.get('id'), self.shift_filled_ids + [self.shift_to_fill], shift)
             self.assertEqual(shift.get('employer'), self.test_employer.id, shift)
-            self.assertIn(shift.get('status'), ['OPEN'], shift)
+            self.assertIn(shift.get('status'), ['FILLED'], shift)
             self.assertIsInstance(shift.get('employees'), list, shift)
-            self.assertEqual(len(shift.get('employees')), 2, shift)
+            if len(shift.get('employees')):
+                self.assertEqual(len(shift.get('employees')), 2, shift)
             self.assertIsInstance(shift.get('candidates'), list, shift)
+
+    @patch('api.utils.notifier.notify_shift_candidate_update')
+    def test_fill_nofill_my_shift(self, mocked_notify_result):
+        """Test one of my shift, changing it between FILLED and OPEN status"""
+        self.client.force_login(self.test_user_employer)
+        url_get_shift = reverse_lazy('api:me-employer-id-shifts', kwargs={'id': self.shift_to_fill})
+        url_put = reverse_lazy('api:me-employer-update-shift-employees', kwargs={'id': self.shift_to_fill})
+        # check that shift is OPEN
+        response = self.client.get(url_get_shift)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        self.assertEqual(response.json().get('status'), 'OPEN', response.json())
+
+        # add employees to fill the shift
+        response = self.client.put(url_put,
+                                   content_type='application/json',
+                                   data={"employees": [self.test_employee.id, self.test_employee2.id]}
+                                   )
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        # check that shift is FILLED
+        response = self.client.get(url_get_shift)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        self.assertEqual(response.json().get('status'), 'FILLED', response.json())
+
+        # remove employees to no fill the shift
+        response = self.client.put(url_put,
+                                   content_type='application/json',
+                                   data={"employees": [self.test_employee.id]}
+                                   )
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        # check that fill is OPEN
+        response = self.client.get(url_get_shift)
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        self.assertEqual(response.json().get('status'), 'OPEN', response.json())
 
     @expectedFailure
     def test_get_my_shifts_wrong_status(self):

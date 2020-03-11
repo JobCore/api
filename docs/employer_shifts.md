@@ -156,7 +156,7 @@ or the following when **serializer=big** is provided
 
 - Status values can be uppercase or lowercase.
 - If `status` parameter is not provided, shifts with CANCELLED status are not returned.
-- `filled` parameter filter to shifts where number of employees == maximum_allowed_employees.
+- `filled` parameter with `true` value is equal to use `status` parameter with `filled` value
 
 
 ## Get data of shift related to current Employer
