@@ -593,7 +593,7 @@ def update_shift_employees(shift, updated_employees):
             ShiftEmployee.objects.create(employee=employee, shift=shift)
 
     # update FILLED status, if condition is met
-    if shift.maximum_allowed_employees == shift.employees.count():
+    if shift.maximum_allowed_employees and shift.maximum_allowed_employees == shift.employees.count():
         shift.status = FILLED
         shift.save()
     elif shift.status == FILLED:
