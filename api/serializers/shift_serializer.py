@@ -6,7 +6,7 @@ from rest_framework import serializers
 from api.utils import notifier
 from django.db.models import Q
 from django.utils import timezone
-from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS
+from api.models import Shift, ShiftInvite, ShiftApplication, Employee, Employer, ShiftEmployee, Position, Venue, User, Profile, Clockin, SHIFT_INVITE_STATUS_CHOICES, SHIFT_APPLICATION_RESTRICTIONS, FILLED, OPEN
 BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
 
 from api.utils.loggers import log_debug
@@ -272,7 +272,7 @@ class ShiftCandidatesAndEmployeesSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         shift = Shift.objects.get(id=self.instance.id)
-        if ('status' in data and data['status'] !='OPEN') and shift.status != 'OPEN':
+        if ('status' in data and data['status'] !='OPEN') or (shift.status != OPEN and shift.status != FILLED):
             raise serializers.ValidationError('This shift is not opened for applicants')
 
         if 'employees' in data and len(data['employees']) > shift.maximum_allowed_employees:
@@ -592,19 +592,24 @@ def update_shift_employees(shift, updated_employees):
             talents_to_notify["accepted"].append(employee)
             ShiftEmployee.objects.create(employee=employee, shift=shift)
 
+    # update FILLED status, if condition is met
+    if shift.maximum_allowed_employees and shift.maximum_allowed_employees == shift.employees.count():
+        shift.status = FILLED
+        shift.save()
+    elif shift.status == FILLED:
+        shift.status = OPEN
+        shift.save()
+
     return talents_to_notify
 
 
 def update_shift_candidates(shift, updated_candidates):
-    current_candidates = shift.candidates.all()
     new_candidates = Employee.objects.filter(id__in=updated_candidates)
-    for employee in current_candidates:
-        if employee not in new_candidates:
-            ShiftApplication.objects.filter(
-                employee__id=employee.id,
-                shift__id=shift.id).delete()
-    for employee in new_candidates:
-        if employee not in current_candidates:
-            ShiftApplication.objects.create(employee=employee, shift=shift)
+    ShiftApplication.objects.filter(shift__id=shift.id).exclude(employee__in=new_candidates).delete()
+
+    candidate_ids = shift.candidates.values_list('id', flat=True)
+    candidates_add = new_candidates.exclude(id__in=candidate_ids)
+    for employee in candidates_add:
+        ShiftApplication.objects.create(employee=employee, shift=shift)
 
     return None
