@@ -29,7 +29,7 @@ from api.models import (
     BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
     PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
     Shift, ShiftApplication, ShiftInvite, Venue,
-    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
+    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, FILLED,
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
@@ -514,9 +514,7 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
             qFilled = request.GET.get('filled')
             if qFilled == 'true':
-                shifts = shifts.annotate(total_employees=Count('employees')).filter(
-                    total_employees=F('maximum_allowed_employees')
-                )
+                shifts = shifts.filter(status=FILLED)
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
