@@ -211,7 +211,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
                                                        payroll_period_id=self.test_period.id)
         self.assertEqual(employee_payment.earnings, Decimal('300.00'), employee_payment.earnings)
 
-    def test_finalize_period_overtime(self):   # THIS
+    def test_finalize_period_overtime(self):
         """Test finalize period, verifying amounts with data that generate over_time"""
         employee_payments_qty = EmployeePayment.objects.filter(employer=self.test_employer).count()
         url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': self.test_period.id})
