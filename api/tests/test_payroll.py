@@ -8,6 +8,7 @@ from datetime import timedelta, datetime
 from django.apps import apps
 from decimal import Decimal
 import pytz
+import math
 
 
 Employer = apps.get_model('api', 'Employer')
@@ -375,9 +376,9 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
             'splited_payment': True,
             'status': 'PENDING',
             'breaktime_minutes': 5,
-            'regular_hours': 8,
-            'over_time': 2,
-            'hourly_rate': 10,
+            'regular_hours': 6,
+            'over_time': 2.42,
+            'hourly_rate': 8.4,
             'total_amount': 13,
         }
         url = reverse_lazy('api:me-get-payroll-payments-employer')
@@ -386,14 +387,11 @@ class Payroll(TestCase, WithMakeUser, WithMakeShift):
         response_json = response.json()
         self.assertEqual(response_json.get('breaktime_minutes'), 5, response_json)
         self.assertEqual(Decimal(response_json.get('regular_hours')), Decimal(payload.get('regular_hours')), response_json)
-        self.assertEqual(Decimal(response_json.get('over_time')), Decimal(payload.get('over_time')), response_json)
+        self.assertEqual(Decimal(response_json.get('over_time')), Decimal(str(payload.get('over_time'))), response_json)
         self.assertIsNotNone(response_json.get('hourly_rate'), response_json)
         self.assertIsNotNone(response_json.get('total_amount'), response_json)
-        limit_minimum_amount = round(Decimal(payload.get('regular_hours') + payload.get('over_time') - 1)
-                                     * Decimal(response_json.get('hourly_rate')),
-                                     2)
-        limit_maximum_amount = round(Decimal(payload.get('regular_hours') + payload.get('regular_hours'))
-                                     * Decimal(response_json.get('hourly_rate')),
-                                     2)
-        self.assertGreaterEqual(Decimal(response_json.get('total_amount')), limit_minimum_amount, response_json)
-        self.assertLessEqual(Decimal(response_json.get('total_amount')), limit_maximum_amount, response_json)
+        total_amount = Decimal(str(
+            math.trunc((Decimal(response_json.get('regular_hours')) + Decimal(response_json.get('over_time')))
+                       * Decimal(response_json.get('hourly_rate')) * 100) / 100
+        ))
+        self.assertEqual(Decimal(response_json.get('total_amount')), total_amount, response_json)
