@@ -369,6 +369,9 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
                 amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:
                 amount = decimal.Decimal('{:.2f}'.format(deduction.value))
+            amount = decimal.Decimal(str(
+                math.trunc(amount * 100) / 100
+            ))
             self.context['total_deductions'] += amount
             res_list.append({'name': deduction.name, 'amount': amount})
         return res_list
@@ -376,17 +379,13 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
     def get_taxes(self, instance):
         if instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 7:
             period_quantity = 52
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 14:
             period_quantity = 26
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS:
             period_quantity = 260
-            wage_amount = instance.earnings
         else:
             period_quantity = 12 / instance.payroll_period.length
-            wage_amount = instance.earnings
-        return instance.employee.calculate_tax_amount(wage_amount, period_quantity)
+        return instance.employee.calculate_tax_amount(instance.earnings, period_quantity)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

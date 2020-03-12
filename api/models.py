@@ -1,3 +1,4 @@
+import math
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -258,7 +259,7 @@ class Employee(models.Model):
         if annual_withholding < 0:
             annual_withholding = Decimal('0.00')
         annual_withholding += self.extra_withholding
-        return round(Decimal(annual_withholding / period_quantity), 2)
+        return Decimal(str(math.trunc(annual_withholding / period_quantity * 100) / 100))
 
 
 ACTIVE = 'ACTIVE'
