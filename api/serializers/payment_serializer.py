@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import itertools
+import math
 
 from django.db.models import Q, Sum
 from django.utils import timezone
@@ -274,18 +275,22 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
 
                 if (total_regular_hours + total_over_time) >= decimal.Decimal('40.00'):
                     legal_overtime_hours += ppp.regular_hours + ppp.over_time
-                    overtime_earnings += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate * decimal.Decimal('0.5') * 100) / 100
+                    ))
                 elif (total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time) > decimal.Decimal('40.00'):
                     overtime_hours = total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time - 40
                     legal_overtime_hours += overtime_hours
-                    overtime_earnings += round(decimal.Decimal(overtime_hours * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc(overtime_hours * ppp.hourly_rate * decimal.Decimal('0.5') * 100) / 100
+                    ))
 
                 total_regular_hours += ppp.regular_hours
                 total_over_time += ppp.over_time
                 total_breaktime_minutes += ppp.breaktime_minutes
-                gross_amount += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate), 2)
+                gross_amount += decimal.Decimal(str(
+                    math.trunc((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate * 100) / 100
+                ))
 
             # get_or_create is used to maintain idempotence
             if prev_employee_id:   # to avoid if value is 0 (fake initial value)
