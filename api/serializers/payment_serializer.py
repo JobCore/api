@@ -202,7 +202,9 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
         regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
         over_time = round(decimal.Decimal(params['over_time']), 2)
-        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours + over_time)), 2)
+        params['total_amount'] = decimal.Decimal(str(
+            math.trunc(params['hourly_rate'] * (regular_hours + over_time) * 100) / 100
+        ))
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
         return payment
 
@@ -231,7 +233,9 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         if params_keys.get('regular_hours') or params_keys.get('over_time'):
             regular_hours = round(decimal.Decimal(params['regular_hours']), 2) if params_keys.get('regular_hours') else payment.regular_hours
             over_time = round(decimal.Decimal(params['over_time']), 2) if params_keys.get('over_time') else payment.over_time
-            params['total_amount'] = round(payment.hourly_rate * (regular_hours + over_time), 2)
+            params['total_amount'] = decimal.Decimal(str(
+                math.trunc(payment.hourly_rate * (regular_hours + over_time) * 100) / 100
+            ))
         elif params_keys.get('total_amount'):
             params['total_amount'] = payment.total_amount
         return super().update(payment, params)
