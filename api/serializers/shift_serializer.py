@@ -71,7 +71,16 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
         fields = ('title', 'id', 'latitude', 'longitude', 'street_address', 'zip_code')
 
 
-class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
+class ShiftStatusMixin:
+
+    def get_status(self, instance):
+        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
+            return FILLED
+        else:
+            return instance.status
+
+
+class ShiftGetTinyForEmployeesSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     employer = EmployerGetSmallSerializer(read_only=True)
@@ -90,14 +99,8 @@ class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
-
-class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
+class ShiftGetPublicTinySerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     status = serializers.SerializerMethodField()
@@ -116,14 +119,8 @@ class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
-
-class ShiftGetTinySerializer(serializers.ModelSerializer):
+class ShiftGetTinySerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     status = serializers.SerializerMethodField()
@@ -141,14 +138,8 @@ class ShiftGetTinySerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
-
-class ShiftGetSmallSerializer(serializers.ModelSerializer):
+class ShiftGetSmallSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     status = serializers.SerializerMethodField()
@@ -165,14 +156,8 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
-
-class ShiftGetBigListSerializer(serializers.ModelSerializer):
+class ShiftGetBigListSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     employees = EmployeeGetSmallSerializer(many=True, read_only=True)
@@ -187,12 +172,6 @@ class ShiftGetBigListSerializer(serializers.ModelSerializer):
             'rating',
             'application_restriction',
             'updated_at')
-
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
 
 #
@@ -390,7 +369,7 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         return shift
 
 
-class ShiftGetSerializer(serializers.ModelSerializer):
+class ShiftGetSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     candidates = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
@@ -403,12 +382,6 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         exclude = ()
-
-    def get_status(self, instance):
-        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
-            return FILLED
-        else:
-            return instance.status
 
 
 class ShiftGetBigSerializer(ShiftGetSerializer):
