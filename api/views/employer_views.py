@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from django.db.models import Q, Count, F
+from django.db.models import Q, BooleanField, Case, Count, F, Value, When
 from django.http import HttpRequest
 
 import requests
@@ -29,7 +29,7 @@ from api.models import (
     BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
     PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
     Shift, ShiftApplication, ShiftInvite, Venue,
-    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, FILLED,
+    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, OPEN,
     Shift, ShiftApplication, Employee,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
@@ -128,10 +128,11 @@ class EmployerMeUsersView(EmployerView):
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
+        
         if serializer.is_valid():
             serializer.save()
-
             serializer = user_serializer.UserGetSmallSerializer(user, many=False)
+            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -509,12 +510,20 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             elif qStatus:
                 status_list = qStatus.split(",")
                 shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+                if OPEN in status_list and 'filled' not in request.GET.keys():
+                    shifts = shifts.annotate(total_employees=Count('employees')).exclude(
+                        total_employees=F('maximum_allowed_employees')
+                    )
             else:
                 shifts = shifts.exclude(status='CANCELLED')
 
             qFilled = request.GET.get('filled')
             if qFilled == 'true':
-                shifts = shifts.filter(status=FILLED)
+                shifts = shifts.annotate(total_employees=Count('employees'))\
+                    .filter(total_employees=F('maximum_allowed_employees'))
+            elif qFilled == 'false':
+                shifts = shifts.annotate(total_employees=Count('employees'))\
+                    .exclude(total_employees=F('maximum_allowed_employees'))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -660,10 +669,18 @@ class EmployerShiftNewView(EmployerView, HeaderLimitOffsetPagination):
                         "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
                 if status_list:
                     shifts = shifts.filter(status__in=status_list)
+                    if OPEN in status_list and 'filled' not in request.GET.keys():
+                        shifts = shifts.annotate(total_employees=Count('employees')).exclude(
+                            total_employees=F('maximum_allowed_employees')
+                        )
 
             qFilled = request.GET.get('filled')
             if qFilled == 'true':
                 shifts = shifts.annotate(total_employees=Count('employees')).filter(
+                    total_employees=F('maximum_allowed_employees')
+                )
+            elif qFilled == 'false':
+                shifts = shifts.annotate(total_employees=Count('employees')).exclude(
                     total_employees=F('maximum_allowed_employees')
                 )
 

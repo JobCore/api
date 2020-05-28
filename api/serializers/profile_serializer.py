@@ -52,7 +52,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         exclude = ()
         extra_kwargs = {
             'id': {'read_only': True},
-            'employer': {'read_only': True},
+            ### remove to change employer
+            # 'employer': {'read_only': True},
             'employee': {'read_only': True},
             'status': {'read_only': True}
         }

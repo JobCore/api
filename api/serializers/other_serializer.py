@@ -139,17 +139,18 @@ class JobCoreInviteGetSerializer(serializers.ModelSerializer):
 
 class JobCoreInvitePostSerializer(serializers.ModelSerializer):
     include_sms = serializers.BooleanField(default=False, write_only=True)
-
+    talent = serializers.BooleanField(default=False, write_only=True)
+    # is_jobcore_employer = serializers.BooleanField(default=False, write_only=True)
     def validate(self, data):
         if not data.get('email'):
             raise serializers.ValidationError('invalid payload')
-
+   
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
             if profile is not None:
+                # if profile.employer is None:
                 raise serializers.ValidationError("The user is already registered in jobcore")
-
         try:
             sender = self.context['request'].user.profile.id
             JobCoreInvite.objects.get(
@@ -167,11 +168,20 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # TODO: send email message not working
+        # is_jobcore_employer = validated_data.pop('is_jobcore_employer', True)
+        # user = User.objects.filter(email=validated_data["email"]).first()
+        # if user is not None:
+        #     profile = Profile.objects.filter(user=user).first()
+        #     if profile is not None:
+        #         if profile.employer is not None:
+        #             is_jobcore_employer = True
+
+        talent = validated_data.pop('talent', False)
         include_sms = validated_data.pop('include_sms', False)
         invite = JobCoreInvite(**validated_data)
         invite.save()
-
-        notifier.notify_jobcore_invite(invite, include_sms=include_sms)
+        # notifier.notify_jobcore_invite(invite, include_sms=include_sms, is_jobcore_employer=is_jobcore_employer)
+        notifier.notify_jobcore_invite(invite, include_sms=include_sms, talent=talent)
 
         return invite
 

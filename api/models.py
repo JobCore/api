@@ -1,7 +1,8 @@
+import math
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
@@ -258,7 +259,7 @@ class Employee(models.Model):
         if annual_withholding < 0:
             annual_withholding = Decimal('0.00')
         annual_withholding += self.extra_withholding
-        return round(Decimal(annual_withholding / period_quantity), 2)
+        return Decimal(str(math.trunc(annual_withholding / period_quantity * 100) / 100))
 
 
 ACTIVE = 'ACTIVE'
@@ -273,9 +274,11 @@ PROFILE_STATUS = (
 )
 
 ADMIN = 'ADMIN'
+MANAGER = 'MANAGER'
 SUPERVISOR = 'SUPERVISOR'
 COMPANY_ROLES = (
     (ADMIN, 'Admin'),
+    (MANAGER, 'Manager'),
     (SUPERVISOR, 'Supervisor'),
 )
 
@@ -309,6 +312,7 @@ class Profile(models.Model):
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
+    other_employers = JSONField(blank=True, default=list)
 
     status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 

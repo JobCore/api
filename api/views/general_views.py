@@ -819,7 +819,6 @@ class ProjectedPaymentsView(APIView):
 
 class JobCoreInviteView(APIView):
     def get(self, request, id=False):
-
         if request.user is None:
             raise PermissionDenied("You don't seem to be logged in")
 
@@ -842,12 +841,10 @@ class JobCoreInviteView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         if request.user is None:
             raise PermissionDenied("You don't seem to be logged in")
 
         request.data['sender'] = request.user.profile.id
-
         serializer = other_serializer.JobCoreInvitePostSerializer(
             data=request.data, context={"request": request})
         if serializer.is_valid():

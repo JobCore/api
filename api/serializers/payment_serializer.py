@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import itertools
+import math
 
 from django.db.models import Q, Sum
 from django.utils import timezone
@@ -201,7 +202,9 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
         regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
         over_time = round(decimal.Decimal(params['over_time']), 2)
-        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours + over_time)), 2)
+        params['total_amount'] = decimal.Decimal(str(
+            math.trunc(params['hourly_rate'] * (regular_hours + over_time) * 100) / 100
+        ))
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
         return payment
 
@@ -230,7 +233,9 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         if params_keys.get('regular_hours') or params_keys.get('over_time'):
             regular_hours = round(decimal.Decimal(params['regular_hours']), 2) if params_keys.get('regular_hours') else payment.regular_hours
             over_time = round(decimal.Decimal(params['over_time']), 2) if params_keys.get('over_time') else payment.over_time
-            params['total_amount'] = round(payment.hourly_rate * (regular_hours + over_time), 2)
+            params['total_amount'] = decimal.Decimal(str(
+                math.trunc(payment.hourly_rate * (regular_hours + over_time) * 100) / 100
+            ))
         elif params_keys.get('total_amount'):
             params['total_amount'] = payment.total_amount
         return super().update(payment, params)
@@ -274,18 +279,22 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
 
                 if (total_regular_hours + total_over_time) >= decimal.Decimal('40.00'):
                     legal_overtime_hours += ppp.regular_hours + ppp.over_time
-                    overtime_earnings += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate * decimal.Decimal('0.5') * 100) / 100
+                    ))
                 elif (total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time) > decimal.Decimal('40.00'):
                     overtime_hours = total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time - 40
                     legal_overtime_hours += overtime_hours
-                    overtime_earnings += round(decimal.Decimal(overtime_hours * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc(overtime_hours * ppp.hourly_rate * decimal.Decimal('0.5') * 100) / 100
+                    ))
 
                 total_regular_hours += ppp.regular_hours
                 total_over_time += ppp.over_time
                 total_breaktime_minutes += ppp.breaktime_minutes
-                gross_amount += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate), 2)
+                gross_amount += decimal.Decimal(str(
+                    math.trunc((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate * 100) / 100
+                ))
 
             # get_or_create is used to maintain idempotence
             if prev_employee_id:   # to avoid if value is 0 (fake initial value)
@@ -360,6 +369,9 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
                 amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:
                 amount = decimal.Decimal('{:.2f}'.format(deduction.value))
+            amount = decimal.Decimal(str(
+                math.trunc(amount * 100) / 100
+            ))
             self.context['total_deductions'] += amount
             res_list.append({'name': deduction.name, 'amount': amount})
         return res_list
@@ -367,17 +379,13 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
     def get_taxes(self, instance):
         if instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 7:
             period_quantity = 52
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 14:
             period_quantity = 26
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS:
             period_quantity = 260
-            wage_amount = instance.earnings
         else:
             period_quantity = 12 / instance.payroll_period.length
-            wage_amount = instance.earnings
-        return instance.employee.calculate_tax_amount(wage_amount, period_quantity)
+        return instance.employee.calculate_tax_amount(instance.earnings, period_quantity)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
