@@ -177,6 +177,7 @@ def notify_jobcore_invite(invite, include_sms=False, talent=False):
         "user_email": invite.email
     })
     if talent is False and invite.employer is not None:
+        print(EMPLOYER_URL + "/invite?token_invite=" + token + "&employer="+str(invite.employer.id))
         send_email_message("invite_to_jobcore_employer", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
