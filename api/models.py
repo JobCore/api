@@ -312,7 +312,7 @@ class Profile(models.Model):
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
-    other_employers = JSONField(blank=True, default=list)
+    # other_employers = JSONField(blank=True, default=list)
 
     status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 
