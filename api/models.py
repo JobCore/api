@@ -2,7 +2,7 @@ import math
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
@@ -274,9 +274,11 @@ PROFILE_STATUS = (
 )
 
 ADMIN = 'ADMIN'
+MANAGER = 'MANAGER'
 SUPERVISOR = 'SUPERVISOR'
 COMPANY_ROLES = (
     (ADMIN, 'Admin'),
+    (MANAGER, 'Manager'),
     (SUPERVISOR, 'Supervisor'),
 )
 
@@ -310,6 +312,7 @@ class Profile(models.Model):
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
+    other_employers = JSONField(blank=True, default=list)
 
     status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 

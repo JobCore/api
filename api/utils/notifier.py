@@ -9,6 +9,7 @@ from datetime import timedelta
 API_URL = os.environ.get('API_URL')
 EMPLOYER_URL = os.environ.get('EMPLOYER_URL')
 EMPLOYEE_URL = os.environ.get('EMPLOYEE_URL')
+EMPLOYEE_REGISTER_URL = "https://jobcore.co/job-seekers-signup/"
 BROADCAST_NOTIFICATIONS_BY_EMAIL = os.environ.get('BROADCAST_NOTIFICATIONS_BY_EMAIL')
 
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
@@ -167,29 +168,29 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
         })
 
 
-def notify_jobcore_invite(invite, include_sms=False):
+def notify_jobcore_invite(invite, include_sms=False, talent=False):
+# def notify_jobcore_invite(invite, include_sms=False, is_jobcore_employer=False):
     # manual invite
-
     token = api.utils.jwt.internal_payload_encode({
         "sender_id": invite.sender.id,
         "invite_id": invite.id,
         "user_email": invite.email
     })
-
-    if invite.employer is not None:
+    if talent is False:
         send_email_message("invite_to_jobcore_employer", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
             "COMPANY": invite.sender.user.profile.employer.title,
-            "LINK": EMPLOYER_URL + "/invite?token=" + token + "&employer="+str(invite.employer.id),
+            "LINK": EMPLOYER_URL + "/invite?token_invite=" + token + "&employer="+str(invite.employer.id),
             "DATA": {"type": "invite", "id": invite.id}
         })
+        
     else:
         send_email_message("invite_to_jobcore", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
             "COMPANY": invite.sender.user.profile.employer.title,
-            "LINK": EMPLOYER_URL + "/invite?token=" + token,
+            "LINK": EMPLOYER_URL + "/invite?token_invite=" + token,
             "DATA": {"type": "invite", "id": invite.id}
         })
 

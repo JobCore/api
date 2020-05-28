@@ -10,6 +10,7 @@ from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 
 from jwt.exceptions import DecodeError
+import jwt
 
 from api.serializers import employer_serializer
 from api.actions import employee_actions, auth_actions
@@ -163,6 +164,7 @@ class UserRegisterSerializer(serializers.Serializer):
         #     employer = previous_invite.employer
 
         if account_type == 'employer':
+            status = 'PENDING_EMAIL_VALIDATION'
             if employer is None:
                 args = {
                     "title": business_name,
@@ -170,8 +172,27 @@ class UserRegisterSerializer(serializers.Serializer):
                     "bio": about_business,
                 }
                 employer = Employer.objects.create(**args)
-                
-            Profile.objects.create(user=user, picture='', employer=employer)
+            # if the user is coming from an email link
+            token = self.context.get("token")
+            if token:
+                try:
+                    data = jwt_decode_handler(token)
+                except jwt.ExpiredSignatureError:
+                    raise serializers.ValidationError(" - Token Expired. Please get a new one.")
+                except jwt.InvalidTokenError:
+                    raise serializers.ValidationError(" - Invalid Token.")
+
+                if data['user_email'] == user.email:
+                    status = 'ACTIVE'
+                else: raise serializers.ValidationError(" - Please use the same email where you get this invitation from.") 
+           
+            Profile.objects.create(user=user, picture='', employer=employer, status=status)
+
+            #Update jobcore invitation
+            jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
+
+            jobcore_invites.update(status='ACCEPTED')
+
 
         elif account_type == 'employee':
             status = 'PENDING_EMAIL_VALIDATION'

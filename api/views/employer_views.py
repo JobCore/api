@@ -128,10 +128,11 @@ class EmployerMeUsersView(EmployerView):
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
         serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
+        
         if serializer.is_valid():
             serializer.save()
-
             serializer = user_serializer.UserGetSmallSerializer(user, many=False)
+            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
