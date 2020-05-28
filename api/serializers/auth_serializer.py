@@ -100,6 +100,9 @@ class UserRegisterSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, max_length=14, write_only=True)
     city = serializers.CharField(required=False, max_length=20)
     profile_city = serializers.CharField(required=False, max_length=20)
+    
+    # these are added when created an account thru invitation
+    employer_role = serializers.CharField(required=False,max_length=20, write_only=True)
 
     def validate(self, data):
 
@@ -165,6 +168,7 @@ class UserRegisterSerializer(serializers.Serializer):
 
         if account_type == 'employer':
             status = 'PENDING_EMAIL_VALIDATION'
+            employer_role = 'ADMIN'
             if employer is None:
                 args = {
                     "title": business_name,
@@ -175,6 +179,7 @@ class UserRegisterSerializer(serializers.Serializer):
             # if the user is coming from an email link
             token = self.context.get("token")
             if token:
+                employer_role = ""
                 try:
                     data = jwt_decode_handler(token)
                 except jwt.ExpiredSignatureError:
@@ -185,8 +190,8 @@ class UserRegisterSerializer(serializers.Serializer):
                 if data['user_email'] == user.email:
                     status = 'ACTIVE'
                 else: raise serializers.ValidationError(" - Please use the same email where you get this invitation from.") 
-           
-            Profile.objects.create(user=user, picture='', employer=employer, status=status)
+
+            Profile.objects.create(user=user, picture='', employer=employer, status=status, employer_role=employer_role)
 
             #Update jobcore invitation
             jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
