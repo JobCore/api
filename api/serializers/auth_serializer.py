@@ -97,7 +97,7 @@ class UserRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
-    phone_number = serializers.CharField(required=False, write_only=True, max_length=50)
+    phone_number = serializers.CharField(required=False, write_only=True)
     password = serializers.CharField(required=True, write_only=True)
     city = serializers.CharField(required=False, max_length=20)
     profile_city = serializers.CharField(required=False, max_length=20)
@@ -227,7 +227,7 @@ class UserRegisterSerializer(serializers.Serializer):
             Profile.objects.create(
                 user=user,
                 picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile' + str(
-                    randint(1, 3)) + '.png', employee=emp, status=status, phone_number=phone_number,
+                    randint(1, 3)) + '.png', employee=emp, status=status, phone_number=phone_number or '',
                 profile_city_id=profile_city, city=city)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=True)
