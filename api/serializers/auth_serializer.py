@@ -97,7 +97,8 @@ class UserRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
-    password = serializers.CharField(required=True, max_length=14, write_only=True)
+    phone_number = serializers.CharField(required=False, write_only=True, max_length=50)
+    password = serializers.CharField(required=True, write_only=True)
     city = serializers.CharField(required=False, max_length=20)
     profile_city = serializers.CharField(required=False, max_length=20)
     
@@ -105,7 +106,7 @@ class UserRegisterSerializer(serializers.Serializer):
     employer_role = serializers.CharField(required=False,max_length=20, write_only=True)
 
     def validate(self, data):
-
+        print(data)
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
@@ -147,10 +148,10 @@ class UserRegisterSerializer(serializers.Serializer):
         employer = validated_data.pop('employer', None)
         city = validated_data.pop('city', None)
         business_name = validated_data.pop('business_name', None)
+        phone_number = validated_data.pop('phone_number', None)
         business_website = validated_data.pop('business_website', None)
         about_business = validated_data.pop('about_business', None)
         profile_city = validated_data.pop('profile_city', None)
-
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
@@ -205,6 +206,7 @@ class UserRegisterSerializer(serializers.Serializer):
             # if the user is coming from an email link
             token = self.context.get("token")
             if token:
+                print('no token')
                 # example data: {'sender_id': 1, 'invite_id': 7, 'user_email': 'a+employee5@jobcore.co', 'exp': 1560364249, 'orig_iat': 1560363349}
                 data = jwt_decode_handler(token)
                 if data['user_email'] == user.email:
@@ -212,6 +214,7 @@ class UserRegisterSerializer(serializers.Serializer):
 
             emp = Employee.objects.filter(user__id=user.id).first()
             if emp is None:
+                print('emp is none bro')
                 emp = Employee.objects.create(user=user)
                 user.employee.save()
 
@@ -224,7 +227,7 @@ class UserRegisterSerializer(serializers.Serializer):
             Profile.objects.create(
                 user=user,
                 picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile' + str(
-                    randint(1, 3)) + '.png', employee=emp, status=status,
+                    randint(1, 3)) + '.png', employee=emp, status=status, phone_number=phone_number,
                 profile_city_id=profile_city, city=city)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=True)
@@ -234,7 +237,6 @@ class UserRegisterSerializer(serializers.Serializer):
             jobcore_invites.update(status='ACCEPTED')
 
         notifier.notify_email_validation(user)
-
         return user
 
 
@@ -246,8 +248,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, data):
         try:
             payload = jwt_decode_handler(data["token"])
-        except DecodeError:
-            raise serializers.ValidationError("Invalid token")
+        except jwt.ExpiredSignatureError:
+            raise serializers.ValidationError("Token Expired. Please get a new one.")
+        except jwt.InvalidTokenError:
+            raise serializers.ValidationError("Invalid Token.")
 
         try:
             print(payload)
