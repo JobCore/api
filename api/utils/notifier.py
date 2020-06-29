@@ -58,7 +58,6 @@ def notify_password_reset_code(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-
     send_email_message("password_reset_link", user.email, {
         "link": API_URL + '/api/user/password/reset?token=' + token
     })
@@ -177,7 +176,6 @@ def notify_jobcore_invite(invite, include_sms=False, talent=False):
         "user_email": invite.email
     })
     if talent is False and invite.employer is not None:
-        print(EMPLOYER_URL + "/invite?token_invite=" + token + "&employer="+str(invite.employer.id))
         send_email_message("invite_to_jobcore_employer", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
@@ -187,6 +185,7 @@ def notify_jobcore_invite(invite, include_sms=False, talent=False):
         })
         
     else:
+        print(EMPLOYER_URL + "/invite?token_invite=" + token)
         send_email_message("invite_to_jobcore", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
@@ -234,6 +233,7 @@ def notify_single_shift_invite(invite, withEmail=False):
 
 
 def notify_new_rating(rating):
+    print('the new rating', rating)
     if rating.employee is not None:
         send_email_message("new_rating", rating.employee.user.email, {
             "SENDER": rating.sender.employer.title,

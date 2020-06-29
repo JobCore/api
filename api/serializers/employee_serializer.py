@@ -10,7 +10,7 @@ from api.serializers.position_serializer import PositionSerializer
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture', 'bio')
+        fields = ('picture', 'bio', 'phone_number')
 
 
 class UserGetSmallSerializer(serializers.ModelSerializer):

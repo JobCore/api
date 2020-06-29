@@ -339,7 +339,6 @@ class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
                 starting_at__week_day=django_start_week_day, recurrency_type='WEEKLY',
                 employee_id=self.context['request'].user.profile.id
             )
-
             # if updating
             if self.instance:
                 previous_ablock_in_week = previous_ablock_in_week.exclude(

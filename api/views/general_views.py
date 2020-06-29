@@ -177,12 +177,13 @@ class UserRegisterView(APIView):
         token = None
         if "token" in request.data:
             token = request.data["token"]
-
+        print('request data', request.data)
         serializer = auth_serializer.UserRegisterSerializer(
             data=request.data,
             context={"token": token})
         if serializer.is_valid():
             serializer.save()
+            print('serializer data', serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -254,6 +255,7 @@ class UserView(APIView):
 
 
 class EmployeeView(APIView, HeaderLimitOffsetPagination):
+
     def get(self, request, id=False):
         if (id):
             try:
@@ -266,7 +268,7 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
                 employee, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            employees = Employee.objects.all()
+            employees = Employee.objects.all().order_by('profile__user__first_name')
 
             qName = request.GET.get('full_name')
             if qName:
@@ -617,6 +619,7 @@ class RateView(APIView):
         serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
         if serializer.is_valid():
             serializer.save()
+            print('e valido')
             if isinstance(request.data, list) is False:
                 resp = rating_serializer.RatingSerializer( data=serializer.data[0], many=False)
                 return Response(resp.initial_data, status=status.HTTP_201_CREATED)
