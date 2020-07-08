@@ -300,6 +300,10 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
             if qBadges:
                 employees = employees.filter(badges__id__in=qBadges)
 
+            qRating = request.GET.getlist('rating')
+            if qRating:
+                employees = employees.filter(rating__gte=qRating[0])
+
             serializer = employee_serializer.EmployeeGetSmallSerializer(
                 employees, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
