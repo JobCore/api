@@ -336,9 +336,9 @@ class ProfileMeView(APIView):
             profile = getattr(request.user, 'profile')
         except Profile.DoesNotExist:
             raise PermissionDenied("You don't seem to have a profile")
-
         serializer = profile_serializer.ProfileGetSerializer(
             profile, many=False)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # No POST request needed
