@@ -31,14 +31,13 @@ class UserGetSmallSerializer(serializers.ModelSerializer):
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture', 'id', 'bio', 'status')
+        fields = ('picture', 'id', 'bio', 'status', 'show_tutorial')
 
 
 class ProfileGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer()
     employer = EmployerGetSmallSerializer()
     employee = EmployeeGetTinySerializer()
-
     class Meta:
         model = Profile
         exclude = ()
