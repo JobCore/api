@@ -80,7 +80,6 @@ def notify_email_validation(user):
 def notify_shift_cancellation(user, shift):
     # automatic notification
     shift = Shift.objects.get(id=shift.id)  # IMPORTANT: override the shift
-
     talents_to_notify = shift.candidates.all() | shift.employees.all()
     for talent in talents_to_notify:
 
@@ -90,15 +89,17 @@ def notify_shift_cancellation(user, shift):
             "DATE": shift.starting_at,
             "DATA": {"type": "shift", "id": shift.id}
         })
-
+ 
         send_fcm_notification("cancelled_shift", talent.user.id, {
-            "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
+            "SENDER": '{} {}'.format(
+            talent.user.first_name , talent.user.last_name),
             "COMPANY": user.profile.employer.title,
             "POSITION": shift.position.title,
-            "LINK": EMPLOYER_URL,
+            "LINK": EMPLOYEE_URL,
             "DATE": shift.starting_at.strftime('%m/%d/%Y'),
             "DATA": {"type": "shift", "id": shift.id}
         })
+        
 
 def notify_shift_update(user, shift, pending_invites=[]):
     # automatic notification
