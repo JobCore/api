@@ -128,10 +128,11 @@ def notify_shift_update(user, shift, pending_invites=[]):
             })
 
         send_fcm_notification("new_shift", talent.user.id, {
-            "EMAIL": talent.user.first_name + ' ' + talent.user.last_name,
+            "SENDER": '{} {}'.format(
+            talent.user.first_name , talent.user.last_name),            
             "COMPANY": user.profile.employer.title,
             "POSITION": shift.position.title,
-            "LINK": EMPLOYER_URL,
+            "LINK": EMPLOYEE_URL,
             "DATE": shift.starting_at.strftime('%m/%d/%Y'),
             "DATA": {"type": "shift", "id": shift.id}
         })
@@ -147,8 +148,11 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
             "DATA": {"type": "shift", "id": shift.id}
         })
         send_fcm_notification('applicant_accepted', talent.user.id, {
+            "SENDER": '{} {}'.format(
+            talent.user.first_name , talent.user.last_name), 
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
+            "LINK": EMPLOYEE_URL,
             "DATE": shift.starting_at,
             "DATA": {"type": "shift", "id": shift.id}
         })
@@ -161,8 +165,11 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
             "DATA": {"type": "shift", "id": shift.id}
         })
         send_fcm_notification('applicant_rejected', talent.user.id, {
+            "SENDER": '{} {}'.format(
+            talent.user.first_name , talent.user.last_name), 
             "COMPANY": shift.employer.title,
             "POSITION": shift.position.title,
+            "LINK": EMPLOYEE_URL,
             "DATE": shift.starting_at,
             "DATA": {"type": "shift", "id": shift.id}
         })
