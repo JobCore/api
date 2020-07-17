@@ -268,7 +268,7 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
                 employee, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            employees = Employee.objects.all().order_by('profile__user__first_name')
+            employees = Employee.objects.all().order_by('profile__user__last_name')
 
             qName = request.GET.get('full_name')
             if qName:
