@@ -355,6 +355,10 @@ class ShiftPostSerializer(serializers.ModelSerializer):
             talents = notifier.get_talents_to_notify(shift)
 
         manual_invitations = (shift.application_restriction == 'SPECIFIC_PEOPLE')
+
+        print('talents', talents)
+        print('include email', includeEmailNotification)
+
         for talent in talents:
             invite = ShiftInvite(
                 manually_created=manual_invitations,

@@ -42,6 +42,7 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
     user = UserLoginSerializer(required=False)
     registration_id = serializers.CharField(write_only=True, required=False)
     exp_days = serializers.IntegerField(write_only=True, required=False)
+    employer_id = serializers.IntegerField(write_only=True, required=False)
 
     def validate(self, attrs):
         lookup = Q(email=attrs.get("username_or_email")) \
@@ -49,7 +50,9 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
         password = attrs.get("password")
         user_obj = User.objects.filter(lookup).first()
-
+        employer_id = attrs.get("employer_id")
+    
+            
         if not user_obj:
             msg = 'Account with this credentials does not exists'
             raise serializers.ValidationError(msg)
@@ -58,6 +61,12 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             msg = _('User account is disabled. Have you confirmed your email?')
             raise serializers.ValidationError(msg)
 
+        if employer_id:
+            employer = Profile.objects.filter(Q(employer=employer_id, user=user_obj.id) | Q(other_employers__id=employer_id, user=user_obj.id))
+            if not employer:
+                msg = 'Account with this employer id does not exists'
+                raise serializers.ValidationError(msg)
+                
         credentials = {
             'username': user_obj.username,
             'password': password
@@ -152,6 +161,8 @@ class UserRegisterSerializer(serializers.Serializer):
         business_website = validated_data.pop('business_website', None)
         about_business = validated_data.pop('about_business', None)
         profile_city = validated_data.pop('profile_city', None)
+        employer_role = validated_data.pop('employer_role', None)
+        
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
@@ -166,10 +177,12 @@ class UserRegisterSerializer(serializers.Serializer):
         # if previous_invite is not None and account_type is None:
         #     account_type = 'employer'
         #     employer = previous_invite.employer
+        token = self.context.get("token")
 
         if account_type == 'employer':
             status = 'PENDING_EMAIL_VALIDATION'
-            employer_role = 'ADMIN'
+            if token is None: 
+                employer_role = 'ADMIN'
             if employer is None:
                 args = {
                     "title": business_name,
@@ -178,9 +191,8 @@ class UserRegisterSerializer(serializers.Serializer):
                 }
                 employer = Employer.objects.create(**args)
             # if the user is coming from an email link
-            token = self.context.get("token")
             if token:
-                employer_role = ""
+                employer_role = employer_role
                 try:
                     data = jwt_decode_handler(token)
                 except jwt.ExpiredSignatureError:

@@ -57,6 +57,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'status': {'read_only': True}
         }
 
+    
     def validate_latitude(self, value):
         """
         Check that the latitud does not have more than 8 digits

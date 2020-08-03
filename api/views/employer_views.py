@@ -26,11 +26,11 @@ from rest_framework.response import Response
 
 from api.mixins import EmployerView
 from api.models import (
-    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
+    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList, EmployerUsers, Employer,
     PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
     Shift, ShiftApplication, ShiftInvite, Venue,
     APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, OPEN,
-    Shift, ShiftApplication, Employee,
+    Shift, ShiftApplication, Employee, Profile, 
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
@@ -62,6 +62,7 @@ class EmployerMeView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, employer_id=None):
+        print('request', request.data)
         serializer = employer_serializer.EmployerSerializer(
             request.user.profile.employer, data=request.data)
         if serializer.is_valid():
@@ -103,11 +104,11 @@ class EmployerMeImageView(EmployerView):
 
 class EmployerMeUsersView(EmployerView):
     def get_queryset(self):
-        return User.objects.filter(profile__employer_id=self.employer.id)
+        # return User.objects.filter(profile__employer_id=self.employer.id)
+        return User.objects.filter(Q(profile__employer_id=self.employer.id) | Q(profile__other_employers=self.employer.id) )
 
     def get(self, request, profile_id=False):
-        qs = self.get_queryset()
-        many = True
+       
         # no hay un endpoint que use esto.
         # if id:
         #     try:
@@ -116,9 +117,19 @@ class EmployerMeUsersView(EmployerView):
         #     except User.DoesNotExist:
         #         return Response(validators.error_object(
         #             'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        if profile_id is not False:
+                try:
+                    user = User.objects.get(profile__id=profile_id)
+                except User.DoesNotExist:
+                    return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = user_serializer.UserGetSmallSerializer(qs, many=many)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+                serializer = user_serializer.UserGetSmallSerializer(user, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        else: 
+            qs = self.get_queryset()
+            many = True
+            serializer = user_serializer.UserGetSmallSerializer(qs, many=many)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, profile_id):
 
@@ -126,13 +137,26 @@ class EmployerMeUsersView(EmployerView):
             user = self.get_queryset().get(profile__id=profile_id)
         except User.DoesNotExist:
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        print(request.data)
+
+        employer_id = request.data['employer_id']
+        employer_role = request.data['employer_role']
+        if employer_id is not None: 
+            try:
+                employers = EmployerUsers.objects.get(profile=user.profile, employer=employer_id)
+            except EmployerUsers.DoesNotExist:
+                employers = None
+            
+            if employers is not None: 
+                employers.employer_role = employer_role
+                employers.save()
 
         serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
         
+        print(EmployerUsers.objects.filter(profile=user.profile.id))
         if serializer.is_valid():
             serializer.save()
             serializer = user_serializer.UserGetSmallSerializer(user, many=False)
-            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

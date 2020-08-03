@@ -31,7 +31,7 @@ import api.utils.jwt
 from api.pagination import HeaderLimitOffsetPagination
 
 from api.models import *
-from api.utils.notifier import notify_password_reset_code, notify_email_validation
+from api.utils.notifier import notify_password_reset_code, notify_email_validation, notify_company_invite_confirmation
 from api.utils import validators
 from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
@@ -110,6 +110,93 @@ class ValidateSendEmailView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
         notify_email_validation(user)
+
+        return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
+
+class ValidateEmailCompanyView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.GET.get('token')
+
+        try:
+            payload = jwt_decode_handler(token)
+        except (DecodeError, ExpiredSignatureError) as e:
+            return html_error('Your company invitation link has expired')
+
+        try:
+            user = User.objects.get(id=payload["user_id"])
+         
+            if user.profile.employer is not None: 
+                if user.profile.employer.id ==  payload["employer_id"]:
+                    return html_error('Your are already working for this company')
+                if user.profile.other_employers is not None:
+                    if payload["employer_id"] in user.profile.other_employers.values_list('id', flat=True):
+                        return html_error('Your are already working for this company')
+            try:
+                # db_token = UserToken.objects.get(token=token, email=user.email)
+                # db_token.delete()
+                if user.profile.employer is None:
+                   
+                    employer = Employer.objects.get(id=payload["employer_id"])  
+                    
+                    user.profile.employer = employer
+                    user.profile.save()
+                elif user.profile.employer is not None: 
+           
+                    employer = Employer.objects.get(id=payload["employer_id"])  
+                    profile = Profile.objects.get(id=user.profile.id)
+                    EmployerUsers.objects.create(
+                        employer=employer,
+                        profile=profile,
+                        employer_role=payload["employer_role"]
+                    )
+
+                template = get_template_content('invite_to_jobcore_employer_accepted',{
+                    "COMPANY": employer.title,
+                    "COMPANY_ID": employer.id,
+                    "COMPANY_ROLE": payload["employer_role"],
+                })
+                return HttpResponse(template['html'])
+
+            except UserToken.DoesNotExist:
+                return html_error('Your company invitation link has expired')
+
+        except User.DoesNotExist:
+            return html_error('Not found')
+
+class SendCompanyInvitationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, email=None, employer=None, employer_role=None):
+
+        if email is None:
+            raise ValidationError('Invalid email to validate')
+ 
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(validators.error_object(
+                'The user was not found'), status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            employer = Employer.objects.get(id=employer)
+        except Employer.DoesNotExist:
+            return Response(validators.error_object(
+                'The employer does not exist'), status=status.HTTP_400_BAD_REQUEST)
+        
+
+        if user.profile.employer is not None: 
+            if user.profile.employer.id ==  employer.id:
+                return Response(validators.error_object('This user is already working for this company'),
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        if user.profile.other_employers is not None:
+            if employer.id in user.profile.other_employers.values_list('id', flat=True):
+                return Response(validators.error_object('This user is already working for this company'),
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        notify_company_invite_confirmation(user, employer, employer_role)
 
         return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
 
@@ -623,7 +710,7 @@ class RateView(APIView):
         serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
         if serializer.is_valid():
             serializer.save()
-            print('e valido')
+       
             if isinstance(request.data, list) is False:
                 resp = rating_serializer.RatingSerializer( data=serializer.data[0], many=False)
                 return Response(resp.initial_data, status=status.HTTP_201_CREATED)
@@ -669,6 +756,32 @@ class CatalogView(APIView):
                     'last_name',
                     'profile__employee__id'))
             return Response(employees, status=status.HTTP_200_OK)
+
+        if catalog_type == 'profiles':
+            profiles = User.objects.all()
+
+            qName = request.GET.get('full_name')
+            if qName:
+                search_args = []
+                for term in qName.split():  # first_name__unaccent__startswith
+                    for query in ('profile__user__first_name__unaccent__istartswith',
+                                  'profile__user__last_name__unaccent__istartswith'):
+                        search_args.append(Q(**{query: term}))
+
+                profiles = profiles.filter(
+                    functools.reduce(operator.or_, search_args))
+
+            profiles = map(
+                lambda emp: {
+                    "label": emp["first_name"] +
+                             ' ' +
+                             emp["last_name"],
+                    "value": emp["profile__id"]},
+                profiles.values(
+                    'first_name',
+                    'last_name',
+                    'profile__id'))
+            return Response(profiles, status=status.HTTP_200_OK)
 
         elif catalog_type == 'positions':
             positions = Position.objects.exclude().order_by("title")

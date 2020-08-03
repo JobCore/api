@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Employer, Shift
+from api.models import Employer, Shift,EmployerUsers, Profile
 from datetime import datetime
 from django.utils import timezone
 from api.serializers.badge_serializers import BadgeGetSmallSerializer
@@ -15,6 +15,29 @@ class EmployerGetSmallSerializer(serializers.ModelSerializer):
         model = Employer
         exclude = ()
 
+# class OtherEmployerSerializer(serializers.ModelSerializer):
+#     employer_title = serializers.ReadOnlyField(source='employer.title')
+
+#     class Meta:
+#         model = EmployerUsers
+#         fields = ('employer_title',)
+
+
+
+class OtherEmployerSerializer(serializers.ModelSerializer):
+    profile_id = serializers.ReadOnlyField(source='profile.id')
+
+    class Meta:
+        model = EmployerUsers
+        fields = ('employer_role', 'profile_id', 'employer')
+
+
+class OtherProfileSerializer(serializers.ModelSerializer):
+    other_employers = OtherEmployerSerializer(source='company_users_employer', many=True)
+
+    class Meta:
+        model = Profile
+        fields = ('other_employers',)
 
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeGetSmallSerializer(many=True)
@@ -59,7 +82,7 @@ class EmployerSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, employer, validated_data):
-
+  
         employer = super(EmployerSerializer, self).update(employer, validated_data)
 
         # update shifts settings retroactively

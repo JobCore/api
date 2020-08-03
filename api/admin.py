@@ -130,5 +130,6 @@ class EmployerSubscriptionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SubscriptionPlan)
+admin.site.register(EmployerUsers)
 admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
 # admin.site.register(EmployerSubscription)
