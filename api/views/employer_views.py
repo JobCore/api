@@ -137,11 +137,11 @@ class EmployerMeUsersView(EmployerView):
             user = self.get_queryset().get(profile__id=profile_id)
         except User.DoesNotExist:
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
-        print(request.data)
 
-        employer_id = request.data['employer_id']
-        employer_role = request.data['employer_role']
-        if employer_id is not None: 
+       
+        if 'employer_id' in request.data:
+            employer_id = request.data['employer_id']
+            employer_role = request.data['employer_role']
             try:
                 employers = EmployerUsers.objects.get(profile=user.profile, employer=employer_id)
             except EmployerUsers.DoesNotExist:
