@@ -1,6 +1,5 @@
 import math
 from decimal import Decimal
-
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
@@ -312,7 +311,7 @@ class Profile(models.Model):
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
-    # other_employers = JSONField(blank=True, default=list)
+    other_employers = models.ManyToManyField(Employer, blank=True, related_name="other_employers", through="EmployerUsers")
 
     status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 
@@ -332,6 +331,20 @@ RECURRENCY_TYPE = (
     (WEEKLY, 'Weekly'),
     (MONTHLY, 'Monthly'),
 )
+
+class EmployerUsers(models.Model):
+    employer = models.ForeignKey(
+        Employer, on_delete=models.CASCADE, blank=True, related_name="company_users_employer")
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, blank=True, related_name="company_users_profile")
+
+    employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.employer.title + " (" + self.employer_role + "), " + str(self.profile.user.email)
 
 
 class AvailabilityBlock(models.Model):

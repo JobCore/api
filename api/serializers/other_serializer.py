@@ -139,8 +139,8 @@ class JobCoreInviteGetSerializer(serializers.ModelSerializer):
 
 class JobCoreInvitePostSerializer(serializers.ModelSerializer):
     include_sms = serializers.BooleanField(default=False, write_only=True)
-    talent = serializers.BooleanField(default=False, write_only=True)
-    # is_jobcore_employer = serializers.BooleanField(default=False, write_only=True)
+    employer_role = serializers.CharField(default='', write_only=True)
+
     def validate(self, data):
         if not data.get('email'):
             raise serializers.ValidationError('invalid payload')
@@ -149,6 +149,7 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
             if profile is not None:
+                print(profile.employer)
                 # if profile.employer is None:
                 raise serializers.ValidationError("The user is already registered in jobcore")
         try:
@@ -176,12 +177,12 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         #         if profile.employer is not None:
         #             is_jobcore_employer = True
 
-        talent = validated_data.pop('talent', False)
+        employer_role = validated_data.pop('employer_role', '')
         include_sms = validated_data.pop('include_sms', False)
         invite = JobCoreInvite(**validated_data)
         invite.save()
         # notifier.notify_jobcore_invite(invite, include_sms=include_sms, is_jobcore_employer=is_jobcore_employer)
-        notifier.notify_jobcore_invite(invite, include_sms=include_sms, talent=talent)
+        notifier.notify_jobcore_invite(invite, include_sms=include_sms, employer_role=employer_role)
 
         return invite
 

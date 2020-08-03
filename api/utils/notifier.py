@@ -70,10 +70,32 @@ def notify_email_validation(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
+
+    print(API_URL + '/api/user/email/validate?token=' + token
+    )
     send_email_message("registration", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
+    })
+
+def notify_company_invite_confirmation(user,employer,employer_role):
+    # user company invitaiton
+    
+    token = api.utils.jwt.internal_payload_encode({
+        "user_id": user.id,
+        "employer_id": employer.id,
+        "employer_role": employer_role
+    })
+    print(API_URL + '/api/user/email/company/validate?token=' + token)
+    send_email_message("invite_to_jobcore_employer", user.email, {
+        "SENDER": '{} {}'.format(user.first_name, user.last_name),
+        "EMAIL": user.email,
+        "COMPANY": employer.title,
+        "COMPANY_ID": employer.id,
+        "COMPANY_ROLE": employer_role,
+        "LINK": API_URL + '/api/user/email/company/validate?token=' + token,
+        "DATA": {"type": "invite", "id": user.id}
     })
 
 
@@ -175,7 +197,7 @@ def notify_shift_candidate_update(user, shift, talents_to_notify=[]):
         })
 
 
-def notify_jobcore_invite(invite, include_sms=False, talent=False):
+def notify_jobcore_invite(invite, include_sms=False, employer_role=""):
 # def notify_jobcore_invite(invite, include_sms=False, is_jobcore_employer=False):
     # manual invite
     token = api.utils.jwt.internal_payload_encode({
@@ -183,17 +205,19 @@ def notify_jobcore_invite(invite, include_sms=False, talent=False):
         "invite_id": invite.id,
         "user_email": invite.email
     })
-    if talent is False and invite.employer is not None:
+    if invite.employer is not None:
+
         send_email_message("invite_to_jobcore_employer", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,
             "COMPANY": invite.sender.user.profile.employer.title,
+            "COMPANY_ID": invite.employer.id,
+            "COMPANY_ROLE": employer_role,
             "LINK": EMPLOYER_URL + "/invite?token_invite=" + token + "&employer="+str(invite.employer.id),
             "DATA": {"type": "invite", "id": invite.id}
         })
         
     else:
-        print(EMPLOYER_URL + "/invite?token_invite=" + token)
         send_email_message("invite_to_jobcore", invite.email, {
             "SENDER": '{} {}'.format(invite.sender.user.first_name, invite.sender.user.last_name),
             "EMAIL": invite.email,

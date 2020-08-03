@@ -1,11 +1,22 @@
-from api.models import User, JobCoreInvite, Profile
+from api.models import User, JobCoreInvite, Profile,EmployerUsers
 from rest_framework import serializers
+from api.serializers import employer_serializer
+
+class OtherEmployerSerializer(serializers.ModelSerializer):
+    profile_id = serializers.ReadOnlyField(source='profile.id')
+
+    class Meta:
+        model = EmployerUsers
+        fields = ('employer_role', 'profile_id', 'employer')
 
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
+    other_employers = OtherEmployerSerializer(source='company_users_profile', many=True)
+
     class Meta:
         model = Profile
-        fields = ('picture', 'id', 'bio', 'status', 'employer', 'employer_role', 'employee', 'show_tutorial')
+        fields = ('picture', 'id', 'bio', 'status', 'employer', 'employer_role', 'employee', 'show_tutorial','other_employers')
+
 
 
 class UserGetTinySerializer(serializers.ModelSerializer):
