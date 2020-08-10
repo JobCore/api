@@ -40,7 +40,7 @@ from api.views.employer_views import (
     EmployerShiftEmployeesView, EmployerShiftView, EmployerShiftNewView, EmployerBatchActions,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
-    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView, EmployerMePayrates,
     EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView,
 )
 
@@ -67,7 +67,7 @@ urlpatterns = [
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
     #add user to company
     path('user/email/company/validate', ValidateEmailCompanyView.as_view(), name="validate-company-invite"),
-    path('user/email/company/send/<str:email>/<int:employer>/<str:employer_role>', SendCompanyInvitationView.as_view(), name="send-company-invite"),
+    path('user/email/company/send/<str:email>/<int:sender>/<int:employer>/<str:employer_role>', SendCompanyInvitationView.as_view(), name="send-company-invite"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
     path('user/register', UserRegisterView.as_view(), name="register"),
 
@@ -164,7 +164,12 @@ urlpatterns = [
         name="me-employer-get-applicants"),
     path('employers/me/applications/<int:application_id>',
          ApplicantsView.as_view(), name="me-employer-get-applicants"),
-
+    path('employers/me/payrates', EmployerMePayrates.as_view(),
+         name="me-get-payrate"),
+    path(
+        'employers/me/payrates/<int:id>',
+        EmployerMePayrates.as_view(),
+        name="me-employer-id-payrates"),
     # path(
     #     'employers/me/periods',
     #     EmployerPayrollPeriodView.as_view(),
