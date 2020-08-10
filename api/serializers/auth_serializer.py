@@ -116,7 +116,6 @@ class UserRegisterSerializer(serializers.Serializer):
     validate_email = serializers.BooleanField(required=False, allow_null=True, write_only=True)
 
     def validate(self, data):
-        print(data['validate_email'])
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
