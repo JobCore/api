@@ -113,9 +113,10 @@ class UserRegisterSerializer(serializers.Serializer):
     
     # these are added when created an account thru invitation
     employer_role = serializers.CharField(required=False,max_length=20, write_only=True)
+    validate_email = serializers.BooleanField(required=False, write_only=True)
 
     def validate(self, data):
-        print(data)
+        print('la data @@@@@', data)
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
@@ -140,6 +141,9 @@ class UserRegisterSerializer(serializers.Serializer):
                 "Account type can only be employer or employee")
         if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
+        
+        if 'validate_email' in data:  
+            raise serializers.ValidationError("Email is valid")
 
         # validate creation of new employer
         if data['account_type'] == 'employer' and ('employer' not in data or data['employer'] is None):

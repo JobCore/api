@@ -19,20 +19,6 @@ POSITION_STATUS = (
 )
 
 
-class Position(models.Model):
-    picture = models.URLField(blank=True)
-    title = models.TextField(max_length=100, blank=True)
-    description = models.TextField(max_length=1050, blank=True)
-    meta_description = models.TextField(max_length=250, blank=True)
-    meta_keywords = models.TextField(max_length=250, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-    status = models.CharField(max_length=9, choices=POSITION_STATUS, default=ACTIVE, blank=True)
-
-    def __str__(self):
-        return self.title
-
-
 class Badge(models.Model):
     title = models.TextField(max_length=100, blank=True)
     image_url = models.TextField(max_length=255, blank=True)
@@ -173,6 +159,34 @@ SUBSCRIPTION_MODE = (
     (MONTHLY, 'Monthly'),
     (YEARLY, 'Yearly'),
 )
+
+class Position(models.Model):
+    picture = models.URLField(blank=True)
+    title = models.TextField(max_length=100, blank=True)
+    description = models.TextField(max_length=1050, blank=True)
+    meta_description = models.TextField(max_length=250, blank=True)
+    meta_keywords = models.TextField(max_length=250, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9, choices=POSITION_STATUS, default=ACTIVE, blank=True)
+    pay_rate = models.ManyToManyField(
+        Employer, blank=True, related_name="pay_rate", through="Payrates")
+
+    def __str__(self):
+        return self.title
+
+class Payrates(models.Model):
+    position = models.ForeignKey(
+        Position, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_positions")
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_employer")
+    hourly_rate = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True)    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.position.title + " " + str(self.hourly_rate)
+
 class EmployerSubscription(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE, blank=True)

@@ -27,10 +27,10 @@ from rest_framework.response import Response
 from api.mixins import EmployerView
 from api.models import (
     BankAccount, Clockin, Employee, EmployeePayment, FavoriteList, EmployerUsers, Employer,
-    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
+    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate, Position,
     Shift, ShiftApplication, ShiftInvite, Venue,
     APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, OPEN,
-    Shift, ShiftApplication, Employee, Profile, 
+    Shift, ShiftApplication, Employee, Profile, Payrates,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
@@ -166,9 +166,24 @@ class EmployerMeUsersView(EmployerView):
         try:
             user = qs.get(profile__id=profile_id)
             print(user.profile)
+
+            other_employers = User.objects.filter(profile__other_employers=self.employer.id)
+            print(other_employers)
+            print(user.profile.employee)
             if user.profile.shift_set.count() > 0 or user.profile.shiftinvite_set.count() > 0 or user.profile.jobcoreinvite_set.count() > 0 or user.profile.rate_set.count() > 0:
                 user.status = 'DELETED'
                 user.save()
+            elif user.profile.employee is not None:
+                if not other_employers:
+                    user.profile.employer = None
+                    user.profile.save()
+                else:
+                    other_employer = EmployerUsers.objects.get(employer=self.employer.id)
+                    other_employer.delete()        
+
+            elif other_employers:
+                other_employer = EmployerUsers.objects.get(employer=self.employer.id)
+                other_employer.delete()
             else:
                 user.delete()
 
@@ -1268,6 +1283,58 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
         return Response(ser.data, status=status.HTTP_200_OK)
 
 
+class EmployerMePayrates(EmployerView):
+    def get_queryset(self):
+        return Payrates.objects.filter(employer_id=self.employer.id)
+
+    def get(self, request, employer_id=False):
+        request.data['employer_id'] = self.employer.id
+        try:
+            payrates = Payrates.objects.filter(employer_id = self.employer.id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employer_serializer.EmployerPayrateGetSmallSerializer(payrates, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+                
+    def post(self, request, employer_id=False):
+        request.data['employer'] = self.employer.id
+        serializer = employer_serializer.EmployerPayratePostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)  
+
+    def put(self, request, id):
+        request.data['employer'] = self.employer.id
+
+        try:
+            payrate = self.get_queryset().get(id=id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object(
+                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = employer_serializer.EmployerPayratePutSerializer(payrate, data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save() 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+          
+    def delete(self, request, id):
+
+        try:
+            payrate = self.get_queryset().get(id=id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        payrate.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+     
 class EmployerMeEmployeePaymentDeductionReportView(EmployerMeEmployeePaymentReportView):
 
     def get(self, request):

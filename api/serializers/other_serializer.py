@@ -179,6 +179,8 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
 
         employer_role = validated_data.pop('employer_role', '')
         include_sms = validated_data.pop('include_sms', False)
+
+        print('jobcore invite', validated_data)
         invite = JobCoreInvite(**validated_data)
         invite.save()
         # notifier.notify_jobcore_invite(invite, include_sms=include_sms, is_jobcore_employer=is_jobcore_employer)

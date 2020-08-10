@@ -129,10 +129,10 @@ class ValidateEmailCompanyView(APIView):
          
             if user.profile.employer is not None: 
                 if user.profile.employer.id ==  payload["employer_id"]:
-                    return html_error('Your are already working for this company')
+                    return html_error('You are already working for this company')
                 if user.profile.other_employers is not None:
                     if payload["employer_id"] in user.profile.other_employers.values_list('id', flat=True):
-                        return html_error('Your are already working for this company')
+                        return html_error('You are already working for this company')
             try:
                 # db_token = UserToken.objects.get(token=token, email=user.email)
                 # db_token.delete()
@@ -141,6 +141,7 @@ class ValidateEmailCompanyView(APIView):
                     employer = Employer.objects.get(id=payload["employer_id"])  
                     
                     user.profile.employer = employer
+                    user.profile.employer_role = payload["employer_role"]
                     user.profile.save()
                 elif user.profile.employer is not None: 
            
@@ -157,6 +158,11 @@ class ValidateEmailCompanyView(APIView):
                     "COMPANY_ID": employer.id,
                     "COMPANY_ROLE": payload["employer_role"],
                 })
+
+                jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
+
+                jobcore_invites.update(status='ACCEPTED')
+                
                 return HttpResponse(template['html'])
 
             except UserToken.DoesNotExist:
@@ -168,7 +174,9 @@ class ValidateEmailCompanyView(APIView):
 class SendCompanyInvitationView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, email=None, employer=None, employer_role=None):
+    def post(self, request, email=None, sender=None, employer=None, employer_role=None):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
 
         if email is None:
             raise ValidationError('Invalid email to validate')
@@ -184,8 +192,25 @@ class SendCompanyInvitationView(APIView):
         except Employer.DoesNotExist:
             return Response(validators.error_object(
                 'The employer does not exist'), status=status.HTTP_400_BAD_REQUEST)
+        try:
+            sender = Profile.objects.get(id=sender)
+        except Profile.DoesNotExist:
+            return Response(validators.error_object(
+                'Sender does not exist'), status=status.HTTP_400_BAD_REQUEST)
         
+        try:
+            JobCoreInvite.objects.get(
+                sender=sender,
+                status='ACCEPTED',
+                email=email
+            )
+            return Response(validators.error_object(
+                'User with this email has already accepted an invite'), status=status.HTTP_400_BAD_REQUEST)
+        except JobCoreInvite.DoesNotExist:
+            pass
+            
 
+    
         if user.profile.employer is not None: 
             if user.profile.employer.id ==  employer.id:
                 return Response(validators.error_object('This user is already working for this company'),
@@ -196,9 +221,25 @@ class SendCompanyInvitationView(APIView):
                 return Response(validators.error_object('This user is already working for this company'),
                     status=status.HTTP_400_BAD_REQUEST)
 
+        invite = JobCoreInvite.objects.create(
+            first_name = user.first_name,
+            last_name = user.last_name,
+            email = email,
+            status = 'PENDING',
+            phone_number = '',
+            sender = sender,
+            employer = employer 
+        )    
+        serializer = other_serializer.JobCoreInviteGetSerializer(
+                invite)
+    
         notify_company_invite_confirmation(user, employer, employer_role)
 
-        return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
+    
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # notify_company_invite_confirmation(user, employer, employer_role)
+
 
 
 class PasswordView(APIView):
@@ -770,7 +811,7 @@ class CatalogView(APIView):
 
                 profiles = profiles.filter(
                     functools.reduce(operator.or_, search_args))
-
+            
             profiles = map(
                 lambda emp: {
                     "label": emp["first_name"] +
@@ -785,6 +826,7 @@ class CatalogView(APIView):
 
         elif catalog_type == 'positions':
             positions = Position.objects.exclude().order_by("title")
+            
             positions = map(
                 lambda emp: {
                     "label": emp["title"],
