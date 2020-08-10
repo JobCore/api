@@ -113,10 +113,10 @@ class UserRegisterSerializer(serializers.Serializer):
     
     # these are added when created an account thru invitation
     employer_role = serializers.CharField(required=False,max_length=20, write_only=True)
-    validate_email = serializers.BooleanField(required=False, write_only=True)
+    validate_email = serializers.BooleanField(required=False, allow_null=True, write_only=True)
 
     def validate(self, data):
-        print('la data @@@@@', data)
+        print(data['validate_email'])
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
@@ -142,8 +142,11 @@ class UserRegisterSerializer(serializers.Serializer):
         if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
         
-        if 'validate_email' in data:  
-            raise serializers.ValidationError("Email is valid")
+        if 'validate_email' in data:
+            if data['validate_email']: 
+                raise serializers.ValidationError("Email is valid")
+            else: 
+                data.pop('validate_email')
 
         # validate creation of new employer
         if data['account_type'] == 'employer' and ('employer' not in data or data['employer'] is None):
@@ -157,6 +160,7 @@ class UserRegisterSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        
         account_type = validated_data.pop('account_type', None)
         employer = validated_data.pop('employer', None)
         city = validated_data.pop('city', None)
@@ -167,6 +171,7 @@ class UserRegisterSerializer(serializers.Serializer):
         profile_city = validated_data.pop('profile_city', None)
         employer_role = validated_data.pop('employer_role', None)
         
+        print('validated data', validated_data)
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
