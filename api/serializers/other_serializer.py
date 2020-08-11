@@ -142,16 +142,25 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
     employer_role = serializers.CharField(default='', write_only=True)
 
     def validate(self, data):
+        print(data)
         if not data.get('email'):
             raise serializers.ValidationError('invalid payload')
    
         user = User.objects.filter(email=data["email"]).first()
-        if user is not None:
-            profile = Profile.objects.filter(user=user).first()
-            if profile is not None:
-                print(profile.employer)
-                # if profile.employer is None:
-                raise serializers.ValidationError("The user is already registered in jobcore")
+
+        if 'status' in data and data['status'] == "COMPANY":
+            data["user"] = user
+        else:
+            if user is not None:
+                profile = Profile.objects.filter(user=user).first()
+                if profile is not None:
+                    print(profile.employer)
+                    # if profile.employer is None:
+                    raise serializers.ValidationError("The user is already registered in jobcore")
+        
+         
+       
+
         try:
             sender = self.context['request'].user.profile.id
             JobCoreInvite.objects.get(
@@ -180,7 +189,6 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         employer_role = validated_data.pop('employer_role', '')
         include_sms = validated_data.pop('include_sms', False)
 
-        print('jobcore invite', validated_data)
         invite = JobCoreInvite(**validated_data)
         invite.save()
         # notifier.notify_jobcore_invite(invite, include_sms=include_sms, is_jobcore_employer=is_jobcore_employer)
@@ -189,9 +197,11 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
         return invite
 
     def update(self, invite, validated_data):
-
         invite = super(JobCoreInvitePostSerializer, self).update(invite, validated_data)
-        notifier.notify_jobcore_invite(invite)
+        if invite.status == "COMPANY":
+            notifier.notify_company_invite_confirmation( user=validated_data["user"], employer=invite.employer, employer_role=invite.employer_role)
+        else:
+            notifier.notify_jobcore_invite(invite)
 
         return invite
 
