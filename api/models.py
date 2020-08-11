@@ -569,8 +569,10 @@ class UserToken(models.Model):
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
+COMPANY_PENDING = 'COMPANY'
 JOBCORE_INVITE_STATUS_CHOICES = (
     (PENDING, 'Pending'),
+    (COMPANY_PENDING, 'Company Pending'),
     (ACCEPTED, 'Accepted'),
 )
 
@@ -591,6 +593,7 @@ class JobCoreInvite(models.Model):
         default=PENDING,
         blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
+    employer_role = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 

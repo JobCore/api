@@ -81,7 +81,9 @@ def notify_email_validation(user):
 
 def notify_company_invite_confirmation(user,employer,employer_role):
     # user company invitaiton
-    
+    print(user.id)
+    print(employer.id)
+    print(employer_role)
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id,
         "employer_id": employer.id,

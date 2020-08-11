@@ -126,7 +126,7 @@ class ValidateEmailCompanyView(APIView):
 
         try:
             user = User.objects.get(id=payload["user_id"])
-         
+      
             if user.profile.employer is not None: 
                 if user.profile.employer.id ==  payload["employer_id"]:
                     return html_error('You are already working for this company')
@@ -208,7 +208,6 @@ class SendCompanyInvitationView(APIView):
                 'User with this email has already accepted an invite'), status=status.HTTP_400_BAD_REQUEST)
         except JobCoreInvite.DoesNotExist:
             pass
-            
 
     
         if user.profile.employer is not None: 
@@ -225,8 +224,9 @@ class SendCompanyInvitationView(APIView):
             first_name = user.first_name,
             last_name = user.last_name,
             email = email,
-            status = 'PENDING',
+            status = 'COMPANY',
             phone_number = '',
+            employer_role = employer_role,
             sender = sender,
             employer = employer 
         )    
@@ -237,8 +237,6 @@ class SendCompanyInvitationView(APIView):
 
     
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-        # notify_company_invite_confirmation(user, employer, employer_role)
 
 
 
