@@ -281,14 +281,14 @@ class EmployeeShiftInviteView(EmployeeView):
                 shift=invite.shift
             )
 
-            notify_shift_candidate_update(
-                user=self.employee.user,
-                shift=invite.shift,
-                talents_to_notify=dict(
-                    accepted=[self.employee],
-                    rejected=[]
-                )
-            )
+            # notify_shift_candidate_update(
+            #     user=self.employee.user,
+            #     shift=invite.shift,
+            #     talents_to_notify=dict(
+            #         accepted=[self.employee],
+            #         rejected=[]
+            #     )
+            # )
 
             if is_manual_invite:
                 return Response({ "details": "Your application was automatically approved because you were hand-picked for this shift." }, status=status.HTTP_200_OK)

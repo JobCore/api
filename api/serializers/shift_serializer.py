@@ -187,6 +187,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         model = Shift
         exclude = ()
 
+
     def has_sensitive_updates(self, new_data, old_data=None):
         sensitive_fields = [
             'starting_at',
@@ -195,6 +196,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
             'position',
             'minimum_hourly_rate',
             'status']
+       
         for key in new_data:
             if key in sensitive_fields:
                 if old_data is None:
@@ -211,7 +213,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
 
         data = super(ShiftUpdateSerializer, self).validate(data)
-
+        
         clockins = Clockin.objects.filter(shift__id=self.instance.id).count()
         if clockins > 0:
             raise serializers.ValidationError(
@@ -220,8 +222,10 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, shift, validated_data):
-
         # Sync employees
+
+     
+        
         if 'allowed_from_list' in validated_data:
             current_favlists = shift.allowed_from_list.all().values_list('id', flat=True)
             new_favlists = validated_data['allowed_from_list']
@@ -247,7 +251,9 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         pending_invites = []
         if 'pending_invites' in validated_data:
             pending_invites = [talent['value'] for talent in validated_data['pending_invites']]
-
+        
+        if 'pending_invites' in self.context['request'].data:
+            pending_invites = [talent['value'] for talent in self.context['request'].data['pending_invites']]
         # before making the shift a draft or cancelled I have to let the employees know that the
         # shift is no longer available
         if 'status' in validated_data and validated_data['status'] in ['DRAFT', 'CANCELLED']:

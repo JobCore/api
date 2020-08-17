@@ -70,10 +70,20 @@ def notify_email_validation(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-
-    print(API_URL + '/api/user/email/validate?token=' + token
-    )
+    print(API_URL + '/api/user/email/validate?token=' + token)
     send_email_message("registration", user.email, {
+        "SUBJECT": "Please validate your email in JobCore",
+        "LINK": API_URL + '/api/user/email/validate?token=' + token,
+        "FIRST_NAME": user.first_name
+    })
+
+def notify_employee_email_validation(user):
+    # user registration
+    token = api.utils.jwt.internal_payload_encode({
+        "user_id": user.id
+    })
+
+    send_email_message("registration_employee", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
@@ -81,15 +91,12 @@ def notify_email_validation(user):
 
 def notify_company_invite_confirmation(user,employer,employer_role):
     # user company invitaiton
-    print(user.id)
-    print(employer.id)
-    print(employer_role)
+
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id,
         "employer_id": employer.id,
         "employer_role": employer_role
     })
-    print(API_URL + '/api/user/email/company/validate?token=' + token)
     send_email_message("invite_to_jobcore_employer", user.email, {
         "SENDER": '{} {}'.format(user.first_name, user.last_name),
         "EMAIL": user.email,

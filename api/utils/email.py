@@ -136,6 +136,7 @@ def get_template_info(slug):
         "email_validated": {"type": "views", "subject": "Your email has been validated"},
         "reset_password_form": {"type": "views", "subject": "Reset your password"},
         "registration": {"type": "registration", "subject": "Welcome to JobCore"},
+        "registration_employee": {"type": "registration", "subject": "Welcome to JobCore"},
         "password_reset_link": {"type": "registration", "subject": "About your password reset"},
         "password_reset": {"type": "registration", "subject": "You password has been reset"},
 

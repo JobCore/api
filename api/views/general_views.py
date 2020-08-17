@@ -303,13 +303,11 @@ class UserRegisterView(APIView):
         token = None
         if "token" in request.data:
             token = request.data["token"]
-        print('request data', request.data)
         serializer = auth_serializer.UserRegisterSerializer(
             data=request.data,
             context={"token": token})
         if serializer.is_valid():
             serializer.save()
-            print('serializer data', serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

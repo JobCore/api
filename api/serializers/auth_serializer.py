@@ -170,7 +170,6 @@ class UserRegisterSerializer(serializers.Serializer):
         profile_city = validated_data.pop('profile_city', None)
         employer_role = validated_data.pop('employer_role', None)
         
-        print('validated data', validated_data)
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
@@ -219,6 +218,7 @@ class UserRegisterSerializer(serializers.Serializer):
 
             jobcore_invites.update(status='ACCEPTED')
 
+            notifier.notify_email_validation(user)
 
         elif account_type == 'employee':
             status = 'PENDING_EMAIL_VALIDATION'
@@ -226,7 +226,6 @@ class UserRegisterSerializer(serializers.Serializer):
             # if the user is coming from an email link
             token = self.context.get("token")
             if token:
-                print('no token')
                 # example data: {'sender_id': 1, 'invite_id': 7, 'user_email': 'a+employee5@jobcore.co', 'exp': 1560364249, 'orig_iat': 1560363349}
                 data = jwt_decode_handler(token)
                 if data['user_email'] == user.email:
@@ -234,7 +233,6 @@ class UserRegisterSerializer(serializers.Serializer):
 
             emp = Employee.objects.filter(user__id=user.id).first()
             if emp is None:
-                print('emp is none bro')
                 emp = Employee.objects.create(user=user)
                 user.employee.save()
 
@@ -242,7 +240,7 @@ class UserRegisterSerializer(serializers.Serializer):
             employee_actions.create_default_availablity(emp)
 
             # add the talent to all positions by default
-            employee_actions.add_default_positions(emp)
+            # employee_actions.add_default_positions(emp)
 
             Profile.objects.create(
                 user=user,
@@ -256,7 +254,8 @@ class UserRegisterSerializer(serializers.Serializer):
 
             jobcore_invites.update(status='ACCEPTED')
 
-        notifier.notify_email_validation(user)
+            notifier.notify_employee_email_validation(user)
+        # notifier.notify_email_validation(user)
         return user
 
 
