@@ -67,10 +67,8 @@ def send_sms_valdation(phone_number):
                         .services(TWILLIO_SERVICES) \
                         .verifications \
                         .create(to='+1' + phone_number, channel='sms')
-        print('verification',verification.status)
         return True
     except Exception:
-        print(verification)
         return False
 
     
