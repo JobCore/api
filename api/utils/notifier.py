@@ -1,7 +1,7 @@
 import os
 from django.db.models import Q
 from api.models import Employee, ShiftInvite, Shift, Profile
-from api.utils.email import send_email_message, send_fcm_notification, send_sms
+from api.utils.email import send_email_message, send_fcm_notification, send_sms, send_sms_valdation
 import api.utils.jwt
 from rest_framework_jwt.settings import api_settings
 from django.utils import timezone
@@ -70,12 +70,22 @@ def notify_email_validation(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-    print(API_URL + '/api/user/email/validate?token=' + token)
+    print('notify_email_validation')
     send_email_message("registration", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
     })
+    
+def notify_sms_validation(user):
+    # user registration
+    token = api.utils.jwt.internal_payload_encode({
+        "user_id": user.id
+    })
+    send_sms_valdation(user.profile.phone_number)
+
+
+
 
 def notify_employee_email_validation(user):
     # user registration
@@ -83,11 +93,14 @@ def notify_employee_email_validation(user):
         "user_id": user.id
     })
 
+
     send_email_message("registration_employee", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
     })
+
+    # send_sms_valdation(user.profile.phone_number)
 
 def notify_company_invite_confirmation(user,employer,employer_role):
     # user company invitaiton

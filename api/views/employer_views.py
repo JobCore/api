@@ -1298,6 +1298,7 @@ class EmployerMePayrates(EmployerView):
                 
     def post(self, request, employer_id=False):
         request.data['employer'] = self.employer.id
+        request.data['employee'] = request.data['employee']['value']
         serializer = employer_serializer.EmployerPayratePostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -1309,6 +1310,7 @@ class EmployerMePayrates(EmployerView):
 
     def put(self, request, id):
         request.data['employer'] = self.employer.id
+        request.data['employee'] = request.data['employee']['value']
 
         try:
             payrate = self.get_queryset().get(id=id)

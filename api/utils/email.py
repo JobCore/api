@@ -42,8 +42,9 @@ def send_sms(slug, phone_number, data={}):
     # DANGER! This is insecure. See http://twil.io/secure
     TWILLIO_SID = os.environ.get('TWILLIO_SID')
     TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+    TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
     client = Client(TWILLIO_SID, TWILLIO_SECRET)
-
+   
     try:
         message = client.messages.create(
             body=template['sms'],
@@ -54,6 +55,25 @@ def send_sms(slug, phone_number, data={}):
     except Exception:
         return False
 
+def send_sms_valdation(phone_number):
+
+    TWILLIO_SID = os.environ.get('TWILLIO_SID')
+    TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+    TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
+    client = Client(TWILLIO_SID, TWILLIO_SECRET)
+   
+    try:
+        verification = client.verify \
+                        .services(TWILLIO_SERVICES) \
+                        .verifications \
+                        .create(to='+1' + phone_number, channel='sms')
+        print('verification',verification.status)
+        return True
+    except Exception:
+        print(verification)
+        return False
+
+    
 
 def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0 and push_service):
