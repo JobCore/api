@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Employer, Shift,EmployerUsers, Profile, Payrates, Position
+from api.models import Employer, Shift,EmployerUsers, Profile, Payrates, Position, Employee, User
 from datetime import datetime
 from django.utils import timezone
 from api.serializers.badge_serializers import BadgeGetSmallSerializer
@@ -54,30 +54,48 @@ class EmployerGetSerializer(serializers.ModelSerializer):
 
 
 class EmployerPayratePostSerializer(serializers.ModelSerializer):
-
+        
     class Meta:
         model = Payrates
-        fields = ('employer','position', 'hourly_rate')  
+        fields = ('employer', 'employee', 'position', 'hourly_rate') 
 
+    employee = serializers.SerializerMethodField()
+
+    def get_employee(self, data):
+        return {
+            'first_name': data.employee.user.first_name,
+            'last_name': data.employee.user.last_name,
+            'picture': data.employee.user.profile.picture,
+            'employee': data.employee.id
+        }
     def validate(self, data):
-
         data = super(EmployerPayratePostSerializer, self).validate(data)
         if 'position' in data and (data['position'] == '' or data['position'] == 0):
             raise serializers.ValidationError('Position cannot be empty.')
         if 'hourly_rate' in data and (data['hourly_rate'] == '' or data['hourly_rate'] == 0):
             raise serializers.ValidationError('Hourly rate cannot be empty or equal to 0.')
+        if 'employee' in data and (data['employee'] == '' or data['employee'] == 0):
+            raise serializers.ValidationError('Please select an employee')
 
-        payrate = Payrates.objects.filter(employer=data["employer"], position=data['position']).first()
+        payrate = Payrates.objects.filter(employer=data["employer"], employee=data["employee"], position=data['position']).first()
         if payrate is not None:
-            raise serializers.ValidationError("This position already have a payrate setup.")
+            raise serializers.ValidationError("This payrate already exists.")
 
         return data
 class EmployerPayratePutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payrates
-        fields = '__all__'
+        fields = ('id','employer', 'employee', 'position', 'hourly_rate') 
+    employee = serializers.SerializerMethodField()
 
+    def get_employee(self, data):
+        return {
+            'first_name': data.employee.user.first_name,
+            'last_name': data.employee.user.last_name,
+            'picture': data.employee.user.profile.picture,
+            'employee': data.employee.id
+        }
     def validate(self, data):
 
         data = super(EmployerPayratePutSerializer, self).validate(data)
@@ -86,18 +104,26 @@ class EmployerPayratePutSerializer(serializers.ModelSerializer):
         if 'hourly_rate' in data and (data['hourly_rate'] == '' or data['hourly_rate'] == 0):
             raise serializers.ValidationError('Hourly rate cannot be empty or equal to 0.')
 
-        payrate = Payrates.objects.filter(employer=data["employer"], position=data['position']).first()
-        if payrate is not None:
-            raise serializers.ValidationError("This position already have a payrate setup.")
+
 
         return data
+
 class EmployerPayrateGetSmallSerializer(serializers.ModelSerializer):
     employer = EmployerGetSmallSerializer(many=False, read_only=True)
     position = PositionSmallSerializer(many=False, read_only=True)
+    employee = serializers.SerializerMethodField()
+
+    def get_employee(self, data):
+        return {
+            'first_name': data.employee.user.first_name,
+            'last_name': data.employee.user.last_name,
+            'picture': data.employee.user.profile.picture,
+            'employee': data.employee.id
+        }
 
     class Meta:
         model = Payrates
-        fields = ('id','employer', 'position', 'hourly_rate')
+        fields = ('id','employer', 'position', 'hourly_rate', 'employee')
 
 class EmployerSerializer(serializers.ModelSerializer):
     retroactive = serializers.BooleanField(write_only=True, required=False)

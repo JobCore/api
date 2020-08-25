@@ -31,7 +31,7 @@ import api.utils.jwt
 from api.pagination import HeaderLimitOffsetPagination
 
 from api.models import *
-from api.utils.notifier import notify_password_reset_code, notify_email_validation, notify_company_invite_confirmation
+from api.utils.notifier import notify_password_reset_code, notify_email_validation,notify_sms_validation, notify_company_invite_confirmation, notify_sms_validation
 from api.utils import validators
 from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
@@ -47,6 +47,9 @@ from api.serializers import rating_serializer
 from api.utils.email import get_template_content
 
 from operator import itemgetter
+
+import os
+from twilio.rest import Client
 
  
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -112,6 +115,71 @@ class ValidateSendEmailView(APIView):
         notify_email_validation(user)
 
         return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
+
+
+class ValidateSendSMSView(APIView):
+    permission_classes = [AllowAny]
+  
+
+    def post(self, request, email=None, phone_number=None):
+
+        if email is None: 
+            raise ValidationError('Invalid email to validate')
+        if phone_number is None:
+            raise ValidationError('Invalid phone number to validate')
+
+
+        print(email)
+        print(phone_number)
+        try:
+            user = User.objects.get(email=email, profile__phone_number=phone_number)
+            print(user)
+        except User.DoesNotExist:
+            return Response(validators.error_object(
+                'The user with this phone number was not found'), status=status.HTTP_400_BAD_REQUEST)
+
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                return Response(validators.error_object('This user is already validated'),
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        notify_sms_validation(user)
+
+        return Response({"details": "The SMS was sent"}, status=status.HTTP_200_OK)
+
+class ValidateSMSView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, email=None, phone_number=None, code=None):
+        try:
+            user = User.objects.get(email=email, profile__phone_number=phone_number)
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                return Response(validators.error_object('Your phone number has been already activated, open the JobCore App and go ahead and sign in'))
+            try:
+                TWILLIO_SID = os.environ.get('TWILLIO_SID')
+                TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+                TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
+                client = Client(TWILLIO_SID, TWILLIO_SECRET)
+        
+
+                verification_check = client.verify \
+                                .services(TWILLIO_SERVICES) \
+                                .verification_checks \
+                                .create(to='+1' + phone_number, code=code)
+                print(verification_check.status)
+                if(verification_check.status == "approved"):
+                    user.profile.status = 'ACTIVE' 
+                    user.profile.save()
+                    return Response({"active": True}, status=status.HTTP_200_OK)
+                else:
+                    return Response(validators.error_object('Invalid 6 digit code or the code has expired, please resend it and try again'),
+                    status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e: 
+                print(e)
+                return Response(validators.error_object('Invalid 6 digit code or the code has expired, Please resend it and try again'),
+                status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return html_error('Not found')  
+
 
 class ValidateEmailCompanyView(APIView):
     permission_classes = [AllowAny]

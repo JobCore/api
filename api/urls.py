@@ -13,7 +13,7 @@ from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
     EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, ValidateEmailCompanyView, SendCompanyInvitationView, CityView, PublicShiftView,
+    PositionView, OnboardingView, ValidateSendEmailView, ValidateSendSMSView,ValidateSMSView, ValidateEmailCompanyView, SendCompanyInvitationView, CityView, PublicShiftView,
     AppVersionView, SubscriptionsView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
@@ -65,6 +65,8 @@ urlpatterns = [
         ValidateEmailView.as_view(),
         name="validate-email"),
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
+    path('user/phone_number/validate/send/<str:email>/<str:phone_number>', ValidateSendSMSView.as_view(), name="validate-phone-number-send"),
+    path('user/phone_number/validate/<str:email>/<str:phone_number>/<str:code>', ValidateSMSView.as_view(), name="validate-phone-number"),
     #add user to company
     path('user/email/company/validate', ValidateEmailCompanyView.as_view(), name="validate-company-invite"),
     path('user/email/company/send/<str:email>/<int:sender>/<int:employer>/<str:employer_role>', SendCompanyInvitationView.as_view(), name="send-company-invite"),

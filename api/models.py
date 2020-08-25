@@ -179,6 +179,8 @@ class Payrates(models.Model):
     position = models.ForeignKey(
         Position, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_positions")
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_employer")
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE, blank=True, null=True)
+
     hourly_rate = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)    
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
