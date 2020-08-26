@@ -234,6 +234,7 @@ class UserRegisterSerializer(serializers.Serializer):
             emp = Employee.objects.filter(user__id=user.id).first()
             if emp is None:
                 emp = Employee.objects.create(user=user)
+                user.employee.stop_receiving_invites = True
                 user.employee.save()
 
             # availably all week by default
