@@ -168,7 +168,7 @@ class EmployeeMeView(EmployeeView):
 
     def put(self, request):
         employee = self.employee
-
+        print(request.data)
         serializer = employee_serializer.EmployeeSettingsSerializer(
             employee, data=request.data)
 

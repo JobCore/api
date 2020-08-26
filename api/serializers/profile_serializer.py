@@ -76,15 +76,16 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Enter your birth date")
         return value
 
-    def validate_last_4dig_ssn(self, value):
-        """Check that last_4dig_ssn is not null (can't be set as None)"""
-        if not value:
-            raise serializers.ValidationError("Enter your 4 digits of your social security number ")
-        elif len(value) != 4:
-            raise serializers.ValidationError("SSN should have 4 characters")
-        else:
-            try:
-                int(value)
-            except ValueError:
-                raise serializers.ValidationError("Wrong value. Only digits are allowed.")
-        return value
+    # def validate_last_4dig_ssn(self, value):
+    #     """Check that last_4dig_ssn is not null (can't be set as None)"""
+    #     if not value:
+    #         raise serializers.ValidationError("Enter your 4 digits of your social security number ")
+    #     elif len(value) != 4:
+    #         raise serializers.ValidationError("SSN should have 4 characters")
+    #     else:
+    #         try:
+    #             int(value)
+    #         except ValueError:
+    #             raise serializers.ValidationError("Wrong value. Only digits are allowed.")
+    #     return value
+
