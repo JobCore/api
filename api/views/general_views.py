@@ -551,7 +551,8 @@ class ProfileMeView(APIView):
             request.data["latitude"] = round(request.data["latitude"], 6)
         if "longitude" in request.data:
             request.data["longitude"] = round(request.data["longitude"], 6)
-
+        
+        print(request.data)
         serializer = profile_serializer.ProfileSerializer(
             profile, data=request.data,
             context={"request": request}, partial=True)
