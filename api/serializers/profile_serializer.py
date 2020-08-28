@@ -76,6 +76,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Enter your birth date")
         return value
 
+    def validate_bio(self, value):
+        """Check that BIO is not null (can't be set as None)"""
+        if not value:
+            raise serializers.ValidationError("Please enter information about yourself")
+        return value
+
+
     # def validate_last_4dig_ssn(self, value):
     #     """Check that last_4dig_ssn is not null (can't be set as None)"""
     #     if not value:
