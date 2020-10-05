@@ -57,7 +57,6 @@ class EmployeeDocumentAPI(EmployeeView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-
         documents = EmployeeDocument.objects.filter(employee_id=self.employee.id)
 
         qStatus = request.GET.get('status')

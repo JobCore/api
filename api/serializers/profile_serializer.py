@@ -54,7 +54,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             ### remove to change employer
             # 'employer': {'read_only': True},
             'employee': {'read_only': True},
-            'status': {'read_only': True}
+            # 'status': {'read_only': True}
         }
 
     

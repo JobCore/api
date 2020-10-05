@@ -319,7 +319,7 @@ class Profile(models.Model):
 
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
-    last_4dig_ssn = models.CharField(max_length=4, blank=True)
+    last_4dig_ssn = models.CharField(max_length=4, default='', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -487,6 +487,7 @@ class Shift(models.Model):
         through='ShiftEmployee')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    description = models.TextField(max_length=300, blank=True, default="")
 
     # if this option is None, the talent will be able to clockin anytime
     # he wants. By default, he can only clockin within 15 min of the starting
