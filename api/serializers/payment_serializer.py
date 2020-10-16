@@ -347,7 +347,7 @@ class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('first_name', 'last_name', 'bank_accounts', 'filing_status', 'w4_year')
+        fields = ('first_name', 'last_name', 'bank_accounts', 'filing_status', 'w4_year', 'step2c_checked')
 
 
 class EmployeePaymentSerializer(serializers.ModelSerializer):
