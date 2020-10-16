@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name" style="background-image: url('https://res.cloudinary.com/hq02xjols/image/upload/v1558731479/static/logo.png'); width: 200px">
+    <a href="{% url 'admin:index' %}">
+        <img src="https://res.cloudinary.com/hq02xjols/image/upload/v1558731479/static/logo.png" height="40px" />
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

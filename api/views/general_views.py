@@ -166,7 +166,7 @@ class ValidateSMSView(APIView):
                                 .create(to='+1' + phone_number, code=code)
                 print(verification_check.status)
                 if(verification_check.status == "approved"):
-                    user.profile.status = 'ACTIVE' 
+                    user.profile.status = 'PAUSED' 
                     user.profile.save()
                     return Response({"active": True}, status=status.HTTP_200_OK)
                 else:
@@ -309,7 +309,7 @@ class SendCompanyInvitationView(APIView):
 
 
 class PasswordView(APIView):
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
 
     def get(self, request):
 
@@ -349,7 +349,7 @@ class PasswordView(APIView):
                 status=status.HTTP_404_NOT_FOUND)
 
         tokenDic = {"token": notify_password_reset_code(user)}
-
+        print('token dick', tokenDic)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):

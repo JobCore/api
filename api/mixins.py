@@ -16,7 +16,6 @@ class HaveProfileMixin:
 class IsEmployeeMixin:
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
-
         if request.user.profile.employee_id is None:
             raise PermissionDenied("You don't seem to be a talent")
 
