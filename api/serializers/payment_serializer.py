@@ -347,7 +347,7 @@ class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('first_name', 'last_name', 'bank_accounts')
+        fields = ('first_name', 'last_name', 'bank_accounts', 'filing_status', 'w4_year')
 
 
 class EmployeePaymentSerializer(serializers.ModelSerializer):
@@ -369,9 +369,10 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
                 amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:
                 amount = decimal.Decimal('{:.2f}'.format(deduction.value))
-            amount = decimal.Decimal(str(
-                math.trunc(amount * 100) / 100
-            ))
+            # amount = decimal.Decimal(str(
+            #     math.trunc(amount * 100) / 100
+            # ))
+            amount = round(amount, 2)
             self.context['total_deductions'] += amount
             res_list.append({'name': deduction.name, 'amount': amount})
         return res_list

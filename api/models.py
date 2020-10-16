@@ -255,6 +255,7 @@ class Employee(models.Model):
                                                       blank=True)
     filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
     allowances = models.IntegerField(blank=True, default=0)
+    w4_year = models.IntegerField(blank=True, default=0)
     step2c_checked = models.BooleanField(blank=True, default=False)
     dependants_deduction = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     other_income = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
