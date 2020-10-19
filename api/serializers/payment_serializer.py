@@ -231,8 +231,8 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         params = validated_data.copy()
         params_keys = dict.fromkeys(params, 1)
         if params_keys.get('regular_hours') or params_keys.get('over_time'):
-            regular_hours = round(decimal.Decimal(params['regular_hours']), 4) if params_keys.get('regular_hours') else payment.regular_hours
-            over_time = round(decimal.Decimal(params['over_time']), 4) if params_keys.get('over_time') else payment.over_time
+            regular_hours = round(decimal.Decimal(params['regular_hours']), 5) if params_keys.get('regular_hours') else payment.regular_hours
+            over_time = round(decimal.Decimal(params['over_time']), 5) if params_keys.get('over_time') else payment.over_time
             params['total_amount'] = decimal.Decimal(str(
                 math.trunc(payment.hourly_rate * (regular_hours + over_time) * 100) / 100
             ))
@@ -606,12 +606,12 @@ def generate_periods_and_payments(employer, generate_since=None):
                 if clocked_hours is None:
                     continue
                 else:
-                    clocked_hours = round(decimal.Decimal(clocked_hours), 2)
+                    clocked_hours = round(decimal.Decimal(clocked_hours), 5)
 
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
                 projected_ending_time = clockin.shift.ending_at
-                projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 2)
+                projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 5)
                 log_debug('hooks','Projected hours '+str(projected_hours))
 
                 if clocked_hours <= projected_hours:
