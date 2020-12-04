@@ -25,7 +25,7 @@ from api.views.admin_views import (
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView, EmployeeMeI9Form,
 )
 
 from api.views.documents_view import (
@@ -369,6 +369,11 @@ urlpatterns = [
         name="me-employees-id-jcinvites"),
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
+
+
+    # EMPLOYEE I9 FORM
+    path('employees/me/i9-form', EmployeeMeI9Form.as_view(), name="employee-i9form"),
+
 
     # DOCUMENTS
     path('documents', DocumentAPI.as_view(), name="document"),

@@ -228,9 +228,70 @@ FILING_STATUS = (
     (WIDOWER, 'Qualifying widow(er) with dependent child'),
 )
 
+class I9Form(models.Model):
+    CITIZEN = 'CITIZEN'
+    NON_CITIZEN = 'NON_CITIZEN'
+    RESIDENT = 'RESIDENT'
+    ALIEN = 'ALIEN'
+    ATTESTATION = (
+        (CITIZEN, 'A citizen of the United States'),
+        (NON_CITIZEN, 'A noncitizen national of the United States'),
+        (RESIDENT, 'A lawful permanent resident'),
+        (ALIEN, 'An alien authorized to work'),
+    ) 
+
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    ARCHIVED = 'ARCHIVED'
+    DELETED = 'DELETED'
+    REJECTED = 'REJECTED'
+    UNDER_REVIEW = 'UNDER_REVIEW'
+    I9_FORM_STATUS = (
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (ARCHIVED, 'Archived'),
+        (DELETED, 'Deleted'),
+        (REJECTED, 'Rejected'),
+    )
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    middle_initial = models.CharField(max_length=100, blank=True)
+    other_last_name = models.CharField(max_length=100, blank=True)
+    address = models.CharField(max_length=100, blank=True)
+    apt_number = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    zipcode = models.CharField(max_length=100, blank=True)
+    date_of_birth = models.CharField(max_length=100, blank=True)
+    social_security = models.CharField(max_length=100, blank=True)
+    email = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=100, blank=True)
+    employee_attestation = models.CharField(max_length=25, choices=ATTESTATION, default=CITIZEN, blank=True)
+    USCIS = models.CharField(max_length=100, blank=True)
+    I_94 = models.CharField(max_length=100, blank=True)
+    passport_number = models.CharField(max_length=100, blank=True)
+    country_issuance = models.CharField(max_length=100, blank=True)
+    employee_signature = models.URLField(blank=True)
+    date_employee_signature = models.TextField(blank=True)
+    translator = models.BooleanField(default=False)
+    translator_signature = models.URLField(blank=True)
+    date_translator_signature = models.CharField(max_length=100, blank=True)
+    translator_first_name = models.CharField(max_length=100, blank=True)
+    translator_last_name = models.CharField(max_length=100, blank=True)
+    translator_address = models.CharField(max_length=100, blank=True)
+    translator_last_name = models.CharField(max_length=100, blank=True)
+    translator_address= models.CharField(max_length=100, blank=True)
+    translator_state = models.CharField(max_length=100, blank=True)
+    translator_city = models.CharField(max_length=100, blank=True)
+    translator_zipcode = models.CharField(max_length=100, blank=True)
+    document_a = models.URLField(blank=True)
+    document_b_c = models.URLField(blank=True)
+    document_b_c2 = models.URLField(blank=True)
+    status = models.CharField(max_length=8, choices=I9_FORM_STATUS, default=PENDING)
 
 class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
+    i9form = models.OneToOneField(I9Form, on_delete=models.CASCADE, blank=True, null=True)
     minimum_hourly_rate = models.DecimalField(
         max_digits=3, decimal_places=1, default=8, blank=True)
     stop_receiving_invites = models.BooleanField(default=False)
@@ -868,7 +929,9 @@ class Document(models.Model):
     validates_identity = models.BooleanField(default=False)
     validates_employment = models.BooleanField(default=False)
     is_form = models.BooleanField(default=False)
-
+    document_a = models.BooleanField(default=False)
+    document_b = models.BooleanField(default=False)
+    document_c = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -940,3 +1003,15 @@ class EmployerDeduction(models.Model):
     value = models.FloatField(blank=False, null=False)
     # Attribute to block the deletion of a Deduction
     lock = models.BooleanField(default=False, null=False, blank=True)
+
+
+
+
+
+
+
+
+
+
+
+
