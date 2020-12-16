@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from api.models import Employer, Shift,EmployerUsers, Profile, Payrates, Position, Employee, User
+from api.models import Employer, Shift,EmployerUsers, Profile, Payrates, SubscriptionPlan, Position, Employee, User
 from datetime import datetime
 from django.utils import timezone
 from api.serializers.badge_serializers import BadgeGetSmallSerializer
-from api.serializers.other_serializer import SubscriptionSerializer
+# from api.serializers.other_serializer import SubscriptionSerializer
 from api.serializers.position_serializer import PositionSmallSerializer
 
 #
@@ -31,6 +31,12 @@ class OtherProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ('other_employers',)
 
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        exclude = ()
+        
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeGetSmallSerializer(many=True)
     active_subscription = serializers.SerializerMethodField()

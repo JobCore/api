@@ -1,6 +1,6 @@
 from api.serializers import favlist_serializer
 from rest_framework import serializers
-from api.models import Employee, Profile, User, FavoriteList, Badge
+from api.models import Employee, Profile, User, FavoriteList, Badge,I9Form
 from api.serializers.position_serializer import PositionSerializer
 #
 # NESTED
@@ -45,11 +45,17 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
+class EmployeeI9Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = I9Form
+        fields = '__all__'
+        
 class EmployeeGetSerializer(serializers.ModelSerializer):
     positions = PositionSerializer(many=True)
     badges = BadgeGetSmallSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     user = UserGetSmallSerializer(many=False)
+    i9form = EmployeeI9Serializer(many=False)
 
     class Meta:
         model = Employee
@@ -124,3 +130,7 @@ class EmployeeSettingsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'The minimum hourly rate allowed is 8 dollars')
         return value
+
+
+
+    

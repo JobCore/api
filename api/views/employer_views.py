@@ -80,20 +80,23 @@ class EmployerMeImageView(EmployerView):
                 validators.error_object('No image to update'),
                 status=status.HTTP_400_BAD_REQUEST)
 
+        print(request.FILES['image'])
         result = cloudinary.uploader.upload(
-            request.FILES['image'],
-            public_id='employer' + str(self.employer.id),
-            crop='limit',
-            width=450,
-            height=450,
-            eager=[{
-                'width': 200, 'height': 200,
-                'crop': 'thumb', 'gravity': 'face',
-                'radius': 100
-            },
-            ],
-            tags=['employer_profile_picture']
+            request.FILES['image']
+            # public_id='employer' + str(self.employer.id),
+            # crop='limit',
+            # width=450,
+            # height=450,
+            # eager=[{
+            #     'width': 200, 'height': 200,
+            #     'crop': 'thumb', 'gravity': 'face',
+            #     'radius': 100
+            # },
+            # ],
+            # tags=['employer_profile_picture']
         )
+
+        print('result image',result)
 
         self.employer.picture = result['secure_url']
         self.employer.save()
@@ -898,6 +901,10 @@ class EmployerClockinsMeView(EmployerView):
             qEmployee = request.GET.get('employee')
             if qEmployee:
                 clockins = clockins.filter(employee__id=qEmployee)
+
+            qUpdated = request.GET.get('updated')
+            if qUpdated:
+                clockins = clockins.filter(updated_at__range=(datetime.now() - timedelta(days=2), datetime.now()))
 
             qOpen = request.GET.get('open')
             if qOpen:

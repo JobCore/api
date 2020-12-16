@@ -168,7 +168,6 @@ class EmployeeMeView(EmployeeView):
 
     def put(self, request):
         employee = self.employee
-        print(request.data)
         serializer = employee_serializer.EmployeeSettingsSerializer(
             employee, data=request.data)
 
@@ -538,3 +537,19 @@ class EmployeeDeviceMeView(WithProfileView):
         qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeMeI9Form(EmployeeView):
+
+    def post(self, request):
+        employee = self.employee
+        request.data['employee'] = self.employee.id
+
+        serializer = employee_serializer.EmployeeI9Serializer(data=request.data)
+        print('rquest data', request.data)
+        if serializer.is_valid():
+            serializer.save()
+            print('serialzier data @@@@@@@@@@@@@@', serializer.data)
+            i9form = I9Form.objects.get(pk=serializer.data['id'])
+            Employee.objects.filter(pk=self.employee.id).update(i9form=i9form)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
