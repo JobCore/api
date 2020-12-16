@@ -32,7 +32,11 @@ class OtherProfileSerializer(serializers.ModelSerializer):
         fields = ('other_employers',)
 
 
-
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        exclude = ()
+        
 class EmployerGetSerializer(serializers.ModelSerializer):
     badges = BadgeGetSmallSerializer(many=True)
     active_subscription = serializers.SerializerMethodField()
