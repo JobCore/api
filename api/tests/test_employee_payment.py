@@ -131,43 +131,43 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsInstance(payment.get('employee').get('bank_accounts'), list, payment)
         self.assertEqual(payment.get('paid'), False, payment)
 
-    def test_make_payment_transfer(self):
-        """Test make a payment via electronic transference"""
-        self.client.force_login(self.test_user_employer)
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={"period_id": self.test_period.id})
-        response = self.client.put(url, {"status": "FINALIZED"}, content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        employee_payment = EmployeePayment.objects.get(payroll_period=self.test_period,
-                                                       employer=self.test_employer,
-                                                       employee=self.test_employee)
-        self.assertFalse(employee_payment.paid)
+    # def test_make_payment_transfer(self):
+    #     """Test make a payment via electronic transference"""
+    #     self.client.force_login(self.test_user_employer)
+    #     url = reverse_lazy('api:me-get-single-payroll-period', kwargs={"period_id": self.test_period.id})
+    #     response = self.client.put(url, {"status": "FINALIZED"}, content_type='application/json')
+    #     self.assertEqual(response.status_code, 200, response.content.decode())
+    #     employee_payment = EmployeePayment.objects.get(payroll_period=self.test_period,
+    #                                                    employer=self.test_employer,
+    #                                                    employee=self.test_employee)
+    #     self.assertFalse(employee_payment.paid)
 
-        payment_transactions_qty = PaymentTransaction.objects.count()
-        paid_payroll_payments = self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
-                                                                                   status="PAID").count()
-        approved_payroll_payments = self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
-                                                                                       status="APPROVED").count()
+    #     payment_transactions_qty = PaymentTransaction.objects.count()
+    #     paid_payroll_payments = self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
+    #                                                                                status="PAID").count()
+    #     approved_payroll_payments = self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
+    #                                                                                    status="APPROVED").count()
 
-        url = reverse_lazy('api:me-get-employee-payment', kwargs={"employee_payment_id": employee_payment.id})
-        response = self.client.post(url,
-                                    {"payment_type": "FAKE",
-                                     "payment_data": {"employer_bank_account_id": self.test_acc1_employer.id,
-                                                      "employee_bank_account_id": self.test_acc_employee.id}},
-                                    content_type='application/json')
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "PAID",
-                         "Period should be FINALIZED because there is a pending employee payment")
-        self.assertEqual(PaymentTransaction.objects.count(), payment_transactions_qty + 1,
-                         "Should be exist one PaymentTransaction additional")
-        employee_payment.refresh_from_db()
-        self.assertTrue(employee_payment.paid)
-        self.assertEqual(self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
-                                                                            status="PAID").count(),
-                         paid_payroll_payments + approved_payroll_payments)
-        self.assertEqual(employee_payment.earnings,
-                         round(employee_payment.amount + employee_payment.deductions + employee_payment.taxes, 2),
-                         'Should be equal, no money could be missing')
+    #     url = reverse_lazy('api:me-get-employee-payment', kwargs={"employee_payment_id": employee_payment.id})
+    #     response = self.client.post(url,
+    #                                 {"payment_type": "FAKE",
+    #                                  "payment_data": {"employer_bank_account_id": self.test_acc1_employer.id,
+    #                                                   "employee_bank_account_id": self.test_acc_employee.id}},
+    #                                 content_type='application/json')
+    #     self.assertEqual(response.status_code, 200, response.content.decode())
+    #     self.assertDictEqual(response.json(), {'message': 'success'}, response.content.decode())
+    #     self.assertEqual(PayrollPeriod.objects.get(id=self.test_period.id).status, "PAID",
+    #                      "Period should be FINALIZED because there is a pending employee payment")
+    #     self.assertEqual(PaymentTransaction.objects.count(), payment_transactions_qty + 1,
+    #                      "Should be exist one PaymentTransaction additional")
+    #     employee_payment.refresh_from_db()
+    #     self.assertTrue(employee_payment.paid)
+    #     self.assertEqual(self.test_employee.payrollperiodpayment_set.filter(payroll_period=self.test_period,
+    #                                                                         status="PAID").count(),
+    #                      paid_payroll_payments + approved_payroll_payments)
+    #     self.assertEqual(employee_payment.earnings,
+    #                      round(employee_payment.amount + employee_payment.deductions + employee_payment.taxes, 2),
+    #                      'Should be equal, no money could be missing')
 
     def test_make_payment_missing_payment_type(self):
         """Try to make a payment without provide payment_type info"""

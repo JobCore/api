@@ -42,6 +42,19 @@ class ProfileGetSerializer(serializers.ModelSerializer):
         model = Profile
         exclude = ()
 
+class ProfileResumeSerializer(serializers.ModelSerializer):
+    user = UserGetSmallSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = Profile
+        exclude = ()
+        extra_kwargs = {
+            'id': {'read_only': True},
+            ### remove to change employer
+            # 'employer': {'read_only': True},
+            'employee': {'read_only': True},
+            # 'status': {'read_only': True}
+        } 
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(many=False, read_only=True)

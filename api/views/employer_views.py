@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q, BooleanField, Case, Count, F, Value, When
 from django.http import HttpRequest
-
+import decimal
 import requests
 import cloudinary
 import cloudinary.api
@@ -903,8 +903,12 @@ class EmployerClockinsMeView(EmployerView):
                 clockins = clockins.filter(employee__id=qEmployee)
 
             qUpdated = request.GET.get('updated')
+            
             if qUpdated:
-                clockins = clockins.filter(updated_at__range=(datetime.now() - timedelta(days=2), datetime.now()))
+                print(qUpdated)
+                today = datetime.datetime.today()
+                yesterday = today - datetime.timedelta(days=1)
+                clockins = clockins.filter(updated_at__range=[yesterday, today])
 
             qOpen = request.GET.get('open')
             if qOpen:
@@ -1073,11 +1077,15 @@ class EmployerMeEmployeePaymentView(EmployerView):
         if serializer.is_valid():
             emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment,
                                                                        context={'employer_id': self.employer.id})
-            employee_payment.deductions = emp_pay_ser.data['deductions']
-            employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
-                                                                    cls=DecimalEncoder))
+            #old
+            # employee_payment.deductions = emp_pay_ser.data['deductions']
+            # employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
+            #                                                         cls=DecimalEncoder))
+            
+            employee_payment.deductions = request.data["deductions"]
+            employee_payment.deduction_list = request.data["deductions_list"]
             employee_payment.taxes = emp_pay_ser.data['taxes']
-            employee_payment.amount = emp_pay_ser.data['amount']
+            employee_payment.amount = decimal.Decimal(emp_pay_ser.data['earnings']) - decimal.Decimal(request.data["deductions"])
             with transaction.atomic():
                 employee_payment.save()
                 if serializer.validated_data['payment_type'] in [PaymentTransaction.ELECT_TRANSF,

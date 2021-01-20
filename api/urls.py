@@ -11,7 +11,7 @@ from api.views.hooks import (
 
 from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
-    EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
+    EmployerView, ProfileMeView, ProfileMeImageView, ProfileMeResumeView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
     PositionView, OnboardingView, ValidateSendEmailView, ValidateSendSMSView,ValidateSMSView, ValidateEmailCompanyView, SendCompanyInvitationView, CityView, PublicShiftView,
     AppVersionView, SubscriptionsView
@@ -25,7 +25,7 @@ from api.views.admin_views import (
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView, EmployeeMeI9Form,
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView, EmployeeMeI9Form,EmployeeMeW4Form
 )
 
 from api.views.documents_view import (
@@ -100,6 +100,10 @@ urlpatterns = [
         'profiles/me/image',
         ProfileMeImageView.as_view(),
         name="me-profiles-image"),
+    path(
+        'profiles/me/resume',
+        ProfileMeResumeView.as_view(),
+        name="me-profiles-resume"),
 
     path(
         'jobcore-invites',
@@ -373,6 +377,9 @@ urlpatterns = [
 
     # EMPLOYEE I9 FORM
     path('employees/me/i9-form', EmployeeMeI9Form.as_view(), name="employee-i9form"),
+
+    # EMPLOYEE W4 FORM
+    path('employees/me/w4-form', EmployeeMeW4Form.as_view(), name="employee-w4form"),
 
 
     # DOCUMENTS

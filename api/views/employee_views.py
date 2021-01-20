@@ -540,16 +540,76 @@ class EmployeeDeviceMeView(WithProfileView):
 
 class EmployeeMeI9Form(EmployeeView):
 
-    def post(self, request):
-        employee = self.employee
-        request.data['employee'] = self.employee.id
+    def get(self, request):
+        i9form = I9Form.objects.filter(employee_id=self.employee.id)
 
+        serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def post(self, request):
+
+        request.data['employee'] = self.employee.id
         serializer = employee_serializer.EmployeeI9Serializer(data=request.data)
-        print('rquest data', request.data)
+        if serializer.is_valid():
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+
+        try:
+            i9form = I9Form.objects.filter(
+                employee_id=self.employee.id).get()
+        except I9Form.DoesNotExist:
+            return Response(validators.error_object(
+                'I9-Form not found'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employee_serializer.EmployeeI9Serializer(
+            i9form, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+class EmployeeMeW4Form(EmployeeView):
+
+    def get(self, request):
+        w4form = W4Form.objects.filter(employee_id=self.employee.id)
+
+        serializer = employee_serializer.EmployeeW4Serializer(w4form, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def post(self, request):
+
+        request.data['employee'] = self.employee.id
+        serializer = employee_serializer.EmployeeW4Serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            print('serialzier data @@@@@@@@@@@@@@', serializer.data)
-            i9form = I9Form.objects.get(pk=serializer.data['id'])
-            Employee.objects.filter(pk=self.employee.id).update(i9form=i9form)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+
+        try:
+            w4form = W4Form.objects.filter(
+                employee_id=self.employee.id).get()
+        except W4Form.DoesNotExist:
+            return Response(validators.error_object(
+                'W4-Form not found'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employee_serializer.EmployeeW4Serializer(
+            i9form, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

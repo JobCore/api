@@ -1,6 +1,6 @@
 from api.serializers import favlist_serializer
 from rest_framework import serializers
-from api.models import Employee, Profile, User, FavoriteList, Badge,I9Form
+from api.models import Employee, Profile, User, FavoriteList, Badge,I9Form, W4Form
 from api.serializers.position_serializer import PositionSerializer
 #
 # NESTED
@@ -45,17 +45,34 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
+
+class EmployeeGetI9Serializer(serializers.ModelSerializer):
+    employee = EmployeeGetTinySerializer(many=False)
+    class Meta:
+        model = I9Form
+        exclude = ()
 class EmployeeI9Serializer(serializers.ModelSerializer):
     class Meta:
         model = I9Form
-        fields = '__all__'
+        exclude = ()
+
+class EmployeeGetW4Serializer(serializers.ModelSerializer):
+    employee = EmployeeGetTinySerializer(many=False)
+    class Meta:
+        model = W4Form
+        exclude = ()
+class EmployeeW4Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = W4Form
+        exclude = ()
+
         
 class EmployeeGetSerializer(serializers.ModelSerializer):
     positions = PositionSerializer(many=True)
     badges = BadgeGetSmallSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     user = UserGetSmallSerializer(many=False)
-    i9form = EmployeeI9Serializer(many=False)
+
 
     class Meta:
         model = Employee
