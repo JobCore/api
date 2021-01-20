@@ -128,9 +128,6 @@ class ValidateSendSMSView(APIView):
         if phone_number is None:
             raise ValidationError('Invalid phone number to validate')
 
-
-        print(email)
-        print(phone_number)
         try:
             user = User.objects.get(email=email, profile__phone_number=phone_number)
             print(user)
@@ -601,6 +598,40 @@ class ProfileMeImageView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class ProfileMeResumeView(APIView):
+
+    def put(self, request):
+        try:
+            profile = Profile.objects.get(user=self.request.user)
+        except Profile.DoesNotExist:
+            raise PermissionDenied("You don't seem to have a profile")
+
+        if 'image' not in request.FILES:
+            return Response(
+                validators.error_object('no image'),
+                status=status.HTTP_400_BAD_REQUEST)
+
+        result = cloudinary.uploader.upload(
+            request.FILES['image'],
+            public_id=f'{str(profile.id)}/profile' + str(profile.id),
+            crop='limit',
+            width=450,
+            height=450,
+            eager=[{
+                'width': 200, 'height': 200,
+                'crop': 'thumb', 'gravity': 'face',
+                'radius': 100
+            },
+            ],
+            tags=['profile_resume', 'profile' + str(profile.id)]
+        )
+
+        profile.resume = result['secure_url']
+        profile.save()
+        serializer = profile_serializer.ProfileResumeSerializer(profile)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class PositionView(APIView):
     def get(self, request, id=False):
@@ -802,7 +833,6 @@ class RateView(APIView):
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
             serializer = rating_serializer.RatingGetSerializer(qs, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def post(self, request):

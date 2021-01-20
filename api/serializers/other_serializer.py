@@ -20,10 +20,7 @@ class AppVersionSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubscriptionPlan
-        exclude = ()
+
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -298,7 +295,11 @@ class AvailabilityBlockSerializer(serializers.ModelSerializer):
 
         return data
 
-
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionPlan
+        exclude = ()
+        
 class AvailabilityPutBlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvailabilityBlock
