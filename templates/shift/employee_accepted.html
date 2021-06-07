@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+  <!-- HEADING -->
+  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tbody>
+        <tr>
+          <td height="35"></td>
+        </tr>
+        <tr>
+          <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tbody>
+                <tr>
+                  <td valign="top" align="center" class="specbundle">
+                    <div class="contentEditableContainer contentTextEditable">
+                      <div class="contentEditable">
+                        <p style='text-align:center;margin:0;font-family:Georgia,Time,sans-serif;font-size:26px;color:#222222;'>
+                          <span class="specbundle2">
+                            <span class="font1"></br> </br> Your shift invite has been accepted!</span>
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- SEPARATOR -->
+  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+        <tr>
+          <td height="35"></td>
+        </tr>
+    </table>
+  </div>
+  <!-- MESSAGE CONTENT -->
+  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+        <tr>
+          <td align='left'>
+            <div class="contentEditableContainer contentTextEditable">
+              <div class="contentEditable" align='center'>
+                <p><span class="fuchsia">{{ TALENT }}</span> has <strong>accepted</strong> your shift invite for <span class="dark-green">{{ POSITION }}</span> on <span class="red">{{ DATE }}</span>. </p>
+                <p>This is just an informative message and it does not require any actions on your side.</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr><td height='55'></td></tr>
+      </table>
+    </div>
+{% endblock %}

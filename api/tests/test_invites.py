@@ -101,6 +101,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.test_shift_stop_receiving_invites_OFF, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -122,8 +123,11 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at, ending_at = ending_at, allday=True)
+
         talents = []
         talents = notifier.get_talents_to_notify(self.test_shift_stop_receiving_invites_OFF)
+
         self.assertEquals(len(talents) > 0, True, 'There should be more than 0 invites because the talent is accepting invites')
 
 
@@ -162,6 +166,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.test_shift_minimum_hourly_rate_greater_employee, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, position=position, ending_at=ending_at,minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -174,8 +179,14 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 username='employee1',
                 email='employee1@testdoma.in',
                 is_active=True,
-            )
+            ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
         )
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at, ending_at = ending_at, allday=True)
+
         talents = []
 
         talents = notifier.get_talents_to_notify(self.test_shift_minimum_hourly_rate_greater_employee)
@@ -219,6 +230,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.test_shift_minimum_hourly_rate_lesser_employee, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 3  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -228,14 +240,22 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 total_ratings=5,
                 positions=[position.id],
             ),
+            profilekwargs = dict(
+                latitude = 40,
+                longitude = -73
+            ),
             userkwargs=dict(
                 username='employee1',
                 email='employee1@testdoma.in',
                 is_active=True,
             )
         )
+
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at, ending_at = ending_at, allday=True)
+
         talents = []
         talents = notifier.get_talents_to_notify(self.test_shift_minimum_hourly_rate_lesser_employee)
+
         self.assertEquals(len(talents) > 0, True, 'There should be 1 invites because the shift have smaller rating')
     
 
@@ -333,6 +353,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
         starting_at = timezone.now() + timedelta(days=1)
         ending_at = starting_at + timedelta(minutes=90)
 
+
         self.test_shift_position, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
             employer=self.test_employer)
@@ -350,6 +371,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.test_shift_position, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -371,7 +393,8 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
-            
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at, ending_at = ending_at, allday=True)
+
         talents = []
         talents = notifier.get_talents_to_notify(self.test_shift_position)
         self.assertEquals(len(talents) > 0, True, 'Employee should receive invite from shift because shift.position is included in the employee positions')
@@ -458,6 +481,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         self.test_shift_availability, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at, ending_at=ending_at, position=position, minimum_hourly_rate=11.50, minimum_allowed_rating = 0  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_user_employee, self.test_employee, _ = self._make_user(
@@ -509,9 +533,12 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at, ending_at = ending_at, allday=True)
+
         #this in range of the shift  
         self.test_shift_pending_inrange, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at - timedelta(minutes=15),  ending_at=ending_at, minimum_hourly_rate=10, minimum_allowed_rating = 1  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_shift_accepted_employees, _, __ = self._make_shift(
@@ -522,6 +549,7 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 ending_at=ending_at, 
                 minimum_hourly_rate=11.50, 
                 minimum_allowed_rating = 0  ),
+                venuekwargs=dict(latitude = 40, longitude = -73),
                 employer=self.test_employer,
             )
         talents = []
@@ -554,9 +582,12 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 is_active=True,
             )
         )
+        mixer.blend('api.AvailabilityBlock', employee=self.test_employee, starting_at=starting_at - timedelta(minutes=200), ending_at = starting_at + timedelta(minutes=200), allday=True)
+
         #this one available to be sent because is outside the range of the applied shift
         self.test_shift_pending_outrange, _, __ = self._make_shift(
             shiftkwargs=dict(status='OPEN', starting_at=starting_at - timedelta(minutes=125),  ending_at=starting_at - timedelta(minutes=5), position=position, minimum_hourly_rate=10, minimum_allowed_rating = 1  ),
+            venuekwargs=dict(latitude = 40, longitude = -73),
             employer=self.test_employer)
 
         self.test_shift_accepted_employees, _, __ = self._make_shift(
@@ -567,8 +598,9 @@ class InvitesTestSuite(TestCase, WithMakeUser, WithMakeShift):
                 ending_at=ending_at, 
                 position=position, 
                 minimum_hourly_rate=11.50, 
-                minimum_allowed_rating = 0  ),
-                employer=self.test_employer,
+                minimum_allowed_rating = 0),
+                venuekwargs=dict(latitude = 40, longitude = -73),
+                employer=self.test_employer
             )
         talents = []
         talents = notifier.get_talents_to_notify(self.test_shift_pending_outrange)

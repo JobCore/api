@@ -31,6 +31,7 @@ class BadgeGetSmallSerializer(serializers.ModelSerializer):
 
 
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
+    user = UserGetSmallSerializer(many=False)
     class Meta:
         model = Employee
         exclude = ()
@@ -61,7 +62,10 @@ class EmployeeGetW4Serializer(serializers.ModelSerializer):
     class Meta:
         model = W4Form
         exclude = ()
+
 class EmployeeW4Serializer(serializers.ModelSerializer):
+    # employee = EmployeeGetTinySerializer(many=False)
+
     class Meta:
         model = W4Form
         exclude = ()

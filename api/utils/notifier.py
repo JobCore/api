@@ -1,11 +1,12 @@
 import os
 from django.db.models import Q
-from api.models import Employee, ShiftInvite, Shift, Profile
+from api.models import Employee, ShiftInvite, Shift, Profile, AvailabilityBlock
 from api.utils.email import send_email_message, send_fcm_notification, send_sms, send_sms_valdation
 import api.utils.jwt
 from rest_framework_jwt.settings import api_settings
 from django.utils import timezone
-from datetime import timedelta
+from math import sin, cos, sqrt, atan2, radians
+from datetime import datetime, timedelta
 API_URL = os.environ.get('API_URL')
 EMPLOYER_URL = os.environ.get('EMPLOYER_URL')
 EMPLOYEE_URL = os.environ.get('EMPLOYEE_URL')
@@ -25,31 +26,72 @@ def get_talents_to_notify(shift):
             Q(starting_at__range=[shift.starting_at, shift.ending_at]) | Q(ending_at__range=[shift.starting_at, shift.ending_at]) | 
             Q(starting_at__lte=shift.starting_at, ending_at__gte=shift.ending_at)
         )
-        print(non_expired_shifts)
 
         
         rating = shift.minimum_allowed_rating
         favorite_lists = shift.allowed_from_list.all()
+        shift_lat = shift.venue.latitude
+        shift_lon = shift.venue.longitude
+
        
-        talents_to_notify = Employee.objects.filter(
-            Q(rating__gte=rating) | Q(rating__isnull=True),
+        for emp in Profile.objects.filter(
+            Q(employee__isnull=False),
+            Q(employee__rating__gte=rating) | Q(employee__rating__isnull=True),
             # the employee gets to pick the minimum hourly rate
-            Q(minimum_hourly_rate__lte=shift.minimum_hourly_rate),
+            Q(employee__minimum_hourly_rate__lte=shift.minimum_hourly_rate),
             # is accepting invites
-            Q(stop_receiving_invites=False),
+            Q(employee__stop_receiving_invites=False),
             # positions not in shift
-            Q(positions__id=shift.position.id),
-        ).exclude(shift_accepted_employees__in=[s.id for s in non_expired_shifts])
+            Q(employee__positions__id=shift.position.id),
+            ).exclude(employee__shift_accepted_employees__in=[s.id for s in non_expired_shifts]
+            ):
+            print('profile emp', emp)
+            if(
+            AvailabilityBlock.objects.filter(
+            Q(employee = emp.employee),
+            Q(starting_at__range=[shift.starting_at, shift.ending_at]) | Q(ending_at__range=[shift.starting_at, shift.ending_at]) | 
+            Q(starting_at__lte=shift.starting_at, ending_at__gte=shift.ending_at)
+            ).exists()
+            ):
+                print('longitude emp', emp)
+                if emp.longitude and emp.latitude:
+                    R = 6373.0
+
+                    lat1 = radians(shift_lat)
+                    lon1 = radians(shift_lon)
+                    lat2 = radians(emp.latitude)
+                    lon2 = radians(emp.longitude)
+
+                    dlon = lon2 - lon1
+                    dlat = lat2 - lat1
+
+                    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+                    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+                    distance = R * c
+                    print('pog ---', emp)
+                    if distance <= 50:
+                        print('employee ---', emp)
+                        talents_to_notify.append(emp.employee)
+
+
+        # talents_to_notify = Employee.objects.filter(
+        #     Q(rating__gte=rating) | Q(rating__isnull=True),
+        #     # the employee gets to pick the minimum hourly rate
+        #     Q(minimum_hourly_rate__lte=shift.minimum_hourly_rate),
+        #     # is accepting invites
+        #     Q(stop_receiving_invites=False),
+        #     # positions not in shift
+        #     Q(positions__id=shift.position.id),
+        # ).exclude(shift_accepted_employees__in=[s.id for s in non_expired_shifts])
         # exclude the talent if it has other shifts during the same time
        
-        
-        # print(talents_to_notify)
         if len(favorite_lists) > 0:
             talents_to_notify = talents_to_notify.filter(
-                # the employer gets to pick employers only from his favlists
+                # the employer gets to pick employers only from his favlists 
                 Q(favoritelist__in=favorite_lists)
             )
-
+    print('TALENT TO NOTIFY--------',talents_to_notify)
     return talents_to_notify
 
 
@@ -70,9 +112,11 @@ def notify_email_validation(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
-    print('notify_email_validation')
+    
     send_email_message("registration", user.email, {
         "SUBJECT": "Please validate your email in JobCore",
+        "EMPLOYER": user.profile.employer.title,
+        "ID": user.profile.employer.id,
         "LINK": API_URL + '/api/user/email/validate?token=' + token,
         "FIRST_NAME": user.first_name
     })
@@ -252,12 +296,28 @@ def notify_jobcore_invite(invite, include_sms=False, employer_role=""):
             send_sms("invite_to_jobcore", invite.phone_number)
 
 
-def notify_invite_accepted(invite):
+def notify_invite_accepted(employee, invite):
 
     return send_email_message("invite_accepted", invite.sender.user.email, {
-        "TALENT": invite.first_name + ' ' + invite.last_name,
+        "TALENT": invite.employee.user.first_name + ' ' + invite.employee.user.last_name,
         "LINK": EMPLOYER_URL,
         "DATA": {"type": "registration"}
+    })
+def notify_invite_shift_rejected(employee, invite):
+   
+    return send_email_message("employee_rejected", invite.sender, {
+        "TALENT": employee.user.first_name + ' ' + employee.user.last_name,
+        "POSITION": invite.shift.position.title,
+        "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
+        "DATA": {"type": "shift"}
+    })
+def notify_invite_shift_accepted(employee, invite):
+   
+    return send_email_message("employee_accepted", invite.sender, {
+        "TALENT": employee.user.first_name + ' ' + employee.user.last_name,
+        "POSITION": invite.shift.position.title,
+        "DATE": invite.shift.starting_at.strftime('%m/%d/%Y'),
+        "DATA": {"type": "shift"}
     })
 
 
@@ -284,7 +344,6 @@ def notify_single_shift_invite(invite, withEmail=False):
         "LINK": EMPLOYEE_URL + '/shift/'+str(invite.shift.id),
         "DATA": {"type": "invite", "id": invite.id}
     })
-
 
 def notify_new_rating(rating):
     print('the new rating', rating)

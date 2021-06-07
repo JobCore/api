@@ -18,7 +18,7 @@ if(FIREBASE_KEY and FIREBASE_KEY!=''):
 def send_email_message(slug, to, data={}):
     if settings.EMAIL_NOTIFICATIONS_ENABLED:
         template = get_template_content(slug, data, ["email"])
-        # print('Email notification '+slug+' sent')
+        print('Email notification '+slug+' sent')
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=(
@@ -111,8 +111,9 @@ def send_fcm_notification(slug, user_id, data={}):
 
 
 def get_template_content(slug, data={}, formats=None):
-    info = get_template_info(slug)
 
+    info = get_template_info(slug)
+    
     #d = Context({ 'username': username })
     con = {
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
@@ -122,6 +123,8 @@ def get_template_content(slug, data={}, formats=None):
         'COMPANY_LEGAL_NAME': 'JobCore LLC',
         'COMPANY_ADDRESS': '270 Catalonia, Coral Gables, 33134'
     }
+
+
     z = con.copy()   # start with x's keys and values
     z.update(data)
 
@@ -142,6 +145,7 @@ def get_template_content(slug, data={}, formats=None):
     if formats is not None and "sms" in formats:
         sms = get_template(info['type'] + '/' + slug + '.sms')
         templates["sms"] = sms.render(z)
+
 
     return templates
 
@@ -191,6 +195,10 @@ def get_template_info(slug):
         "applicant_rejected": {
             "type": "shift",
             "subject": "Job application rejected, we are sorry :("
+        },
+        "employee_rejected": {
+            "type": "shift",
+            "subject": "Shift invite has been rejected, we are sorry :("
         },
     }
     if slug in subjects:

@@ -41,7 +41,7 @@ from api.views.employer_views import (
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView, EmployerMePayrates,
-    EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView,
+    EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView, EmployerMeW4Form,EmployerMeI9Form, EmployerMeEmployeeDocument
 )
 
 app_name = "api"
@@ -380,6 +380,11 @@ urlpatterns = [
 
     # EMPLOYEE W4 FORM
     path('employees/me/w4-form', EmployeeMeW4Form.as_view(), name="employee-w4form"),
+
+    # EMPLOYER W4 FORM
+    path('employers/me/w4-form/<int:id>', EmployerMeW4Form.as_view(), name="employee-w4form"),
+    path('employers/me/i9-form/<int:id>', EmployerMeI9Form.as_view(), name="employee-i9form"),
+    path('employers/me/employee-documents/<int:id>', EmployerMeEmployeeDocument.as_view(), name="employee-i9form"),
 
 
     # DOCUMENTS

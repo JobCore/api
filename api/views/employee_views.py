@@ -597,7 +597,6 @@ class EmployeeMeW4Form(EmployeeView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
-
         try:
             w4form = W4Form.objects.filter(
                 employee_id=self.employee.id).get()
@@ -605,7 +604,7 @@ class EmployeeMeW4Form(EmployeeView):
             return Response(validators.error_object(
                 'W4-Form not found'), status=status.HTTP_404_NOT_FOUND)
         serializer = employee_serializer.EmployeeW4Serializer(
-            i9form, data=request.data)
+            w4form, data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors,
