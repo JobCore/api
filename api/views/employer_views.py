@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q, BooleanField, Case, Count, F, Value, When
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
+
 import decimal
 import requests
 import cloudinary
@@ -26,7 +27,7 @@ from rest_framework.response import Response
 
 from api.mixins import EmployerView
 from api.models import (
-    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList, EmployerUsers, Employer,
+    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList, EmployerUsers, Employer, W4Form,I9Form,EmployeeDocument,
     PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate, Position,
     Shift, ShiftApplication, ShiftInvite, Venue,
     APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, OPEN,
@@ -44,7 +45,7 @@ from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
-    profile_serializer, other_serializer
+    profile_serializer, other_serializer, documents_serializer
 )
 from api.utils import validators
 from api.utils.utils import DecimalEncoder
@@ -52,7 +53,6 @@ from api.utils.utils import DecimalEncoder
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-
 
 class EmployerMeView(EmployerView):
     def get(self, request):
@@ -435,15 +435,40 @@ class EmployerMeSubscriptionView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         request.data['employer'] = self.employer.id
         serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
 
         if serializer.is_valid():
+            
+            customer = stripe.Customer.create(
+                description=request.data['description'],
+                email=request.data['email'],
+                name=request.data['name'],
+                source=request.data['source']['id'],
+                address=request.data['address'],
+                phone=request.data['phone']
+            )
+            plan = ''
+
+            if request.data['subscription'] == 1:
+                plan = 'price_1GuIrZAQGSNQlybY41AJDfoW'
+            elif request.data['subscription'] == 2:
+                plan = 'price_1GuIttAQGSNQlybYWpGxUJyV'
+            elif request.data['subscription'] == 3:
+                plan = 'price_1GuIv1AQGSNQlybYK7k61xh2'
+
+            if customer is not None:
+                stripe.Subscription.create(
+                customer=customer,
+                items=[
+                    {"price": plan},
+                ],
+                )
+
             serializer.save()
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+       
         plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
         _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
         return Response(_serializer.data, status=status.HTTP_201_CREATED)
@@ -931,6 +956,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
 
@@ -1297,6 +1323,54 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
         ser = payment_serializer.EmployeePaymentReportSerializer(self.get_queryset(ser_params.data), many=True)
         return Response(ser.data, status=status.HTTP_200_OK)
 
+class EmployerMeW4Form(EmployerView):
+
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                w4form = W4Form.objects.filter(employee_id=id)
+            except W4Form.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employee_serializer.EmployeeW4Serializer(w4form, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+class EmployerMeI9Form(EmployerView):
+
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                i9form = I9Form.objects.filter(employee_id=id)
+            except I9Form.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+     
+class EmployerMeEmployeeDocument(EmployerView):
+
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                documents = EmployeeDocument.objects.filter(employee_id=id)
+            except EmployeeDocument.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = documents_serializer.EmployeeDocumentGetSerializer(documents, many=True)
+            return JsonResponse(serializer.data, status=200, safe=False)
 
 class EmployerMePayrates(EmployerView):
     def get_queryset(self):

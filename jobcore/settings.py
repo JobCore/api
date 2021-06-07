@@ -203,6 +203,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 #     'localhost'
 # )
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

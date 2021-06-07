@@ -92,7 +92,7 @@ class EmployeeGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('user', 'id', 'badges')
+        fields = ('user', 'id', 'badges','employment_verification_status')
 
 
 class ClockinGetSerializer(serializers.ModelSerializer):

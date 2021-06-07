@@ -12,6 +12,7 @@ class OtherEmployerSerializer(serializers.ModelSerializer):
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     other_employers = OtherEmployerSerializer(source='company_users_profile', many=True)
+    employer = employer_serializer.EmployerGetSerializer(required=False)
 
     class Meta:
         model = Profile
@@ -20,9 +21,11 @@ class ProfileGetSmallSerializer(serializers.ModelSerializer):
 
 
 class UserGetTinySerializer(serializers.ModelSerializer):
+    profile = ProfileGetSmallSerializer(many=False)
+
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email')
+        fields = ('first_name', 'last_name', 'email', 'profile')
 
 
 class UserGetSmallSerializer(serializers.ModelSerializer):

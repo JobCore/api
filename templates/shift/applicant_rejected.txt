@@ -1,0 +1,9 @@
+Hello {{ EMAIL }}.
+
+Oh no! Your job application has been rejected!
+
+{{ COMPANY }} has rejected your application for {{ POSITION }} on {{ DATE }}.
+
+This is just an informative message and it does not require any actions on your side
+
+The JobCore Team

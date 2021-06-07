@@ -51,6 +51,7 @@ class EmployerGetSerializer(serializers.ModelSerializer):
 
     def get_active_subscription(self, employer):
         _sub = employer.employersubscription_set.filter(status='ACTIVE').first()
+    
         if _sub is not None:
             serializer = SubscriptionSerializer(_sub.subscription, many=False)
             return serializer.data
@@ -133,6 +134,7 @@ class EmployerPayrateGetSmallSerializer(serializers.ModelSerializer):
 
 class EmployerSerializer(serializers.ModelSerializer):
     retroactive = serializers.BooleanField(write_only=True, required=False)
+    employer = EmployerGetSerializer(many=False, read_only=True)
 
     class Meta:
         model = Employer

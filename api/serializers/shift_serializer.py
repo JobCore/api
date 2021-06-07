@@ -362,7 +362,7 @@ class ShiftPostSerializer(serializers.ModelSerializer):
 
         manual_invitations = (shift.application_restriction == 'SPECIFIC_PEOPLE')
 
-        print('talents', talents)
+        print('talents @@@', talents)
         print('include email', includeEmailNotification)
 
         for talent in talents:
@@ -424,7 +424,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         exclude = ()
 
     def validate(self, data):
-
+        print('self instance', self.instance.sender)
         data = super(ShiftInviteSerializer, self).validate(data)
 
         current_user = self.context['request'].user
@@ -432,6 +432,8 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             shift_id=self.instance.shift.id,
             employee_id=current_user.profile.employee.id).count()
 
+        print('data, ', dict(data))
+        print('employees, ', current_user)
         if employees > 0:
             raise serializers.ValidationError(
                 'The talent is already working on this shift')
@@ -453,12 +455,17 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can only apply to your preferred positions: "+', '.join(employee_positions_titles))
 
         # @TODO we have to validate the employee availability
+        if 'status' in data and data['status']=='APPLIED' and self.instance.shift.position.id in employee_positions_ids:
+            notifier.notify_invite_accepted(current_user.profile,self.instance)
+            
+        if 'status' in data and data['status']=='REJECTED' and self.instance.shift.position.id in employee_positions_ids:
+            notifier.notify_invite_shift_rejected(current_user.profile,self.instance)
 
         return data
 
 
 class ShiftCreateInviteSerializer(serializers.ModelSerializer):
-
+ 
     class Meta:
         model = ShiftInvite
         exclude = ()

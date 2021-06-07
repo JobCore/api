@@ -1046,6 +1046,8 @@ class W4Form(models.Model):
     step4b = models.CharField(max_length=100, blank=True)
     step4c = models.CharField(max_length=100, blank=True)
     employee_signature = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(max_length=8, choices=W4_FORM_STATUS, default=PENDING)
 
 

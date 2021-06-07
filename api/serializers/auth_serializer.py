@@ -27,7 +27,7 @@ EMPLOYER_REGISTRATION_DEACTIVATED = os.environ.get('EMPLOYER_REGISTRATION_DEACTI
 
 class UserLoginSerializer(serializers.ModelSerializer):
     employee = serializers.CharField(required=False)
-    employer = employer_serializer.EmployerSerializer(required=False)
+    employer = employer_serializer.EmployerGetSerializer(required=False)
     token = serializers.CharField(read_only=True)
 
     class Meta:
@@ -36,7 +36,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
                   'token', 'employer', 'employee')
         extra_kwargs = {"password": {"write_only": True}}
 
-
+   
 class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
@@ -91,7 +91,16 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             'token': jwt_encode_handler(payload),
             'user': user
         }
+    def get_active_subscription(self, employer):
+        _sub = employer.employersubscription_set.filter(status='ACTIVE').first()
+        print('_sub serializer is non', _sub)
 
+        if _sub is not None:
+            serializer = SubscriptionSerializer(_sub.subscription, many=False)
+            print('_sub serializer', serializer.data)
+            return serializer.data
+        else:
+            return None
 
 class UserRegisterSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
@@ -155,7 +164,6 @@ class UserRegisterSerializer(serializers.Serializer):
                 raise serializers.ValidationError("You need to specify the business website or the employer id")
             if data['about_business'] is None:
                 raise serializers.ValidationError("You need to specify the business description or the employer id")
-
         return data
 
     def create(self, validated_data):
@@ -217,8 +225,7 @@ class UserRegisterSerializer(serializers.Serializer):
             jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
 
             jobcore_invites.update(status='ACCEPTED')
-
-            notifier.notify_email_validation(user)
+            # notifier.notify_email_validation(user, employer)
 
         elif account_type == 'employee':
             status = 'PENDING_EMAIL_VALIDATION'
@@ -256,8 +263,8 @@ class UserRegisterSerializer(serializers.Serializer):
 
             notifier.notify_employee_email_validation(user)
         # notifier.notify_email_validation(user)
+        print('user serializer', user)
         return user
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
