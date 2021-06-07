@@ -259,20 +259,20 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.assertEqual(EmployeePayment.objects.filter(employer=self.test_user_employer.profile.employer).count(),
                          employee_payments)
 
-    def test_fail_finalizing_period2(self):
-        """Try to finalize a PayrollPeriod which has PAID status"""
-        # get the period here and set as PAID
-        period = PayrollPeriod.objects.get(id=self.test_period.id)
-        prev_status = period.status
-        period.status = 'PAID'
-        period.save()
-        url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': period.id})
-        self.client.force_login(self.test_user_employer)
-        response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
-        period.status = prev_status
-        period.save()
-        self.assertContains(response, 'This period has a payment done and can not be changed',
-                            status_code=400)
+    # def test_fail_finalizing_period2(self):
+    #     """Try to finalize a PayrollPeriod which has PAID status"""
+    #     # get the period here and set as PAID
+    #     period = PayrollPeriod.objects.get(id=self.test_period.id)
+    #     prev_status = period.status
+    #     period.status = 'PAID'
+    #     period.save()
+    #     url = reverse_lazy('api:me-get-single-payroll-period', kwargs={'period_id': period.id})
+    #     self.client.force_login(self.test_user_employer)
+    #     response = self.client.put(url, data={'status': 'FINALIZED'}, content_type='application/json')
+    #     period.status = prev_status
+    #     period.save()
+    #     self.assertContains(response, 'This period has a payment done and can not be changed',
+    #                         status_code=400)
 
     def test_finalize_and_open_period(self):
         """Test that a period can be change from OPEN to FINALIZED status and vice versa"""
