@@ -100,6 +100,7 @@ def notify_password_reset_code(user):
     token = api.utils.jwt.internal_payload_encode({
         "user_id": user.id
     })
+
     send_email_message("password_reset_link", user.email, {
         "link": API_URL + '/api/user/password/reset?token=' + token
     })

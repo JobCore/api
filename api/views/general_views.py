@@ -346,7 +346,6 @@ class PasswordView(APIView):
                 status=status.HTTP_404_NOT_FOUND)
 
         tokenDic = {"token": notify_password_reset_code(user)}
-        print('token dick', tokenDic)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
