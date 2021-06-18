@@ -27,7 +27,7 @@ django-dotenv==1.4.2
 django-oauth-toolkit==1.0.0
 django==2.2.8
 djangorestframework-jwt==1.11.0
-djangorestframework==3.9.3
+djangorestframework==3.11.2
 faker==0.9.1
 future==0.16.0
 gunicorn==19.9.0
