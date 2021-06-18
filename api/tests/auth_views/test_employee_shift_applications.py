@@ -81,7 +81,6 @@ class EEShiftApplicationTestSuite(TestCase, WithMakeUser, WithMakeShift):
             'It should return a success response')
         response_json = response.json()
 
-        print([str(appli['shift']['starting_at']) for appli in response_json])
 
         count = ShiftApplication.objects.filter(
             employee_id=self.test_employee.id).count()
