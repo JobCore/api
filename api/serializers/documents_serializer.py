@@ -16,30 +16,30 @@ class EmployeeDocumentSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        validates_employment = validated_data['document_type'].validates_employment
-        validates_identity = validated_data['document_type'].validates_identity
-        is_form = validated_data['document_type'].is_form
+        # validates_employment = validated_data['document_type'].validates_employment
+        # validates_identity = validated_data['document_type'].validates_identity
+        # is_form = validated_data['document_type'].is_form
 
-        if validates_employment:
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
-                                            status__in=['PENDING', 'REJECTED'],
-                                            document_type__validates_employment=True).update(status='DELETED')
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
-                                            document_type__validates_employment=True).update(status='ARCHIVED')
+        # if validates_employment:
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
+        #                                     status__in=['PENDING', 'REJECTED'],
+        #                                     document_type__validates_employment=True).update(status='DELETED')
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
+        #                                     document_type__validates_employment=True).update(status='ARCHIVED')
 
-        if validates_identity:
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
-                                            status__in=['PENDING', 'REJECTED'],
-                                            document_type__validates_identity=True).update(status='DELETED')
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
-                                            document_type__validates_identity=True).update(status='ARCHIVED')
+        # if validates_identity:
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
+        #                                     status__in=['PENDING', 'REJECTED'],
+        #                                     document_type__validates_identity=True).update(status='DELETED')
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
+        #                                     document_type__validates_identity=True).update(status='ARCHIVED')
 
-        if is_form:
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
-                                            status__in=['PENDING', 'REJECTED'], document_type__is_form=True).update(
-                status='DELETED')
-            EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
-                                            document_type__is_form=True).update(status='ARCHIVED')
+        # if is_form:
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id,
+        #                                     status__in=['PENDING', 'REJECTED'], document_type__is_form=True).update(
+        #         status='DELETED')
+        #     EmployeeDocument.objects.filter(employee__id=validated_data['employee'].id, status='APPROVED',
+        #                                     document_type__is_form=True).update(status='ARCHIVED')
 
         new_document = EmployeeDocument(**validated_data)
         new_document.save()
