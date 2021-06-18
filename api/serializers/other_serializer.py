@@ -139,7 +139,6 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
     employer_role = serializers.CharField(default='', write_only=True)
 
     def validate(self, data):
-        print(data)
         if not data.get('email'):
             raise serializers.ValidationError('invalid payload')
    
@@ -151,7 +150,6 @@ class JobCoreInvitePostSerializer(serializers.ModelSerializer):
             if user is not None:
                 profile = Profile.objects.filter(user=user).first()
                 if profile is not None:
-                    print(profile.employer)
                     # if profile.employer is None:
                     raise serializers.ValidationError("The user is already registered in jobcore")
         

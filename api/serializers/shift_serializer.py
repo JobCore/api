@@ -362,9 +362,6 @@ class ShiftPostSerializer(serializers.ModelSerializer):
 
         manual_invitations = (shift.application_restriction == 'SPECIFIC_PEOPLE')
 
-        print('talents @@@', talents)
-        print('include email', includeEmailNotification)
-
         for talent in talents:
             invite = ShiftInvite(
                 manually_created=manual_invitations,
@@ -432,8 +429,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             shift_id=self.instance.shift.id,
             employee_id=current_user.profile.employee.id).count()
 
-        print('data, ', dict(data))
-        print('employees, ', current_user)
+  
         if employees > 0:
             raise serializers.ValidationError(
                 'The talent is already working on this shift')
