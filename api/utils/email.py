@@ -23,7 +23,8 @@ def send_email_message(slug, to, data={}):
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=(
                 "api",
-                os.environ.get('MAILGUN_API_KEY')),
+                "key-5e3aefb1e414b74dd899e20f2d8b28da"),
+                # os.environ.get('MAILGUN_API_KEY')),
             data={
                 "from": os.environ.get('MAILGUN_FROM') +
                 " <mailgun@mailgun.jobcore.co>",
