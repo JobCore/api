@@ -117,8 +117,8 @@ class UserRegisterSerializer(serializers.Serializer):
     last_name = serializers.CharField(required=True, max_length=50)
     phone_number = serializers.CharField(required=False, write_only=True)
     password = serializers.CharField(required=True, write_only=True)
-    city = serializers.CharField(required=False, max_length=20)
-    profile_city = serializers.CharField(required=False, max_length=20)
+    city = serializers.CharField(required=False, max_length=100)
+    profile_city = serializers.CharField(required=False, max_length=100)
     
     # these are added when created an account thru invitation
     employer_role = serializers.CharField(required=False,max_length=20, write_only=True)

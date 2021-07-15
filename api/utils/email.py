@@ -11,6 +11,7 @@ from twilio.rest import Client
 
 push_service = None
 FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
+
 if(FIREBASE_KEY and FIREBASE_KEY!=''):
     push_service = FCMNotification(api_key=FIREBASE_KEY)
 
@@ -90,6 +91,11 @@ def send_fcm(slug, registration_ids, data={}):
             raise Exception("There is no data for the notification")
         message_data = data['DATA']
 
+        print('registration_ids', registration_ids)
+        print('message_title', message_title)
+        print('message_body', message_body)
+        print('message_data', message_data)
+
         result = push_service.notify_multiple_devices(
             registration_ids=registration_ids,
             message_title=message_title,
@@ -98,7 +104,7 @@ def send_fcm(slug, registration_ids, data={}):
 
         # if(result["failure"] or not result["success"]):
         #     raise APIException("Problem sending the notification")
-
+        print('fcm result', result)
         return result
     else:
         return False
