@@ -10,8 +10,7 @@ import requests
 from twilio.rest import Client
 
 push_service = None
-# FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
-FIREBASE_KEY = 'AAAAA_nNbHY:APA91bEXutOrIbzje9OqJWWagwNSWpLcoPWE0NotmiYwrJkOC8C3L_8qApW7uiwZlhK3zUbdAOVWSn5H76n2Vh1KskN8v9gQQOvmTGGhmZYzTnK6VhwCgVO94AXWpuiy1oTXkV9oXNSv'
+FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
 
 if(FIREBASE_KEY and FIREBASE_KEY!=''):
     push_service = FCMNotification(api_key=FIREBASE_KEY)
