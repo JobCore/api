@@ -10,7 +10,9 @@ import requests
 from twilio.rest import Client
 
 push_service = None
-FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
+# FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
+FIREBASE_KEY = 'AAAAA_nNbHY:APA91bEXutOrIbzje9OqJWWagwNSWpLcoPWE0NotmiYwrJkOC8C3L_8qApW7uiwZlhK3zUbdAOVWSn5H76n2Vh1KskN8v9gQQOvmTGGhmZYzTnK6VhwCgVO94AXWpuiy1oTXkV9oXNSv'
+
 if(FIREBASE_KEY and FIREBASE_KEY!=''):
     push_service = FCMNotification(api_key=FIREBASE_KEY)
 
@@ -23,8 +25,7 @@ def send_email_message(slug, to, data={}):
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=(
                 "api",
-                "key-5e3aefb1e414b74dd899e20f2d8b28da"),
-                # os.environ.get('MAILGUN_API_KEY')),
+                os.environ.get('MAILGUN_API_KEY')),
             data={
                 "from": os.environ.get('MAILGUN_FROM') +
                 " <mailgun@mailgun.jobcore.co>",
@@ -91,6 +92,11 @@ def send_fcm(slug, registration_ids, data={}):
             raise Exception("There is no data for the notification")
         message_data = data['DATA']
 
+        print('registration_ids', registration_ids)
+        print('message_title', message_title)
+        print('message_body', message_body)
+        print('message_data', message_data)
+
         result = push_service.notify_multiple_devices(
             registration_ids=registration_ids,
             message_title=message_title,
@@ -99,7 +105,7 @@ def send_fcm(slug, registration_ids, data={}):
 
         # if(result["failure"] or not result["success"]):
         #     raise APIException("Problem sending the notification")
-
+        print('fcm result', result)
         return result
     else:
         return False
