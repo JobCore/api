@@ -45,11 +45,11 @@ def get_talents_to_notify(shift):
             Q(employee__positions__id=shift.position.id),
             ).exclude(employee__shift_accepted_employees__in=[s.id for s in non_expired_shifts]
             ):
-            print('profile emp', emp)
+            print('PROFILE EMP @@@', emp)
             if(
             AvailabilityBlock.objects.filter(
             Q(employee = emp.employee),
-            Q(starting_at__range=[shift.starting_at, shift.ending_at]) | Q(ending_at__range=[shift.starting_at, shift.ending_at]) | 
+            Q(allday = True) | Q(starting_at__range=[shift.starting_at, shift.ending_at]) | Q(ending_at__range=[shift.starting_at, shift.ending_at]) | 
             Q(starting_at__lte=shift.starting_at, ending_at__gte=shift.ending_at)
             ).exists()
             ):
@@ -91,7 +91,6 @@ def get_talents_to_notify(shift):
                 # the employer gets to pick employers only from his favlists 
                 Q(favoritelist__in=favorite_lists)
             )
-    print('TALENT TO NOTIFY--------',talents_to_notify)
     return talents_to_notify
 
 

@@ -568,6 +568,8 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
+
+        
             shifts = Shift.objects.filter(employer_id=self.employer.id)
 
             qStatus = request.GET.get('status')
@@ -638,11 +640,14 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
 
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
+            
+         
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
                 defaultSerializer = shift_serializer.ShiftGetBigListSerializer
 
             if page is not None:
+                
                 serializer = defaultSerializer(page, many=True)
                 return paginator.get_paginated_response(serializer.data)
             else:
@@ -652,9 +657,10 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
         _all_serializers = []
         request.data["employer"] = self.employer.id
+        print('request data', request.data)
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
-
+                print('dict date', dict(date))
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
