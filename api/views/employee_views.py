@@ -186,6 +186,8 @@ class EmployeeShiftInviteView(EmployeeView):
         return self.get_queryset().filter(id=id)
 
     def fetch_list(self, request):
+        NOW = datetime.datetime.now(tz=timezone.utc)
+
         if 'status' not in self.request.GET:
             return self.get_queryset()
 
