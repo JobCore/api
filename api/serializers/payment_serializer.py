@@ -112,17 +112,7 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
         exclude = ('shift', 'employee')
 
 
-class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
-    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
-    class Meta:
-        model = PayrollPeriod
-        fields = (
-            'id',
-            'status',
-            'starting_at',
-            'ending_at',
-            'total_payments'
-        )
+
 
 #
 # MAIN
@@ -139,7 +129,19 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
         model = PayrollPeriodPayment
         exclude = ()
 
-
+class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
+    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'total_payments',
+            'payments'
+        )
+        
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
     #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
     payments = serializers.SerializerMethodField()
