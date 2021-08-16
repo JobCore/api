@@ -492,9 +492,26 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
             if qRating:
                 employees = employees.filter(rating__gte=qRating[0])
 
-            serializer = employee_serializer.EmployeeGetSmallSerializer(
-                employees, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            paginator = HeaderLimitOffsetPagination()
+            page = paginator.paginate_queryset(employees.order_by('-created_at'), request)
+
+            defaultSerializer = employee_serializer.EmployeeGetSmallSerializer
+            
+         
+            # qSerializer = request.GET.get('serializer')
+            # if qSerializer is not None and qSerializer == "big":
+            #     defaultSerializer = shift_serializer.ShiftGetBigListSerializer
+
+            if page is not None:
+                
+                serializer = defaultSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # serializer = employee_serializer.EmployeeGetSmallSerializer(
+            #     employees, many=True)
+            # return Response(serializer.data, status=status.HTTP_200_OK)
     # there shoud be no POST because it is created on signup (registration)
 
 

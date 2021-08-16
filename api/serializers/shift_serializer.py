@@ -166,7 +166,8 @@ class ShiftGetBigListSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     position = PositionGetSmallSerializer(read_only=True)
     employees = EmployeeGetSmallSerializer(many=True, read_only=True)
     status = serializers.SerializerMethodField()
-
+    clockin = serializers.SerializerMethodField()
+    
     class Meta:
         model = Shift
         exclude = (
@@ -177,7 +178,9 @@ class ShiftGetBigListSerializer(ShiftStatusMixin, serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-
+    def get_clockin(self, instance):
+        clockin_instances = instance.clockin_set.filter(shift=instance.id)
+        return ClockinGetSmallSerializer(clockin_instances, many=True).data
 
 #
 # MAIN
