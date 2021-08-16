@@ -143,8 +143,7 @@ class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
         )
         
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
-    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
-    payments = serializers.SerializerMethodField()
+    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
     employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -160,10 +159,6 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'created_at',
             'total_payments',
             'payments')
-
-    def get_payments(self, instance):
-        _payments = instance.payments.all().order_by('shift__starting_at')
-        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 
 class RoundingDecimalField(serializers.DecimalField):
