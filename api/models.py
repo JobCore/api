@@ -38,7 +38,7 @@ PAYROLL_LENGTH_TYPE = (
 
 
 class City(models.Model):
-    name = models.CharField(max_length=30, blank=False, null=False)
+    name = models.CharField(max_length=100, blank=False, null=False)
 
     def __str__(self):
         return self.name
@@ -93,7 +93,7 @@ class SubscriptionPlan(models.Model):
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
-    website = models.CharField(max_length=30, blank=True)
+    website = models.CharField(max_length=100, blank=True)
     bio = models.TextField(max_length=250, blank=True)
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
@@ -309,10 +309,10 @@ class Profile(models.Model):
     # location information
     location = models.CharField(max_length=250, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
-    country = models.CharField(max_length=30, blank=True)
-    city = models.CharField(max_length=30, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     profile_city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
-    state = models.CharField(max_length=30, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(
         max_digits=14, decimal_places=11, default=0)
@@ -409,10 +409,10 @@ class Venue(models.Model):
     employer = models.ForeignKey(
         Employer, on_delete=models.CASCADE, blank=True, null=True)
     street_address = models.CharField(max_length=250, blank=True)
-    country = models.CharField(max_length=30, blank=True)
+    country = models.CharField(max_length=100, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
-    state = models.CharField(max_length=30, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -489,7 +489,7 @@ class Shift(models.Model):
         through='ShiftEmployee')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
-    description = models.TextField(max_length=300, blank=True, default="")
+    description = models.TextField(max_length=500, blank=True, default="")
 
     # if this option is None, the talent will be able to clockin anytime
     # he wants. By default, he can only clockin within 15 min of the starting
@@ -1008,6 +1008,8 @@ class I9Form(models.Model):
     document_b_c = models.URLField(blank=True)
     document_b_c2 = models.URLField(blank=True)
     status = models.CharField(max_length=8, choices=I9_FORM_STATUS, default=PENDING)
+    created_at = models.DateTimeField(auto_now=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
 
 class W4Form(models.Model):
     SINGLE = 'SINGLE'
