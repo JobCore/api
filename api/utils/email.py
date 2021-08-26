@@ -125,8 +125,8 @@ def get_template_content(slug, data={}, formats=None):
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
         'EMPLOYER_URL': os.environ.get('EMPLOYER_URL'),
         'API_URL': os.environ.get('API_URL'),
-        'COMPANY_NAME': 'JobCore',
-        'COMPANY_LEGAL_NAME': 'JobCore LLC',
+        'COMPANY_NAME': 'JobCore Talent',
+        'COMPANY_LEGAL_NAME': 'JobCore Talent LLC',
         'COMPANY_ADDRESS': '270 Catalonia, Coral Gables, 33134'
     }
 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import *
-
+from django.utils.html import mark_safe
 
 class AppVersionAdmin(admin.ModelAdmin):
     list_display = ('id', 'version', 'force_update', 'created_at', 'updated_at')
@@ -38,6 +38,80 @@ class EmployeeAdmin(admin.ModelAdmin):
 
     def get_status(self, obj):
         return obj.user.profile.status
+
+def approve_i9(modeladmin, request, queryset):
+    queryset.update(status='APPROVED')
+    print(queryset[0].employee.id)
+    Employee.objects.filter(pk=queryset[0].employee.id).update(employment_verification_status='APPROVED')
+    approve_i9.short_description = "Approve selected i9 form"
+
+def reject_i9(modeladmin, request, queryset):
+    queryset.update(status='REJECTED')
+    reject_i9.short_description = "Reject selected i9 form"
+
+class I9Admin(admin.ModelAdmin):
+    
+    actions = [approve_i9, reject_i9]
+    
+    exclude = ('employee_signature','date_translator_signature','translator_signature','document_a', 'document_b_c', 'document_b_c2')
+    list_display = (
+    'id', 'employee', 'status', 'created_at')
+    search_fields = (
+        'employee__user__first_name', 'employee__user__last_name', 'employee__user__email','created_at')
+
+    list_filter = ('status', 'employee',)
+    list_per_page = 100
+
+    readonly_fields = ['documentA','documentB','documentC']
+
+    def documentA(self, obj):
+        document_list = []
+        document_set = EmployeeDocument.objects.filter(employee__id = obj.employee.id, document_type__document_a = True)
+
+        for doc in document_set.iterator():
+            document_list.append(doc.document)
+            return mark_safe('<img src="%s" width="600" height="450" />' % (document_list[0]))
+
+    def documentB(self, obj):
+        document_list = []
+        document_set = EmployeeDocument.objects.filter(employee__id = obj.employee.id, document_type__document_b = True)
+
+        for doc in document_set.iterator():
+            document_list.append(doc.document)
+            return mark_safe('<img src="%s" width="600" height="450" />' % (document_list[0]))
+
+    def documentC(self, obj):
+        document_list = []
+        document_set = EmployeeDocument.objects.filter(employee__id = obj.employee.id, document_type__document_c = True)
+
+        for doc in document_set.iterator():
+            document_list.append(doc.document)
+            return mark_safe('<img src="%s" width="600" height="450" />' % (document_list[0]))
+
+    documentA.allow_tags = True
+    documentA.short_description = 'Documents A'
+    documentB.allow_tags = True
+    documentB.short_description = 'Documents B'
+    documentC.allow_tags = True
+    documentC.short_description = 'Documents C'
+
+def approve_w4(modeladmin, request, queryset):
+    queryset.update(status='APPROVED')
+    approve_w4.short_description = "Approve selected i9 form"
+
+def reject_w4(modeladmin, request, queryset):
+    queryset.update(status='REJECTED')
+    reject_w4.short_description = "Reject selected i9 form"
+
+class W4Admin(admin.ModelAdmin):
+    actions = [approve_w4, reject_w4]
+    exclude = ('employee_signature',)
+    list_display = (
+    'id', 'employee', 'status', 'created_at')
+    search_fields = (
+        'employee__user__first_name', 'employee__user__last_name', 'employee__user__email','created_at')
+    list_filter = ('status', 'employee',)
+    list_per_page = 100
 
 
 class EmployeeDocumentAdmin(admin.ModelAdmin):
@@ -133,7 +207,8 @@ class EmployerSubscriptionAdmin(admin.ModelAdmin):
 admin.site.register(SubscriptionPlan)
 admin.site.register(EmployerUsers)
 admin.site.register(Payrates)
-admin.site.register(I9Form)
-admin.site.register(W4Form)
+admin.site.register(I9Form, I9Admin)
+
+admin.site.register(W4Form, W4Admin)
 admin.site.register(EmployerSubscription, EmployerSubscriptionAdmin)
 # admin.site.register(EmployerSubscription)
