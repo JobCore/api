@@ -129,8 +129,16 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
         model = PayrollPeriodPayment
         exclude = ()
 
+class PayrollPeriodPaymentEmployeeSerializer(serializers.ModelSerializer):
+    employee = EmployeeGetSerializer(read_only=True)
+
+    class Meta:
+        model = PayrollPeriodPayment
+        exclude = ()
+        fields = ('employee', )
+
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
     class Meta:
         model = PayrollPeriod
         fields = (
@@ -143,7 +151,6 @@ class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
         )
 
 class PayrollPeriodGetSmallSerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
     class Meta:
         model = PayrollPeriod
         fields = (
