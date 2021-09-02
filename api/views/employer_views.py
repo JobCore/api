@@ -978,7 +978,13 @@ class EmployerMePayrollPeriodsView(EmployerView):
                 end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 periods = periods.filter(ending_at__lte=end)
 
-            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
+            defaultSerializer = payment_serializer.PayrollPeriodGetTinySerializer
+            
+            qPayments = request.GET.get('payments')
+            if qPayments is not None and qPayments != ''::
+                defaultSerializer = payment_serializer.PayrollPeriodGetSmallSerializer
+            
+            serializer = defaultSerializer(periods.order_by('-starting_at'), many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, period_id=None):
