@@ -981,7 +981,7 @@ class EmployerMePayrollPeriodsView(EmployerView):
             defaultSerializer = payment_serializer.PayrollPeriodGetTinySerializer
             
             qPayments = request.GET.get('payments')
-            if qPayments is not None and qPayments != ''::
+            if qPayments is not None and qPayments != '':
                 defaultSerializer = payment_serializer.PayrollPeriodGetSmallSerializer
             
             serializer = defaultSerializer(periods.order_by('-starting_at'), many=True)
