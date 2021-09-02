@@ -1086,6 +1086,7 @@ class EmployerMeEmployeePaymentListView(EmployerView):
         qs = self.get_queryset(period_id).order_by('id')
         ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True,
                                                                     context={'employer_id': self.employer.id})
+        print(ser_payments.data)
         return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
                         status=status.HTTP_200_OK)
 
