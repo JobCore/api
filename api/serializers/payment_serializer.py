@@ -141,6 +141,18 @@ class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
             'total_payments',
             'payments'
         )
+
+class PayrollPeriodGetSmallSerializer(serializers.ModelSerializer):
+    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'total_payments',
+        )
         
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
     payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
