@@ -161,7 +161,6 @@ class ValidateSMSView(APIView):
                                 .services(TWILLIO_SERVICES) \
                                 .verification_checks \
                                 .create(to='+1' + phone_number, code=code)
-                print(verification_check.status)
                 if(verification_check.status == "approved"):
                     user.profile.status = 'PAUSED' 
                     user.profile.save()
