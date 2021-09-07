@@ -62,7 +62,6 @@ class EmployerMeView(EmployerView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, employer_id=None):
-        print('request', request.data)
         serializer = employer_serializer.EmployerSerializer(
             request.user.profile.employer, data=request.data)
         if serializer.is_valid():
@@ -80,7 +79,6 @@ class EmployerMeImageView(EmployerView):
                 validators.error_object('No image to update'),
                 status=status.HTTP_400_BAD_REQUEST)
 
-        print(request.FILES['image'])
         result = cloudinary.uploader.upload(
             request.FILES['image']
             # public_id='employer' + str(self.employer.id),
@@ -96,7 +94,6 @@ class EmployerMeImageView(EmployerView):
             # tags=['employer_profile_picture']
         )
 
-        print('result image',result)
 
         self.employer.picture = result['secure_url']
         self.employer.save()
@@ -156,7 +153,6 @@ class EmployerMeUsersView(EmployerView):
 
         serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
         
-        print(EmployerUsers.objects.filter(profile=user.profile.id))
         if serializer.is_valid():
             serializer.save()
             serializer = user_serializer.UserGetSmallSerializer(user, many=False)
@@ -168,11 +164,9 @@ class EmployerMeUsersView(EmployerView):
         qs = self.get_queryset()
         try:
             user = qs.get(profile__id=profile_id)
-            print(user.profile)
 
             other_employers = User.objects.filter(profile__other_employers=self.employer.id)
-            print(other_employers)
-            print(user.profile.employee)
+
             if user.profile.shift_set.count() > 0 or user.profile.shiftinvite_set.count() > 0 or user.profile.jobcoreinvite_set.count() > 0 or user.profile.rate_set.count() > 0:
                 user.status = 'DELETED'
                 user.save()
@@ -630,6 +624,16 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 emp_list = qEmployee.split(',')
                 shifts = shifts.filter(employees__in=[int(emp) for emp in emp_list])
 
+            qVenue = request.GET.get('venue')
+            if qVenue:
+                venue_list = qVenue.split(',')
+                shifts = shifts.filter(venue__in=[int(v) for v in venue_list])
+
+            qPosition = request.GET.get('position')
+            if qPosition:
+                position_list = qPosition.split(',')
+                shifts = shifts.filter(position__in=[int(p) for p in position_list])
+
             qCandidateNot = request.GET.get('candidate_not')
             if qCandidateNot is not None:
                 emp_list = qCandidateNot.split(',')
@@ -657,10 +661,8 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
 
         _all_serializers = []
         request.data["employer"] = self.employer.id
-        print('request data', request.data)
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
-                print('dict date', dict(date))
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
@@ -936,7 +938,6 @@ class EmployerClockinsMeView(EmployerView):
             qUpdated = request.GET.get('updated')
             
             if qUpdated:
-                print(qUpdated)
                 today = datetime.datetime.today()
                 yesterday = today - datetime.timedelta(days=1)
                 clockins = clockins.filter(updated_at__range=[yesterday, today])
@@ -1089,7 +1090,6 @@ class EmployerMeEmployeePaymentListView(EmployerView):
         qs = self.get_queryset(period_id).order_by('id')
         ser_payments = payment_serializer.EmployeePaymentSerializer(qs, many=True,
                                                                     context={'employer_id': self.employer.id})
-        print(ser_payments.data)
         return Response({'employer': ser_employer.data, 'payroll_period': period_id, 'payments': ser_payments.data},
                         status=status.HTTP_200_OK)
 
