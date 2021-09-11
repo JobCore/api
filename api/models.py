@@ -194,6 +194,8 @@ class EmployerSubscription(models.Model):
     subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE, blank=True)
     status = models.CharField(max_length=25, choices=SUBSCRIPTION_STATUS, default=ACTIVE, blank=True)
     payment_mode = models.CharField(max_length=9,choices=SUBSCRIPTION_MODE,default=MONTHLY,blank=True)
+    stripe_sub = models.CharField(max_length=100, blank=True)
+    stripe_cus = models.CharField(max_length=100, blank=True)
     due_at = models.DateTimeField()
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)

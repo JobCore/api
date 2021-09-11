@@ -425,7 +425,7 @@ class EmployerMeSubscriptionView(EmployerView):
         else:
             qs = qs.filter(status='ACTIVE')
 
-        serializer = other_serializer.SubscriptionSerializer(qs, many=True)
+        serializer = other_serializer.EmployerSubscriptionPost(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -433,15 +433,18 @@ class EmployerMeSubscriptionView(EmployerView):
         serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
 
         if serializer.is_valid():
-            
-            customer = stripe.Customer.create(
-                description=request.data['description'],
-                email=request.data['email'],
-                name=request.data['name'],
-                source=request.data['source']['id'],
-                address=request.data['address'],
-                phone=request.data['phone']
-            )
+            if(request.data['stripe_cus'] is None):
+                customer = stripe.Customer.create(
+                    description=request.data['description'],
+                    email=request.data['email'],
+                    name=request.data['name'],
+                    source=request.data['source']['id'],
+                    address=request.data['address'],
+                    phone=request.data['phone']
+                )
+            else: 
+                customer = stripe.Customer.retrieve(request.data['stripe_cus'])
+
             plan = ''
 
             if request.data['subscription'] == 1:
@@ -451,15 +454,20 @@ class EmployerMeSubscriptionView(EmployerView):
             elif request.data['subscription'] == 3:
                 plan = 'price_1GuIv1AQGSNQlybYK7k61xh2'
 
+            subscription = ''
+
             if customer is not None:
-                stripe.Subscription.create(
+                if request.data['stripe_sub']:
+                    stripe.Subscription.delete(request.data['stripe_sub'])
+
+                subscription = stripe.Subscription.create(
                 customer=customer,
                 items=[
                     {"price": plan},
                 ],
                 )
-
-            serializer.save()
+            
+            serializer.save(stripe_cus = customer.id,  stripe_sub = subscription.id)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
        
