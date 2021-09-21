@@ -433,7 +433,7 @@ class EmployerMeSubscriptionView(EmployerView):
         serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
 
         if serializer.is_valid():
-            if(request.data['stripe_cus'] is None):
+            if not 'stripe_cus' in request.data:
                 customer = stripe.Customer.create(
                     description=request.data['description'],
                     email=request.data['email'],
@@ -457,7 +457,7 @@ class EmployerMeSubscriptionView(EmployerView):
             subscription = ''
 
             if customer is not None:
-                if request.data['stripe_sub']:
+                if 'stripe_sub' in request.data:
                     stripe.Subscription.delete(request.data['stripe_sub'])
 
                 subscription = stripe.Subscription.create(
