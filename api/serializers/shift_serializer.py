@@ -32,7 +32,7 @@ class UserGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'profile')
+        fields = ('first_name', 'last_name', 'profile', 'date_joined')
 
 
 class PositionGetSmallSerializer(serializers.ModelSerializer):
@@ -52,7 +52,7 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('user', 'id')
+        fields = ('user', 'id', 'employment_verification_status')
 
 
 class EmployeeGetSerializer(serializers.ModelSerializer):

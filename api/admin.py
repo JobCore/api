@@ -25,8 +25,8 @@ class DocumentAdmin(admin.ModelAdmin):
 
 
 class EmployeeAdmin(admin.ModelAdmin):
-    search_fields = ('user__first_name', 'user__last_name', 'user__email')
-    list_display = ('id', 'get_name', 'get_email', 'get_status')
+    search_fields = ('user__first_name', 'user__last_name', 'user__email', 'employment_verification_status')
+    list_display = ('id', 'get_name', 'get_email', 'get_status', 'employment_verification_status')
     list_filter = ('user__profile__status',)
     list_per_page = 100
 
