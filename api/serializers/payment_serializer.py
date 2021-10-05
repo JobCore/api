@@ -137,6 +137,15 @@ class PayrollPeriodPaymentEmployeeSerializer(serializers.ModelSerializer):
         exclude = ()
         fields = ('employee', )
 
+class PayrollPeriodGetDateSerializer(serializers.ModelSerializer):
+    payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'starting_at',
+            'ending_at',
+        )
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
     payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
     class Meta:
