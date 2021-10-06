@@ -976,7 +976,6 @@ class EmployerMePayrollPeriodsView(EmployerView):
         else:
 
             periods = PayrollPeriod.objects.filter(employer_id=self.employer.id)
-            print('hello world')
             qStart = request.GET.get('start')
             if qStart is not None and qStart != '':
                 start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
@@ -990,7 +989,8 @@ class EmployerMePayrollPeriodsView(EmployerView):
             defaultSerializer = payment_serializer.PayrollPeriodGetTinySerializer
             
             qReports = request.GET.get('reports')
-            if qReports is not None and qReports == True:
+            if qReports is not None and qReports == 'True':
+                print('hello world2')
                 defaultSerializer = payment_serializer.PayrollPeriodGetDateSerializer
 
             serializer = defaultSerializer(periods.order_by('-starting_at'), many=True)
