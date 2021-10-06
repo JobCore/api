@@ -990,7 +990,6 @@ class EmployerMePayrollPeriodsView(EmployerView):
             
             qReports = request.GET.get('reports')
             if qReports is not None and qReports == 'True':
-                print('hello world2')
                 defaultSerializer = payment_serializer.PayrollPeriodGetDateSerializer
 
             serializer = defaultSerializer(periods.order_by('-starting_at'), many=True)
