@@ -138,7 +138,6 @@ class PayrollPeriodPaymentEmployeeSerializer(serializers.ModelSerializer):
         fields = ('employee', )
 
 class PayrollPeriodGetDateSerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
     class Meta:
         model = PayrollPeriod
         fields = (
