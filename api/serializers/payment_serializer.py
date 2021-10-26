@@ -3,7 +3,7 @@ import decimal
 import itertools
 import math
 
-from django.db.models import Q, Sum
+from django.db.models import Q, Count, Sum
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -87,12 +87,12 @@ class EmployeeGetTinySerializer(serializers.ModelSerializer):
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
-    badges = BadgeGetSmallSerializer(read_only=True, many=True)
+    # badges = BadgeGetSmallSerializer(read_only=True, many=True)
 
 
     class Meta:
         model = Employee
-        fields = ('user', 'id', 'badges','employment_verification_status')
+        fields = ('user', 'id','employment_verification_status')
 
 
 class ClockinGetSerializer(serializers.ModelSerializer):
@@ -130,12 +130,11 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
         exclude = ()
 
 class PayrollPeriodPaymentEmployeeSerializer(serializers.ModelSerializer):
-    employee = EmployeeGetSerializer(read_only=True)
+    # employee = EmployeeGetSerializer(read_only=True)
 
     class Meta:
         model = PayrollPeriodPayment
         exclude = ()
-        fields = ('employee', )
 
 class PayrollPeriodGetDateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -146,7 +145,9 @@ class PayrollPeriodGetDateSerializer(serializers.ModelSerializer):
             'ending_at',
         )
 class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
-    payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
+    # payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
+    employee_count = serializers.SerializerMethodField()
+
     class Meta:
         model = PayrollPeriod
         fields = (
@@ -155,8 +156,15 @@ class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
             'starting_at',
             'ending_at',
             'total_payments',
-            'payments'
+            'employee_count'
         )
+
+    def get_employee_count(self, instance):
+        employees = PayrollPeriodPayment.objects.filter(employer__id=instance.employer_id, payroll_period__id = instance.id).order_by('employee_id').values('employee').distinct().count()
+      
+        total_employees = employees
+        
+        return total_employees
 
 class PayrollPeriodGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -595,7 +603,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     if end_date >= NOW:
         log_debug('hooks','No new periods to generate, now is '+ str(NOW) +' we have to wait until '+str(end_date))
         return []
-
+     
     while end_date < NOW:
 
         start_date = end_date - \
@@ -660,6 +668,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                 payment.save()
                 total_payments = total_payments + 1
 
+            print('el total payment', total_payments)
             period.total_payments = total_payments
             period.save()
             generated_periods.append(period)
