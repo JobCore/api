@@ -16,6 +16,7 @@ class Command(BaseCommand):
         payments = PayrollPeriod.objects.annotate(total=Count('payments')).all()
         for payment in payments:
             payment.total_payments = payment.payments.count()
+            payment.total_employees = 
             payment.save()
 
         self.stdout.write(self.style.SUCCESS("Successfully updated all total_payments on every period"))

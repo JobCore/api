@@ -5,7 +5,6 @@ from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
-
 from api.utils.loggers import log_debug
 
 NOW = timezone.now()
@@ -745,6 +744,7 @@ class PayrollPeriod(models.Model):
     ending_at = models.DateTimeField(blank=False)
 
     total_payments = models.IntegerField(blank=True, default=0)
+    total_employees = models.IntegerField(blank=True, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
