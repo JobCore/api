@@ -303,7 +303,7 @@ COMPANY_ROLES = (
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     picture = models.URLField(blank=True)
-    resume = models.URLField(blank=True)
+    resume = models.URLField(blank=True, null=True, default=True)
     bio = models.TextField(max_length=250, blank=True)
     show_tutorial = models.BooleanField(default=True)
 
@@ -807,6 +807,8 @@ class EmployeePayment(models.Model):
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     legal_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # plus 40 hours/week
     breaktime_minutes = models.IntegerField(blank=True, default=0)
+    regular_hours_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='regular hours earnings', default=0)
+    over_time_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='overtime earnings', default=0)
     earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
     deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
