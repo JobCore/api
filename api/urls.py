@@ -4,6 +4,10 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 from api.views.deductions_view import DeductionAPIView, DeductionDetailAPIView
 
+from api.views.subscription_payment import (
+    CreateCheckoutSessionView, StripeIntentView, GetCSRFToken
+)
+
 from api.views.hooks import (
     DefaultAvailabilityHook, ClockOutExpiredShifts, GeneratePeriodsView,
     AddTalentsToAllPositions, RemoveEmployeesWithoutProfile
@@ -33,7 +37,7 @@ from api.views.documents_view import (
 )
 
 from api.views.employer_views import (
-    EmployerMeView, EmployerMeUsersView, ApplicantsView,
+    EmployerMeView, EmployerMeUsersView, ApplicantsView, Subscription_authView,
     EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
@@ -89,6 +93,7 @@ urlpatterns = [
     path('cities/<int:id>', CityView.as_view(), name='id-cities'),
 
     path('employers', EmployerView.as_view(), name="get-employers"),
+    path('subscription_auth/<str:email>', Subscription_authView.as_view()),
     path(
         'employers/<int:id>',
         EmployerView.as_view(),
@@ -157,6 +162,16 @@ urlpatterns = [
     #
     # FOR THE EMPLOYER
     #
+
+    # stripe related
+    path('csrf_cookie', GetCSRFToken.as_view(), name='csrf_cookie'),
+    # path('admin/', admin.site.urls),
+    path('create-payment-intent', StripeIntentView.as_view(), name='create-payment-intent'),
+    # path('webhooks/stripe/', stripe_webhook, name='stripe-webhook'),
+    # path('cancel/', CancelView.as_view(), name='cancel'),
+    # path('success/', SuccessView.as_view(), name='success'),
+    # path('', ProductLandingPageView.as_view(), name='landing-page'),
+    # path('create-checkout-session/<pk>/', CreateCheckoutSessionView.as_view(), name='create-checkout-session'),
 
     path('employers/me', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),

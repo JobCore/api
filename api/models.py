@@ -56,6 +56,7 @@ EMPLOYER_STATUS = (
     (APPROVED, 'Approved'),
 )
 
+
 class SubscriptionPlan(models.Model):
     unique_name = models.CharField(max_length=25, unique=True)
     visible_to_users = models.BooleanField(default=True)
@@ -100,7 +101,7 @@ class Employer(models.Model):
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
     status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED, blank=True)
-
+   
     # talents on employer's favlist's will be automatically accepted
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
@@ -194,6 +195,7 @@ class EmployerSubscription(models.Model):
     status = models.CharField(max_length=25, choices=SUBSCRIPTION_STATUS, default=ACTIVE, blank=True)
     payment_mode = models.CharField(max_length=9,choices=SUBSCRIPTION_MODE,default=MONTHLY,blank=True)
     stripe_sub = models.CharField(max_length=100, blank=True)
+    # stripe_sub_status = models.CharField(max_length=25, blank=True)
     stripe_cus = models.CharField(max_length=100, blank=True)
     due_at = models.DateTimeField()
 
@@ -303,7 +305,7 @@ COMPANY_ROLES = (
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     picture = models.URLField(blank=True)
-    resume = models.URLField(blank=True)
+    resume = models.URLField(blank=True, null=True, default=True)
     bio = models.TextField(max_length=250, blank=True)
     show_tutorial = models.BooleanField(default=True)
 
@@ -807,6 +809,8 @@ class EmployeePayment(models.Model):
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     legal_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # plus 40 hours/week
     breaktime_minutes = models.IntegerField(blank=True, default=0)
+    regular_hours_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='regular hours earnings', default=0)
+    over_time_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='overtime earnings', default=0)
     earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
     deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
@@ -1054,11 +1058,29 @@ class W4Form(models.Model):
     updated_at = models.DateTimeField(auto_now=True, editable=False)
     status = models.CharField(max_length=8, choices=W4_FORM_STATUS, default=PENDING)
 
+class Payment(models.Model):
+    stripe_charge_id = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    amount = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
+        
+    def serialize(self):
+        return {
+           'stripe_charge_id': self.stripe_charge_id,
+           'user': self.user,
+           'amount': self.amount,
+           'timestamp': self.timestamp 
+        }
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, related_name="company_users_profile")
+    stripe_customer_id = models.CharField(max_length=50, blank=True, null=True)
+    stripe_sub_id = models.CharField(max_length=100, blank=True)
 
-
-
-
-
+    def __str__(self):
+        return self.user.username
 

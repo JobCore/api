@@ -728,6 +728,7 @@ class SubscriptionsView(APIView):
     def get(self, request, id=None):
         if (id):
             try:
+                # aqui se esta haciendo un query al model de SubscriptionPlan
                 subscription = SubscriptionPlan.objects.get(pk=id)
             except SubscriptionPlan.DoesNotExist:
                 return Response(validators.error_object(
@@ -736,7 +737,8 @@ class SubscriptionsView(APIView):
             serializer = other_serializer.SubscriptionSerializer(subscription, many=False)
 
         else:
-            subs = SubscriptionPlan.objects.all()
+            # aqui esta sacando todos los subc plans y los pone en una variable
+            subs = SubscriptionPlan.objects.all() 
 
             qsVisibility = request.GET.get('visibility')
             if qsVisibility is None or qsVisibility != 'all':

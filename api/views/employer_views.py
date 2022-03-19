@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q, BooleanField, Case, Count, F, Value, When
 from django.http import HttpRequest, JsonResponse
-
+import re
 import decimal
 import requests
 import cloudinary
@@ -20,7 +20,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -35,7 +35,7 @@ from api.models import (
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
-    EmployerSubscription, EMPLOYER_STATUS
+    EmployerSubscription, EMPLOYER_STATUS, SubscriptionPlan, UserProfile, Payment
 )
 
 from api.utils import validators
@@ -45,7 +45,7 @@ from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
-    profile_serializer, other_serializer, documents_serializer
+    profile_serializer, other_serializer, documents_serializer, subscription_payment_serializer,
 )
 from api.utils import validators
 from api.utils.utils import DecimalEncoder
@@ -431,28 +431,41 @@ class EmployerMeSubscriptionView(EmployerView):
     def post(self, request):
         request.data['employer'] = self.employer.id
         serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
-
+        all_userprofiles = UserProfile.objects.all()
+        all_user_emails = list(map(lambda userprofile: userprofile, all_userprofiles))
+        all_cus = list(map(lambda userprofile: userprofile.stripe_customer_id, all_userprofiles))          
+        employer_email = request.data['email']
+        all_emails_to_strings = [str(x) for x in all_user_emails]
+        if (employer_email in all_emails_to_strings):
+            cus = all_emails_to_strings.index(employer_email)
+            current_cus = all_cus[cus]
+        else: 
+            return Response({"message": "An error has occurred, the subscription has not been created"}, status=status.HTTP_400_BAD_REQUEST)
+        
         if serializer.is_valid():
-            if not 'stripe_cus' in request.data:
-                customer = stripe.Customer.create(
-                    description=request.data['description'],
-                    email=request.data['email'],
-                    name=request.data['name'],
-                    source=request.data['source']['id'],
-                    address=request.data['address'],
-                    phone=request.data['phone']
-                )
-            else: 
-                customer = stripe.Customer.retrieve(request.data['stripe_cus'])
-
+            # if not 'stripe_cus' in request.data:
+                # customer = subscription_payment_serializer.
+                # customer = stripe.Customer.create(
+                #     description=request.data['description'],
+                #     email=request.data['email'],
+                #     name=request.data['name'],
+                #     source=request.data['source']['id'],
+                #     address=request.data['address'],
+                #     phone=request.data['phone']
+                # )
+            # else: 
+                # customer = stripe.Customer.retrieve(request.data['stripe_cus'])
+                # if 
+            customer = stripe.Customer.retrieve(current_cus)
+            
             plan = ''
 
             if request.data['subscription'] == 1:
-                plan = 'price_1GuIrZAQGSNQlybY41AJDfoW'
+                plan = 'price_1KdGXEAQGSNQlybYvySiRZDk'#'price_1GuIrZAQGSNQlybY41AJDfoW'   
             elif request.data['subscription'] == 2:
-                plan = 'price_1GuIttAQGSNQlybYWpGxUJyV'
+                plan = 'price_1KdGWpAQGSNQlybYMX6r0ShG'#'price_1GuIttAQGSNQlybYWpGxUJyV'
             elif request.data['subscription'] == 3:
-                plan = 'price_1GuIv1AQGSNQlybYK7k61xh2'
+                plan = 'price_1KdGWBAQGSNQlybYJYpCEgrE'#'price_1GuIv1AQGSNQlybYK7k61xh2'
 
             subscription = ''
 
@@ -468,12 +481,40 @@ class EmployerMeSubscriptionView(EmployerView):
                 )
             
             serializer.save(stripe_cus = customer.id,  stripe_sub = subscription.id)
+            user = User.objects.get(email=employer_email)
+            userprofile = UserProfile.objects.get(user=user)
+            userprofile.stripe_sub_id = subscription.id
+            userprofile.save()
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
        
         plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
         _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
         return Response(_serializer.data, status=status.HTTP_201_CREATED)
+
+class Subscription_authView(EmployerView):
+    def get(self, request, *args, **kwargs):
+        string = str(self.request)
+        email = re.search(r'[\w.+-]+@[\w-]+\.[\w.-]+', string)
+        email = email.group(0)
+        user = User.objects.get(email=email)
+        employer = user.profile.employer
+        paid_once = UserProfile.objects.filter(user=user)
+        if paid_once:
+            userprofile = UserProfile.objects.get(user=user)
+            sub = userprofile.stripe_sub_id
+            subscription_auth = stripe.Subscription.retrieve(sub)    
+            sub_status = subscription_auth.status
+            if sub_status == 'active' or sub_status == 'trialing':
+                employer.active_subscription = sub_status
+                employer.save()
+                return Response({"message": "the subscription is active"}, status=status.HTTP_200_OK)
+            else: 
+                employer.active_subscription = sub_status
+                employer.save()
+                return Response({"message": "An error has occurred, the subscription is not active"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"message": "redirecting to the subscription view for you to choose a plan"}, status=status.HTTP_200_OK)
 
 class FavListView(EmployerView):
     def get_queryset(self):
