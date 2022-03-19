@@ -4,7 +4,7 @@ from django.db.models import Q
 from random import randint
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
-
+import stripe
 from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
@@ -16,7 +16,7 @@ from api.serializers import employer_serializer
 from api.actions import employee_actions, auth_actions
 from api.models import (
     User, Employer, Employee, Profile,
-    JobCoreInvite, FCMDevice)
+    JobCoreInvite, FCMDevice, UserProfile)
 from api.utils import notifier
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -36,7 +36,6 @@ class UserLoginSerializer(serializers.ModelSerializer):
                   'token', 'employer', 'employee')
         extra_kwargs = {"password": {"write_only": True}}
 
-   
 class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
@@ -86,10 +85,13 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                 FCMDevice.objects.filter(registration_id=device_id).delete()
                 device = FCMDevice(user=user, registration_id=device_id)
                 device.save()
+        
+        
 
         return {
             'token': jwt_encode_handler(payload),
-            'user': user
+            'user': user,
+            
         }
     def get_active_subscription(self, employer):
         _sub = employer.employersubscription_set.filter(status='ACTIVE').first()
@@ -181,6 +183,7 @@ class UserRegisterSerializer(serializers.Serializer):
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
+        
         if not user:
             user = User.objects.create(**{**validated_data, "username": validated_data["email"]})
 

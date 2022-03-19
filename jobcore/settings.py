@@ -40,6 +40,7 @@ ROLLBAR_POST_ACCESS_TOKEN = os.environ.get('ROLLBAR_POST_ACCESS_TOKEN')
 # TODO: Remember deleting unused hosts in production
 ALLOWED_HOSTS = [
     '*'
+    # 'https://8000-lavender-alligator-jdqsikyc39p.ws-us34.gitpod.io'
 ]
 
 # Application definition
@@ -148,6 +149,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -165,6 +168,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STRIPE_PUBLIC_KEY = ""
+STRIPE_SECRET_KEY = ""
+STRIPE_WEBHOOK_SECRET = ""
+
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',

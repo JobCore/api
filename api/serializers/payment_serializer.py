@@ -19,7 +19,7 @@ DATE_FORMAT = '%Y-%m-%d'
 #
 # NESTED
 #
-
+ 
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
