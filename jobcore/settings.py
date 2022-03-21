@@ -31,7 +31,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 _ENV_DEBUG = os.environ.get('DEBUG')
-DEBUG = (_ENV_DEBUG == 'TRUE' or _ENV_DEBUG == 'True')
+# DEBUG = (_ENV_DEBUG == 'TRUE' or _ENV_DEBUG == 'True')
+DEBUG = (_ENV_DEBUG == 'FALSE' or _ENV_DEBUG == 'false')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
