@@ -62,7 +62,6 @@ pep8==1.7.1
 pexpect==4.7.0
 pickleshare==0.7.5
 pipenv==2018.11.26
-plaid==0.1.7
 pluggy==0.6.0
 prometheus-client==0.7.1
 prompt-toolkit==3.0.2
@@ -131,3 +130,4 @@ faker==0.9.1
 coverage==4.5.1
 chardet==3.0.4
 attrs==19.3.0
+plaid-python==3.4.0
