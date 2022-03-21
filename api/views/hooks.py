@@ -69,11 +69,11 @@ class GeneratePeriodsView(APIView):
             periods = []
 
             for employer in employers:
-                p = payment_serializer.generate_periods_and_payments(employer)
-                periods = periods.append(p)
+                periods = periods + \
+                    payment_serializer.generate_periods_and_payments(employer)
 
         serializer = payment_serializer.PayrollPeriodGetSerializer(
-            payments=periods, many=True)
+            periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
