@@ -124,7 +124,7 @@ class EmployeePaymentTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, Wi
         self.assertIsInstance(payment.get('deduction_list'), list, payment)
         self.assertGreaterEqual(len(payment.get('deduction_list')), 2, payment)
         self.assertEqual(Decimal(payment.get('earnings')),
-                         round(Decimal(payment.get('amount')) + Decimal(payment.get('taxes'))
+                              (Decimal(payment.get('amount')) + Decimal(payment.get('taxes'))
                                + Decimal(payment.get('deductions')), 2),
                          payment)
         self.assertIsInstance(payment.get('employee'), dict, payment)
