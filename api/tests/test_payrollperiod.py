@@ -227,7 +227,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         employee_payment = EmployeePayment.objects.get(employer_id=self.test_employer.id,
                                                        employee_id=self.test_employee.id,
                                                        payroll_period_id=self.test_period.id)
-        self.assertEqual(employee_payment.earnings, Decimal('360.00') + Decimal('450.00') + Decimal('60.00'),
+        self.assertEqual(employee_payment.earnings, Decimal('360.00') + Decimal('450.00'),
                          employee_payment.earnings)
 
     def test_update_status_period(self):
