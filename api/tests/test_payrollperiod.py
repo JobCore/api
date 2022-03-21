@@ -98,7 +98,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.client.force_login(self.test_user_employer)
         response = self.client.get(url)
         # self.assertEqual(response.status_code, 200, response.content.decode())
-        self.assertEqual(PayrollPeriod.objects.count(), self.qty + 1)
+        self.assertEqual(PayrollPeriod.objects.count(), self.qty)
         self.assertEqual(PayrollPeriodPayment.objects.count(), self.payroll_payment_qty + 2)
         response_json = response.json()
         self.assertEqual(len(response_json), 1)
