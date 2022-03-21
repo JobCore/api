@@ -673,18 +673,18 @@ def generate_periods_and_payments(employer, generate_since=None):
                     regular_hours = projected_hours
                     overtime = clocked_hours - projected_hours
 
-                payment = PayrollPeriodPayment(
-                    payroll_period=period,
-                    employee=clockin.employee,
-                    employer=employer,
-                    shift=clockin.shift,
-                    clockin=clockin,
-                    regular_hours=regular_hours,
-                    over_time=overtime,
-                    hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
-                    splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                )
+                payment = PayrollPeriodPayment()
+                payment.payroll_period=period,
+                payment.employee=clockin.employee,
+                payment.employer=employer,
+                payment.shift=clockin.shift,
+                payment.clockin=clockin,
+                payment.regular_hours=regular_hours,
+                payment.over_time=overtime,
+                payment.hourly_rate=clockin.shift.minimum_hourly_rate,
+                payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
+                payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
+                
                 payment.save()
                 total_payments = total_payments + 1
 
