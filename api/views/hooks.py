@@ -73,7 +73,7 @@ class GeneratePeriodsView(APIView):
                 periods = periods.append(p)
 
         serializer = payment_serializer.PayrollPeriodGetSerializer(
-            periods, many=True)
+            payments=periods, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
