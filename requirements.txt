@@ -81,7 +81,7 @@ python-dateutil==2.7.2
 python-jsonrpc-server==0.3.2
 python-language-server==0.25.0
 pytz==2018.3
-PyYAML==3.13
+PyYAML==5.4
 pyzmq==18.1.1
 requests==2.20.0
 rope==0.14.0
