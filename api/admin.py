@@ -189,7 +189,8 @@ admin.site.register(Shift, ShiftAdmin)
 admin.site.register(ShiftInvite, ShiftInviteAdmin)
 admin.site.register(UserToken)
 admin.site.register(Venue)
-
+admin.site.register(UserProfile)
+admin.site.register(Payment)
 
 class EmployerSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('id', '_employer', '_subscription', 'status', 'due_at', 'payment_mode')
