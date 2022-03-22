@@ -493,8 +493,8 @@ class EmployerMeSubscriptionView(EmployerView):
         return Response(_serializer.data, status=status.HTTP_201_CREATED)
 
 class Subscription_authView(EmployerView):
-    def get(self, request, *args, **kwargs):
-        string = str(self.request)
+    def get(self, request, email, *args, **kwargs):
+        string = str(email)
         email = re.search(r'[\w.+-]+@[\w-]+\.[\w.-]+', string)
         email = email.group(0)
         user = User.objects.get(email=email)
