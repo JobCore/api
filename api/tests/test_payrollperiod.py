@@ -99,10 +99,9 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content.decode())
         self.assertEqual(PayrollPeriod.objects.count(), self.qty + 1)
-        print(PayrollPeriod.objects.count())
         self.assertEqual(PayrollPeriodPayment.objects.count(), self.payroll_payment_qty + 2)
         response_json = response.json()
-        self.assertEqual(len(response_json), 1)
+        self.assertEqual(len(response_json), 1) 
         obj = response_json[0]
         self.assertIsInstance(obj.get('id'), int, response_json)
         self.assertEqual(obj.get('length'), 7, response_json)
