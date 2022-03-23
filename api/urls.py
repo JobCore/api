@@ -5,7 +5,7 @@ from api.serializers.auth_serializer import CustomJWTSerializer
 from api.views.deductions_view import DeductionAPIView, DeductionDetailAPIView
 
 from api.views.subscription_payment import (
-    CreateCheckoutSessionView, StripeIntentView, GetCSRFToken
+    StripeIntentView, GetCSRFToken
 )
 
 from api.views.hooks import (
