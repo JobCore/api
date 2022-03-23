@@ -71,7 +71,7 @@ class GeneratePeriodsView(APIView):
             periods = []
 
             for employer in employers:
-                periods = periods + \
+                periods = periods + 
                     payment_serializer.generate_periods_and_payments(employer)
                 print('GeneratePeriodsView periods2###', periods)
         serializer = payment_serializer.PayrollPeriodGetSerializer(
