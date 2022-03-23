@@ -461,11 +461,11 @@ class EmployerMeSubscriptionView(EmployerView):
             plan = ''
 
             if request.data['subscription'] == 1:
-                plan = 'price_1KdGXEAQGSNQlybYvySiRZDk'#'price_1GuIrZAQGSNQlybY41AJDfoW'   
+                plan = 'price_1KgEeuAQGSNQlybYFtK9Z8Jh'#'price_1GuIrZAQGSNQlybY41AJDfoW'   
             elif request.data['subscription'] == 2:
-                plan = 'price_1KdGWpAQGSNQlybYMX6r0ShG'#'price_1GuIttAQGSNQlybYWpGxUJyV'
+                plan = 'price_1KgEeTAQGSNQlybY1otsT6R6'#'price_1GuIttAQGSNQlybYWpGxUJyV'
             elif request.data['subscription'] == 3:
-                plan = 'price_1KdGWBAQGSNQlybYJYpCEgrE'#'price_1GuIv1AQGSNQlybYK7k61xh2'
+                plan = 'price_1KgEeJAQGSNQlybYmA6BmxwV'#'price_1GuIv1AQGSNQlybYK7k61xh2'
 
             subscription = ''
 
