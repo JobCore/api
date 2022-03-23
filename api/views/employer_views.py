@@ -506,12 +506,12 @@ class Subscription_authView(EmployerView):
             subscription_auth = stripe.Subscription.retrieve(sub)    
             sub_status = subscription_auth.status
             if sub_status == 'active' or sub_status == 'trialing':
-                employer.active_subscription = sub_status
-                employer.save()
+                # employer.active_subscription = sub_status
+                # employer.save()
                 return Response({"message": "the subscription is active"}, status=status.HTTP_200_OK)
             else: 
-                employer.active_subscription = sub_status
-                employer.save()
+                # employer.active_subscription = sub_status
+                # employer.save()
                 return Response({"message": "An error has occurred, the subscription is not active"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"message": "redirecting to the subscription view for you to choose a plan"}, status=status.HTTP_200_OK)
