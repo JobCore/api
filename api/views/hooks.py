@@ -54,15 +54,17 @@ class GeneratePeriodsView(APIView):
     def get(self, request):
 
         qEmployer = request.GET.get('employer')
-
+        print('GeneratePeriodsView qEmployer###', qEmployer)
         log_debug("hooks",'GeneratePeriodsView:get: init....')
         if qEmployer:
             try:
                 employer = Employer.objects.get(id=qEmployer)
+                print('GeneratePeriodsView employer###', employer)
             except Employer.DoesNotExist:
                 return Response(validators.error_object(
                     'Employer found.'), status=status.HTTP_404_NOT_FOUND)
             periods = payment_serializer.generate_periods_and_payments(employer)
+            print('GeneratePeriodsView periods1###', periods)
         else:
             log_debug("hooks",'GeneratePeriodsView:get: Looking for all employers periods')
             employers = Employer.objects.filter(payroll_period_starting_time__isnull=False)
@@ -71,10 +73,10 @@ class GeneratePeriodsView(APIView):
             for employer in employers:
                 periods = periods + \
                     payment_serializer.generate_periods_and_payments(employer)
-
+                print('GeneratePeriodsView periods2###', periods)
         serializer = payment_serializer.PayrollPeriodGetSerializer(
             periods, many=True)
-
+        print('GeneratePeriodsView serializer###', serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AddTalentsToAllPositions(APIView):
