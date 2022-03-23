@@ -18,7 +18,7 @@ from api.serializers import (
     profile_serializer, other_serializer, documents_serializer, subscription_payment_serializer
 )
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+# stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 # class SuccessView(TemplateView):
