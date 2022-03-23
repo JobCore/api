@@ -170,9 +170,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# STRIPE_PUBLIC_KEY = ""
-# STRIPE_SECRET_KEY = ""
-# STRIPE_WEBHOOK_SECRET = ""
+STRIPE_PUBLIC_KEY = ""
+STRIPE_SECRET_KEY = ""
+STRIPE_WEBHOOK_SECRET = ""
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
