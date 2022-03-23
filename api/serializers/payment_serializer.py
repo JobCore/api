@@ -583,8 +583,6 @@ def get_projected_payments(
 
 
 def generate_periods_and_payments(employer, generate_since=None):
-    print('employer###', employer)
-    print('employer###', employer.id)
     log_debug('hooks','generate_periods -> Employer: '+employer.title)
     NOW = timezone.now()
 
@@ -661,7 +659,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                     continue
                 else:
                     clocked_hours = round(decimal.Decimal(clocked_hours), 5)
-
+                    print('clocked_hours###', clocked_hours)
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
                 projected_ending_time = clockin.shift.ending_at
@@ -696,6 +694,7 @@ def generate_periods_and_payments(employer, generate_since=None):
             generated_periods.append(period)
 
         except Exception as e:
+            print("entrando a borrar")
             PayrollPeriodPayment.objects.filter(payroll_period__id=period.id).delete()
             generated_periods = []
             period.delete()
