@@ -675,16 +675,25 @@ def generate_periods_and_payments(employer, generate_since=None):
 
                 payment = PayrollPeriodPayment()
                 payment.payroll_period=period,
+                print('payment.payroll_period=period###', payment.payroll_period)
                 payment.employee=clockin.employee,
+                print('payment.payment.employee###', payment.payroll_period)
                 payment.employer=employer,
+                print('payment.employer###', payment.payroll_period)
                 payment.shift=clockin.shift,
+                print('payment.shift###', payment.shift)
                 payment.clockin=clockin,
+                print('payment.clockin###', payment.clockin)
                 payment.regular_hours=regular_hours,
+                print('payment.regular_hours###', payment.regular_hours)
                 payment.over_time=overtime,
+                print('payment.over_time###', payment.over_time)
                 payment.hourly_rate=clockin.shift.minimum_hourly_rate,
+                print('payment.hourly_rate###', payment.hourly_rate)
                 payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
+                print('payment.total_amount###', payment.total_amount)
                 payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                print('generate_periods_and_payments payment###', payment)
+                print('payment.splited_payment###', payment.splited_payment)
                 payment.save()
                 total_payments = total_payments + 1
 
@@ -694,7 +703,7 @@ def generate_periods_and_payments(employer, generate_since=None):
             generated_periods.append(period)
 
         except Exception as e:
-            print("entrando a borrar")
+            print("entrando a borrar", e)
             PayrollPeriodPayment.objects.filter(payroll_period__id=period.id).delete()
             generated_periods = []
             period.delete()
