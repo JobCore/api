@@ -686,8 +686,8 @@ def generate_periods_and_payments(employer, generate_since=None):
                 payment.hourly_rate=clockin.shift.minimum_hourly_rate,
                 payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
                 payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                print()
-                payment.save('generate_periods_and_payments payment###', payment)
+                print('generate_periods_and_payments payment###', payment)
+                payment.save()
                 total_payments = total_payments + 1
 
             print('el total payment', total_payments)
