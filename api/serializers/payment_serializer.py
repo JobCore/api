@@ -583,7 +583,8 @@ def get_projected_payments(
 
 
 def generate_periods_and_payments(employer, generate_since=None):
-
+    print('employer###', employer)
+    print('employer###', employer.id)
     log_debug('hooks','generate_periods -> Employer: '+employer.title)
     NOW = timezone.now()
 
@@ -636,6 +637,7 @@ def generate_periods_and_payments(employer, generate_since=None):
             length=employer.payroll_period_length,
             length_type=employer.payroll_period_type
         )
+        print('generate_periods_and_payments period###', period)
         period.save()
 
         # move the end_date forward to make sture the loop stops eventually
@@ -684,7 +686,7 @@ def generate_periods_and_payments(employer, generate_since=None):
                 payment.hourly_rate=clockin.shift.minimum_hourly_rate,
                 payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
                 payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                
+                print('generate_periods_and_payments payment###', payment)
                 payment.save()
                 total_payments = total_payments + 1
 
