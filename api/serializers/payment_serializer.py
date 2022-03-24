@@ -636,8 +636,7 @@ def generate_periods_and_payments(employer, generate_since=None):
             length_type=employer.payroll_period_type
         )
         print('generate_periods_and_payments period###', period)
-        periodisra = PayrollPeriod.objects.filter(id=period.period_id, employer_id=employer.id).first()
-        print('generate_periods_and_payments periodisra###', periodisra)
+       
         period.save()
 
         # move the end_date forward to make sture the loop stops eventually
