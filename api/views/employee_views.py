@@ -168,7 +168,6 @@ class EmployeeMeView(EmployeeView):
 
     def put(self, request):
         employee = self.employee
-
         serializer = employee_serializer.EmployeeSettingsSerializer(
             employee, data=request.data)
 
@@ -187,6 +186,8 @@ class EmployeeShiftInviteView(EmployeeView):
         return self.get_queryset().filter(id=id)
 
     def fetch_list(self, request):
+        NOW = datetime.datetime.now(tz=timezone.utc)
+
         if 'status' not in self.request.GET:
             return self.get_queryset()
 
@@ -281,14 +282,14 @@ class EmployeeShiftInviteView(EmployeeView):
                 shift=invite.shift
             )
 
-            notify_shift_candidate_update(
-                user=self.employee.user,
-                shift=invite.shift,
-                talents_to_notify=dict(
-                    accepted=[self.employee],
-                    rejected=[]
-                )
-            )
+            # notify_shift_candidate_update(
+            #     user=self.employee.user,
+            #     shift=invite.shift,
+            #     talents_to_notify=dict(
+            #         accepted=[self.employee],
+            #         rejected=[]
+            #     )
+            # )
 
             if is_manual_invite:
                 return Response({ "details": "Your application was automatically approved because you were hand-picked for this shift." }, status=status.HTTP_200_OK)
@@ -538,3 +539,78 @@ class EmployeeDeviceMeView(WithProfileView):
         qs.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EmployeeMeI9Form(EmployeeView):
+
+    def get(self, request):
+        i9form = I9Form.objects.filter(employee_id=self.employee.id)
+
+        serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def post(self, request):
+
+        request.data['employee'] = self.employee.id
+        serializer = employee_serializer.EmployeeI9Serializer(data=request.data)
+        if serializer.is_valid():
+
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+
+        try:
+            i9form = I9Form.objects.filter(
+                employee_id=self.employee.id).get()
+        except I9Form.DoesNotExist:
+            return Response(validators.error_object(
+                'I9-Form not found'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employee_serializer.EmployeeI9Serializer(
+            i9form, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+class EmployeeMeW4Form(EmployeeView):
+
+    def get(self, request):
+        w4form = W4Form.objects.filter(employee_id=self.employee.id)
+
+        serializer = employee_serializer.EmployeeW4Serializer(w4form, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    def post(self, request):
+
+        request.data['employee'] = self.employee.id
+        serializer = employee_serializer.EmployeeW4Serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        try:
+            w4form = W4Form.objects.filter(
+                employee_id=self.employee.id).get()
+        except W4Form.DoesNotExist:
+            return Response(validators.error_object(
+                'W4-Form not found'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employee_serializer.EmployeeW4Serializer(
+            w4form, data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

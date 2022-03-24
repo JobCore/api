@@ -1,11 +1,10 @@
+import math
 from decimal import Decimal
-
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import models
 from django.db.models import Avg, Count
 from django.utils import timezone
-
 from api.utils.loggers import log_debug
 
 NOW = timezone.now()
@@ -17,20 +16,6 @@ POSITION_STATUS = (
     (ACTIVE, 'Active'),
     (DELETED, 'Deleted'),
 )
-
-
-class Position(models.Model):
-    picture = models.URLField(blank=True)
-    title = models.TextField(max_length=100, blank=True)
-    description = models.TextField(max_length=1050, blank=True)
-    meta_description = models.TextField(max_length=250, blank=True)
-    meta_keywords = models.TextField(max_length=250, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(auto_now=True, editable=False)
-    status = models.CharField(max_length=9, choices=POSITION_STATUS, default=ACTIVE, blank=True)
-
-    def __str__(self):
-        return self.title
 
 
 class Badge(models.Model):
@@ -52,7 +37,7 @@ PAYROLL_LENGTH_TYPE = (
 
 
 class City(models.Model):
-    name = models.CharField(max_length=30, blank=False, null=False)
+    name = models.CharField(max_length=100, blank=False, null=False)
 
     def __str__(self):
         return self.name
@@ -70,6 +55,7 @@ EMPLOYER_STATUS = (
     (DELETED, 'Deleted'),
     (APPROVED, 'Approved'),
 )
+
 
 class SubscriptionPlan(models.Model):
     unique_name = models.CharField(max_length=25, unique=True)
@@ -107,7 +93,7 @@ class SubscriptionPlan(models.Model):
 class Employer(models.Model):
     title = models.TextField(max_length=100, blank=True)
     picture = models.URLField(blank=True)
-    website = models.CharField(max_length=30, blank=True)
+    website = models.CharField(max_length=100, blank=True)
     bio = models.TextField(max_length=250, blank=True)
     response_time = models.IntegerField(blank=True, default=0)  # in minutes
     rating = models.DecimalField(
@@ -115,7 +101,7 @@ class Employer(models.Model):
     total_ratings = models.IntegerField(blank=True, default=0)  # in minutes
     badges = models.ManyToManyField(Badge, blank=True)
     status = models.CharField(max_length=25, choices=EMPLOYER_STATUS, default=APPROVED, blank=True)
-
+   
     # talents on employer's favlist's will be automatically accepted
     automatically_accept_from_favlists = models.BooleanField(default=True)
 
@@ -173,11 +159,44 @@ SUBSCRIPTION_MODE = (
     (MONTHLY, 'Monthly'),
     (YEARLY, 'Yearly'),
 )
+
+class Position(models.Model):
+    picture = models.URLField(blank=True)
+    title = models.TextField(max_length=100, blank=True)
+    description = models.TextField(max_length=1050, blank=True)
+    meta_description = models.TextField(max_length=250, blank=True)
+    meta_keywords = models.TextField(max_length=250, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=9, choices=POSITION_STATUS, default=ACTIVE, blank=True)
+    pay_rate = models.ManyToManyField(
+        Employer, blank=True, related_name="pay_rate", through="Payrates")
+
+    def __str__(self):
+        return self.title
+
+class Payrates(models.Model):
+    position = models.ForeignKey(
+        Position, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_positions")
+    employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, related_name="employer_payrates_employer")
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE, blank=True, null=True)
+
+    hourly_rate = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True)    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.position.title + " " + str(self.hourly_rate)
+
 class EmployerSubscription(models.Model):
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True)
     subscription = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE, blank=True)
     status = models.CharField(max_length=25, choices=SUBSCRIPTION_STATUS, default=ACTIVE, blank=True)
     payment_mode = models.CharField(max_length=9,choices=SUBSCRIPTION_MODE,default=MONTHLY,blank=True)
+    stripe_sub = models.CharField(max_length=100, blank=True)
+    # stripe_sub_status = models.CharField(max_length=25, blank=True)
+    stripe_cus = models.CharField(max_length=100, blank=True)
     due_at = models.DateTimeField()
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -239,6 +258,7 @@ class Employee(models.Model):
                                                       blank=True)
     filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
     allowances = models.IntegerField(blank=True, default=0)
+    w4_year = models.IntegerField(blank=True, default=0)
     step2c_checked = models.BooleanField(blank=True, default=False)
     dependants_deduction = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     other_income = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
@@ -258,7 +278,7 @@ class Employee(models.Model):
         if annual_withholding < 0:
             annual_withholding = Decimal('0.00')
         annual_withholding += self.extra_withholding
-        return round(Decimal(annual_withholding / period_quantity), 2)
+        return Decimal(str(math.trunc(annual_withholding / period_quantity * 100) / 100))
 
 
 ACTIVE = 'ACTIVE'
@@ -273,9 +293,11 @@ PROFILE_STATUS = (
 )
 
 ADMIN = 'ADMIN'
+MANAGER = 'MANAGER'
 SUPERVISOR = 'SUPERVISOR'
 COMPANY_ROLES = (
     (ADMIN, 'Admin'),
+    (MANAGER, 'Manager'),
     (SUPERVISOR, 'Supervisor'),
 )
 
@@ -283,16 +305,17 @@ COMPANY_ROLES = (
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     picture = models.URLField(blank=True)
+    resume = models.URLField(blank=True, null=True, default=True)
     bio = models.TextField(max_length=250, blank=True)
     show_tutorial = models.BooleanField(default=True)
 
     # location information
     location = models.CharField(max_length=250, blank=True)
     street_address = models.CharField(max_length=250, blank=True)
-    country = models.CharField(max_length=30, blank=True)
-    city = models.CharField(max_length=30, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     profile_city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
-    state = models.CharField(max_length=30, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     latitude = models.DecimalField(
         max_digits=14, decimal_places=11, default=0)
@@ -301,7 +324,7 @@ class Profile(models.Model):
 
     birth_date = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
-    last_4dig_ssn = models.CharField(max_length=4, blank=True)
+    last_4dig_ssn = models.CharField(max_length=4, default='', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -309,6 +332,7 @@ class Profile(models.Model):
 
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, null=True)
     employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
+    other_employers = models.ManyToManyField(Employer, blank=True, related_name="other_employers", through="EmployerUsers")
 
     status = models.CharField(max_length=25, choices=PROFILE_STATUS, default=PENDING, blank=True)
 
@@ -328,6 +352,20 @@ RECURRENCY_TYPE = (
     (WEEKLY, 'Weekly'),
     (MONTHLY, 'Monthly'),
 )
+
+class EmployerUsers(models.Model):
+    employer = models.ForeignKey(
+        Employer, on_delete=models.CASCADE, blank=True, related_name="company_users_employer")
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, blank=True, related_name="company_users_profile")
+
+    employer_role = models.CharField(max_length=25, choices=COMPANY_ROLES, default=ADMIN, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def __str__(self):
+        return self.employer.title + " (" + self.employer_role + "), " + str(self.profile.user.email)
 
 
 class AvailabilityBlock(models.Model):
@@ -374,10 +412,10 @@ class Venue(models.Model):
     employer = models.ForeignKey(
         Employer, on_delete=models.CASCADE, blank=True, null=True)
     street_address = models.CharField(max_length=250, blank=True)
-    country = models.CharField(max_length=30, blank=True)
+    country = models.CharField(max_length=100, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, default=0)
-    state = models.CharField(max_length=30, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     zip_code = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -454,6 +492,7 @@ class Shift(models.Model):
         through='ShiftEmployee')
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
+    description = models.TextField(max_length=500, blank=True, default="")
 
     # if this option is None, the talent will be able to clockin anytime
     # he wants. By default, he can only clockin within 15 min of the starting
@@ -538,8 +577,10 @@ class UserToken(models.Model):
 
 PENDING = 'PENDING'
 ACCEPTED = 'ACCEPTED'
+COMPANY_PENDING = 'COMPANY'
 JOBCORE_INVITE_STATUS_CHOICES = (
     (PENDING, 'Pending'),
+    (COMPANY_PENDING, 'Company Pending'),
     (ACCEPTED, 'Accepted'),
 )
 
@@ -560,6 +601,7 @@ class JobCoreInvite(models.Model):
         default=PENDING,
         blank=True)
     phone_number = models.CharField(max_length=17, blank=True)
+    employer_role = models.CharField(max_length=17, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -704,6 +746,7 @@ class PayrollPeriod(models.Model):
     ending_at = models.DateTimeField(blank=False)
 
     total_payments = models.IntegerField(blank=True, default=0)
+    total_employees = models.IntegerField(blank=True, default=0)
 
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -745,9 +788,9 @@ class PayrollPeriodPayment(models.Model):
     approved_clockout_time= models.DateTimeField(blank=True, null=True)
     breaktime_minutes = models.IntegerField(blank=True, default=0)
     regular_hours = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)   # This value has breaktime deducted already
+        max_digits=10, decimal_places=5, default=0, blank=True)   # This value has breaktime deducted already
     over_time = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, blank=True)
+        max_digits=10, decimal_places=5, default=0, blank=True)
     hourly_rate = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True)
     total_amount = models.DecimalField(
@@ -766,6 +809,8 @@ class EmployeePayment(models.Model):
     over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
     legal_over_time = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)   # plus 40 hours/week
     breaktime_minutes = models.IntegerField(blank=True, default=0)
+    regular_hours_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='regular hours earnings', default=0)
+    over_time_earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='overtime earnings', default=0)
     earnings = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='gross earnings')
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, verbose_name='net earnings')
     deductions = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0)
@@ -830,7 +875,9 @@ class Document(models.Model):
     validates_identity = models.BooleanField(default=False)
     validates_employment = models.BooleanField(default=False)
     is_form = models.BooleanField(default=False)
-
+    document_a = models.BooleanField(default=False)
+    document_b = models.BooleanField(default=False)
+    document_c = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
 
@@ -902,3 +949,138 @@ class EmployerDeduction(models.Model):
     value = models.FloatField(blank=False, null=False)
     # Attribute to block the deletion of a Deduction
     lock = models.BooleanField(default=False, null=False, blank=True)
+
+
+
+class I9Form(models.Model):
+    CITIZEN = 'CITIZEN'
+    NON_CITIZEN = 'NON_CITIZEN'
+    RESIDENT = 'RESIDENT'
+    ALIEN = 'ALIEN'
+    ATTESTATION = (
+        (CITIZEN, 'A citizen of the United States'),
+        (NON_CITIZEN, 'A noncitizen national of the United States'),
+        (RESIDENT, 'A lawful permanent resident'),
+        (ALIEN, 'An alien authorized to work'),
+    ) 
+
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    ARCHIVED = 'ARCHIVED'
+    DELETED = 'DELETED'
+    REJECTED = 'REJECTED'
+    UNDER_REVIEW = 'UNDER_REVIEW'
+    I9_FORM_STATUS = (
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (ARCHIVED, 'Archived'),
+        (DELETED, 'Deleted'),
+        (REJECTED, 'Rejected'),
+    )
+    employee = models.ForeignKey(
+    Employee, on_delete=models.CASCADE, blank=True, null=True)
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    middle_initial = models.CharField(max_length=100, blank=True)
+    other_last_name = models.CharField(max_length=100, blank=True)
+    address = models.CharField(max_length=100, blank=True)
+    apt_number = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    zipcode = models.CharField(max_length=100, blank=True)
+    date_of_birth = models.CharField(max_length=100, blank=True)
+    social_security = models.CharField(max_length=100, blank=True)
+    email = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=100, blank=True)
+    employee_attestation = models.CharField(max_length=25, choices=ATTESTATION, default=CITIZEN, blank=True)
+    USCIS = models.CharField(max_length=100, blank=True)
+    I_94 = models.CharField(max_length=100, blank=True)
+    passport_number = models.CharField(max_length=100, blank=True)
+    country_issuance = models.CharField(max_length=100, blank=True)
+    employee_signature = models.TextField(blank=True)
+    date_employee_signature = models.CharField(max_length=100, blank=True)
+    translator = models.BooleanField(default=False)
+    translator_signature = models.URLField(blank=True)
+    date_translator_signature = models.TextField(blank=True)
+    translator_first_name = models.CharField(max_length=100, blank=True)
+    translator_last_name = models.CharField(max_length=100, blank=True)
+    translator_address = models.CharField(max_length=100, blank=True)
+    translator_last_name = models.CharField(max_length=100, blank=True)
+    translator_address= models.CharField(max_length=100, blank=True)
+    translator_state = models.CharField(max_length=100, blank=True)
+    translator_city = models.CharField(max_length=100, blank=True)
+    translator_zipcode = models.CharField(max_length=100, blank=True)
+    document_a = models.URLField(blank=True)
+    document_b_c = models.URLField(blank=True)
+    document_b_c2 = models.URLField(blank=True)
+    status = models.CharField(max_length=8, choices=I9_FORM_STATUS, default=PENDING)
+    created_at = models.DateTimeField(auto_now=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+class W4Form(models.Model):
+    SINGLE = 'SINGLE'
+    MARRIED = 'MARRIED'
+    HEAD_HOUSEHOLD = 'HEAD_HOUSEHOLD'
+    FILING_STATUS = (
+        (SINGLE, 'Single or married filing separately'),
+        (MARRIED, 'Married filing jointly'),
+        (HEAD_HOUSEHOLD, 'Head of household'),
+    ) 
+
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    ARCHIVED = 'ARCHIVED'
+    DELETED = 'DELETED'
+    REJECTED = 'REJECTED'
+    UNDER_REVIEW = 'UNDER_REVIEW'
+    W4_FORM_STATUS = (
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (ARCHIVED, 'Archived'),
+        (DELETED, 'Deleted'),
+        (REJECTED, 'Rejected'),
+    )
+    employee = models.ForeignKey(
+    Employee, on_delete=models.CASCADE, blank=True, null=True)
+    filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
+    step2a = models.BooleanField(default=False)
+    step2b = models.BooleanField(default=False)
+    step2c = models.BooleanField(default=False)
+    dependant = models.BooleanField(default=False)
+    dependant3a = models.BooleanField(default=False)
+    dependant3b = models.CharField(max_length=100, blank=True)
+    dependant3c = models.CharField(max_length=100, blank=True)
+    step4a = models.CharField(max_length=100, blank=True)
+    step4b = models.CharField(max_length=100, blank=True)
+    step4c = models.CharField(max_length=100, blank=True)
+    employee_signature = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    status = models.CharField(max_length=8, choices=W4_FORM_STATUS, default=PENDING)
+
+class Payment(models.Model):
+    stripe_charge_id = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    amount = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username
+        
+    def serialize(self):
+        return {
+           'stripe_charge_id': self.stripe_charge_id,
+           'user': self.user,
+           'amount': self.amount,
+           'timestamp': self.timestamp 
+        }
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # employer = models.ForeignKey(Employer, on_delete=models.CASCADE, blank=True, related_name="company_users_profile")
+    stripe_customer_id = models.CharField(max_length=50, blank=True, null=True)
+    stripe_sub_id = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.user.username
+

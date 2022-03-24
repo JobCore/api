@@ -1,0 +1,9 @@
+Hello {{ EMAIL }}.
+
+Oh no! Your shift invite has been rejected!
+
+{{ TALENT }} has rejected your shift invite for {{ POSITION }} on {{ DATE }}.
+
+This is just an informative message and it does not require any actions on your side
+
+The JobCore Team

@@ -18,7 +18,6 @@ log = logging.getLogger('api.views.documents_views')
 class EmployeeDocumentAPI(EmployeeView):
 
     def post(self, request):
-
         if 'document_type' not in request.data:
             return Response(validators.error_object('You need to specify the type of document you are uploading'),
                             status=status.HTTP_400_BAD_REQUEST)
@@ -38,16 +37,18 @@ class EmployeeDocumentAPI(EmployeeView):
                 unique_filename=1,
                 resource_type='auto'
             )
+            print(result)
         except Exception as e:
+            print(e)
             return JsonResponse({"error": str(e)}, status=400)
-
+            
         data = {
             'document': result['secure_url'],
             'employee': self.employee.id,
             'document_type': request.data['document_type'],
             'public_id': public_id,
         }
-
+        print('data picker', data)
         serializer = documents_serializer.EmployeeDocumentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -57,7 +58,6 @@ class EmployeeDocumentAPI(EmployeeView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-
         documents = EmployeeDocument.objects.filter(employee_id=self.employee.id)
 
         qStatus = request.GET.get('status')

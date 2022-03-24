@@ -1,6 +1,6 @@
 Hello {{ EMAIL }}
 
-{{ COMPANY }} has invited you to JobCore, to sign up please click on the following link:
+{{ COMPANY }} has invited you to JobCore, to join please click on the following link:
 {{ LINK }}
 
 The JobCore Team

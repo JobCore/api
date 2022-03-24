@@ -1,8 +1,9 @@
 import datetime
 import decimal
 import itertools
+import math
 
-from django.db.models import Q, Sum
+from django.db.models import Q, Count, Sum
 from django.utils import timezone
 
 from rest_framework import serializers
@@ -18,7 +19,7 @@ DATE_FORMAT = '%Y-%m-%d'
 #
 # NESTED
 #
-
+ 
 
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -86,12 +87,12 @@ class EmployeeGetTinySerializer(serializers.ModelSerializer):
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
     user = UserGetSmallSerializer(read_only=True)
-    badges = BadgeGetSmallSerializer(read_only=True, many=True)
+    # badges = BadgeGetSmallSerializer(read_only=True, many=True)
 
 
     class Meta:
         model = Employee
-        fields = ('user', 'id', 'badges')
+        fields = ('user', 'id','employment_verification_status')
 
 
 class ClockinGetSerializer(serializers.ModelSerializer):
@@ -111,17 +112,7 @@ class ClockinGetSmallSerializer(serializers.ModelSerializer):
         exclude = ('shift', 'employee')
 
 
-class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
-    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
-    class Meta:
-        model = PayrollPeriod
-        fields = (
-            'id',
-            'status',
-            'starting_at',
-            'ending_at',
-            'total_payments'
-        )
+
 
 #
 # MAIN
@@ -138,10 +129,56 @@ class PayrollPeriodPaymentGetSerializer(serializers.ModelSerializer):
         model = PayrollPeriodPayment
         exclude = ()
 
+class PayrollPeriodPaymentEmployeeSerializer(serializers.ModelSerializer):
+    # employee = EmployeeGetSerializer(read_only=True)
 
+    class Meta:
+        model = PayrollPeriodPayment
+        exclude = ()
+
+class PayrollPeriodGetDateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'starting_at',
+            'ending_at',
+        )
+class PayrollPeriodGetTinySerializer(serializers.ModelSerializer):
+    # payments = PayrollPeriodPaymentEmployeeSerializer(read_only=True, many=True)
+    employee_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'total_payments',
+            'employee_count'
+        )
+
+    def get_employee_count(self, instance):
+        employees = PayrollPeriodPayment.objects.filter(employer__id=instance.employer_id, payroll_period__id = instance.id).order_by('employee_id').values('employee').distinct().count()
+      
+        total_employees = employees
+        
+        return total_employees
+
+class PayrollPeriodGetSmallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayrollPeriod
+        fields = (
+            'id',
+            'status',
+            'starting_at',
+            'ending_at',
+            'total_payments',
+        )
+        
 class PayrollPeriodGetSerializer(serializers.ModelSerializer):
-    #payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
-    payments = serializers.SerializerMethodField()
+    payments = PayrollPeriodPaymentGetSerializer(read_only=True, many=True)
     employer = EmployerGetSmallSerializer(read_only=True)
 
     class Meta:
@@ -157,10 +194,6 @@ class PayrollPeriodGetSerializer(serializers.ModelSerializer):
             'created_at',
             'total_payments',
             'payments')
-
-    def get_payments(self, instance):
-        _payments = instance.payments.all().order_by('shift__starting_at')
-        return PayrollPeriodPaymentGetSerializer(_payments, many=True).data
 
 
 class RoundingDecimalField(serializers.DecimalField):
@@ -201,7 +234,9 @@ class PayrollPeriodPaymentPostSerializer(serializers.ModelSerializer):
         params['hourly_rate'] = validated_data['shift'].minimum_hourly_rate
         regular_hours = round(decimal.Decimal(params['regular_hours']), 2)
         over_time = round(decimal.Decimal(params['over_time']), 2)
-        params['total_amount'] = round(decimal.Decimal(params['hourly_rate'] * (regular_hours + over_time)), 2)
+        params['total_amount'] = decimal.Decimal(str(
+            math.trunc(params['hourly_rate'] * (regular_hours + over_time) * 100) / 100
+        ))
         payment = super(PayrollPeriodPaymentPostSerializer, self).create(params)
         return payment
 
@@ -228,9 +263,11 @@ class PayrollPeriodPaymentSerializer(serializers.ModelSerializer):
         params = validated_data.copy()
         params_keys = dict.fromkeys(params, 1)
         if params_keys.get('regular_hours') or params_keys.get('over_time'):
-            regular_hours = round(decimal.Decimal(params['regular_hours']), 2) if params_keys.get('regular_hours') else payment.regular_hours
-            over_time = round(decimal.Decimal(params['over_time']), 2) if params_keys.get('over_time') else payment.over_time
-            params['total_amount'] = round(payment.hourly_rate * (regular_hours + over_time), 2)
+            regular_hours = round(decimal.Decimal(params['regular_hours']), 5) if params_keys.get('regular_hours') else payment.regular_hours
+            over_time = round(decimal.Decimal(params['over_time']), 5) if params_keys.get('over_time') else payment.over_time
+            params['total_amount'] = decimal.Decimal(str(
+                math.trunc(payment.hourly_rate * (regular_hours + over_time) * 100) / 100
+            ))
         elif params_keys.get('total_amount'):
             params['total_amount'] = payment.total_amount
         return super().update(payment, params)
@@ -251,11 +288,14 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
             (regular_hours + over_time) * hourly_rate; breaktime was deducted in regular_hours already"""
         employer_id = instance.employer_id
         if validated_data.get('status') == FINALIZED:
+            
             # Create EmployeePayment registries to summarize related data from PayrollPeriodPayment
-            total_regular_hours = total_over_time = total_breaktime_minutes = gross_amount = 0
+            total_regular_hours = total_regular_earnings = total_over_time = total_breaktime_minutes = gross_amount = 0
             prev_employee_id = legal_overtime_hours = overtime_earnings = 0
+
             for ppp in PayrollPeriodPayment.objects.filter(payroll_period_id=instance.id, employer_id=employer_id,
                                                            status=APPROVED).order_by('employee_id', 'id'):
+                
                 if ppp.employee.id != prev_employee_id:
                     if prev_employee_id:   # to avoid if value is 0 (fake initial value)
                         # get_or_create is used to maintain idempotence
@@ -266,7 +306,10 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
                                                               over_time=total_over_time,
                                                               legal_over_time=legal_overtime_hours,
                                                               breaktime_minutes=total_breaktime_minutes,
-                                                              earnings=gross_amount + overtime_earnings,
+                                                              earnings=gross_amount,
+                                                              over_time_earnings= overtime_earnings,
+                                                              regular_hours_earnings=gross_amount
+                                      
                                                               )
                         total_regular_hours = total_over_time = total_breaktime_minutes = gross_amount = 0
                         legal_overtime_hours = overtime_earnings = 0
@@ -274,21 +317,36 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
 
                 if (total_regular_hours + total_over_time) >= decimal.Decimal('40.00'):
                     legal_overtime_hours += ppp.regular_hours + ppp.over_time
-                    overtime_earnings += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc((ppp.regular_hours + ppp.over_time) * (ppp.hourly_rate * decimal.Decimal('1.5')) * 100) / 100
+                    ))
                 elif (total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time) > decimal.Decimal('40.00'):
                     overtime_hours = total_regular_hours + total_over_time + ppp.regular_hours + ppp.over_time - 40
                     legal_overtime_hours += overtime_hours
-                    overtime_earnings += round(decimal.Decimal(overtime_hours * ppp.hourly_rate
-                                                               * decimal.Decimal('0.5')), 2)
-
+                    overtime_earnings += decimal.Decimal(str(
+                        math.trunc(overtime_hours * (ppp.hourly_rate * decimal.Decimal('1.5')) * 100) / 100
+                    ))
+                
                 total_regular_hours += ppp.regular_hours
                 total_over_time += ppp.over_time
                 total_breaktime_minutes += ppp.breaktime_minutes
-                gross_amount += round(decimal.Decimal((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate), 2)
 
+                
+                gross_amount += decimal.Decimal(str(
+                    math.trunc((ppp.regular_hours + ppp.over_time) * ppp.hourly_rate * 100) / 100
+                ))
+
+             
+                # regular_hours_earnings += decimal.Decimal(str(
+                #     math.trunc((gross_amount - overtime_earnings/decimal.Decimal('1.5')) * 100) / 100
+                # ))
+                # earnings = decimal.Decimal(str(
+                #     math.trunc((regular_hours_earnings - overtime_earnings) * 100) / 100
+                # ))
+             
             # get_or_create is used to maintain idempotence
             if prev_employee_id:   # to avoid if value is 0 (fake initial value)
+               
                 EmployeePayment.objects.get_or_create(payroll_period=instance,
                                                       employee_id=prev_employee_id,
                                                       employer_id=employer_id,
@@ -296,7 +354,9 @@ class PayrollPeriodSerializer(serializers.ModelSerializer):
                                                       over_time=total_over_time,
                                                       legal_over_time=legal_overtime_hours,
                                                       breaktime_minutes=total_breaktime_minutes,
-                                                      earnings=gross_amount + overtime_earnings,
+                                                      earnings=gross_amount,
+                                                      over_time_earnings = overtime_earnings,
+                                                      regular_hours_earnings = gross_amount,
                                                       )
 
         elif validated_data.get('status') == OPEN:
@@ -338,7 +398,7 @@ class EmployeeInfoPaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('first_name', 'last_name', 'bank_accounts')
+        fields = ('id', 'first_name', 'last_name', 'bank_accounts', 'filing_status', 'w4_year', 'step2c_checked', "employment_verification_status")
 
 
 class EmployeePaymentSerializer(serializers.ModelSerializer):
@@ -348,7 +408,7 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('id', 'employee', 'regular_hours', 'over_time', 'earnings',
+        fields = ('id', 'employee', 'regular_hours', 'over_time','legal_over_time', 'earnings', 'over_time_earnings',
                   'paid', 'payroll_period_id', 'deductions', 'deduction_list', 'taxes', 'amount')
 
     def get_deduction_list(self, instance):
@@ -360,29 +420,30 @@ class EmployeePaymentSerializer(serializers.ModelSerializer):
                 amount = instance.earnings * decimal.Decimal('{:.2f}'.format(deduction.value)) / 100
             else:
                 amount = decimal.Decimal('{:.2f}'.format(deduction.value))
+            # amount = decimal.Decimal(str(
+            #     math.trunc(amount * 100) / 100
+            # ))
+            amount = round(amount, 2)
             self.context['total_deductions'] += amount
             res_list.append({'name': deduction.name, 'amount': amount})
         return res_list
 
+
     def get_taxes(self, instance):
         if instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 7:
             period_quantity = 52
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS and instance.payroll_period.length == 14:
             period_quantity = 26
-            wage_amount = instance.earnings
         elif instance.payroll_period.length_type == DAYS:
             period_quantity = 260
-            wage_amount = instance.earnings
         else:
             period_quantity = 12 / instance.payroll_period.length
-            wage_amount = instance.earnings
-        return instance.employee.calculate_tax_amount(wage_amount, period_quantity)
+        return instance.employee.calculate_tax_amount(instance.earnings, period_quantity)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['deductions'] = self.context['total_deductions']
-        data['amount'] = instance.earnings - data['deductions'] - data['taxes']
+        data['amount'] = instance.earnings - data['deductions'] 
         return data
 
 
@@ -468,7 +529,7 @@ class EmployeePaymentDeductionReportSerializer(EmployeePaymentReportSerializer):
 
     class Meta:
         model = EmployeePayment
-        fields = ('employee', 'deduction_amount', 'deduction_list', 'payment_date', 'payroll_period', 'taxes')
+        fields = ('employee', 'deduction_amount', 'deduction_list', 'earnings','payment_date', 'payroll_period', 'taxes')
 
 
 def get_projected_payments(
@@ -522,7 +583,6 @@ def get_projected_payments(
 
 
 def generate_periods_and_payments(employer, generate_since=None):
-
     log_debug('hooks','generate_periods -> Employer: '+employer.title)
     NOW = timezone.now()
 
@@ -562,7 +622,7 @@ def generate_periods_and_payments(employer, generate_since=None):
     if end_date >= NOW:
         log_debug('hooks','No new periods to generate, now is '+ str(NOW) +' we have to wait until '+str(end_date))
         return []
-
+     
     while end_date < NOW:
 
         start_date = end_date - \
@@ -575,6 +635,8 @@ def generate_periods_and_payments(employer, generate_since=None):
             length=employer.payroll_period_length,
             length_type=employer.payroll_period_type
         )
+        print('generate_periods_and_payments period###', period)
+       
         period.save()
 
         # move the end_date forward to make sture the loop stops eventually
@@ -597,48 +659,64 @@ def generate_periods_and_payments(employer, generate_since=None):
                 if clocked_hours is None:
                     continue
                 else:
-                    clocked_hours = round(decimal.Decimal(clocked_hours), 2)
-
+                    clocked_hours = round(decimal.Decimal(clocked_hours), 5)
+                    print('clocked_hours###', clocked_hours)
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
+                print("projected_starting_time###", projected_starting_time)
                 projected_ending_time = clockin.shift.ending_at
-                projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 2)
+                print("projected_ending_time###", projected_ending_time)
+                projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 5)
+                print("projected_hours###", projected_hours)
                 log_debug('hooks','Projected hours '+str(projected_hours))
 
                 if clocked_hours <= projected_hours:
                     regular_hours = clocked_hours
                     overtime = 0
+                    print("adentro del if")
                 else:
                     regular_hours = projected_hours
                     overtime = clocked_hours - projected_hours
-
-                payment = PayrollPeriodPayment(
-                    payroll_period=period,
-                    employee=clockin.employee,
-                    employer=employer,
-                    shift=clockin.shift,
-                    clockin=clockin,
-                    regular_hours=regular_hours,
-                    over_time=overtime,
-                    hourly_rate=clockin.shift.minimum_hourly_rate,
-                    total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
-                    splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                )
+                print("justo sobre payment")
+                payment = PayrollPeriodPayment()
+                payment.payroll_period=period,
+                print('payment.payroll_period=period###', payment.payroll_period)
+                payment.employee=clockin.employee,
+                print('payment.payment.employee###', payment.payroll_period)
+                payment.employer=employer,
+                print('payment.employer###', payment.payroll_period)
+                payment.shift=clockin.shift,
+                print('payment.shift###', payment.shift)
+                payment.clockin=clockin,
+                print('payment.clockin###', payment.clockin)
+                payment.regular_hours=regular_hours,
+                print('payment.regular_hours###', payment.regular_hours)
+                payment.over_time=overtime,
+                print('payment.over_time###', payment.over_time)
+                payment.hourly_rate=clockin.shift.minimum_hourly_rate,
+                print('payment.hourly_rate###', payment.hourly_rate)
+                payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
+                print('payment.total_amount###', payment.total_amount)
+                payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
+                print('payment.splited_payment###', payment.splited_payment)
                 payment.save()
                 total_payments = total_payments + 1
 
+            print('el total payment', total_payments)
             period.total_payments = total_payments
             period.save()
             generated_periods.append(period)
+            print("generated_periods###", generated_periods)
 
         except Exception as e:
+            print("entrando a borrar", e)
             PayrollPeriodPayment.objects.filter(payroll_period__id=period.id).delete()
             generated_periods = []
             period.delete()
             raise e
 
     return generated_periods
-
+    
 
 def get_employee_payments(
         talent_id=None,

@@ -33,7 +33,7 @@
     </table>
   </div>
   <!-- SEPARATOR -->
-  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
+  <!-- <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
       <tr>
         <td valign='top' align='center'>
@@ -45,14 +45,16 @@
         </td>
       </tr>
     </table>
-  </div>
+  </div> -->
   <!-- MESSAGE CONTENT -->
-  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative;">
+  <div class="movableContent" style="border: 0px; padding-top: 0px; position: relative; background-color:blue">
       <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
         <tr>
           <td align='left'>
             <div class="contentEditableContainer contentTextEditable">
               <div class="contentEditable" align='center'>
+                <h1 class="font">{{EMPLOYER}}</h1>
+                <h1 class="font">Company ID: {{ID}}</h2>
                 <p>We are very excited to have you here {{ FIRST_NAME }}, please click on the following link to validate your email:</p>
               </div>
             </div>
@@ -64,12 +66,15 @@
             <table>
               <tr>
                 <td align='center' bgcolor='#27666F' style='background:#27666F; padding:15px 18px;-webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px;'>
+                    <a target='_blank' href='{{ LINK }}'>
+
                   <div class="contentEditableContainer contentTextEditable">
                     <div class="contentEditable" align='center'>
                       <a target='_blank' href='{{ LINK }}' class='link2' style='color:#ffffff;'>Validate my email</a>
                       <p style='color:#aee8b9;'><small>Be aware that this link will only be valid for 15 minutes</small></p>
                     </div>
                   </div>
+                    </a>
                 </td>
               </tr>
             </table>

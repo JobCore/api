@@ -1,9 +1,10 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from django.db.models import Q, Count, F
-from django.http import HttpRequest
-
+from django.db.models import Q, BooleanField, Case, Count, F, Value, When
+from django.http import HttpRequest, JsonResponse
+import re
+import decimal
 import requests
 import cloudinary
 import cloudinary.api
@@ -19,22 +20,22 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from api.mixins import EmployerView
 from api.models import (
-    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList,
-    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate,
+    BankAccount, Clockin, Employee, EmployeePayment, FavoriteList, EmployerUsers, Employer, W4Form,I9Form,EmployeeDocument,
+    PaymentTransaction, PayrollPeriod, PayrollPeriodPayment, Rate, Position,
     Shift, ShiftApplication, ShiftInvite, Venue,
-    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, FILLED,
-    Shift, ShiftApplication, Employee,
+    APPROVED, PAID, SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES, OPEN,
+    Shift, ShiftApplication, Employee, Profile, Payrates,
     ShiftInvite, Venue, FavoriteList,
     PayrollPeriod, Rate, Clockin, PayrollPeriodPayment, PERIOD_STATUS,
     SHIFT_STATUS_CHOICES, SHIFT_INVITE_STATUS_CHOICES,
-    EmployerSubscription, EMPLOYER_STATUS
+    EmployerSubscription, EMPLOYER_STATUS, SubscriptionPlan, UserProfile, Payment
 )
 
 from api.utils import validators
@@ -44,7 +45,7 @@ from api.serializers import (
     employer_serializer, user_serializer, shift_serializer,
     payment_serializer, venue_serializer, favlist_serializer,
     employee_serializer, clockin_serializer, rating_serializer,
-    profile_serializer, other_serializer
+    profile_serializer, other_serializer, documents_serializer, subscription_payment_serializer,
 )
 from api.utils import validators
 from api.utils.utils import DecimalEncoder
@@ -52,7 +53,6 @@ from api.utils.utils import DecimalEncoder
 logger = logging.getLogger(__name__)
 DATE_FORMAT = '%Y-%m-%d'
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-
 
 class EmployerMeView(EmployerView):
     def get(self, request):
@@ -80,19 +80,20 @@ class EmployerMeImageView(EmployerView):
                 status=status.HTTP_400_BAD_REQUEST)
 
         result = cloudinary.uploader.upload(
-            request.FILES['image'],
-            public_id='employer' + str(self.employer.id),
-            crop='limit',
-            width=450,
-            height=450,
-            eager=[{
-                'width': 200, 'height': 200,
-                'crop': 'thumb', 'gravity': 'face',
-                'radius': 100
-            },
-            ],
-            tags=['employer_profile_picture']
+            request.FILES['image']
+            # public_id='employer' + str(self.employer.id),
+            # crop='limit',
+            # width=450,
+            # height=450,
+            # eager=[{
+            #     'width': 200, 'height': 200,
+            #     'crop': 'thumb', 'gravity': 'face',
+            #     'radius': 100
+            # },
+            # ],
+            # tags=['employer_profile_picture']
         )
+
 
         self.employer.picture = result['secure_url']
         self.employer.save()
@@ -103,11 +104,11 @@ class EmployerMeImageView(EmployerView):
 
 class EmployerMeUsersView(EmployerView):
     def get_queryset(self):
-        return User.objects.filter(profile__employer_id=self.employer.id)
+        # return User.objects.filter(profile__employer_id=self.employer.id)
+        return User.objects.filter(Q(profile__employer_id=self.employer.id) | Q(profile__other_employers=self.employer.id) )
 
     def get(self, request, profile_id=False):
-        qs = self.get_queryset()
-        many = True
+       
         # no hay un endpoint que use esto.
         # if id:
         #     try:
@@ -116,9 +117,19 @@ class EmployerMeUsersView(EmployerView):
         #     except User.DoesNotExist:
         #         return Response(validators.error_object(
         #             'Not found.'), status=status.HTTP_404_NOT_FOUND)
+        if profile_id is not False:
+                try:
+                    user = User.objects.get(profile__id=profile_id)
+                except User.DoesNotExist:
+                    return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
-        serializer = user_serializer.UserGetSmallSerializer(qs, many=many)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+                serializer = user_serializer.UserGetSmallSerializer(user, many=False)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        else: 
+            qs = self.get_queryset()
+            many = True
+            serializer = user_serializer.UserGetSmallSerializer(qs, many=many)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, profile_id):
 
@@ -127,10 +138,23 @@ class EmployerMeUsersView(EmployerView):
         except User.DoesNotExist:
             return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
 
+       
+        if 'employer_id' in request.data:
+            employer_id = request.data['employer_id']
+            employer_role = request.data['employer_role']
+            try:
+                employers = EmployerUsers.objects.get(profile=user.profile, employer=employer_id)
+            except EmployerUsers.DoesNotExist:
+                employers = None
+            
+            if employers is not None: 
+                employers.employer_role = employer_role
+                employers.save()
+
         serializer = profile_serializer.ProfileSerializer(user.profile, data=request.data, context={"request": request})
+        
         if serializer.is_valid():
             serializer.save()
-
             serializer = user_serializer.UserGetSmallSerializer(user, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -140,10 +164,23 @@ class EmployerMeUsersView(EmployerView):
         qs = self.get_queryset()
         try:
             user = qs.get(profile__id=profile_id)
-            print(user.profile)
+
+            other_employers = User.objects.filter(profile__other_employers=self.employer.id)
+
             if user.profile.shift_set.count() > 0 or user.profile.shiftinvite_set.count() > 0 or user.profile.jobcoreinvite_set.count() > 0 or user.profile.rate_set.count() > 0:
                 user.status = 'DELETED'
                 user.save()
+            elif user.profile.employee is not None:
+                if not other_employers:
+                    user.profile.employer = None
+                    user.profile.save()
+                else:
+                    other_employer = EmployerUsers.objects.get(employer=self.employer.id)
+                    other_employer.delete()        
+
+            elif other_employers:
+                other_employer = EmployerUsers.objects.get(employer=self.employer.id)
+                other_employer.delete()
             else:
                 user.delete()
 
@@ -388,22 +425,96 @@ class EmployerMeSubscriptionView(EmployerView):
         else:
             qs = qs.filter(status='ACTIVE')
 
-        serializer = other_serializer.SubscriptionSerializer(qs, many=True)
+        serializer = other_serializer.EmployerSubscriptionPost(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         request.data['employer'] = self.employer.id
         serializer = other_serializer.EmployerSubscriptionPost(data=request.data, context={"request": request})
-
+        all_userprofiles = UserProfile.objects.all()
+        all_user_emails = list(map(lambda userprofile: userprofile, all_userprofiles))
+        all_cus = list(map(lambda userprofile: userprofile.stripe_customer_id, all_userprofiles))          
+        employer_email = request.data['email']
+        all_emails_to_strings = [str(x) for x in all_user_emails]
+        if (employer_email in all_emails_to_strings):
+            cus = all_emails_to_strings.index(employer_email)
+            current_cus = all_cus[cus]
+        else: 
+            return Response({"message": "An error has occurred, the subscription has not been created"}, status=status.HTTP_400_BAD_REQUEST)
+        
         if serializer.is_valid():
-            serializer.save()
+            # if not 'stripe_cus' in request.data:
+                # customer = subscription_payment_serializer.
+                # customer = stripe.Customer.create(
+                #     description=request.data['description'],
+                #     email=request.data['email'],
+                #     name=request.data['name'],
+                #     source=request.data['source']['id'],
+                #     address=request.data['address'],
+                #     phone=request.data['phone']
+                # )
+            # else: 
+                # customer = stripe.Customer.retrieve(request.data['stripe_cus'])
+                # if 
+            customer = stripe.Customer.retrieve(current_cus)
+            
+            plan = ''
+
+            if request.data['subscription'] == 1:
+                plan = 'price_1KgEeuAQGSNQlybYFtK9Z8Jh'#'price_1GuIrZAQGSNQlybY41AJDfoW'   
+            elif request.data['subscription'] == 2:
+                plan = 'price_1KgEeTAQGSNQlybY1otsT6R6'#'price_1GuIttAQGSNQlybYWpGxUJyV'
+            elif request.data['subscription'] == 3:
+                plan = 'price_1KgEeJAQGSNQlybYmA6BmxwV'#'price_1GuIv1AQGSNQlybYK7k61xh2'
+
+            subscription = ''
+
+            if customer is not None:
+                if 'stripe_sub' in request.data:
+                    stripe.Subscription.delete(request.data['stripe_sub'])
+
+                subscription = stripe.Subscription.create(
+                customer=customer,
+                items=[
+                    {"price": plan},
+                ],
+                )
+            
+            serializer.save(stripe_cus = customer.id,  stripe_sub = subscription.id)
+            user = User.objects.get(email=employer_email)
+            userprofile = UserProfile.objects.get(user=user)
+            userprofile.stripe_sub_id = subscription.id
+            userprofile.save()
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+       
         plan = EmployerSubscription.objects.filter(status='ACTIVE', employer=self.employer.id).first()
         _serializer = other_serializer.SubscriptionSerializer(plan.subscription, many=False)
         return Response(_serializer.data, status=status.HTTP_201_CREATED)
+
+class Subscription_authView(EmployerView):
+    def get(self, request, email, *args, **kwargs):
+        string = str(email)
+        email = re.search(r'[\w.+-]+@[\w-]+\.[\w.-]+', string)
+        email = email.group(0)
+        user = User.objects.get(email=email)
+        employer = user.profile.employer
+        paid_once = UserProfile.objects.filter(user=user)
+        if paid_once:
+            userprofile = UserProfile.objects.get(user=user)
+            sub = userprofile.stripe_sub_id
+            subscription_auth = stripe.Subscription.retrieve(sub)    
+            sub_status = subscription_auth.status
+            if sub_status == 'active' or sub_status == 'trialing':
+                # employer.active_subscription = sub_status
+                # employer.save()
+                return Response({"message": "the subscription is active"}, status=status.HTTP_200_OK)
+            else: 
+                # employer.active_subscription = sub_status
+                # employer.save()
+                return Response({"message": "An error has occurred, the subscription is not active"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"message": "redirecting to the subscription view for you to choose a plan"}, status=status.HTTP_200_OK)
 
 class FavListView(EmployerView):
     def get_queryset(self):
@@ -500,6 +611,8 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             serializer = shift_serializer.ShiftGetSerializer(shift, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
+
+        
             shifts = Shift.objects.filter(employer_id=self.employer.id)
 
             qStatus = request.GET.get('status')
@@ -509,12 +622,20 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             elif qStatus:
                 status_list = qStatus.split(",")
                 shifts = shifts.filter(status__in=list(map(lambda s: s.upper(), status_list)))
+                if OPEN in status_list and 'filled' not in request.GET.keys():
+                    shifts = shifts.annotate(total_employees=Count('employees')).exclude(
+                        total_employees=F('maximum_allowed_employees')
+                    )
             else:
                 shifts = shifts.exclude(status='CANCELLED')
 
             qFilled = request.GET.get('filled')
             if qFilled == 'true':
-                shifts = shifts.filter(status=FILLED)
+                shifts = shifts.annotate(total_employees=Count('employees'))\
+                    .filter(total_employees=F('maximum_allowed_employees'))
+            elif qFilled == 'false':
+                shifts = shifts.annotate(total_employees=Count('employees'))\
+                    .exclude(total_employees=F('maximum_allowed_employees'))
 
             qStatus = request.GET.get('not_status')
             if validators.in_choices(qStatus, SHIFT_STATUS_CHOICES):
@@ -552,6 +673,16 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
                 emp_list = qEmployee.split(',')
                 shifts = shifts.filter(employees__in=[int(emp) for emp in emp_list])
 
+            qVenue = request.GET.get('venue')
+            if qVenue:
+                venue_list = qVenue.split(',')
+                shifts = shifts.filter(venue__in=[int(v) for v in venue_list])
+
+            qPosition = request.GET.get('position')
+            if qPosition:
+                position_list = qPosition.split(',')
+                shifts = shifts.filter(position__in=[int(p) for p in position_list])
+
             qCandidateNot = request.GET.get('candidate_not')
             if qCandidateNot is not None:
                 emp_list = qCandidateNot.split(',')
@@ -562,11 +693,14 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
             page = paginator.paginate_queryset(shifts.order_by('-starting_at'), request)
 
             defaultSerializer = shift_serializer.ShiftGetSmallSerializer
+            
+         
             qSerializer = request.GET.get('serializer')
             if qSerializer is not None and qSerializer == "big":
                 defaultSerializer = shift_serializer.ShiftGetBigListSerializer
 
             if page is not None:
+                
                 serializer = defaultSerializer(page, many=True)
                 return paginator.get_paginated_response(serializer.data)
             else:
@@ -578,7 +712,6 @@ class EmployerShiftView(EmployerView, HeaderLimitOffsetPagination):
         request.data["employer"] = self.employer.id
         if 'multiple_dates' in request.data:
             for date in request.data['multiple_dates']:
-
                 shift_date = dict(date)
                 data = dict(request.data)
                 data["starting_at"] = shift_date['starting_at']
@@ -660,10 +793,18 @@ class EmployerShiftNewView(EmployerView, HeaderLimitOffsetPagination):
                         "Invalid Status"), status=status.HTTP_400_BAD_REQUEST)
                 if status_list:
                     shifts = shifts.filter(status__in=status_list)
+                    if OPEN in status_list and 'filled' not in request.GET.keys():
+                        shifts = shifts.annotate(total_employees=Count('employees')).exclude(
+                            total_employees=F('maximum_allowed_employees')
+                        )
 
             qFilled = request.GET.get('filled')
             if qFilled == 'true':
                 shifts = shifts.annotate(total_employees=Count('employees')).filter(
+                    total_employees=F('maximum_allowed_employees')
+                )
+            elif qFilled == 'false':
+                shifts = shifts.annotate(total_employees=Count('employees')).exclude(
                     total_employees=F('maximum_allowed_employees')
                 )
 
@@ -843,6 +984,13 @@ class EmployerClockinsMeView(EmployerView):
             if qEmployee:
                 clockins = clockins.filter(employee__id=qEmployee)
 
+            qUpdated = request.GET.get('updated')
+            
+            if qUpdated:
+                today = datetime.datetime.today()
+                yesterday = today - datetime.timedelta(days=1)
+                clockins = clockins.filter(updated_at__range=[yesterday, today])
+
             qOpen = request.GET.get('open')
             if qOpen:
                 clockins = clockins.filter(ended_at__isnull=(True if qOpen == 'true' else False))
@@ -864,11 +1012,11 @@ class EmployerMePayrollPeriodsView(EmployerView):
                     validators.error_object('The payroll period was not found'),status=status.HTTP_404_NOT_FOUND)
 
             serializer = payment_serializer.PayrollPeriodGetSerializer(period, many=False)
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
 
             periods = PayrollPeriod.objects.filter(employer_id=self.employer.id)
-
             qStart = request.GET.get('start')
             if qStart is not None and qStart != '':
                 start = timezone.make_aware(datetime.datetime.strptime(qStart, DATE_FORMAT))
@@ -879,7 +1027,13 @@ class EmployerMePayrollPeriodsView(EmployerView):
                 end = timezone.make_aware(datetime.datetime.strptime(qEnd, DATE_FORMAT) + datetime.timedelta(days=1))
                 periods = periods.filter(ending_at__lte=end)
 
-            serializer = payment_serializer.PayrollPeriodGetTinySerializer(periods.order_by('-starting_at'), many=True)
+            defaultSerializer = payment_serializer.PayrollPeriodGetTinySerializer
+            
+            qReports = request.GET.get('reports')
+            if qReports is not None and qReports == 'True':
+                defaultSerializer = payment_serializer.PayrollPeriodGetDateSerializer
+
+            serializer = defaultSerializer(periods.order_by('-starting_at')[:52:1], many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, period_id=None):
@@ -1010,11 +1164,15 @@ class EmployerMeEmployeePaymentView(EmployerView):
         if serializer.is_valid():
             emp_pay_ser = payment_serializer.EmployeePaymentSerializer(employee_payment,
                                                                        context={'employer_id': self.employer.id})
-            employee_payment.deductions = emp_pay_ser.data['deductions']
-            employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
-                                                                    cls=DecimalEncoder))
+            #old
+            # employee_payment.deductions = emp_pay_ser.data['deductions']
+            # employee_payment.deduction_list = json.loads(json.dumps(emp_pay_ser.data['deduction_list'],
+            #                                                         cls=DecimalEncoder))
+            
+            employee_payment.deductions = request.data["deductions"]
+            employee_payment.deduction_list = request.data["deductions_list"]
             employee_payment.taxes = emp_pay_ser.data['taxes']
-            employee_payment.amount = emp_pay_ser.data['amount']
+            employee_payment.amount = decimal.Decimal(emp_pay_ser.data['earnings']) - decimal.Decimal(request.data["deductions"])
             with transaction.atomic():
                 employee_payment.save()
                 if serializer.validated_data['payment_type'] in [PaymentTransaction.ELECT_TRANSF,
@@ -1226,7 +1384,109 @@ class EmployerMeEmployeePaymentReportView(EmployerView):
         ser = payment_serializer.EmployeePaymentReportSerializer(self.get_queryset(ser_params.data), many=True)
         return Response(ser.data, status=status.HTTP_200_OK)
 
+class EmployerMeW4Form(EmployerView):
 
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                w4form = W4Form.objects.filter(employee_id=id)
+            except W4Form.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employee_serializer.EmployeeW4Serializer(w4form, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+class EmployerMeI9Form(EmployerView):
+
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                i9form = I9Form.objects.filter(employee_id=id)
+            except I9Form.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+     
+class EmployerMeEmployeeDocument(EmployerView):
+
+    def get(self, request, id=False):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if (id):
+            try:
+                documents = EmployeeDocument.objects.filter(employee_id=id)
+            except EmployeeDocument.DoesNotExist:
+                return Response(validators.error_object(
+                    'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+            serializer = documents_serializer.EmployeeDocumentGetSerializer(documents, many=True)
+            return JsonResponse(serializer.data, status=200, safe=False)
+
+class EmployerMePayrates(EmployerView):
+    def get_queryset(self):
+        return Payrates.objects.filter(employer_id=self.employer.id)
+
+    def get(self, request, employer_id=False):
+        request.data['employer_id'] = self.employer.id
+        try:
+            payrates = Payrates.objects.filter(employer_id = self.employer.id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+        serializer = employer_serializer.EmployerPayrateGetSmallSerializer(payrates, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+                
+    def post(self, request, employer_id=False):
+        request.data['employer'] = self.employer.id
+        request.data['employee'] = request.data['employee']['value']
+        serializer = employer_serializer.EmployerPayratePostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)  
+
+    def put(self, request, id):
+        request.data['employer'] = self.employer.id
+        request.data['employee'] = request.data['employee']['value']
+
+        try:
+            payrate = self.get_queryset().get(id=id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object(
+                'Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        serializer = employer_serializer.EmployerPayratePutSerializer(payrate, data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save() 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+          
+    def delete(self, request, id):
+
+        try:
+            payrate = self.get_queryset().get(id=id)
+        except Payrates.DoesNotExist:
+            return Response(validators.error_object('Not found.'), status=status.HTTP_404_NOT_FOUND)
+
+        payrate.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+     
 class EmployerMeEmployeePaymentDeductionReportView(EmployerMeEmployeePaymentReportView):
 
     def get(self, request):

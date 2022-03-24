@@ -15,7 +15,7 @@
 | key            | Example Value        | Required?     | Observations                                                 |
 | -------------  | -------------------  | ------------- | ------------------------------------------------------------ |
 | status         |  OPEN,DRAFT          |   No          | OPEN, FILLED, PAUSED, EXPIRED, COMPLETED, DRAFT, CANCELLED   |
-| filled         |  true                |   No          | true or anything                                             |
+| filled         |  true                |   No          | true or false                                                |
 | not_status     |  EXPIRED (one value) |   No          | OPEN, FILLED, PAUSED, EXPIRED, COMPLETED, DRAFT, CANCELLED   |
 | upcoming       |  true                |   No          | true or anything                                             |
 | start          |  2020-01-05          |   No          |                                                              |
@@ -156,7 +156,7 @@ or the following when **serializer=big** is provided
 
 - Status values can be uppercase or lowercase.
 - If `status` parameter is not provided, shifts with CANCELLED status are not returned.
-- `filled` parameter filter to shifts where number of employees == maximum_allowed_employees.
+- If `open` value is provided to `status` parameter, filled shifts are excluded.
 
 
 ## Get data of shift related to current Employer

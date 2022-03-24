@@ -59,7 +59,6 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakeShift):
 
         shift, _, _ = self._make_shift(self.test_employer,
                                        shiftkwargs={'status': 'OPEN', 'maximum_allowed_employees': 2})
-        self.shift_open_ids.append(shift.id)
         self.all_shift_ids.append(shift.id)
         shift.employees.add(self.test_employee)
         shift.employees.add(self.test_employee2)
@@ -136,7 +135,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakeShift):
         for shift in response_json:
             self.assertIn(shift.get('id'), self.shift_fill_ids, shift)
             self.assertEqual(shift.get('employer'), self.test_employer.id, shift)
-            self.assertIn(shift.get('status'), ['OPEN'], shift)
+            self.assertIn(shift.get('status'), ['FILLED'], shift)
             self.assertIsInstance(shift.get('employees'), list, shift)
             self.assertEqual(len(shift.get('employees')), 2, shift)
             self.assertIsInstance(shift.get('candidates'), list, shift)

@@ -11,6 +11,7 @@ from twilio.rest import Client
 
 push_service = None
 FIREBASE_KEY = os.environ.get('FIREBASE_KEY')
+
 if(FIREBASE_KEY and FIREBASE_KEY!=''):
     push_service = FCMNotification(api_key=FIREBASE_KEY)
 
@@ -18,7 +19,7 @@ if(FIREBASE_KEY and FIREBASE_KEY!=''):
 def send_email_message(slug, to, data={}):
     if settings.EMAIL_NOTIFICATIONS_ENABLED:
         template = get_template_content(slug, data, ["email"])
-        # print('Email notification '+slug+' sent')
+        print('Email notification '+slug+' sent')
         return requests.post(
             "https://api.mailgun.net/v3/mailgun.jobcore.co/messages",
             auth=(
@@ -42,8 +43,9 @@ def send_sms(slug, phone_number, data={}):
     # DANGER! This is insecure. See http://twil.io/secure
     TWILLIO_SID = os.environ.get('TWILLIO_SID')
     TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+    TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
     client = Client(TWILLIO_SID, TWILLIO_SECRET)
-
+   
     try:
         message = client.messages.create(
             body=template['sms'],
@@ -54,6 +56,24 @@ def send_sms(slug, phone_number, data={}):
     except Exception:
         return False
 
+def send_sms_valdation(phone_number):
+
+    TWILLIO_SID = os.environ.get('TWILLIO_SID')
+    TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+    TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
+    client = Client(TWILLIO_SID, TWILLIO_SECRET)
+   
+    try:
+        verification = client.verify \
+                        .services(TWILLIO_SERVICES) \
+                        .verifications \
+                        .create(to='+1' + phone_number, channel='sms')
+        print(verification)
+        return True
+    except Exception:
+        return False
+
+    
 
 def send_fcm(slug, registration_ids, data={}):
     if(len(registration_ids) > 0 and push_service):
@@ -71,6 +91,11 @@ def send_fcm(slug, registration_ids, data={}):
             raise Exception("There is no data for the notification")
         message_data = data['DATA']
 
+        print('registration_ids', registration_ids)
+        print('message_title', message_title)
+        print('message_body', message_body)
+        print('message_data', message_data)
+
         result = push_service.notify_multiple_devices(
             registration_ids=registration_ids,
             message_title=message_title,
@@ -79,7 +104,7 @@ def send_fcm(slug, registration_ids, data={}):
 
         # if(result["failure"] or not result["success"]):
         #     raise APIException("Problem sending the notification")
-
+        print('fcm result', result)
         return result
     else:
         return False
@@ -92,17 +117,20 @@ def send_fcm_notification(slug, user_id, data={}):
 
 
 def get_template_content(slug, data={}, formats=None):
-    info = get_template_info(slug)
 
+    info = get_template_info(slug)
+    
     #d = Context({ 'username': username })
     con = {
         'EMPLOYEE_URL': os.environ.get('EMPLOYEE_URL'),
         'EMPLOYER_URL': os.environ.get('EMPLOYER_URL'),
         'API_URL': os.environ.get('API_URL'),
-        'COMPANY_NAME': 'JobCore',
-        'COMPANY_LEGAL_NAME': 'JobCore LLC',
+        'COMPANY_NAME': 'JobCore Talent',
+        'COMPANY_LEGAL_NAME': 'JobCore Talent LLC',
         'COMPANY_ADDRESS': '270 Catalonia, Coral Gables, 33134'
     }
+
+
     z = con.copy()   # start with x's keys and values
     z.update(data)
 
@@ -124,6 +152,7 @@ def get_template_content(slug, data={}, formats=None):
         sms = get_template(info['type'] + '/' + slug + '.sms')
         templates["sms"] = sms.render(z)
 
+
     return templates
 
 
@@ -132,9 +161,11 @@ def get_template_info(slug):
         "general": {"type": "utils", "subject": "Important message from JobCore"},
         "invite_to_jobcore": { "type": "employee", "subject": "A job is waiting for you", },
         "invite_to_jobcore_employer": { "type": "invite", "subject": "You have been invited to jobcore", },
+        "invite_to_jobcore_employer_accepted": { "type": "invite", "subject": "You have been accepted to a company", },
         "email_validated": {"type": "views", "subject": "Your email has been validated"},
         "reset_password_form": {"type": "views", "subject": "Reset your password"},
         "registration": {"type": "registration", "subject": "Welcome to JobCore"},
+        "registration_employee": {"type": "registration", "subject": "Welcome to JobCore"},
         "password_reset_link": {"type": "registration", "subject": "About your password reset"},
         "password_reset": {"type": "registration", "subject": "You password has been reset"},
 
@@ -170,6 +201,10 @@ def get_template_info(slug):
         "applicant_rejected": {
             "type": "shift",
             "subject": "Job application rejected, we are sorry :("
+        },
+        "employee_rejected": {
+            "type": "shift",
+            "subject": "Shift invite has been rejected, we are sorry :("
         },
     }
     if slug in subjects:

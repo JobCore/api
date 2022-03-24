@@ -31,7 +31,7 @@ import api.utils.jwt
 from api.pagination import HeaderLimitOffsetPagination
 
 from api.models import *
-from api.utils.notifier import notify_password_reset_code, notify_email_validation
+from api.utils.notifier import notify_password_reset_code, notify_email_validation,notify_sms_validation, notify_company_invite_confirmation, notify_sms_validation
 from api.utils import validators
 from api.utils.validators import html_error
 from api.utils.utils import get_aware_datetime
@@ -47,6 +47,9 @@ from api.serializers import rating_serializer
 from api.utils.email import get_template_content
 
 from operator import itemgetter
+
+import os
+from twilio.rest import Client
 
  
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -114,8 +117,195 @@ class ValidateSendEmailView(APIView):
         return Response({"details": "The email was sent"}, status=status.HTTP_200_OK)
 
 
+class ValidateSendSMSView(APIView):
+    permission_classes = [AllowAny]
+  
+
+    def post(self, request, email=None, phone_number=None):
+
+        if email is None: 
+            raise ValidationError('Invalid email to validate')
+        if phone_number is None:
+            raise ValidationError('Invalid phone number to validate')
+
+        try:
+            user = User.objects.get(email=email, profile__phone_number=phone_number)
+            print(user)
+        except User.DoesNotExist:
+            return Response(validators.error_object(
+                'The user with this phone number was not found'), status=status.HTTP_400_BAD_REQUEST)
+
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                return Response(validators.error_object('This user is already validated'),
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        notify_sms_validation(user)
+
+        return Response({"details": "The SMS was sent"}, status=status.HTTP_200_OK)
+
+class ValidateSMSView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, email=None, phone_number=None, code=None):
+        try:
+            user = User.objects.get(email=email, profile__phone_number=phone_number)
+            if user.profile.status != 'PENDING_EMAIL_VALIDATION':
+                return Response(validators.error_object('Your phone number has been already activated, open the JobCore App and go ahead and sign in'))
+            try:
+                TWILLIO_SID = os.environ.get('TWILLIO_SID')
+                TWILLIO_SECRET = os.environ.get('TWILLIO_SECRET')
+                TWILLIO_SERVICES = os.environ.get('TWILLIO_SERVICES')
+                client = Client(TWILLIO_SID, TWILLIO_SECRET)
+        
+
+                verification_check = client.verify \
+                                .services(TWILLIO_SERVICES) \
+                                .verification_checks \
+                                .create(to='+1' + phone_number, code=code)
+                if(verification_check.status == "approved"):
+                    user.profile.status = 'PAUSED' 
+                    user.profile.save()
+                    return Response({"active": True}, status=status.HTTP_200_OK)
+                else:
+                    return Response(validators.error_object('Invalid 6 digit code or the code has expired, please resend it and try again'),
+                    status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e: 
+                print(e)
+                return Response(validators.error_object('Invalid 6 digit code or the code has expired, Please resend it and try again'),
+                status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return html_error('Not found')  
+
+
+class ValidateEmailCompanyView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.GET.get('token')
+
+        try:
+            payload = jwt_decode_handler(token)
+        except (DecodeError, ExpiredSignatureError) as e:
+            return html_error('Your company invitation link has expired')
+
+        try:
+            user = User.objects.get(id=payload["user_id"])
+      
+            if user.profile.employer is not None: 
+                if user.profile.employer.id ==  payload["employer_id"]:
+                    return html_error('You are already working for this company')
+                if user.profile.other_employers is not None:
+                    if payload["employer_id"] in user.profile.other_employers.values_list('id', flat=True):
+                        return html_error('You are already working for this company')
+            try:
+                # db_token = UserToken.objects.get(token=token, email=user.email)
+                # db_token.delete()
+                if user.profile.employer is None:
+                   
+                    employer = Employer.objects.get(id=payload["employer_id"])  
+                    
+                    user.profile.employer = employer
+                    user.profile.employer_role = payload["employer_role"]
+                    user.profile.save()
+                elif user.profile.employer is not None: 
+           
+                    employer = Employer.objects.get(id=payload["employer_id"])  
+                    profile = Profile.objects.get(id=user.profile.id)
+                    EmployerUsers.objects.create(
+                        employer=employer,
+                        profile=profile,
+                        employer_role=payload["employer_role"]
+                    )
+
+                template = get_template_content('invite_to_jobcore_employer_accepted',{
+                    "COMPANY": employer.title,
+                    "COMPANY_ID": employer.id,
+                    "COMPANY_ROLE": payload["employer_role"],
+                })
+
+                jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
+
+                jobcore_invites.update(status='ACCEPTED')
+                
+                return HttpResponse(template['html'])
+
+            except UserToken.DoesNotExist:
+                return html_error('Your company invitation link has expired')
+
+        except User.DoesNotExist:
+            return html_error('Not found')
+
+class SendCompanyInvitationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, email=None, sender=None, employer=None, employer_role=None):
+        if request.user is None:
+            raise PermissionDenied("You don't seem to be logged in")
+
+        if email is None:
+            raise ValidationError('Invalid email to validate')
+ 
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(validators.error_object(
+                'The user was not found'), status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            employer = Employer.objects.get(id=employer)
+        except Employer.DoesNotExist:
+            return Response(validators.error_object(
+                'The employer does not exist'), status=status.HTTP_400_BAD_REQUEST)
+        try:
+            sender = Profile.objects.get(id=sender)
+        except Profile.DoesNotExist:
+            return Response(validators.error_object(
+                'Sender does not exist'), status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            JobCoreInvite.objects.get(
+                sender=sender,
+                status='ACCEPTED',
+                email=email
+            )
+            return Response(validators.error_object(
+                'User with this email has already accepted an invite'), status=status.HTTP_400_BAD_REQUEST)
+        except JobCoreInvite.DoesNotExist:
+            pass
+
+    
+        if user.profile.employer is not None: 
+            if user.profile.employer.id ==  employer.id:
+                return Response(validators.error_object('This user is already working for this company'),
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        if user.profile.other_employers is not None:
+            if employer.id in user.profile.other_employers.values_list('id', flat=True):
+                return Response(validators.error_object('This user is already working for this company'),
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        invite = JobCoreInvite.objects.create(
+            first_name = user.first_name,
+            last_name = user.last_name,
+            email = email,
+            status = 'COMPANY',
+            phone_number = '',
+            employer_role = employer_role,
+            sender = sender,
+            employer = employer 
+        )    
+        serializer = other_serializer.JobCoreInviteGetSerializer(
+                invite)
+    
+        notify_company_invite_confirmation(user, employer, employer_role)
+
+    
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 class PasswordView(APIView):
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
 
     def get(self, request):
 
@@ -155,7 +345,6 @@ class PasswordView(APIView):
                 status=status.HTTP_404_NOT_FOUND)
 
         tokenDic = {"token": notify_password_reset_code(user)}
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
@@ -177,7 +366,6 @@ class UserRegisterView(APIView):
         token = None
         if "token" in request.data:
             token = request.data["token"]
-
         serializer = auth_serializer.UserRegisterSerializer(
             data=request.data,
             context={"token": token})
@@ -254,6 +442,7 @@ class UserView(APIView):
 
 
 class EmployeeView(APIView, HeaderLimitOffsetPagination):
+
     def get(self, request, id=False):
         if (id):
             try:
@@ -266,7 +455,7 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
                 employee, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            employees = Employee.objects.all()
+            employees = Employee.objects.all().order_by('profile__user__last_name')
 
             qName = request.GET.get('full_name')
             if qName:
@@ -298,9 +487,30 @@ class EmployeeView(APIView, HeaderLimitOffsetPagination):
             if qBadges:
                 employees = employees.filter(badges__id__in=qBadges)
 
-            serializer = employee_serializer.EmployeeGetSmallSerializer(
-                employees, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            qRating = request.GET.getlist('rating')
+            if qRating:
+                employees = employees.filter(rating__gte=qRating[0])
+
+            paginator = HeaderLimitOffsetPagination()
+            page = paginator.paginate_queryset(employees.order_by('-created_at'), request)
+
+            defaultSerializer = employee_serializer.EmployeeGetSmallSerializer
+            
+         
+            # qSerializer = request.GET.get('serializer')
+            # if qSerializer is not None and qSerializer == "big":
+            #     defaultSerializer = shift_serializer.ShiftGetBigListSerializer
+
+            if page is not None:
+                
+                serializer = defaultSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # serializer = employee_serializer.EmployeeGetSmallSerializer(
+            #     employees, many=True)
+            # return Response(serializer.data, status=status.HTTP_200_OK)
     # there shoud be no POST because it is created on signup (registration)
 
 
@@ -330,9 +540,9 @@ class ProfileMeView(APIView):
             profile = getattr(request.user, 'profile')
         except Profile.DoesNotExist:
             raise PermissionDenied("You don't seem to have a profile")
-
         serializer = profile_serializer.ProfileGetSerializer(
             profile, many=False)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # No POST request needed
@@ -353,7 +563,8 @@ class ProfileMeView(APIView):
             request.data["latitude"] = round(request.data["latitude"], 6)
         if "longitude" in request.data:
             request.data["longitude"] = round(request.data["longitude"], 6)
-
+        
+        print(request.data)
         serializer = profile_serializer.ProfileSerializer(
             profile, data=request.data,
             context={"request": request}, partial=True)
@@ -365,7 +576,6 @@ class ProfileMeView(APIView):
             serializer.save()
             userSerializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -400,6 +610,40 @@ class ProfileMeImageView(APIView):
         profile.picture = result['secure_url']
         profile.save()
         serializer = profile_serializer.ProfileSerializer(profile)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ProfileMeResumeView(APIView):
+
+    def put(self, request):
+        try:
+            profile = Profile.objects.get(user=self.request.user)
+        except Profile.DoesNotExist:
+            raise PermissionDenied("You don't seem to have a profile")
+
+        if 'image' not in request.FILES:
+            return Response(
+                validators.error_object('no image'),
+                status=status.HTTP_400_BAD_REQUEST)
+
+        result = cloudinary.uploader.upload(
+            request.FILES['image'],
+            public_id=f'{str(profile.id)}/profile' + str(profile.id),
+            crop='limit',
+            width=450,
+            height=450,
+            eager=[{
+                'width': 200, 'height': 200,
+                'crop': 'thumb', 'gravity': 'face',
+                'radius': 100
+            },
+            ],
+            tags=['profile_resume', 'profile' + str(profile.id)]
+        )
+
+        profile.resume = result['secure_url']
+        profile.save()
+        serializer = profile_serializer.ProfileResumeSerializer(profile)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -484,6 +728,7 @@ class SubscriptionsView(APIView):
     def get(self, request, id=None):
         if (id):
             try:
+                # aqui se esta haciendo un query al model de SubscriptionPlan
                 subscription = SubscriptionPlan.objects.get(pk=id)
             except SubscriptionPlan.DoesNotExist:
                 return Response(validators.error_object(
@@ -492,7 +737,8 @@ class SubscriptionsView(APIView):
             serializer = other_serializer.SubscriptionSerializer(subscription, many=False)
 
         else:
-            subs = SubscriptionPlan.objects.all()
+            # aqui esta sacando todos los subc plans y los pone en una variable
+            subs = SubscriptionPlan.objects.all() 
 
             qsVisibility = request.GET.get('visibility')
             if qsVisibility is None or qsVisibility != 'all':
@@ -604,7 +850,6 @@ class RateView(APIView):
             lookup = self.build_lookup(request)
             qs = qs.filter(**lookup)
             serializer = rating_serializer.RatingGetSerializer(qs, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def post(self, request):
@@ -617,6 +862,7 @@ class RateView(APIView):
         serializer = rating_serializer.RatingSerializer( data=_rates, context={"request": request}, many=True)
         if serializer.is_valid():
             serializer.save()
+       
             if isinstance(request.data, list) is False:
                 resp = rating_serializer.RatingSerializer( data=serializer.data[0], many=False)
                 return Response(resp.initial_data, status=status.HTTP_201_CREATED)
@@ -663,8 +909,35 @@ class CatalogView(APIView):
                     'profile__employee__id'))
             return Response(employees, status=status.HTTP_200_OK)
 
+        if catalog_type == 'profiles':
+            profiles = User.objects.all()
+
+            qName = request.GET.get('full_name')
+            if qName:
+                search_args = []
+                for term in qName.split():  # first_name__unaccent__startswith
+                    for query in ('profile__user__first_name__unaccent__istartswith',
+                                  'profile__user__last_name__unaccent__istartswith'):
+                        search_args.append(Q(**{query: term}))
+
+                profiles = profiles.filter(
+                    functools.reduce(operator.or_, search_args))
+            
+            profiles = map(
+                lambda emp: {
+                    "label": emp["first_name"] +
+                             ' ' +
+                             emp["last_name"],
+                    "value": emp["profile__id"]},
+                profiles.values(
+                    'first_name',
+                    'last_name',
+                    'profile__id'))
+            return Response(profiles, status=status.HTTP_200_OK)
+
         elif catalog_type == 'positions':
             positions = Position.objects.exclude().order_by("title")
+            
             positions = map(
                 lambda emp: {
                     "label": emp["title"],
@@ -819,7 +1092,6 @@ class ProjectedPaymentsView(APIView):
 
 class JobCoreInviteView(APIView):
     def get(self, request, id=False):
-
         if request.user is None:
             raise PermissionDenied("You don't seem to be logged in")
 
@@ -842,12 +1114,10 @@ class JobCoreInviteView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-
         if request.user is None:
             raise PermissionDenied("You don't seem to be logged in")
 
         request.data['sender'] = request.user.profile.id
-
         serializer = other_serializer.JobCoreInvitePostSerializer(
             data=request.data, context={"request": request})
         if serializer.is_valid():

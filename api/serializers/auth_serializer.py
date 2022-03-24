@@ -4,18 +4,19 @@ from django.db.models import Q
 from random import randint
 from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
-
+import stripe
 from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework import serializers
 
 from jwt.exceptions import DecodeError
+import jwt
 
 from api.serializers import employer_serializer
 from api.actions import employee_actions, auth_actions
 from api.models import (
     User, Employer, Employee, Profile,
-    JobCoreInvite, FCMDevice)
+    JobCoreInvite, FCMDevice, UserProfile)
 from api.utils import notifier
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
@@ -26,7 +27,7 @@ EMPLOYER_REGISTRATION_DEACTIVATED = os.environ.get('EMPLOYER_REGISTRATION_DEACTI
 
 class UserLoginSerializer(serializers.ModelSerializer):
     employee = serializers.CharField(required=False)
-    employer = employer_serializer.EmployerSerializer(required=False)
+    employer = employer_serializer.EmployerGetSerializer(required=False)
     token = serializers.CharField(read_only=True)
 
     class Meta:
@@ -35,12 +36,12 @@ class UserLoginSerializer(serializers.ModelSerializer):
                   'token', 'employer', 'employee')
         extra_kwargs = {"password": {"write_only": True}}
 
-
 class CustomJWTSerializer(JSONWebTokenSerializer):
     username_field = 'username_or_email'
     user = UserLoginSerializer(required=False)
     registration_id = serializers.CharField(write_only=True, required=False)
     exp_days = serializers.IntegerField(write_only=True, required=False)
+    employer_id = serializers.IntegerField(write_only=True, required=False)
 
     def validate(self, attrs):
         lookup = Q(email=attrs.get("username_or_email")) \
@@ -48,7 +49,9 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
 
         password = attrs.get("password")
         user_obj = User.objects.filter(lookup).first()
-
+        employer_id = attrs.get("employer_id")
+    
+            
         if not user_obj:
             msg = 'Account with this credentials does not exists'
             raise serializers.ValidationError(msg)
@@ -57,6 +60,12 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
             msg = _('User account is disabled. Have you confirmed your email?')
             raise serializers.ValidationError(msg)
 
+        if employer_id:
+            employer = Profile.objects.filter(Q(employer=employer_id, user=user_obj.id) | Q(other_employers__id=employer_id, user=user_obj.id))
+            if not employer:
+                msg = 'Account with this employer id does not exists'
+                raise serializers.ValidationError(msg)
+                
         credentials = {
             'username': user_obj.username,
             'password': password
@@ -76,12 +85,24 @@ class CustomJWTSerializer(JSONWebTokenSerializer):
                 FCMDevice.objects.filter(registration_id=device_id).delete()
                 device = FCMDevice(user=user, registration_id=device_id)
                 device.save()
+        
+        
 
         return {
             'token': jwt_encode_handler(payload),
-            'user': user
+            'user': user,
+            
         }
+    def get_active_subscription(self, employer):
+        _sub = employer.employersubscription_set.filter(status='ACTIVE').first()
+        print('_sub serializer is non', _sub)
 
+        if _sub is not None:
+            serializer = SubscriptionSerializer(_sub.subscription, many=False)
+            print('_sub serializer', serializer.data)
+            return serializer.data
+        else:
+            return None
 
 class UserRegisterSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
@@ -96,12 +117,16 @@ class UserRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     first_name = serializers.CharField(required=True, max_length=50)
     last_name = serializers.CharField(required=True, max_length=50)
-    password = serializers.CharField(required=True, max_length=14, write_only=True)
-    city = serializers.CharField(required=False, max_length=20)
-    profile_city = serializers.CharField(required=False, max_length=20)
+    phone_number = serializers.CharField(required=False, write_only=True)
+    password = serializers.CharField(required=True, write_only=True)
+    city = serializers.CharField(required=False, max_length=100)
+    profile_city = serializers.CharField(required=False, max_length=100)
+    
+    # these are added when created an account thru invitation
+    employer_role = serializers.CharField(required=False,max_length=20, write_only=True)
+    validate_email = serializers.BooleanField(required=False, allow_null=True, write_only=True)
 
     def validate(self, data):
-
         user = User.objects.filter(email=data["email"]).first()
         if user is not None:
             profile = Profile.objects.filter(user=user).first()
@@ -126,6 +151,12 @@ class UserRegisterSerializer(serializers.Serializer):
                 "Account type can only be employer or employee")
         if data['account_type'] == 'employer' and EMPLOYER_REGISTRATION_DEACTIVATED == 'TRUE':
             raise serializers.ValidationError("Company registration is disabled")
+        
+        if 'validate_email' in data:
+            if data['validate_email']: 
+                raise serializers.ValidationError("Email is valid")
+            else: 
+                data.pop('validate_email')
 
         # validate creation of new employer
         if data['account_type'] == 'employer' and ('employer' not in data or data['employer'] is None):
@@ -135,21 +166,24 @@ class UserRegisterSerializer(serializers.Serializer):
                 raise serializers.ValidationError("You need to specify the business website or the employer id")
             if data['about_business'] is None:
                 raise serializers.ValidationError("You need to specify the business description or the employer id")
-
         return data
 
     def create(self, validated_data):
+        
         account_type = validated_data.pop('account_type', None)
         employer = validated_data.pop('employer', None)
         city = validated_data.pop('city', None)
         business_name = validated_data.pop('business_name', None)
+        phone_number = validated_data.pop('phone_number', None)
         business_website = validated_data.pop('business_website', None)
         about_business = validated_data.pop('about_business', None)
         profile_city = validated_data.pop('profile_city', None)
-
+        employer_role = validated_data.pop('employer_role', None)
+        
         # @TODO: Use IP address to get the initial address,
         #        latitude and longitud.
         user = User.objects.filter(email=validated_data["email"]).first()
+        
         if not user:
             user = User.objects.create(**{**validated_data, "username": validated_data["email"]})
 
@@ -161,8 +195,12 @@ class UserRegisterSerializer(serializers.Serializer):
         # if previous_invite is not None and account_type is None:
         #     account_type = 'employer'
         #     employer = previous_invite.employer
+        token = self.context.get("token")
 
         if account_type == 'employer':
+            status = 'PENDING_EMAIL_VALIDATION'
+            if token is None: 
+                employer_role = 'ADMIN'
             if employer is None:
                 args = {
                     "title": business_name,
@@ -170,8 +208,27 @@ class UserRegisterSerializer(serializers.Serializer):
                     "bio": about_business,
                 }
                 employer = Employer.objects.create(**args)
-                
-            Profile.objects.create(user=user, picture='', employer=employer)
+            # if the user is coming from an email link
+            if token:
+                employer_role = employer_role
+                try:
+                    data = jwt_decode_handler(token)
+                except jwt.ExpiredSignatureError:
+                    raise serializers.ValidationError(" - Token Expired. Please get a new one.")
+                except jwt.InvalidTokenError:
+                    raise serializers.ValidationError(" - Invalid Token.")
+
+                if data['user_email'] == user.email:
+                    status = 'ACTIVE'
+                else: raise serializers.ValidationError(" - Please use the same email where you get this invitation from.") 
+
+            Profile.objects.create(user=user, picture='', employer=employer, status=status, employer_role=employer_role)
+
+            #Update jobcore invitation
+            jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer=employer)
+
+            jobcore_invites.update(status='ACCEPTED')
+            # notifier.notify_email_validation(user, employer)
 
         elif account_type == 'employee':
             status = 'PENDING_EMAIL_VALIDATION'
@@ -193,12 +250,12 @@ class UserRegisterSerializer(serializers.Serializer):
             employee_actions.create_default_availablity(emp)
 
             # add the talent to all positions by default
-            employee_actions.add_default_positions(emp)
+            # employee_actions.add_default_positions(emp)
 
             Profile.objects.create(
                 user=user,
                 picture='https://res.cloudinary.com/hq02xjols/image/upload/v1560365062/static/default_profile' + str(
-                    randint(1, 3)) + '.png', employee=emp, status=status,
+                    randint(1, 3)) + '.png', employee=emp, status=status, phone_number=phone_number or '',
                 profile_city_id=profile_city, city=city)
 
             jobcore_invites = JobCoreInvite.objects.all().filter(email=user.email, employer__isnull=True)
@@ -207,10 +264,10 @@ class UserRegisterSerializer(serializers.Serializer):
 
             jobcore_invites.update(status='ACCEPTED')
 
-        notifier.notify_email_validation(user)
-
+            notifier.notify_employee_email_validation(user)
+        # notifier.notify_email_validation(user)
+        print('user serializer', user)
         return user
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
@@ -220,8 +277,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, data):
         try:
             payload = jwt_decode_handler(data["token"])
-        except DecodeError:
-            raise serializers.ValidationError("Invalid token")
+        except jwt.ExpiredSignatureError:
+            raise serializers.ValidationError("Token Expired. Please get a new one.")
+        except jwt.InvalidTokenError:
+            raise serializers.ValidationError("Invalid Token.")
 
         try:
             print(payload)

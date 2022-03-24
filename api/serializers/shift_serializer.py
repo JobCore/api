@@ -32,7 +32,7 @@ class UserGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'profile')
+        fields = ('first_name', 'last_name', 'profile', 'date_joined')
 
 
 class PositionGetSmallSerializer(serializers.ModelSerializer):
@@ -52,7 +52,7 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ('user', 'id')
+        fields = ('user', 'id', 'employment_verification_status')
 
 
 class EmployeeGetSerializer(serializers.ModelSerializer):
@@ -70,10 +70,21 @@ class VenueGetSmallSerializer(serializers.ModelSerializer):
         model = Venue
         fields = ('title', 'id', 'latitude', 'longitude', 'street_address', 'zip_code')
 
-class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
+
+class ShiftStatusMixin:
+
+    def get_status(self, instance):
+        if instance.employees.count() == instance.maximum_allowed_employees and instance.status == OPEN:
+            return FILLED
+        else:
+            return instance.status
+
+
+class ShiftGetTinyForEmployeesSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     employer = EmployerGetSmallSerializer(read_only=True)
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Shift
@@ -88,9 +99,11 @@ class ShiftGetTinyForEmployeesSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
+
+class ShiftGetPublicTinySerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Shift
@@ -106,9 +119,11 @@ class ShiftGetPublicTinySerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetTinySerializer(serializers.ModelSerializer):
+
+class ShiftGetTinySerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
+    status = serializers.SerializerMethodField()
     
     class Meta:
         model = Shift
@@ -123,9 +138,12 @@ class ShiftGetTinySerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetSmallSerializer(serializers.ModelSerializer):
+
+class ShiftGetSmallSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
+    status = serializers.SerializerMethodField()
+    clockin = serializers.SerializerMethodField()
 
     class Meta:
         model = Shift
@@ -139,11 +157,17 @@ class ShiftGetSmallSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
-class ShiftGetBigListSerializer(serializers.ModelSerializer):
+    def get_clockin(self, instance):
+        clockin_instances = instance.clockin_set.filter(shift=instance.id)
+        return ClockinGetSmallSerializer(clockin_instances, many=True).data
+
+class ShiftGetBigListSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
-    employees= EmployeeGetSmallSerializer(many=True, read_only=True)
-
+    employees = EmployeeGetSmallSerializer(many=True, read_only=True)
+    status = serializers.SerializerMethodField()
+    clockin = serializers.SerializerMethodField()
+    
     class Meta:
         model = Shift
         exclude = (
@@ -154,6 +178,9 @@ class ShiftGetBigListSerializer(serializers.ModelSerializer):
             'application_restriction',
             'updated_at')
 
+    def get_clockin(self, instance):
+        clockin_instances = instance.clockin_set.filter(shift=instance.id)
+        return ClockinGetSmallSerializer(clockin_instances, many=True).data
 
 #
 # MAIN
@@ -168,6 +195,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         model = Shift
         exclude = ()
 
+
     def has_sensitive_updates(self, new_data, old_data=None):
         sensitive_fields = [
             'starting_at',
@@ -176,6 +204,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
             'position',
             'minimum_hourly_rate',
             'status']
+       
         for key in new_data:
             if key in sensitive_fields:
                 if old_data is None:
@@ -192,7 +221,7 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
 
         data = super(ShiftUpdateSerializer, self).validate(data)
-
+        
         clockins = Clockin.objects.filter(shift__id=self.instance.id).count()
         if clockins > 0:
             raise serializers.ValidationError(
@@ -201,8 +230,10 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, shift, validated_data):
-
         # Sync employees
+
+     
+        
         if 'allowed_from_list' in validated_data:
             current_favlists = shift.allowed_from_list.all().values_list('id', flat=True)
             new_favlists = validated_data['allowed_from_list']
@@ -228,7 +259,9 @@ class ShiftUpdateSerializer(serializers.ModelSerializer):
         pending_invites = []
         if 'pending_invites' in validated_data:
             pending_invites = [talent['value'] for talent in validated_data['pending_invites']]
-
+        
+        if 'pending_invites' in self.context['request'].data:
+            pending_invites = [talent['value'] for talent in self.context['request'].data['pending_invites']]
         # before making the shift a draft or cancelled I have to let the employees know that the
         # shift is no longer available
         if 'status' in validated_data and validated_data['status'] in ['DRAFT', 'CANCELLED']:
@@ -336,6 +369,8 @@ class ShiftPostSerializer(serializers.ModelSerializer):
             talents = notifier.get_talents_to_notify(shift)
 
         manual_invitations = (shift.application_restriction == 'SPECIFIC_PEOPLE')
+
+        
         for talent in talents:
             invite = ShiftInvite(
                 manually_created=manual_invitations,
@@ -350,7 +385,7 @@ class ShiftPostSerializer(serializers.ModelSerializer):
         return shift
 
 
-class ShiftGetSerializer(serializers.ModelSerializer):
+class ShiftGetSerializer(ShiftStatusMixin, serializers.ModelSerializer):
     venue = VenueGetSmallSerializer(read_only=True)
     position = PositionGetSmallSerializer(read_only=True)
     candidates = employee_serializer.EmployeeGetSerializer(many=True, read_only=True)
@@ -358,6 +393,7 @@ class ShiftGetSerializer(serializers.ModelSerializer):
     employer = EmployerGetSmallSerializer(many=False, read_only=True)
     required_badges = other_serializer.BadgeSerializer(many=True, read_only=True)
     allowed_from_list = favlist_serializer.FavoriteListGetSerializer(many=True, read_only=True)
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Shift
@@ -394,7 +430,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
         exclude = ()
 
     def validate(self, data):
-
+        print('self instance', self.instance.sender)
         data = super(ShiftInviteSerializer, self).validate(data)
 
         current_user = self.context['request'].user
@@ -402,6 +438,7 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             shift_id=self.instance.shift.id,
             employee_id=current_user.profile.employee.id).count()
 
+  
         if employees > 0:
             raise serializers.ValidationError(
                 'The talent is already working on this shift')
@@ -423,12 +460,17 @@ class ShiftInviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You can only apply to your preferred positions: "+', '.join(employee_positions_titles))
 
         # @TODO we have to validate the employee availability
+        if 'status' in data and data['status']=='APPLIED' and self.instance.shift.position.id in employee_positions_ids:
+            notifier.notify_invite_accepted(current_user.profile,self.instance)
+            
+        if 'status' in data and data['status']=='REJECTED' and self.instance.shift.position.id in employee_positions_ids:
+            notifier.notify_invite_shift_rejected(current_user.profile,self.instance)
 
         return data
 
 
 class ShiftCreateInviteSerializer(serializers.ModelSerializer):
-
+ 
     class Meta:
         model = ShiftInvite
         exclude = ()
@@ -591,14 +633,6 @@ def update_shift_employees(shift, updated_employees):
         if employee not in current_employees:
             talents_to_notify["accepted"].append(employee)
             ShiftEmployee.objects.create(employee=employee, shift=shift)
-
-    # update FILLED status, if condition is met
-    if shift.maximum_allowed_employees and shift.maximum_allowed_employees == shift.employees.count():
-        shift.status = FILLED
-        shift.save()
-    elif shift.status == FILLED:
-        shift.status = OPEN
-        shift.save()
 
     return talents_to_notify
 

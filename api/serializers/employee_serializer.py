@@ -1,6 +1,6 @@
 from api.serializers import favlist_serializer
 from rest_framework import serializers
-from api.models import Employee, Profile, User, FavoriteList, Badge
+from api.models import Employee, Profile, User, FavoriteList, Badge,I9Form, W4Form
 from api.serializers.position_serializer import PositionSerializer
 #
 # NESTED
@@ -10,7 +10,7 @@ from api.serializers.position_serializer import PositionSerializer
 class ProfileGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('picture', 'bio')
+        fields = ('picture', 'bio', 'phone_number')
 
 
 class UserGetSmallSerializer(serializers.ModelSerializer):
@@ -31,6 +31,7 @@ class BadgeGetSmallSerializer(serializers.ModelSerializer):
 
 
 class EmployeeGetTinySerializer(serializers.ModelSerializer):
+    user = UserGetSmallSerializer(many=False)
     class Meta:
         model = Employee
         exclude = ()
@@ -45,11 +46,37 @@ class EmployeeGetSmallSerializer(serializers.ModelSerializer):
         exclude = ()
 
 
+
+class EmployeeGetI9Serializer(serializers.ModelSerializer):
+    employee = EmployeeGetTinySerializer(many=False)
+    class Meta:
+        model = I9Form
+        exclude = ()
+class EmployeeI9Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = I9Form
+        exclude = ()
+
+class EmployeeGetW4Serializer(serializers.ModelSerializer):
+    employee = EmployeeGetTinySerializer(many=False)
+    class Meta:
+        model = W4Form
+        exclude = ()
+
+class EmployeeW4Serializer(serializers.ModelSerializer):
+    # employee = EmployeeGetTinySerializer(many=False)
+
+    class Meta:
+        model = W4Form
+        exclude = ()
+
+        
 class EmployeeGetSerializer(serializers.ModelSerializer):
     positions = PositionSerializer(many=True)
     badges = BadgeGetSmallSerializer(many=True)
     favoritelist_set = favlist_serializer.FavoriteListSerializer(many=True)
     user = UserGetSmallSerializer(many=False)
+
 
     class Meta:
         model = Employee
@@ -124,3 +151,7 @@ class EmployeeSettingsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'The minimum hourly rate allowed is 8 dollars')
         return value
+
+
+
+    

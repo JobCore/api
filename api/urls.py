@@ -4,6 +4,10 @@ from rest_framework_jwt.views import ObtainJSONWebToken
 from api.serializers.auth_serializer import CustomJWTSerializer
 from api.views.deductions_view import DeductionAPIView, DeductionDetailAPIView
 
+from api.views.subscription_payment import (
+    StripeIntentView, GetCSRFToken
+)
+
 from api.views.hooks import (
     DefaultAvailabilityHook, ClockOutExpiredShifts, GeneratePeriodsView,
     AddTalentsToAllPositions, RemoveEmployeesWithoutProfile
@@ -11,9 +15,9 @@ from api.views.hooks import (
 
 from api.views.general_views import (
     PasswordView, ValidateEmailView, UserView, UserRegisterView, EmployeeView,
-    EmployerView, ProfileMeView, ProfileMeImageView, JobCoreInviteView,
+    EmployerView, ProfileMeView, ProfileMeImageView, ProfileMeResumeView, JobCoreInviteView,
     CatalogView, RateView, BadgeView, PayrollShiftsView, ProjectedPaymentsView,
-    PositionView, OnboardingView, ValidateSendEmailView, CityView, PublicShiftView,
+    PositionView, OnboardingView, ValidateSendEmailView, ValidateSendSMSView,ValidateSMSView, ValidateEmailCompanyView, SendCompanyInvitationView, CityView, PublicShiftView,
     AppVersionView, SubscriptionsView
 )
 from api.views.bank_accounts_view import BankAccountAPIView, BankAccountDetailAPIView
@@ -25,7 +29,7 @@ from api.views.admin_views import (
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
     EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
-    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView,
+    EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView, EmployeeMeI9Form,EmployeeMeW4Form
 )
 
 from api.views.documents_view import (
@@ -33,15 +37,15 @@ from api.views.documents_view import (
 )
 
 from api.views.employer_views import (
-    EmployerMeView, EmployerMeUsersView, ApplicantsView,
+    EmployerMeView, EmployerMeUsersView, ApplicantsView, Subscription_authView,
     EmployerMePayrollPeriodsView, EmployerMeImageView,
     EmployerShiftInviteView, EmployerVenueView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerShiftNewView, EmployerBatchActions,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
     EmployerMeEmployeePaymentView, EmployerMeEmployeePaymentListView,
-    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
-    EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView,
+    EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView, EmployerMePayrates,
+    EmployerMeSubscriptionView, EmployerMeEmployeePaymentReportView, EmployerMeEmployeePaymentDeductionReportView, EmployerMeW4Form,EmployerMeI9Form, EmployerMeEmployeeDocument
 )
 
 app_name = "api"
@@ -65,6 +69,11 @@ urlpatterns = [
         ValidateEmailView.as_view(),
         name="validate-email"),
     path('user/email/validate/send/<str:email>', ValidateSendEmailView.as_view(), name="validate-email-send"),
+    path('user/phone_number/validate/send/<str:email>/<str:phone_number>', ValidateSendSMSView.as_view(), name="validate-phone-number-send"),
+    path('user/phone_number/validate/<str:email>/<str:phone_number>/<str:code>', ValidateSMSView.as_view(), name="validate-phone-number"),
+    #add user to company
+    path('user/email/company/validate', ValidateEmailCompanyView.as_view(), name="validate-company-invite"),
+    path('user/email/company/send/<str:email>/<int:sender>/<int:employer>/<str:employer_role>', SendCompanyInvitationView.as_view(), name="send-company-invite"),
     path('user/<int:id>', UserView.as_view(), name="id-user"),
     path('user/register', UserRegisterView.as_view(), name="register"),
 
@@ -84,6 +93,7 @@ urlpatterns = [
     path('cities/<int:id>', CityView.as_view(), name='id-cities'),
 
     path('employers', EmployerView.as_view(), name="get-employers"),
+    path('subscription_auth/<str:email>', Subscription_authView.as_view()),
     path(
         'employers/<int:id>',
         EmployerView.as_view(),
@@ -95,6 +105,10 @@ urlpatterns = [
         'profiles/me/image',
         ProfileMeImageView.as_view(),
         name="me-profiles-image"),
+    path(
+        'profiles/me/resume',
+        ProfileMeResumeView.as_view(),
+        name="me-profiles-resume"),
 
     path(
         'jobcore-invites',
@@ -149,6 +163,16 @@ urlpatterns = [
     # FOR THE EMPLOYER
     #
 
+    # stripe related
+    path('csrf_cookie', GetCSRFToken.as_view(), name='csrf_cookie'),
+    # path('admin/', admin.site.urls),
+    path('create-payment-intent', StripeIntentView.as_view(), name='create-payment-intent'),
+    # path('webhooks/stripe/', stripe_webhook, name='stripe-webhook'),
+    # path('cancel/', CancelView.as_view(), name='cancel'),
+    # path('success/', SuccessView.as_view(), name='success'),
+    # path('', ProductLandingPageView.as_view(), name='landing-page'),
+    # path('create-checkout-session/<pk>/', CreateCheckoutSessionView.as_view(), name='create-checkout-session'),
+
     path('employers/me', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/<int:employer_id>', EmployerMeView.as_view(), name="me-employer"),
     path('employers/me/image', EmployerMeImageView.as_view(), name="me-employers-image"),
@@ -161,7 +185,12 @@ urlpatterns = [
         name="me-employer-get-applicants"),
     path('employers/me/applications/<int:application_id>',
          ApplicantsView.as_view(), name="me-employer-get-applicants"),
-
+    path('employers/me/payrates', EmployerMePayrates.as_view(),
+         name="me-get-payrate"),
+    path(
+        'employers/me/payrates/<int:id>',
+        EmployerMePayrates.as_view(),
+        name="me-employer-id-payrates"),
     # path(
     #     'employers/me/periods',
     #     EmployerPayrollPeriodView.as_view(),
@@ -359,6 +388,19 @@ urlpatterns = [
         name="me-employees-id-jcinvites"),
 
     path('employees/me/payroll-payments', EmployeeMePayrollPaymentsView.as_view(), name="me-get-payroll-payments"),
+
+
+    # EMPLOYEE I9 FORM
+    path('employees/me/i9-form', EmployeeMeI9Form.as_view(), name="employee-i9form"),
+
+    # EMPLOYEE W4 FORM
+    path('employees/me/w4-form', EmployeeMeW4Form.as_view(), name="employee-w4form"),
+
+    # EMPLOYER W4 FORM
+    path('employers/me/w4-form/<int:id>', EmployerMeW4Form.as_view(), name="employee-w4form"),
+    path('employers/me/i9-form/<int:id>', EmployerMeI9Form.as_view(), name="employee-i9form"),
+    path('employers/me/employee-documents/<int:id>', EmployerMeEmployeeDocument.as_view(), name="employee-i9form"),
+
 
     # DOCUMENTS
     path('documents', DocumentAPI.as_view(), name="document"),

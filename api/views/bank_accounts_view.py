@@ -148,9 +148,10 @@ class BankAccountAPIView(APIView):
                 "name": acc.name,
                 "institution_name": acc.institution_name,
                 "id": acc.id,
+                "account": acc.account[-4:]
             }
             json_accounts.append(acc_obj)
-
+        print(json_accounts)
         return Response(json_accounts, status=status.HTTP_200_OK)
 
 

@@ -139,3 +139,5 @@ db.sqlite
 #static/*
 
 tmp/
+
+Pipfile
