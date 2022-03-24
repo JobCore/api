@@ -662,17 +662,21 @@ def generate_periods_and_payments(employer, generate_since=None):
                     print('clocked_hours###', clocked_hours)
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
+                print("projected_starting_time###", projected_starting_time)
                 projected_ending_time = clockin.shift.ending_at
+                print("projected_ending_time###", projected_ending_time)
                 projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 5)
+                print("projected_hours###", projected_hours)
                 log_debug('hooks','Projected hours '+str(projected_hours))
 
                 if clocked_hours <= projected_hours:
                     regular_hours = clocked_hours
                     overtime = 0
+                    print("adentro del if")
                 else:
                     regular_hours = projected_hours
                     overtime = clocked_hours - projected_hours
-
+                print("justo sobre payment")
                 payment = PayrollPeriodPayment()
                 payment.payroll_period=period,
                 print('payment.payroll_period=period###', payment.payroll_period)
@@ -701,6 +705,7 @@ def generate_periods_and_payments(employer, generate_since=None):
             period.total_payments = total_payments
             period.save()
             generated_periods.append(period)
+            print("generated_periods###", generated_periods)
 
         except Exception as e:
             print("entrando a borrar", e)
