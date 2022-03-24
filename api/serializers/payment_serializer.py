@@ -715,8 +715,8 @@ def generate_periods_and_payments(employer, generate_since=None):
             period.delete()
             raise e
 
-    # return generated_periods
-    return period
+    return generated_periods
+    
 
 def get_employee_payments(
         talent_id=None,
