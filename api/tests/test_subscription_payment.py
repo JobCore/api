@@ -48,39 +48,39 @@ class SubscriptionPaymentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         )
     
 
-    def test_stripe_single_charge(self):
-        token = stripe.Token.create(
-                card={
-                    "number": "4242424242424242",
-                    "exp_month": 4,
-                    "exp_year": 2028,
-                    "cvc": "314",
-                },
-            )
-        customer = stripe.Customer.create(
-                email='employer1@testdoma.in',
-            )
-        data= {
-            'token': token.id,
-            'amount': 1,
-            }
-        url = reverse_lazy('api:create-payment-intent')
-        self.client.force_login(self.test_user_employer)
-        response = self.client.post(url, data=data, content_type="application/json")
-        self.assertEqual(response.status_code, 200, response.content.decode())
-        response_json = response.json()
+    # def test_stripe_single_charge(self):
+    #     token = stripe.Token.create(
+    #             card={
+    #                 "number": "4242424242424242",
+    #                 "exp_month": 4,
+    #                 "exp_year": 2028,
+    #                 "cvc": "314",
+    #             },
+    #         )
+    #     customer = stripe.Customer.create(
+    #             email='employer1@testdoma.in',
+    #         )
+    #     data= {
+    #         'token': token.id,
+    #         'amount': 1,
+    #         }
+    #     url = reverse_lazy('api:create-payment-intent')
+    #     self.client.force_login(self.test_user_employer)
+    #     response = self.client.post(url, data=data, content_type="application/json")
+    #     self.assertEqual(response.status_code, 200, response.content.decode())
+    #     response_json = response.json()
     
-    def test_customer_stripe_id(self):
-        self.customer = stripe.Customer.create(
-            email="employer1@testdoma.in",
-            description="customer for test",
-        )
-        self.assertIsNotNone(self.customer.id)
+    # def test_customer_stripe_id(self):
+    #     self.customer = stripe.Customer.create(
+    #         email="employer1@testdoma.in",
+    #         description="customer for test",
+    #     )
+    #     self.assertIsNotNone(self.customer.id)
 
-    def test_creating_a_new_customer(self):
-        customer = stripe.Customer.create(
-            email="employer1@testdoma.in",
-            description="customer for test",
-        )
+    # def test_creating_a_new_customer(self):
+    #     customer = stripe.Customer.create(
+    #         email="employer1@testdoma.in",
+    #         description="customer for test",
+    #     )
     
                

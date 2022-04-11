@@ -67,4 +67,4 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
         self.assertEquals(json_response[0].get("employee"), document.get("employee_id"), response.content)
         self.assertEquals(json_response[0].get("name"), 'Untitled document', response.content)
-        self.assertEquals(1,2)
+        
