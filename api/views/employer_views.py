@@ -1394,9 +1394,10 @@ class EmployerMeW4Form(EmployerView):
             raise PermissionDenied("You don't seem to be logged in")
             
         if (id):
-            print('request.user###', request.user)
+            logger.debug('EmployerMeW4Form:request.user###', request.user)
             try:
                 w4form = W4Form.objects.filter(employee_id=id)
+                logger.debug('EmployerMeW4Form:w4form###', w4form)
             except W4Form.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
@@ -1413,13 +1414,13 @@ class EmployerMeI9Form(EmployerView):
         if (id):
             try:
                 i9form = I9Form.objects.filter(employee_id=id)
-                print('i9form###', i9form)
+                logger.debug('EmployerMeI9Form:i9form###', i9form)
             except I9Form.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
-            print('serializer.data###', serializer.data)
+            logger.debug('EmployerMeI9Form:serializer.data###', serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
      
