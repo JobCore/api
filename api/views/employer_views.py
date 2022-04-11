@@ -1392,8 +1392,9 @@ class EmployerMeW4Form(EmployerView):
     def get(self, request, id=False):
         if request.user is None:
             raise PermissionDenied("You don't seem to be logged in")
-
+            
         if (id):
+            print('request.user###', request.user)
             try:
                 w4form = W4Form.objects.filter(employee_id=id)
             except W4Form.DoesNotExist:
