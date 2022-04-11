@@ -461,11 +461,14 @@ class EmployerMeSubscriptionView(EmployerView):
             plan = ''
 
             if request.data['subscription'] == 1:
-                plan = 'price_1KgEeuAQGSNQlybYFtK9Z8Jh'#'price_1GuIrZAQGSNQlybY41AJDfoW'   
+                plan = 'price_1GuIrZAQGSNQlybY41AJDfoW'
+                # plan = 'price_1KgEeuAQGSNQlybYFtK9Z8Jh' 
             elif request.data['subscription'] == 2:
-                plan = 'price_1KgEeTAQGSNQlybY1otsT6R6'#'price_1GuIttAQGSNQlybYWpGxUJyV'
+                plan = 'price_1GuIttAQGSNQlybYWpGxUJyV'
+                # plan = 'price_1KgEeTAQGSNQlybY1otsT6R6'
             elif request.data['subscription'] == 3:
-                plan = 'price_1KgEeJAQGSNQlybYmA6BmxwV'#'price_1GuIv1AQGSNQlybYK7k61xh2'
+                plan = 'price_1GuIv1AQGSNQlybYK7k61xh2'
+                # plan = 'price_1KgEeJAQGSNQlybYmA6BmxwV'
 
             subscription = ''
 
@@ -1409,11 +1412,13 @@ class EmployerMeI9Form(EmployerView):
         if (id):
             try:
                 i9form = I9Form.objects.filter(employee_id=id)
+                print('i9form###', i9form)
             except I9Form.DoesNotExist:
                 return Response(validators.error_object(
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+            print('serializer.data###', serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
      

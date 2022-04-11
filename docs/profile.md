@@ -105,7 +105,7 @@ http://localhost:5000/api/profiles/me
   "user": {
     "first_name": "John",
     "last_name": "Lennon",
-    "email": "a+employee2@jobcore.co",
+    "email": "israel@jobcore.co",
   },
   "picture": "https://res.cloudinary.com/...",
   "bio": "",

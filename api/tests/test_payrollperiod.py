@@ -146,7 +146,7 @@ class PayrollPeriodTestSuite(TestCase, WithMakeUser, WithMakePayrollPeriod, With
         self.assertEqual(response_json.get('employer').get('picture'), self.test_employer.picture, response_json)
         self.assertIsInstance(response_json.get('payments'), list, response_json)
         self.assertEqual(len(response_json.get('payments')), 3, response_json)
-
+        
     def test_get_my_periods(self):
         url = reverse_lazy('api:me-get-payroll-period')
         self.client.force_login(self.test_user_employer)

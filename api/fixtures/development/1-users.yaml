@@ -70,8 +70,8 @@
   fields:
     first_name: John
     last_name: Lennon
-    email: a+employee2@jobcore.co
-    username: a+employee2@jobcore.co
+    email: lennon@jobcore.co
+    username: isra@jobcore.co
     password: pbkdf2_sha256$100000$NhRd421Q6xfJ$kEnuXU5FWK0+PdCNzFaTVb6Eo/p5feam1KD5P28GvPU=
 - model: api.employee
   pk: 2

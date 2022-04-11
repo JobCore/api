@@ -56,14 +56,16 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
             "employee_id": Employee.objects.all()[0].id,
             "document_type": mixer.blend('api.Document')
         }
-
+        print('Employee.objects.all()[0].id###', Employee.objects.all()[0].id)
         EmployeeDocument.objects.create(**document)
         url = reverse_lazy('api:employee-document')
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
+        print('json_response###', json_response)
         self.assertEquals(response.status_code, 200, response.content)
         self.assertEquals(len(json_response), 1, response.content)
         self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)
         self.assertEquals(json_response[0].get("employee"), document.get("employee_id"), response.content)
         self.assertEquals(json_response[0].get("name"), 'Untitled document', response.content)
+        self.assertEquals(1,2)

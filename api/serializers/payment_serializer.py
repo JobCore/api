@@ -635,7 +635,6 @@ def generate_periods_and_payments(employer, generate_since=None):
             length=employer.payroll_period_length,
             length_type=employer.payroll_period_type
         )
-        print('generate_periods_and_payments period###', period)
        
         period.save()
 
@@ -660,56 +659,40 @@ def generate_periods_and_payments(employer, generate_since=None):
                     continue
                 else:
                     clocked_hours = round(decimal.Decimal(clocked_hours), 5)
-                    print('clocked_hours###', clocked_hours)
                 # the projected payment varies depending on the payment period
                 projected_starting_time = clockin.shift.starting_at
-                print("projected_starting_time###", projected_starting_time)
                 projected_ending_time = clockin.shift.ending_at
-                print("projected_ending_time###", projected_ending_time)
                 projected_hours = round(decimal.Decimal((projected_ending_time - projected_starting_time).total_seconds() / 3600), 5)
-                print("projected_hours###", projected_hours)
                 log_debug('hooks','Projected hours '+str(projected_hours))
 
                 if clocked_hours <= projected_hours:
                     regular_hours = clocked_hours
                     overtime = 0
-                    print("adentro del if")
+                    
                 else:
                     regular_hours = projected_hours
                     overtime = clocked_hours - projected_hours
-                print("justo sobre payment")
-                payment = PayrollPeriodPayment()
-                payment.payroll_period=period
-                print('payment.payroll_period=period###', payment.payroll_period)
-                payment.employee=clockin.employee
-                print('payment.payment.employee###', payment.payroll_period)
-                payment.employer=employer
-                print('payment.employer###', payment.payroll_period)
-                payment.shift=clockin.shift
-                print('payment.shift###', payment.shift)
-                payment.clockin=clockin
-                print('payment.clockin###', payment.clockin)
-                payment.regular_hours=regular_hours
-                print('payment.regular_hours###', payment.regular_hours)
-                payment.over_time=overtime
-                print('payment.over_time###', payment.over_time)
-                payment.hourly_rate=clockin.shift.minimum_hourly_rate
-                print('payment.hourly_rate###', payment.hourly_rate)
-                payment.total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2)
-                print('payment.total_amount###', payment.total_amount)
-                payment.splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
-                print('payment.splited_payment###', payment.splited_payment)
+                payment = PayrollPeriodPayment(
+                    payroll_period=period,
+                    employee=clockin.employee,
+                    employer=employer,
+                    shift=clockin.shift,
+                    clockin=clockin,
+                    regular_hours=regular_hours,
+                    over_time=overtime,
+                    hourly_rate=clockin.shift.minimum_hourly_rate,
+                    total_amount=round((regular_hours + overtime) * clockin.shift.minimum_hourly_rate, 2),
+                    splited_payment=False if clockin.ended_at is None or (clockin.started_at == starting_time and ending_time == clockin.ended_at) else True
+                )
                 payment.save()
                 total_payments = total_payments + 1
 
-            print('el total payment', total_payments)
             period.total_payments = total_payments
             period.save()
             generated_periods.append(period)
-            print("generated_periods###", generated_periods)
+            
 
         except Exception as e:
-            print("entrando a borrar", e)
             PayrollPeriodPayment.objects.filter(payroll_period__id=period.id).delete()
             generated_periods = []
             period.delete()

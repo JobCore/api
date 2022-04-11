@@ -17,7 +17,9 @@ from api.serializers import (
     employee_serializer, clockin_serializer, rating_serializer,
     profile_serializer, other_serializer, documents_serializer, subscription_payment_serializer
 )
+import logging
 
+logger = logging.getLogger('jobcore:general')
 # stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -143,6 +145,9 @@ class StripeIntentView(APIView):
                 email=self.request.user,
             )
             cus = customer.sources.create(source=token)
+            if cus is not None:
+                logger.info('StripeIntentView:post: customer created')
+                logger.debug('StripeIntentView:post: cus: %s' % cus)
             userprofile.stripe_customer_id = customer['id']
             userprofile.user = self.request.user
             userprofile.save()
@@ -157,6 +162,9 @@ class StripeIntentView(APIView):
                     currency="usd",
                     customer=customer['id']
                 )
+                if charge is not None:
+                    logger.info('StripeIntentView:post: charge created')
+                    logger.debug('StripeIntentView:post: charge: %s' % charge)
                 # create the payment
                 payment = Payment()
                 payment.stripe_charge_id = charge['id']
@@ -171,35 +179,40 @@ class StripeIntentView(APIView):
             except stripe.error.CardError as e:
                 body = e.json_body
                 err = body.get('error', {})
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": f"{err.get('message')}"}, status=status.HTTP_400_BAD_REQUEST)
 
             except stripe.error.RateLimitError as e:
                 # Too many requests made to the API too quickly
                 messages.warning(self.request, "Rate limit error")
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": "Rate limit error"}, status=status.HTTP_400_BAD_REQUEST)
 
             except stripe.error.InvalidRequestError as e:
-                print(e)
+                logger.error('StripeIntentView:post: %s' % str(e))
                 # Invalid parameters were supplied to Stripe's API
                 return Response({"message": "Invalid parameters"}, status=status.HTTP_400_BAD_REQUEST)
 
             except stripe.error.AuthenticationError as e:
                 # Authentication with Stripe's API failed
                 # (maybe you changed API keys recently)
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": "Not authenticated"}, status=status.HTTP_400_BAD_REQUEST)
 
             except stripe.error.APIConnectionError as e:
                 # Network communication with Stripe failed
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": "Network error"}, status=status.HTTP_400_BAD_REQUEST)
 
             except stripe.error.StripeError as e:
                 # Display a very generic error to the user, and maybe send
                 # yourself an email
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": "Something went wrong. You were not charged. Please try again."}, status=status.HTTP_400_BAD_REQUEST)
 
             except Exception as e:
-                print("esto es e###" , e)
                 # send an email to ourselves
+                logger.error('StripeIntentView:post: %s' % str(e))
                 return Response({"message": "A serious error occurred. We have been notifed."}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({"message": "Invalid data received"}, status=status.HTTP_400_BAD_REQUEST)

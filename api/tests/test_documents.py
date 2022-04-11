@@ -54,9 +54,11 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
-       
+        print('json_response###' , json_response)
         self.assertEquals(response.status_code, 200, "Must be a 200 status code response")
         self.assertEquals((json_response[0]['name']), "Untitled document", "If no title was given then it must have Untitled docuiment as a default title")
+        self.assertEquals(1,2)
+
     def test_default_get_employee_document_ARCHIVED(self):
     # Test that, by default, archived document dont show on the default list of documents GET /emplyees/me/document
         mixer.blend(
@@ -90,120 +92,120 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.assertEqual(EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count(), 1) #still in the data
 
     # def test_employee_document_filtering(self):
-    # Test filters for getting the list of documents:
-        # self.random = random.randint(0, 2)
-        # document_type = ['identity', 'employment', 'form']
-        # status = ['PENDING', 'APPROVED', 'REJECTED']
-        # mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status='APPROVED',
-        #         document_type = mixer.blend(
-        #             'api.Document',
-        #             title='employment'
-        #         )
-        #     )
-        # for x in range(0, 3):
-        #     mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status=status[self.random],
-        #         document_type = mixer.blend(
-        #             'api.Document',
-        #             title=document_type[x]
-        #         )
-        #     )
-        #filtering type
-        # url = reverse_lazy('api:employee-document', kwargs=dict(
-        #     status='APPROVED'
-        # ))
-        # self.client.force_login(self.test_user_employee)
-        # response = self.client.get(url, content_type='application/json')
-        # json_response = response.json()
-        # print(json_response)
-        # self.assertEquals(response.status_code, 500, response.content)
+    #     Test filters for getting the list of documents:
+    #         self.random = random.randint(0, 2)
+    #         document_type = ['identity', 'employment', 'form']
+    #         status = ['PENDING', 'APPROVED', 'REJECTED']
+    #         mixer.blend(
+    #                 'api.EmployeeDocument',
+    #                 employee=self.test_employee,
+    #                 status='APPROVED',
+    #                 document_type = mixer.blend(
+    #                     'api.Document',
+    #                     title='employment'
+    #                 )
+    #             )
+    #         for x in range(0, 3):
+    #             mixer.blend(
+    #                 'api.EmployeeDocument',
+    #                 employee=self.test_employee,
+    #                 status=status[self.random],
+    #                 document_type = mixer.blend(
+    #                     'api.Document',
+    #                     title=document_type[x]
+    #                 )
+    #             )
+    #         filtering type
+    #         url = reverse_lazy('api:employee-document', kwargs=dict(
+    #             status='APPROVED'
+    #         ))
+    #         self.client.force_login(self.test_user_employee)
+    #         response = self.client.get(url, content_type='application/json')
+    #         json_response = response.json()
+    #         print(json_response)
+    #         self.assertEquals(response.status_code, 500, response.content)
 
     # @patch('cloudinary.uploader.upload')
     # def test_upload_document_validate_identity_TRUE(self, mocked_uploader):
-        # Test if you upload a document of validate_identity = true all the others with validate_identity = true document for the same exmployee should be archived (historical)
-        # mocked_uploader.return_value = {
-        #     'secure_url': 'http://a-valid.url/for-the-doc'
-        # }
-        # url = reverse_lazy('api:employee-document')
-        # self.client.force_login(self.test_user_employee)
-        # document_type =  mixer.blend('api.Document', validates_identity=True)
-        # document_type1 =  mixer.blend('api.Document', validates_identity=True)
-        # document_type2 =  mixer.blend('api.Document', validates_identity=True)
-        # mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status='PENDING',
-        #         document_type = document_type1
-        #     )
-        # mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status='PENDING',
-        #         document_type = document_type2
-        #     )
-        # with BytesIO(b'the-data') as f:
-        #     payload = {
-        #         'document': f,
-        #         'document_type': document_type.id
-        #     }
-        #     response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
-        #     json_response = response.json()
-        #     print(json_response)
-        #     print(EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count())
-        # self.assertEquals(
-        #     response.status_code,
-        #     201,
-        #     f'It should return a success response: {str(response.content)}')
-        # self.assertEquals(
-        #     EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count(),
-        #     2,
-        #     f'There should be two archived documents')
+    #     Test if you upload a document of validate_identity = true all the others with validate_identity = true document for the same exmployee should be archived (historical)
+    #     mocked_uploader.return_value = {
+    #         'secure_url': 'http://a-valid.url/for-the-doc'
+    #     }
+    #     url = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee)
+    #     document_type =  mixer.blend('api.Document', validates_identity=True)
+    #     document_type1 =  mixer.blend('api.Document', validates_identity=True)
+    #     document_type2 =  mixer.blend('api.Document', validates_identity=True)
+    #     mixer.blend(
+    #             'api.EmployeeDocument',
+    #             employee=self.test_employee,
+    #             status='PENDING',
+    #             document_type = document_type1
+    #         )
+    #     mixer.blend(
+    #             'api.EmployeeDocument',
+    #             employee=self.test_employee,
+    #             status='PENDING',
+    #             document_type = document_type2
+    #         )
+    #     with BytesIO(b'the-data') as f:
+    #         payload = {
+    #             'document': f,
+    #             'document_type': document_type.id
+    #         }
+    #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+    #         json_response = response.json()
+    #         print(json_response)
+    #         print(EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count())
+    #     self.assertEquals(
+    #         response.status_code,
+    #         201,
+    #         f'It should return a success response: {str(response.content)}')
+    #     self.assertEquals(
+    #         EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count(),
+    #         2,
+    #         f'There should be two archived documents')
 
     # @patch('cloudinary.uploader.upload')
     # def test_upload_document_validate_identity_REJECTED_PENDING(self, mocked_uploader):
-        # Repeat the above but if is previous document status for the same type are PENDING OR REJECTED they should be deleted.
-        # mocked_uploader.return_value = {
-        #     'secure_url': 'http://a-valid.url/for-the-doc'
-        # }
-        # url = reverse_lazy('api:employee-document')
-        # self.client.force_login(self.test_user_employee)
-        # document_type =  mixer.blend('api.Document', validates_identity=True)
-        # document_type1 =  mixer.blend('api.Document', validates_identity=True)
-        # document_type2 =  mixer.blend('api.Document', validates_identity=True)
-        # mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status='PENDING',
-        #         document_type = document_type1
-        #     )
-        # mixer.blend(
-        #         'api.EmployeeDocument',
-        #         employee=self.test_employee,
-        #         status='REJECTED',
-        #         document_type = document_type2
-        #     )
-        # with BytesIO(b'the-data') as f:
-        #     payload = {
-        #         'document': f,
-        #         'document_type': document_type.id
-        #     }
-        #     response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
-        #     json_response = response.json()
-        #     print(json_response)
-        #     print(EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count())
-        # self.assertEquals(
-        #     response.status_code,
-        #     201,
-        #     f'It should return a success response: {str(response.content)}')
-        # self.assertEquals(
-        #     EmployeeDocument.objects.filter(employee=self.test_employee).count(),
-        #     1,
-        #     f'There should be two archived documents')
+    #     Repeat the above but if is previous document status for the same type are PENDING OR REJECTED they should be deleted.
+    #     mocked_uploader.return_value = {
+    #         'secure_url': 'http://a-valid.url/for-the-doc'
+    #     }
+    #     url = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee)
+    #     document_type =  mixer.blend('api.Document', validates_identity=True)
+    #     document_type1 =  mixer.blend('api.Document', validates_identity=True)
+    #     document_type2 =  mixer.blend('api.Document', validates_identity=True)
+    #     mixer.blend(
+    #             'api.EmployeeDocument',
+    #             employee=self.test_employee,
+    #             status='PENDING',
+    #             document_type = document_type1
+    #         )
+    #     mixer.blend(
+    #             'api.EmployeeDocument',
+    #             employee=self.test_employee,
+    #             status='REJECTED',
+    #             document_type = document_type2
+    #         )
+    #     with BytesIO(b'the-data') as f:
+    #         payload = {
+    #             'document': f,
+    #             'document_type': document_type.id
+    #         }
+    #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
+    #         json_response = response.json()
+    #         print(json_response)
+    #         print(EmployeeDocument.objects.filter(employee=self.test_employee, status__in=['ARCHIVED']).count())
+    #     self.assertEquals(
+    #         response.status_code,
+    #         201,
+    #         f'It should return a success response: {str(response.content)}')
+    #     self.assertEquals(
+    #         EmployeeDocument.objects.filter(employee=self.test_employee).count(),
+    #         1,
+    #         f'There should be two archived documents')
 
     # @patch('cloudinary.uploader.upload')
     # def test_default_get_employee_document_double_approve_same_type(self, mocked_uploader):
@@ -236,13 +238,13 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     #         response = self.client.post(url, payload, content_type=MULTIPART_CONTENT)
 
 
-        # url_get_document = reverse_lazy('api:employee-document')
-        # self.client.force_login(self.test_user_employee)
-        # response = self.client.get(url_get_document, content_type='application/json')
-        # json_response = response.json()
-        # print(json_response)
-        # print(len(json_response))
-        # self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
+    #     url_get_document = reverse_lazy('api:employee-document')
+    #     self.client.force_login(self.test_user_employee)
+    #     response = self.client.get(url_get_document, content_type='application/json')
+    #     json_response = response.json()
+    #     print(json_response)
+    #     print(len(json_response))
+    #     self.assertEquals(response.status_code, 400, 'Cannot Have 2 Employee document with the status approved')
 
 
     # @patch('cloudinary.uploader.upload')
