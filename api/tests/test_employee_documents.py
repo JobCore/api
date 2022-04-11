@@ -62,7 +62,6 @@ class EmployeeDocumentTestSuite(TestCase, WithMakeUser):
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
-        print('json_response###', json_response)
         self.assertEquals(response.status_code, 200, response.content)
         self.assertEquals(len(json_response), 1, response.content)
         self.assertEquals(json_response[0].get("document"), document.get("document"), response.content)

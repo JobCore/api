@@ -54,7 +54,6 @@ class DocumentTestSuite(TestCase, WithMakeUser, WithMakeShift):
         self.client.force_login(self.test_user_employee)
         response = self.client.get(url, content_type='application/json')
         json_response = response.json()
-        print('json_response###' , json_response)
         self.assertEquals(response.status_code, 200, "Must be a 200 status code response")
         self.assertEquals((json_response[0]['name']), "Untitled document", "If no title was given then it must have Untitled docuiment as a default title")
         self.assertEquals(1,2)
