@@ -544,7 +544,6 @@ class EmployeeMeI9Form(EmployeeView):
 
     def get(self, request):
         i9form = I9Form.objects.filter(employee_id=self.employee.id)
-
         serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
