@@ -51,6 +51,16 @@ from api.utils import validators
 from api.utils.utils import DecimalEncoder
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+stream = logging.StreamHandler()
+stream.setLevel(logging.DEBUG)
+streamformat = logging.Formatter("%(levelname)s:%(module)s:%(message)s")
+stream.setFormatter(streamformat)
+
+logger.addHandler(stream)
+
+
 DATE_FORMAT = '%Y-%m-%d'
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
@@ -1403,6 +1413,8 @@ class EmployerMeW4Form(EmployerView):
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employee_serializer.EmployeeW4Serializer(w4form, many=True)
+            logger.debug("EmployerMeW4Form:serializer###", serializer)
+            logger.debug("EmployerMeW4Form:serializer.data###", serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 class EmployerMeI9Form(EmployerView):
@@ -1420,6 +1432,7 @@ class EmployerMeI9Form(EmployerView):
                     'Not found.'), status=status.HTTP_404_NOT_FOUND)
 
             serializer = employee_serializer.EmployeeI9Serializer(i9form, many=True)
+            logger.debug('EmployerMeI9Form:serializer###', serializer)
             logger.debug('EmployerMeI9Form:serializer.data###', serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
