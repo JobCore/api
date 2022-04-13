@@ -9,11 +9,14 @@ import random
 from mock import patch
 import stripe
 import os
-
+import logging, logging.handlers
+import sys, socket
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 EmployeeDocument = apps.get_model('api', 'EmployeeDocument')
 Document = apps.get_model('api', 'Document')
+
+
 @override_settings(STATICFILES_STORAGE=None)
 class SubscriptionPaymentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     """ 
@@ -82,5 +85,5 @@ class SubscriptionPaymentTestSuite(TestCase, WithMakeUser, WithMakeShift):
     #         email="employer1@testdoma.in",
     #         description="customer for test",
     #     )
-    
-               
+       
+      
