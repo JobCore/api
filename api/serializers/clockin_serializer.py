@@ -27,11 +27,11 @@ class ClockinSerializer(serializers.ModelSerializer):
         print("distance###", distance)
         print("VALIDATE_CLOCKIN_DISTANCE", VALIDATE_CLOCKIN_DISTANCE)
         if distance > threshold and VALIDATE_CLOCKIN_DISTANCE != 'FALSE':
-            distance3 = round(distance, 2)
+            distance_round = round(distance, 2)
             print("if distance###", distance3)
             raise serializers.ValidationError(
                 "You need to be {} miles near {} to clock in/out. Right now you"
-                " are at {} miles".format(threshold, venue.title, distance3)
+                " are at {} miles".format(threshold, venue.title, distance_round)
             )
         elif distance > threshold:
             return False
