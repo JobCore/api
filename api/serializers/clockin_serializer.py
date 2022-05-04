@@ -14,6 +14,8 @@ class ClockinSerializer(serializers.ModelSerializer):
         exclude = ()
 
     def _ensure_distance_threshold(self, currentPos, shift, threshold=0.2):
+        print("dentro de _ensure_distance_threshold###")
+        print("threshold###", threshold)
         venue = shift.venue
         talent_lat, talent_lon = currentPos
         shift_lat, shift_lon = [venue.latitude, venue.longitude]
@@ -24,6 +26,8 @@ class ClockinSerializer(serializers.ModelSerializer):
         )
 
         if distance > threshold and VALIDATE_CLOCKIN_DISTANCE != 'FALSE':
+            print("distance###", distance)
+            print("VALIDATE_CLOCKIN_DISTANCE", VALIDATE_CLOCKIN_DISTANCE)
             raise serializers.ValidationError(
                 "You need to be {} miles near {} to clock in/out. Right now you"
                 " are at {} miles".format(threshold, venue.title, distance)
