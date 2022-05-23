@@ -254,7 +254,8 @@ class Employee(models.Model):
     total_invites = models.IntegerField(blank=True, default=0)  # in minutes
 
     # employment and deductions
-    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=NOT_APPROVED,
+    employability_expired_at = models.DateTimeField(blank=True, null=True)
+    employment_verification_status = models.CharField(max_length=25, choices=EMPLOYEMNT_STATUS, default=BEING_REVIEWED,
                                                       blank=True)
     filing_status = models.CharField(max_length=25, choices=FILING_STATUS, default=SINGLE, blank=True)
     allowances = models.IntegerField(blank=True, default=0)

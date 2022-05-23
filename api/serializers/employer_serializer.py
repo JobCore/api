@@ -10,6 +10,30 @@ from api.serializers.position_serializer import PositionSmallSerializer
 # MAIN
 #
 
+class EmployeeUpdateVerificationStatusSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Employee
+        exclude = ()
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'user': {'read_only': True},
+            'rating': {'read_only': True},
+            'total_ratings': {'read_only': True},
+            'total_pending_payments': {'read_only': True},
+            'job_count': {'read_only': True},
+            'badges': {'read_only': True}
+        }
+
+    def change_employment_verification_status(self, value):
+        print("change_employment_verification_status self###", self)
+        print("change_employment_verification_status value###", value)
+        # Employee.employment_verification_status = value
+        Emp = value["catalog"]["employee"]
+        Emp.save() 
+
+   
+
 
 class EmployerGetSmallSerializer(serializers.ModelSerializer):
     class Meta:
