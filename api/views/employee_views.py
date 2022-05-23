@@ -33,6 +33,7 @@ logger = logging.getLogger('jobcore:general')
 # jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
+
 class EmployeeMeRateView(EmployeeView, RateView):
 
     def get_queryset(self):
@@ -175,6 +176,7 @@ class EmployeeMeView(EmployeeView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class EmployeeShiftInviteView(EmployeeView):
