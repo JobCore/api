@@ -73,7 +73,7 @@ pydocstyle==5.0.1
 pyfcm==1.4.5
 pyflakes==2.1.1
 Pygments==2.2.0
-PyJWT==1.7.1
+PyJWT==2.4.0
 pylama==7.7.1
 pylint==1.8.4
 pyrsistent==0.15.6
