@@ -115,9 +115,9 @@ class W4Admin(admin.ModelAdmin):
 
 
 class EmployeeDocumentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'document', 'get_name', 'status', 'created_at', 'updated_at')
+    list_display = ('id', 'employee', 'document', 'get_name', 'status', 'created_at', 'updated_at')
     search_fields = (
-        'state', 'name', 'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
+        'employee__user__first_name', 'employee__user__last_name', 'employee__user__email')
     list_filter = (
         'status', 'document_type__validates_identity', 'document_type__validates_employment', 'document_type__is_form')
     list_per_page = 100
