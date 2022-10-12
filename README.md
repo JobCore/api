@@ -111,4 +111,5 @@ pg_restore -c -d jobcore [dumpfile_name]
 
 ## CREATING AN ADMIN usER 
 pipenv shell createsuperuser
-now enter username and password
+now enter username and password.
+

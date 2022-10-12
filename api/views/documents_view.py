@@ -15,6 +15,7 @@ u'rRXVe68NO7m3mHoBS488KdHaqQPD6Ofv'
 log = logging.getLogger('api.views.documents_views')
 
 
+
 class EmployeeDocumentAPI(EmployeeView):
 
     def post(self, request):
@@ -82,7 +83,9 @@ class EmployeeDocumentAPI(EmployeeView):
 
         serializer = documents_serializer.EmployeeDocumentGetSerializer(documents, many=True)
         return JsonResponse(serializer.data, status=200, safe=False)
-
+    
+    # def put(self, request):
+    #     documents = EmployeeDocument.objects.filter(employee_id=self.employee.id)
 
 class EmployeeDocumentDetailAPI(EmployeeView):
     def delete(self, request, document_id):

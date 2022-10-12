@@ -28,7 +28,7 @@ from api.views.admin_views import (
 )
 from api.views.employee_views import (
     EmployeeMeView, EmployeeShiftInviteView, EmployeeMeShiftView, EmployeeMeRateView,
-    EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView,
+    EmployeeMeSentRatingsView, ClockinsMeView, EmployeeMeApplicationsView, 
     EmployeeAvailabilityBlockView, EmployeeDeviceMeView, EmployeeMePayrollPaymentsView, EmployeeMeI9Form,EmployeeMeW4Form
 )
 
@@ -38,8 +38,8 @@ from api.views.documents_view import (
 
 from api.views.employer_views import (
     EmployerMeView, EmployerMeUsersView, ApplicantsView, Subscription_authView,
-    EmployerMePayrollPeriodsView, EmployerMeImageView,
-    EmployerShiftInviteView, EmployerVenueView,
+    EmployerMePayrollPeriodsView, EmployerMeImageView, UpdateEmployeeEmployabilityExpirationDateView,
+    EmployerShiftInviteView, EmployerVenueView, EmployeeUpdateVerificationStatusView,
     FavListView, FavListEmployeeView, EmployerShiftCandidatesView,
     EmployerShiftEmployeesView, EmployerShiftView, EmployerShiftNewView, EmployerBatchActions,
     EmployerMePayrollPeriodPaymentView, EmployerClockinsMeView,
@@ -225,7 +225,7 @@ urlpatterns = [
     #      'clockins/<int:clockin_id>',
     #      ClockinsView.as_view(),
     #      name="me-employees"),
-
+    
     path(
         'employers/me/invites',
         EmployerShiftInviteView.as_view(),
@@ -322,6 +322,7 @@ urlpatterns = [
         EmployeeMeView.as_view(),
         name="me-employees"),
     # path('clockins/me',PaymentMeView.as_view(), name="me-employees"),
+     
     path(
         'employees/me/shifts/invites',
         EmployeeShiftInviteView.as_view(),
@@ -411,6 +412,12 @@ urlpatterns = [
     #
     # ADMIN USE ONLY
     #
+    path('employee/employability_expired_at/update/<int:employee_id>',
+        UpdateEmployeeEmployabilityExpirationDateView.as_view(),
+        name="employability_expired_at"),
+    path('employee/employment_verification_status/update/<int:employee_id>',
+        EmployeeUpdateVerificationStatusView.as_view(),
+        name="employment_verification_status"),
     path('admin/clockins', AdminClockinsview.as_view(), name="admin-get-clockins"),
     path(
         'employees/<int:employee_id>/badges',

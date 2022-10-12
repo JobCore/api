@@ -49,6 +49,8 @@ from api.serializers import (
 )
 from api.utils import validators
 from api.utils.utils import DecimalEncoder
+from django.contrib import admin
+from dateutil import parser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -63,6 +65,26 @@ logger.addHandler(stream)
 
 DATE_FORMAT = '%Y-%m-%d'
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+
+
+class UpdateEmployeeEmployabilityExpirationDateView(EmployerView):
+    def put(self, request, *args, **kwargs):
+        EmployabilityExpirationDate = request.data["catalog"]["employee"]["employability_expired_at"]
+        EmployabilityExpirationDate = parser.parse(EmployabilityExpirationDate)
+        EmployabilityExpirationDate = EmployabilityExpirationDate.replace(hour=0, minute=0, second=0, microsecond=0)
+        employee = Employee.objects.get(id=request.data["catalog"]["employee"]["id"])
+        employee.employability_expired_at = EmployabilityExpirationDate
+        employee.save()
+        
+        return Response(status=status.HTTP_200_OK)
+
+class EmployeeUpdateVerificationStatusView(EmployerView):
+    def put(self, request, *args, **kwargs):
+        employee = Employee.objects.get(id=request.data["catalog"]["employee"]["id"])
+        employee.employment_verification_status = request.data["catalog"]["employee"]["employment_verification_status"]
+        employee.save()
+        
+        return Response(status=status.HTTP_200_OK)
 
 class EmployerMeView(EmployerView):
     def get(self, request):
@@ -323,13 +345,13 @@ class EmployerShiftInviteView(EmployerView):
                     "shift": shift,
                     "manually_created": True
                 }
+                         
 
                 serializer = shift_serializer.ShiftCreateInviteSerializer(
                     data=data,
                     context={
                         "request": request
                     })
-
                 if not serializer.is_valid():
                     return Response(
                         serializer.errors,
